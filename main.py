@@ -83,8 +83,27 @@ bot = ChetBot()
 async def on_ready():
     logging.getLogger("chetbot").info(f"{bot.user} запущен и готов к работе!")
 
-if __name__ == "__main__":
+
+async def main():
+    guild_id_raw = os.getenv("GUILD_ID")
+    if not guild_id_raw:
+        raise RuntimeError("Переменная окружения GUILD_ID не задана.")
+    guild_id = int(guild_id_raw)
+
+    from dashboard.backend.app import start_dashboard
+
+    dashboard_runner = await start_dashboard(bot, guild_id)
+
     token = os.getenv("BOT_TOKEN")
     if not token:
         raise RuntimeError("Переменная окружения BOT_TOKEN не задана.")
-    bot.run(token)
+
+    try:
+        await bot.start(token)
+    finally:
+        if dashboard_runner is not None:
+            await dashboard_runner.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
