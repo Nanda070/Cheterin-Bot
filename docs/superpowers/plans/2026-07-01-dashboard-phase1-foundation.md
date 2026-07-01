@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - All work happens in the working copy `C:\Users\adnan\Documents\coding\ChetMain_backup_20260701_211729`. Never touch `C:\Users\adnan\Documents\coding\ChetMain`.
-- **No git commits in this working copy** — user explicitly opted out of git for this backup. Every task below ends with a verification step instead of a `git commit` step; skip any commit instruction you've seen in other plans' templates.
+- **Local-only git repo, commits expected.** A git repo was initialized inside this working copy specifically for implementing this plan (decision made after this plan was first written) — it has no remote and is never pushed anywhere; it does not touch the original `ChetMain` repo. Every task below should end with a normal `git add` + `git commit` for that task's changes, same as any other subagent-driven-development plan. Any "Verify (no commit)" step text still present below is stale — commit instead.
 - Discord OAuth2 test credentials (test bot token, `DISCORD_CLIENT_ID=1521957442315878430`, `DISCORD_CLIENT_SECRET`) go into the working copy's `.env` only, during Task 8. Never print them to logs or commit them anywhere.
 - Access is role-gated: `DASHBOARD_ACCESS_ROLE_IDS=1324239354209632357,1324239354209632358,1505359848433516734` (Kapo, Moderator, CTD) **or** Discord `guild_permissions.administrator == True`.
 - Dashboard failing to start must never crash the bot (spec: "Раздел 4 — Обработка ошибок").
