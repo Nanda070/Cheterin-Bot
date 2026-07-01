@@ -12,5 +12,10 @@ def derive_fernet_key(secret: str) -> bytes:
 
 
 def setup_session(app: web.Application, session_secret: str) -> None:
-    storage = EncryptedCookieStorage(derive_fernet_key(session_secret), cookie_name="chetbot_dashboard_session")
+    # EncryptedCookieStorage re-encodes bytes/bytearray keys with an extra
+    # base64 pass (see aiohttp_session.cookie_storage.EncryptedCookieStorage.__init__),
+    # which would double-encode our already-base64 Fernet key. Passing it as
+    # str routes straight to fernet.Fernet(secret_key) and avoids that.
+    fernet_key = derive_fernet_key(session_secret).decode("ascii")
+    storage = EncryptedCookieStorage(fernet_key, cookie_name="chetbot_dashboard_session")
     setup_aiohttp_session(app, storage)
