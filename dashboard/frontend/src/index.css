@@ -1,5 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-body {
-  background-color: #020617;
+@theme {
+  /* Base surfaces */
+  --color-background: #0b0e14;
+  --color-surface: #131722;
+  --color-surface-hover: #181d2c;
+  --color-border: #232838;
+
+  /* Text */
+  --color-foreground: #e8eaf0;
+  --color-muted: #8b93a7;
+
+  /* Brand accent — Discord blurple family */
+  --color-primary: #5865f2;
+  --color-primary-hover: #6e76f5;
+  --color-primary-muted: #5865f224;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-danger-hover: #f56565;
+
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+
+  --ease-out-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 400ms var(--ease-out-smooth) both;
+}
+
+.animate-dropdown-in {
+  animation: dropdown-in 150ms var(--ease-out-smooth) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-dropdown-in {
+    animation: none;
+  }
 }
