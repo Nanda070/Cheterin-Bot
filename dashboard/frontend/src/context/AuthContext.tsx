@@ -17,6 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       setUser(await fetchCurrentUser())
+    } catch (error) {
+      console.error('Failed to refresh user session:', error)
+      setUser(null)
     } finally {
       setIsLoading(false)
     }

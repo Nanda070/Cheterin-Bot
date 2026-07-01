@@ -60,4 +60,35 @@ describe('ProtectedRoute', () => {
 
     await waitFor(() => expect(screen.getByText('Secret dashboard')).toBeInTheDocument())
   })
+
+  it('handles errors from fetchCurrentUser and redirects to /login', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('Network error or server error (5xx)')),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<div>Login page</div>} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <div>Secret dashboard</div>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByText('Login page')).toBeInTheDocument())
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to refresh user session:', expect.any(Error))
+
+    consoleErrorSpy.mockRestore()
+  })
 })
