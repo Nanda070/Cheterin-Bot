@@ -13,6 +13,7 @@ class DashboardConfig:
     redirect_uri: str
     session_secret: str
     access_role_ids: frozenset
+    frontend_url: str
 
 
 REQUIRED_KEYS = (
@@ -56,4 +57,5 @@ def load_dashboard_config(env: dict) -> DashboardConfig:
         redirect_uri=env["DISCORD_OAUTH_REDIRECT_URI"],
         session_secret=session_secret,
         access_role_ids=role_ids,
+        frontend_url=env.get("DASHBOARD_FRONTEND_URL", ""),
     )

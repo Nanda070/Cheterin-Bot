@@ -13,6 +13,17 @@ CONFIG = DashboardConfig(
     redirect_uri="http://localhost:8080/api/auth/discord/callback",
     session_secret="x" * 32,
     access_role_ids=frozenset({"111"}),
+    frontend_url="",
+)
+
+CONFIG_WITH_FRONTEND_URL = DashboardConfig(
+    port=8080,
+    client_id="test-client-id",
+    client_secret="test-client-secret",
+    redirect_uri="http://localhost:8080/api/auth/discord/callback",
+    session_secret="x" * 32,
+    access_role_ids=frozenset({"111"}),
+    frontend_url="http://localhost:5173",
 )
 
 
@@ -54,13 +65,13 @@ class FakeBot:
         return self._guild
 
 
-def make_app(bot, http_session_stub):
+def make_app(bot, http_session_stub, config=CONFIG):
     app = web.Application()
     app["bot"] = bot
-    app["dashboard_config"] = CONFIG
+    app["dashboard_config"] = config
     app["guild_id"] = 1
     app["http_session"] = http_session_stub
-    setup_session(app, CONFIG.session_secret)
+    setup_session(app, config.session_secret)
     app.add_routes(routes)
     return app
 
@@ -146,6 +157,83 @@ async def test_callback_succeeds_and_me_returns_user(aiohttp_client, monkeypatch
     assert me_resp.status == 200
     body = await me_resp.json()
     assert body["id"] == "111"
+
+
+@pytest.mark.asyncio
+async def test_callback_error_query_redirects_to_login_with_frontend_url(aiohttp_client):
+    app = make_app(FakeBot(FakeGuild()), _NullHttpSession(), config=CONFIG_WITH_FRONTEND_URL)
+    client = await aiohttp_client(app)
+
+    resp = await client.get(
+        "/api/auth/discord/callback?error=access_denied",
+        allow_redirects=False,
+    )
+    assert resp.status == 302
+    assert resp.headers["Location"] == "http://localhost:5173/login?auth_error=denied"
+
+
+@pytest.mark.asyncio
+async def test_callback_access_denied_uses_frontend_url(aiohttp_client, monkeypatch):
+    import dashboard.backend.auth as auth_module
+
+    async def fake_exchange(*args, **kwargs):
+        return {"access_token": "tok"}
+
+    async def fake_identity(*args, **kwargs):
+        return {"id": "999"}
+
+    monkeypatch.setattr(auth_module, "exchange_code_for_token", fake_exchange)
+    monkeypatch.setattr(auth_module, "fetch_discord_identity", fake_identity)
+
+    member_without_role = FakeMember(999, role_ids=[])
+    app = make_app(
+        FakeBot(FakeGuild(member_without_role)),
+        _NullHttpSession(),
+        config=CONFIG_WITH_FRONTEND_URL,
+    )
+    client = await aiohttp_client(app)
+
+    login_resp = await client.get("/api/auth/login", allow_redirects=False)
+    state_cookie = login_resp.cookies["oauth_state"].value
+
+    resp = await client.get(
+        f"/api/auth/discord/callback?code=abc&state={state_cookie}",
+        allow_redirects=False,
+    )
+    assert resp.status == 302
+    assert resp.headers["Location"] == "http://localhost:5173/access-denied?reason=insufficient_role"
+
+
+@pytest.mark.asyncio
+async def test_callback_succeeds_redirects_to_frontend_url(aiohttp_client, monkeypatch):
+    import dashboard.backend.auth as auth_module
+
+    async def fake_exchange(*args, **kwargs):
+        return {"access_token": "tok"}
+
+    async def fake_identity(*args, **kwargs):
+        return {"id": "111"}
+
+    monkeypatch.setattr(auth_module, "exchange_code_for_token", fake_exchange)
+    monkeypatch.setattr(auth_module, "fetch_discord_identity", fake_identity)
+
+    member_with_role = FakeMember(111, role_ids=[111])
+    app = make_app(
+        FakeBot(FakeGuild(member_with_role)),
+        _NullHttpSession(),
+        config=CONFIG_WITH_FRONTEND_URL,
+    )
+    client = await aiohttp_client(app)
+
+    login_resp = await client.get("/api/auth/login", allow_redirects=False)
+    state_cookie = login_resp.cookies["oauth_state"].value
+
+    callback_resp = await client.get(
+        f"/api/auth/discord/callback?code=abc&state={state_cookie}",
+        allow_redirects=False,
+    )
+    assert callback_resp.status == 302
+    assert callback_resp.headers["Location"] == "http://localhost:5173/"
 
 
 @pytest.mark.asyncio

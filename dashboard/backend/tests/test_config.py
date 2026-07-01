@@ -42,3 +42,14 @@ def test_empty_role_list_raises():
     env = dict(VALID_ENV, DASHBOARD_ACCESS_ROLE_IDS="")
     with pytest.raises(ConfigError, match="DASHBOARD_ACCESS_ROLE_IDS"):
         load_dashboard_config(env)
+
+
+def test_frontend_url_defaults_to_empty_string():
+    config = load_dashboard_config(VALID_ENV)
+    assert config.frontend_url == ""
+
+
+def test_frontend_url_picked_up_when_present():
+    env = dict(VALID_ENV, DASHBOARD_FRONTEND_URL="http://localhost:5173")
+    config = load_dashboard_config(env)
+    assert config.frontend_url == "http://localhost:5173"

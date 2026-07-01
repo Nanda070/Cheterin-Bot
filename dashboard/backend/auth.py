@@ -34,7 +34,7 @@ async def callback(request: web.Request) -> web.Response:
     guild_id = request.app["guild_id"]
 
     if request.query.get("error"):
-        return web.HTTPFound("/login?auth_error=denied")
+        return web.HTTPFound(f"{config.frontend_url}/login?auth_error=denied")
 
     code = request.query.get("code")
     returned_state = request.query.get("state")
@@ -45,7 +45,7 @@ async def callback(request: web.Request) -> web.Response:
         or not cookie_state
         or not secrets.compare_digest(returned_state, cookie_state)
     ):
-        return web.HTTPFound("/login?auth_error=state_mismatch")
+        return web.HTTPFound(f"{config.frontend_url}/login?auth_error=state_mismatch")
 
     http_session = request.app["http_session"]
     try:
@@ -54,22 +54,22 @@ async def callback(request: web.Request) -> web.Response:
         )
         identity = await fetch_discord_identity(http_session, token_data["access_token"])
     except DiscordOAuthError:
-        return web.HTTPFound("/login?auth_error=oauth_failed")
+        return web.HTTPFound(f"{config.frontend_url}/login?auth_error=oauth_failed")
 
     user_id = int(identity["id"])
     lookup = await resolve_guild_member(bot, guild_id, user_id)
 
     if lookup.service_error:
-        return web.HTTPFound("/login?auth_error=service_unavailable")
+        return web.HTTPFound(f"{config.frontend_url}/login?auth_error=service_unavailable")
     if lookup.not_found or lookup.member is None:
-        return web.HTTPFound("/access-denied?reason=not_a_member")
+        return web.HTTPFound(f"{config.frontend_url}/access-denied?reason=not_a_member")
     if not has_dashboard_access(lookup.member, config.access_role_ids):
-        return web.HTTPFound("/access-denied?reason=insufficient_role")
+        return web.HTTPFound(f"{config.frontend_url}/access-denied?reason=insufficient_role")
 
     session = await get_session(request)
     session["discord_user_id"] = str(user_id)
 
-    response = web.HTTPFound("/")
+    response = web.HTTPFound(f"{config.frontend_url}/")
     response.del_cookie(STATE_COOKIE_NAME)
     return response
 
