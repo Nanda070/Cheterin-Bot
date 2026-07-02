@@ -7,11 +7,13 @@ from ..access_middleware import require_dashboard_access
 routes = web.RouteTableDef()
 
 
-async def _log(bot, title: str, color, moderator, lines: dict):
+async def _log(bot, title: str, color, moderator, lines: dict, errors: list[str] = None):
     embed = discord.Embed(title=title, color=color, timestamp=bot.utcnow())
     embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
     for name, value in lines.items():
         embed.add_field(name=name, value=value, inline=True)
+    if errors:
+        embed.add_field(name="Ошибки", value="\n".join(errors[:10]), inline=False)
     embed.set_footer(text="Dashboard · Lockdown")
     await bot.send_log(embed)
 
@@ -38,6 +40,7 @@ async def lockdown_activate(request: web.Request) -> web.Response:
     await _log(
         request.app["bot"], "🛡️ Антиспам ВКЛЮЧЁН (дашборд)", discord.Color.red(),
         request["moderator"], {"Изменено ролей": str(modified_count)},
+        errors=errors if errors else None,
     )
     return web.json_response({"ok": True, "modified_count": modified_count, "errors": errors})
 
@@ -57,5 +60,6 @@ async def lockdown_deactivate(request: web.Request) -> web.Response:
     await _log(
         request.app["bot"], "🟢 Антиспам ВЫКЛЮЧЕН (дашборд)", discord.Color.green(),
         request["moderator"], {"Восстановлено ролей": str(restored_count)},
+        errors=errors if errors else None,
     )
     return web.json_response({"ok": True, "restored_count": restored_count, "errors": errors})
