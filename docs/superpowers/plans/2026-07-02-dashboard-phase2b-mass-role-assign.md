@@ -288,8 +288,10 @@ async def test_mass_assign_all_except_bots_completes(aiohttp_client):
 
     body = await _wait_for_completion(client, job_id)
     assert body["status"] == "completed"
-    assert body["total"] == 1
-    assert body["succeeded"] == 1
+    # build()'s own moderator (FakeMember(10), bot=False) is also a guild member
+    # and is non-bot, so "all_except_bots" legitimately includes it too: 2 total.
+    assert body["total"] == 2
+    assert body["succeeded"] == 2
     assert human.action_calls[0][0] == "add_roles"
     assert a_bot.action_calls == []
 
