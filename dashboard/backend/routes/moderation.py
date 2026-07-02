@@ -306,6 +306,14 @@ async def revoke_role(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+async def _run_mass_assign_guarded(job_id, guild, role, members, moderator):
+    job = mass_role_jobs.JOBS[job_id]
+    try:
+        await mass_role_jobs.run_mass_assign(job_id, guild, role, members, moderator, dashboard_reason)
+    except Exception:
+        job.status = "failed"
+
+
 @routes.post("/api/roles/{role_id}/mass-assign")
 @require_dashboard_access
 async def mass_assign_role(request: web.Request) -> web.Response:
@@ -316,9 +324,6 @@ async def mass_assign_role(request: web.Request) -> web.Response:
     role, error = _resolve_assignable_role(request, request.match_info["role_id"])
     if error:
         return error
-
-    if any(job.status == "running" for job in mass_role_jobs.JOBS.values()):
-        return web.json_response({"error": "job_already_running"}, status=409)
 
     try:
         body = await request.json()
@@ -349,6 +354,9 @@ async def mass_assign_role(request: web.Request) -> web.Response:
     else:
         return web.json_response({"error": "invalid_request"}, status=400)
 
+    if any(job.status == "running" for job in mass_role_jobs.JOBS.values()):
+        return web.json_response({"error": "job_already_running"}, status=409)
+
     job_id = str(uuid.uuid4())
     job = mass_role_jobs.MassAssignJob(
         status="running",
@@ -361,7 +369,7 @@ async def mass_assign_role(request: web.Request) -> web.Response:
 
     moderator = request["moderator"]
     asyncio.create_task(
-        mass_role_jobs.run_mass_assign(job_id, guild, role, members, moderator, dashboard_reason)
+        _run_mass_assign_guarded(job_id, guild, role, members, moderator)
     )
 
     return web.json_response({"job_id": job_id}, status=202)

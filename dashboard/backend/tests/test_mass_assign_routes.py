@@ -126,3 +126,74 @@ async def test_mass_assign_requires_auth(aiohttp_client):
     client = await aiohttp_client(build())
     resp = await client.post("/api/roles/7/mass-assign", json={"target": "all"})
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_mass_assign_concurrent_requests_only_one_job_starts(aiohttp_client, monkeypatch):
+    # Regression test for TOCTOU race: two concurrent mass-assign requests must
+    # never both succeed (which would start two simultaneous background jobs
+    # mutating live Discord roles) and must never both be rejected.
+    #
+    # In this in-memory test harness, request bodies are tiny and fully
+    # buffered by the time the handler runs, so `await request.json()` on its
+    # own does not actually suspend back to the event loop (StreamReader's
+    # buffer is already non-empty) and plain asyncio.gather(...) over two
+    # client.post(...) calls ends up processing them sequentially end-to-end
+    # -- never reproducing the interleaving. To exercise the real race window
+    # through the test client's real await points, we gate on an
+    # asyncio.Barrier(2) inside Request.json() so both requests are forced to
+    # actually be "in flight" past their JSON-parsing await point at the same
+    # time -- the exact interleaving a TOCTOU race depends on -- before either
+    # is allowed to proceed to the job_already_running check.
+    from aiohttp.web_request import Request
+
+    role = FakeRole(7, name="VIP", position=5)
+    members = [FakeMember(100 + i, name=f"user{i}") for i in range(20)]
+    client = await aiohttp_client(build(members=members, roles=[role]))
+    await force_login(client, 10)
+
+    orig_json = Request.json
+    barrier = asyncio.Barrier(2)
+
+    async def gated_json(self, *args, **kwargs):
+        result = await orig_json(self, *args, **kwargs)
+        try:
+            await asyncio.wait_for(barrier.wait(), timeout=5)
+        except Exception:
+            pass
+        return result
+
+    monkeypatch.setattr(Request, "json", gated_json)
+
+    resp1, resp2 = await asyncio.gather(
+        client.post("/api/roles/7/mass-assign", json={"target": "all"}),
+        client.post("/api/roles/7/mass-assign", json={"target": "all"}),
+    )
+
+    statuses = sorted([resp1.status, resp2.status])
+    assert statuses == [202, 409], (
+        f"expected exactly one 202 and one 409, got {resp1.status} and {resp2.status}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_mass_assign_job_marked_failed_on_unexpected_exception(aiohttp_client, monkeypatch):
+    # Regression test: if run_mass_assign raises something other than
+    # discord.HTTPException, the fire-and-forget task must not die silently
+    # leaving the job wedged at "running" forever.
+    role = FakeRole(7, name="VIP", position=5)
+    present = FakeMember(60, name="present")
+    client = await aiohttp_client(build(members=[present], roles=[role]))
+    await force_login(client, 10)
+
+    async def broken_run_mass_assign(job_id, guild, role, members, moderator, dashboard_reason):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(mass_role_jobs, "run_mass_assign", broken_run_mass_assign)
+
+    resp = await client.post("/api/roles/7/mass-assign", json={"target": "selected", "member_ids": ["60"]})
+    assert resp.status == 202
+    job_id = (await resp.json())["job_id"]
+
+    body = await _wait_for_completion(client, job_id)
+    assert body["status"] == "failed"
