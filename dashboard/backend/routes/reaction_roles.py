@@ -28,8 +28,10 @@ async def list_reaction_roles(request: web.Request) -> web.Response:
     )
 
 
-async def _validate_pairs(pairs, guild):
-    """Returns None on success, or an error web.Response."""
+def _validate_pairs_structure(pairs):
+    """Checks that don't require Discord data: non-empty, no duplicate emoji,
+    well-formed. Returns None on success, or an error web.Response. Must run
+    BEFORE any channel/message lookup."""
     if not pairs:
         return web.json_response({"error": "invalid_request"}, status=400)
     if reaction_roles.has_duplicate_emoji(pairs):
@@ -38,10 +40,17 @@ async def _validate_pairs(pairs, guild):
         if not pair.get("emoji"):
             return web.json_response({"error": "invalid_request"}, status=400)
         try:
-            role_id = int(pair.get("role_id"))
+            int(pair.get("role_id"))
         except (TypeError, ValueError):
             return web.json_response({"error": "invalid_request"}, status=400)
-        role = guild.get_role(role_id)
+    return None
+
+
+def _validate_roles_assignable(pairs, guild):
+    """Role-hierarchy check. Returns None on success, or an error
+    web.Response. Must run AFTER channel/message existence checks."""
+    for pair in pairs:
+        role = guild.get_role(int(pair["role_id"]))
         if role is None or not _is_role_assignable(role, guild):
             return web.json_response({"error": "role_not_assignable"}, status=403)
     return None
@@ -66,7 +75,7 @@ async def create_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
 
     pairs = body.get("pairs") or []
-    error = await _validate_pairs(pairs, guild)
+    error = _validate_pairs_structure(pairs)
     if error:
         return error
 
@@ -80,6 +89,10 @@ async def create_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "message_not_found"}, status=404)
     except discord.HTTPException:
         return web.json_response({"error": "discord_error"}, status=502)
+
+    error = _validate_roles_assignable(pairs, guild)
+    if error:
+        return error
 
     config = reaction_roles.load_config()
     config[str(message_id)] = {"channel_id": str(channel_id), "pairs": pairs}

@@ -144,3 +144,21 @@ async def test_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/reaction-roles")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_create_reaction_role_checks_channel_before_role_assignability(aiohttp_client):
+    # Role is not assignable AND channel doesn't exist. Must get 404 channel_not_found,
+    # not 403 role_not_assignable -- proves channel existence is checked before role
+    # assignability, per the plan's binding validation order.
+    role = FakeRole(9, name="TooHigh", position=60)
+    _, app = build(roles=[role], channels=[])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "9"}]},
+    )
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "channel_not_found"
