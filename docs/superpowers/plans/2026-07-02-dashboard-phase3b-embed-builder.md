@@ -348,8 +348,21 @@ def test_validate_embed_spec_rejects_field_value_too_long():
 
 
 def test_validate_embed_spec_rejects_total_budget_exceeded():
-    spec = {"title": "Hi", "description": "x" * 4096, "footer": {"text": "x" * 1900}}
+    # 2 ("Hi") + 4096 + 1903 = 6001, one over the 6000 budget.
+    spec = {"title": "Hi", "description": "x" * 4096, "footer": {"text": "x" * 1903}}
     assert embed_builder.validate_embed_spec(spec) == "embed_too_large"
+
+
+def test_build_embed_omits_color_when_absent():
+    embed = embed_builder.build_embed({"title": "Hi"})
+    assert embed.color is None
+    assert "color" not in embed.to_dict()
+
+
+def test_embed_to_spec_returns_empty_color_when_absent():
+    embed = embed_builder.build_embed({"title": "Hi"})
+    spec = embed_builder.embed_to_spec(embed)
+    assert spec["color"] == ""
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -475,12 +488,12 @@ def validate_embed_spec(spec: dict) -> str | None:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest dashboard/backend/tests/test_embed_builder_core.py -v`
-Expected: PASS (13 tests)
+Expected: PASS (15 tests)
 
 - [ ] **Step 5: Run the full backend suite**
 
 Run: `pytest dashboard/backend/tests/ -q`
-Expected: all pass (136 + 13 = 149)
+Expected: all pass (136 + 15 = 151)
 
 - [ ] **Step 6: Commit**
 
@@ -599,7 +612,7 @@ Expected: no output, exit code 0
 - [ ] **Step 6: Run the full backend suite**
 
 Run: `pytest dashboard/backend/tests/ -q`
-Expected: all pass (149 + 5 = 154)
+Expected: all pass (151 + 5 = 156)
 
 - [ ] **Step 7: Commit**
 
@@ -1087,7 +1100,7 @@ Expected: PASS (15 tests total in this file)
 - [ ] **Step 5: Run the full backend suite**
 
 Run: `pytest dashboard/backend/tests/ -q`
-Expected: all pass (154 + 8 + 7 = 169)
+Expected: all pass (156 + 8 + 7 = 171)
 
 - [ ] **Step 6: Commit**
 
@@ -1131,7 +1144,7 @@ Expected: no output, exit code 0
 - [ ] **Step 3: Run the full backend suite**
 
 Run: `pytest dashboard/backend/tests/ -q`
-Expected: all pass (169)
+Expected: all pass (171)
 
 - [ ] **Step 4: Commit**
 
