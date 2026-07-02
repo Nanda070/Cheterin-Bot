@@ -90,5 +90,18 @@ def test_validate_embed_spec_rejects_field_value_too_long():
 
 
 def test_validate_embed_spec_rejects_total_budget_exceeded():
-    spec = {"title": "Hi", "description": "x" * 4096, "footer": {"text": "x" * 1900}}
+    # 2 ("Hi") + 4096 + 1903 = 6001, one over the 6000 budget.
+    spec = {"title": "Hi", "description": "x" * 4096, "footer": {"text": "x" * 1903}}
     assert embed_builder.validate_embed_spec(spec) == "embed_too_large"
+
+
+def test_build_embed_omits_color_when_absent():
+    embed = embed_builder.build_embed({"title": "Hi"})
+    assert embed.color is None
+    assert "color" not in embed.to_dict()
+
+
+def test_embed_to_spec_returns_empty_color_when_absent():
+    embed = embed_builder.build_embed({"title": "Hi"})
+    spec = embed_builder.embed_to_spec(embed)
+    assert spec["color"] == ""

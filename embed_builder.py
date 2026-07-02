@@ -104,7 +104,7 @@ def validate_embed_spec(spec: dict) -> str | None:
             return "field_value_too_long"
         total_length += len(name) + len(value)
 
-    if total_length > 5900:
+    if total_length > 6000:
         return "embed_too_large"
 
     return None
