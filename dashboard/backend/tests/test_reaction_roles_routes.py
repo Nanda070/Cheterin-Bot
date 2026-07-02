@@ -1,3 +1,4 @@
+import discord
 import pytest
 
 import reaction_roles
@@ -56,6 +57,24 @@ async def test_create_reaction_role_success(aiohttp_client):
     assert body["message_id"] == "999"
     assert body["pairs"] == [{"emoji": "📖", "role_id": "7"}]
     assert message.reaction_calls == [("add", "📖")]
+    assert reaction_roles.load_config()["999"]["channel_id"] == "500"
+
+
+@pytest.mark.asyncio
+async def test_create_reaction_role_succeeds_even_if_add_reaction_fails(aiohttp_client):
+    role = FakeRole(7, name="VIP", position=5)
+    message = FakeMessage(999)
+    message.add_reaction_raises = discord.HTTPException.__new__(discord.HTTPException)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    assert resp.status == 201
     assert reaction_roles.load_config()["999"]["channel_id"] == "500"
 
 

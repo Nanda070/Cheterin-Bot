@@ -1,8 +1,11 @@
 import json
+import logging
 import os
 
 import discord
 from discord.ext import commands
+
+logger = logging.getLogger(__name__)
 
 CONFIG_FILE = "reaction_roles.json"
 
@@ -87,7 +90,11 @@ async def handle_reaction_change(bot, payload, action: str) -> None:
             await member.add_roles(role, reason=reason)
         else:
             await member.remove_roles(role, reason=reason)
-    except discord.HTTPException:
+    except discord.HTTPException as exc:
+        logger.warning(
+            "Failed to %s role %s for member %s on reaction role message %s: %s",
+            action, role.id, member.id, payload.message_id, exc,
+        )
         return
 
 

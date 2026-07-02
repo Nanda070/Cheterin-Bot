@@ -60,6 +60,24 @@ async def test_handle_reaction_change_remove_revokes_role_by_resolving_member():
 
 
 @pytest.mark.asyncio
+async def test_handle_reaction_change_remove_falls_back_to_fetch_member_when_not_cached():
+    role = FakeRole(7, name="VIP", position=5)
+    reactor = FakeMember(50, name="reactor")
+    # reactor is NOT in guild.members (simulating an uncached member) but IS
+    # resolvable via fetch_member, per FakeGuild's fetchable_members param.
+    guild = FakeGuild(roles=[role], fetchable_members=[reactor])
+    bot = FakeBot(guild)
+    _setup_config(999, 7)
+
+    payload = FakePayload(message_id=999, user_id=50, guild_id=1, emoji="📖", member=None)
+    await reaction_roles.handle_reaction_change(bot, payload, "remove")
+
+    action, kwargs = reactor.action_calls[0]
+    assert action == "remove_roles"
+    assert kwargs["role"].id == 7
+
+
+@pytest.mark.asyncio
 async def test_handle_reaction_change_ignores_bots_own_reaction():
     role = FakeRole(7, name="VIP", position=5)
     guild = FakeGuild(roles=[role])

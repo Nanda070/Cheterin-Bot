@@ -1,8 +1,12 @@
+import logging
+
 import discord
 from aiohttp import web
 
 import reaction_roles
 from ..access_middleware import require_dashboard_access
+
+logger = logging.getLogger(__name__)
 
 routes = web.RouteTableDef()
 
@@ -101,7 +105,8 @@ async def create_reaction_role(request: web.Request) -> web.Response:
     for pair in pairs:
         try:
             await message.add_reaction(pair["emoji"])
-        except discord.HTTPException:
+        except discord.HTTPException as exc:
+            logger.warning("Failed to add reaction %s on message %s: %s", pair["emoji"], message_id, exc)
             continue
 
     return web.json_response(serialize_entry(str(message_id), config[str(message_id)]), status=201)
@@ -153,12 +158,14 @@ async def update_reaction_role(request: web.Request) -> web.Response:
     for emoji in old_emojis - new_emojis:
         try:
             await message.remove_reaction(emoji, request.app["bot"].user)
-        except discord.HTTPException:
+        except discord.HTTPException as exc:
+            logger.warning("Failed to remove reaction %s on message %s: %s", emoji, message_id_raw, exc)
             continue
     for emoji in new_emojis - old_emojis:
         try:
             await message.add_reaction(emoji)
-        except discord.HTTPException:
+        except discord.HTTPException as exc:
+            logger.warning("Failed to add reaction %s on message %s: %s", emoji, message_id_raw, exc)
             continue
 
     config[message_id_raw] = {"channel_id": entry["channel_id"], "pairs": pairs}
@@ -185,7 +192,10 @@ async def delete_reaction_role(request: web.Request) -> web.Response:
                 for pair in entry["pairs"]:
                     try:
                         await message.remove_reaction(pair["emoji"], request.app["bot"].user)
-                    except discord.HTTPException:
+                    except discord.HTTPException as exc:
+                        logger.warning(
+                            "Failed to remove reaction %s on message %s: %s", pair["emoji"], message_id_raw, exc
+                        )
                         continue
             except discord.NotFound:
                 pass

@@ -146,12 +146,13 @@ class FakeMember:
 
 
 class FakeGuild:
-    def __init__(self, members=None, roles=None, me=None, channels=None, emojis=None):
+    def __init__(self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None):
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
         self.channels = channels or []
         self.emojis = emojis or []
+        self._fetchable_members = fetchable_members or []
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)
@@ -166,6 +167,8 @@ class FakeGuild:
         import discord
 
         member = self.get_member(user_id)
+        if member is None:
+            member = next((m for m in self._fetchable_members if m.id == user_id), None)
         if member is None:
             raise discord.NotFound.__new__(discord.NotFound)
         return member
