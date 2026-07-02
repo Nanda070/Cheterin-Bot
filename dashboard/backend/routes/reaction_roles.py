@@ -105,3 +105,115 @@ async def create_reaction_role(request: web.Request) -> web.Response:
             continue
 
     return web.json_response(serialize_entry(str(message_id), config[str(message_id)]), status=201)
+
+
+@routes.put("/api/reaction-roles/{message_id}")
+@require_dashboard_access
+async def update_reaction_role(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    message_id_raw = request.match_info["message_id"]
+    config = reaction_roles.load_config()
+    entry = config.get(message_id_raw)
+    if entry is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    pairs = body.get("pairs") or []
+    error = _validate_pairs_structure(pairs)
+    if error:
+        return error
+
+    channel = guild.get_channel(int(entry["channel_id"]))
+    if channel is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+
+    try:
+        message = await channel.fetch_message(int(message_id_raw))
+    except discord.NotFound:
+        del config[message_id_raw]
+        reaction_roles.save_config(config)
+        return web.json_response({"error": "message_not_found"}, status=404)
+    except discord.HTTPException:
+        return web.json_response({"error": "discord_error"}, status=502)
+
+    error = _validate_roles_assignable(pairs, guild)
+    if error:
+        return error
+
+    old_emojis = {p["emoji"] for p in entry["pairs"]}
+    new_emojis = {p["emoji"] for p in pairs}
+
+    for emoji in old_emojis - new_emojis:
+        try:
+            await message.remove_reaction(emoji, request.app["bot"].user)
+        except discord.HTTPException:
+            continue
+    for emoji in new_emojis - old_emojis:
+        try:
+            await message.add_reaction(emoji)
+        except discord.HTTPException:
+            continue
+
+    config[message_id_raw] = {"channel_id": entry["channel_id"], "pairs": pairs}
+    reaction_roles.save_config(config)
+
+    return web.json_response(serialize_entry(message_id_raw, config[message_id_raw]))
+
+
+@routes.delete("/api/reaction-roles/{message_id}")
+@require_dashboard_access
+async def delete_reaction_role(request: web.Request) -> web.Response:
+    message_id_raw = request.match_info["message_id"]
+    config = reaction_roles.load_config()
+    entry = config.get(message_id_raw)
+    if entry is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    guild = _get_guild_or_none(request)
+    if guild is not None:
+        channel = guild.get_channel(int(entry["channel_id"]))
+        if channel is not None:
+            try:
+                message = await channel.fetch_message(int(message_id_raw))
+                for pair in entry["pairs"]:
+                    try:
+                        await message.remove_reaction(pair["emoji"], request.app["bot"].user)
+                    except discord.HTTPException:
+                        continue
+            except discord.NotFound:
+                pass
+            except discord.HTTPException:
+                pass
+
+    del config[message_id_raw]
+    reaction_roles.save_config(config)
+    return web.json_response({"ok": True})
+
+
+@routes.get("/api/emojis")
+@require_dashboard_access
+async def list_emojis(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    return web.json_response(
+        {"emojis": [{"id": str(e.id), "name": e.name, "url": str(e.url)} for e in guild.emojis]}
+    )
+
+
+@routes.get("/api/channels")
+@require_dashboard_access
+async def list_channels(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    return web.json_response(
+        {"channels": [{"id": str(c.id), "name": c.name} for c in guild.channels]}
+    )

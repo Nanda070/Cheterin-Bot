@@ -162,3 +162,142 @@ async def test_create_reaction_role_checks_channel_before_role_assignability(aio
     )
     assert resp.status == 404
     assert (await resp.json())["error"] == "channel_not_found"
+
+
+@pytest.mark.asyncio
+async def test_update_reaction_role_syncs_reactions(aiohttp_client):
+    role_a = FakeRole(7, name="A", position=5)
+    role_b = FakeRole(8, name="B", position=5)
+    message = FakeMessage(999)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role_a, role_b], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    message.reaction_calls.clear()
+
+    resp = await client.put(
+        "/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "8"}]}
+    )
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["pairs"] == [{"emoji": "✅", "role_id": "8"}]
+    assert ("remove", "📖") in message.reaction_calls
+    assert ("add", "✅") in message.reaction_calls
+
+
+@pytest.mark.asyncio
+async def test_update_reaction_role_404_when_unknown(aiohttp_client):
+    role = FakeRole(7, name="VIP", position=5)
+    _, app = build(roles=[role])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "📖", "role_id": "7"}]})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_update_reaction_role_resets_binding_when_message_gone(aiohttp_client):
+    role = FakeRole(7, name="VIP", position=5)
+    message = FakeMessage(999)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    del channel._messages[999]  # simulate the message being deleted in Discord
+
+    resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "7"}]})
+    assert resp.status == 404
+    assert reaction_roles.load_config() == {}
+
+
+@pytest.mark.asyncio
+async def test_update_reaction_role_checks_message_before_role_assignability(aiohttp_client):
+    # Message no longer exists AND the new pairs include a non-assignable role.
+    # Must get 404 message_not_found, not 403 role_not_assignable -- proves
+    # message existence is checked before role assignability on PUT too.
+    role = FakeRole(7, name="VIP", position=5)
+    too_high_role = FakeRole(9, name="TooHigh", position=60)
+    message = FakeMessage(999)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role, too_high_role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    del channel._messages[999]
+
+    resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "9"}]})
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "message_not_found"
+
+
+@pytest.mark.asyncio
+async def test_delete_reaction_role_removes_config_and_reactions(aiohttp_client):
+    role = FakeRole(7, name="VIP", position=5)
+    message = FakeMessage(999)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    resp = await client.delete("/api/reaction-roles/999")
+    assert resp.status == 200
+    assert reaction_roles.load_config() == {}
+    assert ("remove", "📖") in message.reaction_calls
+
+
+@pytest.mark.asyncio
+async def test_delete_reaction_role_404_when_unknown(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    resp = await client.delete("/api/reaction-roles/999")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_list_emojis(aiohttp_client):
+    from dashboard.backend.tests.fakes import FakeCustomEmoji
+
+    emoji = FakeCustomEmoji(20, "wave")
+    moderator = FakeMember(10, name="mod", role_ids=[111])
+    guild = FakeGuild(members=[moderator], emojis=[emoji])
+    app = make_moderation_app(FakeBot(guild), [reaction_roles_routes])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/emojis")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["emojis"] == [{"id": "20", "name": "wave", "url": "https://cdn.example/emojis/20.png"}]
+
+
+@pytest.mark.asyncio
+async def test_list_channels(aiohttp_client):
+    channel = FakeChannel(500, name="general")
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/channels")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["channels"] == [{"id": "500", "name": "general"}]
