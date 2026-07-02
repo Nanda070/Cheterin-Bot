@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/Login'
 import { AccessDeniedPage } from './pages/AccessDenied'
 import { DashboardShell } from './pages/DashboardShell'
+import { HomePage } from './pages/Home'
 
 function App() {
   return (
@@ -19,7 +20,11 @@ function App() {
                 <DashboardShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<HomePage />} />
+            <Route path="members" element={<div>Участники — скоро (Task 10)</div>} />
+            <Route path="lockdown" element={<div>Lockdown — скоро (Task 11)</div>} />
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
