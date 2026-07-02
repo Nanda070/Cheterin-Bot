@@ -659,7 +659,9 @@ git commit -m "feat: add reaction role listeners and startup self-check"
 
 **Interfaces:**
 - Consumes: `reaction_roles.load_config`/`save_config`/`has_duplicate_emoji` (Task 1, imported as `import reaction_roles` — same bare top-level import style `dashboard/backend/routes/lockdown.py` already uses for `lockdown_core`); `require_dashboard_access` (Phase 2a); fakes from Task 2.
-- Produces: `routes = web.RouteTableDef()` (this task's table gets more routes appended in Task 5); `def serialize_entry(message_id, entry) -> dict`; `def _is_role_assignable(role, guild) -> bool`; `async def _validate_pairs(pairs, guild) -> web.Response | None`; `GET /api/reaction-roles` → `200 {"reaction_roles": [...]}`; `POST /api/reaction-roles` → `201 {message_id, channel_id, pairs}` / `400`/`403`/`404`/`503`.
+- Produces: `routes = web.RouteTableDef()` (this task's table gets more routes appended in Task 5); `def serialize_entry(message_id, entry) -> dict`; `def _is_role_assignable(role, guild) -> bool`; `def _validate_pairs_structure(pairs) -> web.Response | None` (non-empty, no duplicate emoji, well-formed — no Discord data needed); `def _validate_roles_assignable(pairs, guild) -> web.Response | None` (role-hierarchy check — MUST run after channel/message existence checks, never before); `GET /api/reaction-roles` → `200 {"reaction_roles": [...]}`; `POST /api/reaction-roles` → `201 {message_id, channel_id, pairs}` / `400`/`403`/`404`/`503`.
+
+**Validation order is binding, not incidental:** (1) pairs non-empty → `400 invalid_request`; (2) no duplicate emoji → `400 duplicate_emoji`; (3) channel exists → `404 channel_not_found`; (4) message exists → `404 message_not_found`; (5) each role assignable → `403 role_not_assignable`. Steps 1-2 never touch Discord data and must run first; step 5 must run LAST, after both existence checks, so a request with both a missing channel and a non-assignable role gets `404 channel_not_found`, not `403`. This is why role-assignability is split into its own `_validate_roles_assignable` function called separately from the pairs-structure check.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -812,6 +814,24 @@ async def test_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/reaction-roles")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_create_reaction_role_checks_channel_before_role_assignability(aiohttp_client):
+    # Role is not assignable AND channel doesn't exist. Must get 404 channel_not_found,
+    # not 403 role_not_assignable -- proves channel existence is checked before role
+    # assignability, per the plan's binding validation order.
+    role = FakeRole(9, name="TooHigh", position=60)
+    _, app = build(roles=[role], channels=[])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "9"}]},
+    )
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "channel_not_found"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -852,8 +872,10 @@ async def list_reaction_roles(request: web.Request) -> web.Response:
     )
 
 
-async def _validate_pairs(pairs, guild):
-    """Returns None on success, or an error web.Response."""
+def _validate_pairs_structure(pairs):
+    """Checks that don't require Discord data: non-empty, no duplicate emoji,
+    well-formed. Returns None on success, or an error web.Response. Must run
+    BEFORE any channel/message lookup."""
     if not pairs:
         return web.json_response({"error": "invalid_request"}, status=400)
     if reaction_roles.has_duplicate_emoji(pairs):
@@ -862,10 +884,18 @@ async def _validate_pairs(pairs, guild):
         if not pair.get("emoji"):
             return web.json_response({"error": "invalid_request"}, status=400)
         try:
-            role_id = int(pair.get("role_id"))
+            int(pair.get("role_id"))
         except (TypeError, ValueError):
             return web.json_response({"error": "invalid_request"}, status=400)
-        role = guild.get_role(role_id)
+    return None
+
+
+def _validate_roles_assignable(pairs, guild):
+    """Role-hierarchy check. Returns None on success, or an error
+    web.Response. Must run AFTER channel/message existence checks — see the
+    Task 4 Interfaces note on validation order."""
+    for pair in pairs:
+        role = guild.get_role(int(pair["role_id"]))
         if role is None or not _is_role_assignable(role, guild):
             return web.json_response({"error": "role_not_assignable"}, status=403)
     return None
@@ -890,7 +920,7 @@ async def create_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
 
     pairs = body.get("pairs") or []
-    error = await _validate_pairs(pairs, guild)
+    error = _validate_pairs_structure(pairs)
     if error:
         return error
 
@@ -904,6 +934,10 @@ async def create_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "message_not_found"}, status=404)
     except discord.HTTPException:
         return web.json_response({"error": "discord_error"}, status=502)
+
+    error = _validate_roles_assignable(pairs, guild)
+    if error:
+        return error
 
     config = reaction_roles.load_config()
     config[str(message_id)] = {"channel_id": str(channel_id), "pairs": pairs}
@@ -921,7 +955,7 @@ async def create_reaction_role(request: web.Request) -> web.Response:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest dashboard/backend/tests/test_reaction_roles_routes.py -v`
-Expected: PASS (8 tests)
+Expected: PASS (9 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -1002,6 +1036,30 @@ async def test_update_reaction_role_resets_binding_when_message_gone(aiohttp_cli
     resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "7"}]})
     assert resp.status == 404
     assert reaction_roles.load_config() == {}
+
+
+@pytest.mark.asyncio
+async def test_update_reaction_role_checks_message_before_role_assignability(aiohttp_client):
+    # Message no longer exists AND the new pairs include a non-assignable role.
+    # Must get 404 message_not_found, not 403 role_not_assignable -- proves
+    # message existence is checked before role assignability on PUT too.
+    role = FakeRole(7, name="VIP", position=5)
+    too_high_role = FakeRole(9, name="TooHigh", position=60)
+    message = FakeMessage(999)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(roles=[role, too_high_role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post(
+        "/api/reaction-roles",
+        json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
+    )
+    del channel._messages[999]
+
+    resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "9"}]})
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "message_not_found"
 
 
 @pytest.mark.asyncio
@@ -1089,7 +1147,7 @@ async def update_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
 
     pairs = body.get("pairs") or []
-    error = await _validate_pairs(pairs, guild)
+    error = _validate_pairs_structure(pairs)
     if error:
         return error
 
@@ -1105,6 +1163,10 @@ async def update_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "message_not_found"}, status=404)
     except discord.HTTPException:
         return web.json_response({"error": "discord_error"}, status=502)
+
+    error = _validate_roles_assignable(pairs, guild)
+    if error:
+        return error
 
     old_emojis = {p["emoji"] for p in entry["pairs"]}
     new_emojis = {p["emoji"] for p in pairs}
@@ -1181,12 +1243,12 @@ async def list_channels(request: web.Request) -> web.Response:
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest dashboard/backend/tests/test_reaction_roles_routes.py -v`
-Expected: PASS (15 tests total in this file)
+Expected: PASS (17 tests total in this file)
 
 - [ ] **Step 5: Run the full backend suite**
 
 Run: `pytest dashboard/backend/tests/ -q`
-Expected: all pass (111 + 8 + 7 = 126)
+Expected: all pass (111 + 9 + 8 = 128)
 
 - [ ] **Step 6: Commit**
 
@@ -1925,5 +1987,6 @@ git commit -m "feat(dashboard): add Reaction Roles page and form, wire into side
 
 - **Spec coverage:** data model + config helpers → Task 1; bot listeners (raw events, `payload.member` availability nuance, toggle behavior, reason format) → Task 3; startup self-check/self-healing → Task 3 (`cleanup_missing_messages`, called from `setup()`); full CRUD API with the exact validation order from the spec (empty → duplicate emoji → channel → message → role assignability) → Tasks 4-5; `GET /api/emojis` → Task 5; UI (list, create/edit form, read-only channel/message on edit, per-pair emoji+role picker, "+ добавить пару") → Task 8; sidebar wiring → Task 8. "Вне рамок" (allow/blacklist by role, bot-composed messages) are correctly absent from every task.
 - **Gap found and closed during planning:** the spec's UI section calls for a channel `select` in the creation form but never defined a `GET /api/channels` endpoint in its API section. Added it to Task 5 alongside `GET /api/emojis` (both are "supporting picker data" reads) — a minimal, obviously-required addition to make the approved UI possible, not scope creep.
-- **Type consistency:** `ReactionRolePair`/`ReactionRoleEntry` (Task 7) match the backend's `serialize_entry` output (Task 4) field-for-field; `_is_role_assignable`/`_validate_pairs` (Task 4) are reused unmodified by Task 5's `PUT` handler; `FakeChannel`/`FakeMessage`/`FakeCustomEmoji`/`FakeBot.user` (Task 2) are used consistently by Tasks 3, 4, and 5's tests with the same constructor signatures throughout.
+- **Type consistency:** `ReactionRolePair`/`ReactionRoleEntry` (Task 7) match the backend's `serialize_entry` output (Task 4) field-for-field; `_is_role_assignable`/`_validate_pairs_structure`/`_validate_roles_assignable` (Task 4) are reused unmodified by Task 5's `PUT` handler; `FakeChannel`/`FakeMessage`/`FakeCustomEmoji`/`FakeBot.user` (Task 2) are used consistently by Tasks 3, 4, and 5's tests with the same constructor signatures throughout.
+- **Fix applied post-review (during execution):** the original single `_validate_pairs(pairs, guild)` function checked role-assignability inside the same pass as the pairs-empty/duplicate-emoji checks, running BEFORE the channel/message existence checks in both `create_reaction_role` and `update_reaction_role`. This contradicted the binding validation order stated in Task 4's Interfaces section (duplicate-emoji/empty-pairs first since they need no Discord data, role-assignability last since it's the most expensive/least urgent check). Split into `_validate_pairs_structure` (no Discord data needed, runs first) and `_validate_roles_assignable` (runs after channel/message existence checks, in both POST and PUT). Regression tests added to both Task 4 and Task 5 proving the corrected order via a case with two simultaneous violations.
 - **Placeholder scan:** none found — every step has complete code.
