@@ -69,11 +69,16 @@ class FakeCustomEmoji:
 
 
 class FakeMessage:
-    def __init__(self, message_id):
+    def __init__(self, message_id, embeds=None, components=None, content=None):
         self.id = message_id
+        self.content = content
+        self.embeds = embeds or []
+        self.components = components or []
         self.reaction_calls = []
         self.add_reaction_raises = None
         self.remove_reaction_raises = None
+        self.edit_calls = []
+        self.edit_raises = None
 
     async def add_reaction(self, emoji):
         if self.add_reaction_raises:
@@ -85,12 +90,31 @@ class FakeMessage:
             raise self.remove_reaction_raises
         self.reaction_calls.append(("remove", str(emoji)))
 
+    async def edit(self, **kwargs):
+        if self.edit_raises:
+            raise self.edit_raises
+        self.edit_calls.append(kwargs)
+        if "content" in kwargs:
+            self.content = kwargs["content"]
+        if "embed" in kwargs:
+            self.embeds = [kwargs["embed"]] if kwargs["embed"] else []
+        if "view" in kwargs:
+            self.components = kwargs["view"]
+
+
+class FakeComponentRow:
+    def __init__(self, children):
+        self.children = children
+
 
 class FakeChannel:
-    def __init__(self, channel_id, name="channel", messages=None):
+    def __init__(self, channel_id, name="channel", messages=None, next_message_id=1000):
         self.id = channel_id
         self.name = name
         self._messages = messages or {}
+        self._next_message_id = next_message_id
+        self.send_calls = []
+        self.send_raises = None
 
     async def fetch_message(self, message_id):
         import discord
@@ -98,6 +122,20 @@ class FakeChannel:
         message = self._messages.get(message_id)
         if message is None:
             raise discord.NotFound.__new__(discord.NotFound)
+        return message
+
+    async def send(self, **kwargs):
+        if self.send_raises:
+            raise self.send_raises
+        self.send_calls.append(kwargs)
+        message = FakeMessage(
+            self._next_message_id,
+            embeds=[kwargs["embed"]] if kwargs.get("embed") else [],
+            components=kwargs.get("view"),
+            content=kwargs.get("content"),
+        )
+        self._messages[message.id] = message
+        self._next_message_id += 1
         return message
 
 
