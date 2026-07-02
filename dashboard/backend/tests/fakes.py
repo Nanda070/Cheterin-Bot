@@ -58,6 +58,49 @@ class FakeAsset:
         return self.url
 
 
+class FakeCustomEmoji:
+    def __init__(self, emoji_id, name):
+        self.id = emoji_id
+        self.name = name
+        self.url = f"https://cdn.example/emojis/{emoji_id}.png"
+
+    def __str__(self):
+        return f"<:{self.name}:{self.id}>"
+
+
+class FakeMessage:
+    def __init__(self, message_id):
+        self.id = message_id
+        self.reaction_calls = []
+        self.add_reaction_raises = None
+        self.remove_reaction_raises = None
+
+    async def add_reaction(self, emoji):
+        if self.add_reaction_raises:
+            raise self.add_reaction_raises
+        self.reaction_calls.append(("add", str(emoji)))
+
+    async def remove_reaction(self, emoji, member):
+        if self.remove_reaction_raises:
+            raise self.remove_reaction_raises
+        self.reaction_calls.append(("remove", str(emoji)))
+
+
+class FakeChannel:
+    def __init__(self, channel_id, name="channel", messages=None):
+        self.id = channel_id
+        self.name = name
+        self._messages = messages or {}
+
+    async def fetch_message(self, message_id):
+        import discord
+
+        message = self._messages.get(message_id)
+        if message is None:
+            raise discord.NotFound.__new__(discord.NotFound)
+        return message
+
+
 class FakeMember:
     def __init__(
         self,
@@ -103,16 +146,21 @@ class FakeMember:
 
 
 class FakeGuild:
-    def __init__(self, members=None, roles=None, me=None):
+    def __init__(self, members=None, roles=None, me=None, channels=None, emojis=None):
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
+        self.channels = channels or []
+        self.emojis = emojis or []
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)
 
     def get_role(self, role_id):
         return next((r for r in self.roles if r.id == role_id), None)
+
+    def get_channel(self, channel_id):
+        return next((c for c in self.channels if c.id == channel_id), None)
 
     async def fetch_member(self, user_id):
         import discord
@@ -124,8 +172,9 @@ class FakeGuild:
 
 
 class FakeBot:
-    def __init__(self, guild):
+    def __init__(self, guild, user=None):
         self._guild = guild
+        self.user = user or FakeMember(999999, name="ChetBot", bot=True)
         self.stats = {}
         self.feedback_cases = {}
         self.sent_logs = []
