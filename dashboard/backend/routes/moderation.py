@@ -206,3 +206,97 @@ async def kick_member(request: web.Request) -> web.Response:
         request.app["bot"], "👢 Кик через дашборд", target, moderator, reason
     )
     return web.json_response({"ok": True})
+
+
+def _assignable_roles(guild):
+    top = guild.me.top_role.position
+    return sorted(
+        (r for r in guild.roles if not r.is_default() and not r.managed and r.position < top),
+        key=lambda r: r.position,
+        reverse=True,
+    )
+
+
+@routes.get("/api/roles")
+@require_dashboard_access
+async def list_roles(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    return web.json_response(
+        {
+            "roles": [
+                {
+                    "id": str(r.id),
+                    "name": r.name,
+                    "color": f"#{r.color.value:06x}",
+                    "position": r.position,
+                }
+                for r in _assignable_roles(guild)
+            ]
+        }
+    )
+
+
+def _resolve_assignable_role(request, role_id_raw):
+    """Returns (role, None) or (None, error Response)."""
+    guild = _get_guild_or_none(request)
+    try:
+        role_id = int(role_id_raw)
+    except (TypeError, ValueError):
+        return None, web.json_response({"error": "invalid_role_id"}, status=400)
+    role = guild.get_role(role_id)
+    if role is None:
+        return None, web.json_response({"error": "role_not_found"}, status=404)
+    if role.is_default() or role.managed or role.position >= guild.me.top_role.position:
+        return None, web.json_response({"error": "role_not_assignable"}, status=403)
+    return role, None
+
+
+@routes.post("/api/members/{member_id}/roles")
+@require_dashboard_access
+async def grant_role(request: web.Request) -> web.Response:
+    target, error = _get_target_or_response(request)
+    if error:
+        return error
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    role, error = _resolve_assignable_role(request, body.get("role_id"))
+    if error:
+        return error
+
+    moderator = request["moderator"]
+    try:
+        await target.add_roles(role, reason=dashboard_reason(f"выдана роль {role.name}", moderator))
+    except discord.HTTPException as exc:
+        return _map_discord_error(exc)
+
+    await _send_action_log(
+        request.app["bot"], "🎖️ Роль выдана через дашборд", target, moderator, role.name
+    )
+    return web.json_response({"ok": True})
+
+
+@routes.delete("/api/members/{member_id}/roles/{role_id}")
+@require_dashboard_access
+async def revoke_role(request: web.Request) -> web.Response:
+    target, error = _get_target_or_response(request)
+    if error:
+        return error
+    role, error = _resolve_assignable_role(request, request.match_info["role_id"])
+    if error:
+        return error
+
+    moderator = request["moderator"]
+    try:
+        await target.remove_roles(role, reason=dashboard_reason(f"снята роль {role.name}", moderator))
+    except discord.HTTPException as exc:
+        return _map_discord_error(exc)
+
+    await _send_action_log(
+        request.app["bot"], "🎖️ Роль снята через дашборд", target, moderator, role.name
+    )
+    return web.json_response({"ok": True})
