@@ -6,6 +6,7 @@ import { AccessDeniedPage } from './pages/AccessDenied'
 import { DashboardShell } from './pages/DashboardShell'
 import { HomePage } from './pages/Home'
 import { MembersPage } from './pages/Members'
+import { LockdownPage } from './pages/Lockdown'
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
           >
             <Route index element={<HomePage />} />
             <Route path="members" element={<MembersPage />} />
-            <Route path="lockdown" element={<div>Lockdown — скоро (Task 11)</div>} />
+            <Route path="lockdown" element={<LockdownPage />} />
           </Route>
         </Routes>
       </AuthProvider>
