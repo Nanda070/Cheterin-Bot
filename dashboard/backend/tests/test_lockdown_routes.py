@@ -108,6 +108,40 @@ async def test_activate_with_partial_errors_logs_error_field(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_deactivate_with_partial_errors_logs_error_field(aiohttp_client):
+    """Test that partial failures during deactivate are logged with Ошибки field in embed."""
+    noisy = FakeRole(2, position=5)
+    noisy.permissions.mention_everyone = True
+
+    bot, app = build(roles=[noisy])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    # First, activate lockdown to save the backup
+    resp = await client.post("/api/lockdown/activate")
+    assert resp.status == 200
+    assert (await resp.json())["ok"] is True
+    assert len(bot.sent_logs) == 1
+
+    # Now simulate restore failure by making the role uneditable
+    noisy.permissions.mention_everyone = False
+    noisy.edit_raises = _StubForbidden()
+
+    # Deactivate should partially fail and log the error
+    resp = await client.post("/api/lockdown/deactivate")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["ok"] is True
+    assert len(body["errors"]) > 0
+
+    # Verify the deactivate log embed (last one) contains error field
+    assert len(bot.sent_logs) == 2
+    embed = bot.sent_logs[-1]
+    error_field_found = any(f.name == "Ошибки" for f in embed.fields)
+    assert error_field_found, "Embed should contain 'Ошибки' field when errors exist"
+
+
+@pytest.mark.asyncio
 async def test_activate_guild_unavailable_503(aiohttp_client):
     """Test that activate returns 503 when guild is unavailable."""
     bot = FakeBot(FakeGuild(members=[FakeMember(10, name="mod", role_ids=[111])]))
