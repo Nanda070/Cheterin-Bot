@@ -135,3 +135,30 @@ export async function activateLockdown(): Promise<void> {
 export async function deactivateLockdown(): Promise<void> {
   await apiFetch('/api/lockdown/deactivate', jsonInit('POST'))
 }
+
+export type MassAssignTarget = 'all' | 'all_except_bots' | 'selected'
+
+export interface MassAssignStatus {
+  status: 'running' | 'completed' | 'failed'
+  total: number
+  processed: number
+  succeeded: number
+  skipped: number
+  failed: number
+  errors: string[]
+}
+
+export async function startMassAssign(
+  roleId: string,
+  target: MassAssignTarget,
+  memberIds?: string[],
+): Promise<string> {
+  const body: Record<string, unknown> = { target }
+  if (memberIds) body.member_ids = memberIds
+  const result = await apiFetch<{ job_id: string }>(`/api/roles/${roleId}/mass-assign`, jsonInit('POST', body))
+  return result.job_id
+}
+
+export function fetchMassAssignStatus(jobId: string): Promise<MassAssignStatus> {
+  return apiFetch(`/api/roles/mass-assign/${jobId}`)
+}
