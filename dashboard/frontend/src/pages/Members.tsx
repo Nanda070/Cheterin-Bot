@@ -1,6 +1,7 @@
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchMembers, type MembersPage as MembersPageData } from '../api/client'
+import { MassAssignModal } from '../components/MassAssignModal'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { MemberDetailPanel } from './MemberDetailPanel'
@@ -12,6 +13,7 @@ export function MembersPage() {
   const [data, setData] = useState<MembersPageData | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [massAssignOpen, setMassAssignOpen] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,15 +44,28 @@ export function MembersPage() {
   return (
     <div className="flex gap-6">
       <div className="flex-1">
-        <div className="relative mb-4 max-w-md">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Поиск по имени или нику…"
-            className="w-full rounded-control border border-border bg-surface py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary"
-          />
+        <div className="mb-4 flex items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск по имени или нику…"
+              className="w-full rounded-control border border-border bg-surface py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </div>
+          <Button variant="secondary" onClick={() => setMassAssignOpen(true)}>
+            Массовая выдача роли
+          </Button>
         </div>
+
+        <MassAssignModal
+          open={massAssignOpen}
+          onClose={() => {
+            setMassAssignOpen(false)
+            fetchMembers(debounced, page).then(setData).catch(() => {})
+          }}
+        />
 
         {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
