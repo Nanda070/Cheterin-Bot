@@ -132,12 +132,12 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
 
         <div className="flex flex-col gap-2">
           {pairs.map((pair, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={index} className="flex flex-wrap items-center gap-2 rounded-control border border-border/60 p-2">
               <input
                 value={pair.emoji}
                 onChange={(e) => updatePair(index, { emoji: e.target.value })}
                 placeholder="Эмодзи (вставьте unicode или выберите ниже)"
-                className="flex-1 rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+                className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <select
                 aria-label="Свой эмодзи сервера"
@@ -146,7 +146,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
                   const custom = emojis.find((em) => em.id === e.target.value)
                   if (custom) updatePair(index, { emoji: `<:${custom.name}:${custom.id}>` })
                 }}
-                className="rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                className="min-w-0 flex-1 basis-28 rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
               >
                 <option value="">Свой эмодзи…</option>
                 {emojis.map((em) => (
@@ -159,7 +159,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
                 aria-label="Роль для этой пары"
                 value={pair.role_id}
                 onChange={(e) => updatePair(index, { role_id: e.target.value })}
-                className="rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                className="min-w-0 flex-1 basis-28 rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
               >
                 <option value="">Роль…</option>
                 {roles.map((role) => (
