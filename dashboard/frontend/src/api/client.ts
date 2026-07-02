@@ -162,3 +162,59 @@ export async function startMassAssign(
 export function fetchMassAssignStatus(jobId: string): Promise<MassAssignStatus> {
   return apiFetch(`/api/roles/mass-assign/${jobId}`)
 }
+
+export interface ReactionRolePair {
+  emoji: string
+  role_id: string
+}
+
+export interface ReactionRoleEntry {
+  message_id: string
+  channel_id: string
+  pairs: ReactionRolePair[]
+}
+
+export interface CustomEmoji {
+  id: string
+  name: string
+  url: string
+}
+
+export interface ChannelInfo {
+  id: string
+  name: string
+}
+
+export async function fetchReactionRoles(): Promise<ReactionRoleEntry[]> {
+  const body = await apiFetch<{ reaction_roles: ReactionRoleEntry[] }>('/api/reaction-roles')
+  return body.reaction_roles
+}
+
+export function createReactionRole(
+  channelId: string,
+  messageId: string,
+  pairs: ReactionRolePair[],
+): Promise<ReactionRoleEntry> {
+  return apiFetch(
+    '/api/reaction-roles',
+    jsonInit('POST', { channel_id: channelId, message_id: messageId, pairs }),
+  )
+}
+
+export function updateReactionRole(messageId: string, pairs: ReactionRolePair[]): Promise<ReactionRoleEntry> {
+  return apiFetch(`/api/reaction-roles/${messageId}`, jsonInit('PUT', { pairs }))
+}
+
+export async function deleteReactionRole(messageId: string): Promise<void> {
+  await apiFetch(`/api/reaction-roles/${messageId}`, jsonInit('DELETE'))
+}
+
+export async function fetchEmojis(): Promise<CustomEmoji[]> {
+  const body = await apiFetch<{ emojis: CustomEmoji[] }>('/api/emojis')
+  return body.emojis
+}
+
+export async function fetchChannels(): Promise<ChannelInfo[]> {
+  const body = await apiFetch<{ channels: ChannelInfo[] }>('/api/channels')
+  return body.channels
+}
