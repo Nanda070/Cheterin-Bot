@@ -1,7 +1,11 @@
+import asyncio
+import uuid
+
 import discord
 from aiohttp import web
 
 from ..access_middleware import require_dashboard_access
+from .. import mass_role_jobs
 
 routes = web.RouteTableDef()
 
@@ -300,3 +304,83 @@ async def revoke_role(request: web.Request) -> web.Response:
         request.app["bot"], "🎖️ Роль снята через дашборд", target, moderator, role.name
     )
     return web.json_response({"ok": True})
+
+
+@routes.post("/api/roles/{role_id}/mass-assign")
+@require_dashboard_access
+async def mass_assign_role(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    role, error = _resolve_assignable_role(request, request.match_info["role_id"])
+    if error:
+        return error
+
+    if any(job.status == "running" for job in mass_role_jobs.JOBS.values()):
+        return web.json_response({"error": "job_already_running"}, status=409)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    target = body.get("target")
+    missing_ids: list[str] = []
+
+    if target == "all":
+        members = list(guild.members)
+    elif target == "all_except_bots":
+        members = [m for m in guild.members if not m.bot]
+    elif target == "selected":
+        member_ids = body.get("member_ids") or []
+        if not member_ids:
+            return web.json_response({"error": "invalid_request"}, status=400)
+        members = []
+        for raw_id in member_ids:
+            try:
+                member = guild.get_member(int(raw_id))
+            except (TypeError, ValueError):
+                member = None
+            if member is None:
+                missing_ids.append(str(raw_id))
+            else:
+                members.append(member)
+    else:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    job_id = str(uuid.uuid4())
+    job = mass_role_jobs.MassAssignJob(
+        status="running",
+        total=len(members) + len(missing_ids),
+        failed=len(missing_ids),
+        processed=len(missing_ids),
+        errors=[f"Участник {mid}: не найден на сервере" for mid in missing_ids],
+    )
+    mass_role_jobs.JOBS[job_id] = job
+
+    moderator = request["moderator"]
+    asyncio.create_task(
+        mass_role_jobs.run_mass_assign(job_id, guild, role, members, moderator, dashboard_reason)
+    )
+
+    return web.json_response({"job_id": job_id}, status=202)
+
+
+@routes.get("/api/roles/mass-assign/{job_id}")
+@require_dashboard_access
+async def mass_assign_status(request: web.Request) -> web.Response:
+    job = mass_role_jobs.JOBS.get(request.match_info["job_id"])
+    if job is None:
+        return web.json_response({"error": "job_not_found"}, status=404)
+    return web.json_response(
+        {
+            "status": job.status,
+            "total": job.total,
+            "processed": job.processed,
+            "succeeded": job.succeeded,
+            "skipped": job.skipped,
+            "failed": job.failed,
+            "errors": job.errors,
+        }
+    )
