@@ -6,6 +6,8 @@ from aiohttp import web
 
 from .auth import routes as auth_routes
 from .config import ConfigError, DashboardConfig, load_dashboard_config
+from .routes.lockdown import routes as lockdown_routes
+from .routes.moderation import routes as moderation_routes
 from .session import setup_session
 
 logger = logging.getLogger("dashboard")
@@ -30,6 +32,8 @@ def create_app(bot, config: DashboardConfig, guild_id: int) -> web.Application:
     app["http_session"] = aiohttp.ClientSession()
     setup_session(app, config.session_secret)
     app.add_routes(auth_routes)
+    app.add_routes(moderation_routes)
+    app.add_routes(lockdown_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})
