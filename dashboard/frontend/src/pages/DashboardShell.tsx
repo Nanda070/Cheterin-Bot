@@ -23,7 +23,7 @@ interface Section {
 
 const SECTIONS: Section[] = [
   { label: 'Feedback и тикеты', icon: ChatCircleText },
-  { label: 'Конструктор кнопок и эмбедов', icon: Stack },
+  { label: 'Конструктор кнопок и эмбедов', icon: Stack, to: '/reaction-roles' },
   { label: 'События и голосования', icon: CalendarCheck },
   { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
   { label: 'Участники и роли', icon: UsersThree, to: '/members' },
