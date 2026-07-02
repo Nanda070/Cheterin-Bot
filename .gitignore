@@ -5,3 +5,7 @@ dashboard/frontend/dist/
 .env
 .agents/
 .superpowers/
+invites_stats.json
+antispam_backup.json
+buttons_config.json
+bot.log
