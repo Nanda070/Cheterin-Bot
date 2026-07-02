@@ -5,6 +5,7 @@ import { LoginPage } from './pages/Login'
 import { AccessDeniedPage } from './pages/AccessDenied'
 import { DashboardShell } from './pages/DashboardShell'
 import { HomePage } from './pages/Home'
+import { MembersPage } from './pages/Members'
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
             }
           >
             <Route index element={<HomePage />} />
-            <Route path="members" element={<div>Участники — скоро (Task 10)</div>} />
+            <Route path="members" element={<MembersPage />} />
             <Route path="lockdown" element={<div>Lockdown — скоро (Task 11)</div>} />
           </Route>
         </Routes>
