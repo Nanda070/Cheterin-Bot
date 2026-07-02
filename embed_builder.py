@@ -108,3 +108,31 @@ def validate_embed_spec(spec: dict) -> str | None:
         return "embed_too_large"
 
     return None
+
+
+def build_role_button_view(guild, role_ids: list[int]) -> discord.ui.View:
+    view = discord.ui.View(timeout=None)
+    for role_id in role_ids:
+        role = guild.get_role(role_id)
+        label = role.name[:80] if role else str(role_id)
+        view.add_item(
+            discord.ui.Button(
+                label=label,
+                style=discord.ButtonStyle.secondary,
+                custom_id=f"btn_role_{role_id}",
+            )
+        )
+    return view
+
+
+def parse_role_button_ids(message) -> list[int]:
+    role_ids = []
+    for row in getattr(message, "components", []) or []:
+        for child in getattr(row, "children", []):
+            custom_id = getattr(child, "custom_id", "") or ""
+            if custom_id.startswith("btn_role_"):
+                try:
+                    role_ids.append(int(custom_id.removeprefix("btn_role_")))
+                except ValueError:
+                    continue
+    return role_ids
