@@ -314,6 +314,9 @@ async def _run_mass_assign_guarded(job_id, guild, role, members, moderator):
         job.status = "failed"
 
 
+MAX_SELECTED_MEMBER_IDS = 1000
+
+
 @routes.post("/api/roles/{role_id}/mass-assign")
 @require_dashboard_access
 async def mass_assign_role(request: web.Request) -> web.Response:
@@ -339,7 +342,7 @@ async def mass_assign_role(request: web.Request) -> web.Response:
         members = [m for m in guild.members if not m.bot]
     elif target == "selected":
         member_ids = body.get("member_ids") or []
-        if not member_ids:
+        if not member_ids or len(member_ids) > MAX_SELECTED_MEMBER_IDS:
             return web.json_response({"error": "invalid_request"}, status=400)
         members = []
         for raw_id in member_ids:

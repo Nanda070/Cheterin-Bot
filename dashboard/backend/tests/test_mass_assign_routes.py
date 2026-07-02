@@ -93,6 +93,19 @@ async def test_mass_assign_selected_requires_member_ids(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_mass_assign_selected_rejects_oversized_member_ids(aiohttp_client):
+    from dashboard.backend.routes.moderation import MAX_SELECTED_MEMBER_IDS
+
+    role = FakeRole(7, name="VIP", position=5)
+    client = await aiohttp_client(build(roles=[role]))
+    await force_login(client, 10)
+
+    too_many = [str(i) for i in range(MAX_SELECTED_MEMBER_IDS + 1)]
+    resp = await client.post("/api/roles/7/mass-assign", json={"target": "selected", "member_ids": too_many})
+    assert resp.status == 400
+
+
+@pytest.mark.asyncio
 async def test_mass_assign_rejects_role_above_bot(aiohttp_client):
     role = FakeRole(9, name="TooHigh", position=60)
     client = await aiohttp_client(build(roles=[role]))
