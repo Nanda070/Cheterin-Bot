@@ -158,7 +158,10 @@ async def ban_member(request: web.Request) -> web.Response:
     if error:
         return error
 
-    body = await request.json()
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
     reason = (body.get("reason") or "").strip()
     days = body.get("delete_message_days", 0)
     if not reason or days not in ALLOWED_DELETE_DAYS:
@@ -185,7 +188,10 @@ async def kick_member(request: web.Request) -> web.Response:
     if error:
         return error
 
-    body = await request.json()
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
     reason = (body.get("reason") or "").strip()
     if not reason:
         return web.json_response({"error": "invalid_request"}, status=400)

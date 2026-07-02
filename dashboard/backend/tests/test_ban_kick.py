@@ -16,6 +16,11 @@ class _StubForbidden(discord.Forbidden):
         pass
 
 
+class _StubNotFound(discord.NotFound):
+    def __init__(self):
+        pass
+
+
 def build(members):
     moderator = FakeMember(10, name="mod", role_ids=[111])
     bot = FakeBot(FakeGuild(members=[moderator] + members))
@@ -89,3 +94,28 @@ async def test_ban_missing_member_maps_to_404(aiohttp_client):
     await force_login(client, 10)
     resp = await client.post("/api/members/9999/ban", json={"reason": "x", "delete_message_days": 0})
     assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_ban_discord_not_found_maps_to_404(aiohttp_client):
+    target = FakeMember(64)
+    target.action_raises = _StubNotFound()
+    _, app = build([target])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/members/64/ban", json={"reason": "x", "delete_message_days": 0})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_ban_invalid_json_body_returns_400(aiohttp_client):
+    target = FakeMember(65)
+    _, app = build([target])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/members/65/ban", data=b"not json")
+    assert resp.status == 400
+    body = await resp.json()
+    assert body.get("error") == "invalid_request"
