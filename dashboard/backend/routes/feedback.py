@@ -248,3 +248,37 @@ async def delete_feedback_category(request: web.Request) -> web.Response:
         await bot.update_file()
 
     return web.json_response({"ok": True})
+
+
+@routes.post("/api/feedback-panel/publish")
+@require_dashboard_access
+async def publish_feedback_panel_route(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    channel_id_raw = body.get("channel_id")
+    if not isinstance(channel_id_raw, str) or not channel_id_raw:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    try:
+        channel_id = int(channel_id_raw)
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    channel = guild.get_channel(channel_id)
+    if channel is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+
+    bot = request.app["bot"]
+    moderator = request["moderator"]
+    message = await feedback_core.publish_feedback_panel(
+        bot, channel, published_by_id=moderator.id, published_by_mention=f"<@{moderator.id}>"
+    )
+    return web.json_response({"ok": True, "message_id": str(message.id)})
