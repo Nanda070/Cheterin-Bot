@@ -1,5 +1,6 @@
 from aiohttp import web
 
+import feedback_core
 import feedback_menu
 from ..access_middleware import require_dashboard_access
 
@@ -83,3 +84,38 @@ async def get_feedback_case(request: web.Request) -> web.Response:
 
     guild = _get_guild_or_none(request)
     return web.json_response(serialize_case_detail(case_id, case_data, guild))
+
+
+@routes.post("/api/feedback-cases/{case_id}/decide")
+@require_dashboard_access
+async def decide_feedback_case(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    bot = request.app["bot"]
+    case_id = request.match_info["case_id"]
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    approved = body.get("approved")
+    if not isinstance(approved, bool):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    moderator = request["moderator"]
+    result = await feedback_core.decide_case(
+        bot,
+        guild,
+        case_id,
+        approved,
+        decided_by_id=moderator.id,
+        decided_by_mention=f"<@{moderator.id}>",
+    )
+    if not result["ok"]:
+        status_code = 404 if result["error"] == "not_found" else 409
+        return web.json_response({"error": result["error"]}, status=status_code)
+
+    return web.json_response({"ok": True})

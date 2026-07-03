@@ -1,7 +1,10 @@
 import pytest
 
+import discord
+
+import feedback_core
 from dashboard.backend.routes.feedback import routes as feedback_routes
-from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
+from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeChannel, FakeMessage, FakeThread, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
@@ -142,4 +145,72 @@ async def test_get_feedback_case_requires_auth(aiohttp_client):
     _, app = build()
     client = await aiohttp_client(app)
     resp = await client.get("/api/feedback-cases/PR-0001")
+    assert resp.status == 401
+
+
+def build_with_channels():
+    moderator = FakeMember(10, name="mod", role_ids=[111])
+    submitter = FakeMember(50, name="submitter")
+    public_message = FakeMessage(900, embeds=[discord.Embed(title="Case")])
+    channel = FakeChannel(500, messages={900: public_message})
+    decision_message = FakeMessage(901, embeds=[discord.Embed(title="Case")])
+    thread = FakeThread(700, messages={901: decision_message})
+    guild = FakeGuild(members=[moderator, submitter], channels=[channel], threads=[thread])
+    return guild, make_moderation_app(FakeBot(guild), [feedback_routes])
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_approves_and_persists(aiohttp_client):
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
+    assert resp.status == 200
+    assert (await resp.json()) == {"ok": True}
+    assert app["bot"].feedback_cases["PR-0001"]["status"] == "approved"
+    assert app["bot"].feedback_cases["PR-0001"]["reviewed_by"] == 10
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_404_when_unknown(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/feedback-cases/MISSING/decide", json={"approved": True})
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_409_when_already_decided(aiohttp_client):
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="approved")
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
+    assert resp.status == 409
+    assert (await resp.json())["error"] == "already_decided"
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_rejects_non_boolean_approved(aiohttp_client):
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": "yes"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
     assert resp.status == 401
