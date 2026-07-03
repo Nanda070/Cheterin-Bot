@@ -9,6 +9,7 @@ from .config import ConfigError, DashboardConfig, load_dashboard_config
 from .routes.lockdown import routes as lockdown_routes
 from .routes.moderation import routes as moderation_routes
 from .routes.reaction_roles import routes as reaction_roles_routes
+from .routes.embed_builder import routes as embed_builder_routes
 from .session import setup_session
 
 logger = logging.getLogger("dashboard")
@@ -36,6 +37,7 @@ def create_app(bot, config: DashboardConfig, guild_id: int) -> web.Application:
     app.add_routes(moderation_routes)
     app.add_routes(lockdown_routes)
     app.add_routes(reaction_roles_routes)
+    app.add_routes(embed_builder_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})
