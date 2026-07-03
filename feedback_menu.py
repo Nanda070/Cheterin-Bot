@@ -1,56 +1,19 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import os
 from typing import Optional
 import logging
 
+import feedback_categories
 import feedback_core
 
 logger = logging.getLogger("chetbot.feedback")
 
-_feedback_categories_cache = None
-
 PANEL_BANNER_URL = "https://i.imgur.com/vLAcc7q.png"
 
 
-def _env_int(key: str) -> int:
-    """Безопасно читает переменную окружения и конвертирует в int."""
-    val = os.getenv(key)
-    if not val:
-        raise RuntimeError(f"Переменная окружения {key} не задана.")
-    return int(val)
-
-
 def get_feedback_categories():
-    global _feedback_categories_cache
-    if _feedback_categories_cache is not None:
-        return _feedback_categories_cache
-
-    _feedback_categories_cache = {
-        "players": {
-            "title": "Жалоба на участника",
-            "button_label": "            Жалоба на участника            ",
-            "button_style": discord.ButtonStyle.secondary,
-            "channel_id": _env_int("CHANNEL_COMPLAINT_PLAY"),
-            "case_prefix": "PR",
-            "case_title": "Жалоба на участника",
-            "thread_name": "player-report",
-            "review_role_ids": [_env_int("ROLE_PLAYERS")],
-            "review_user_ids": [],
-            "approved_text": "Участник наказан.",
-            "denied_text": "Жалоба отклонена.",
-            "modal_title": "Жалоба на участника",
-            "fields": [
-                {"key": "offender", "label": "Ник / ID участника", "style": discord.TextStyle.short, "required": True, "max_length": 120},
-                {"key": "complaint", "label": "Суть жалобы", "style": discord.TextStyle.paragraph, "required": True, "max_length": 1000},
-                {"key": "datetime", "label": "Дата и время ситуации", "style": discord.TextStyle.short, "required": False, "max_length": 120},
-                {"key": "proof", "label": "Доказательства", "style": discord.TextStyle.paragraph, "required": False, "max_length": 1000},
-            ],
-            "mini_summary_key": "offender",
-        },
-    }
-    return _feedback_categories_cache
+    return feedback_categories.load_categories()
 
 
 class FeedbackMenu(commands.Cog):
@@ -135,7 +98,7 @@ class FeedbackView(discord.ui.View):
         for category_key, config in categories.items():
             button = discord.ui.Button(
                 label=config["button_label"],
-                style=config["button_style"],
+                style=discord.ButtonStyle.secondary,
                 custom_id=f"feedback_open:{category_key}",
                 row=0,
             )
@@ -156,9 +119,10 @@ class FeedbackModal(discord.ui.Modal):
 
         self.field_keys = []
         for field in config["fields"]:
+            style = discord.TextStyle.short if field["style"] == "short" else discord.TextStyle.paragraph
             input_item = discord.ui.TextInput(
                 label=field["label"],
-                style=field["style"],
+                style=style,
                 required=field["required"],
                 max_length=field["max_length"],
             )
@@ -237,14 +201,14 @@ async def get_next_case_id(bot, prefix: str) -> str:
 
 def build_mentions(config: dict) -> str:
     parts = [f"<@&{r_id}>" for r_id in config["review_role_ids"]]
-    parts.extend(f"<@{u_id}>" for u_id in config["review_user_ids"])
+    parts.extend(f"<@{u_id}>" for u_id in config.get("review_user_ids", []))
     return " ".join(parts).strip() or "Без упоминаний"
 
 
 async def add_reviewers(thread: discord.Thread, guild: discord.Guild, config: dict):
     added_ids = set()
     for role_id in config["review_role_ids"]:
-        role = guild.get_role(role_id)
+        role = guild.get_role(int(role_id))
         if not role:
             continue
         for member in role.members:
@@ -255,8 +219,8 @@ async def add_reviewers(thread: discord.Thread, guild: discord.Guild, config: di
                 except Exception as e:
                     logger.debug("Не удалось добавить %s в тред: %s", member.id, e)
 
-    for user_id in config["review_user_ids"]:
-        member = guild.get_member(user_id)
+    for user_id in config.get("review_user_ids", []):
+        member = guild.get_member(int(user_id))
         if member and not member.bot and member.id not in added_ids:
             try:
                 await thread.add_user(member)
@@ -270,7 +234,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
     if not interaction.response.is_done():
         await interaction.response.defer(ephemeral=True)
 
-    parent_channel = bot.get_channel(config["channel_id"])
+    parent_channel = bot.get_channel(int(config["channel_id"]))
     if not isinstance(parent_channel, discord.TextChannel):
         await interaction.followup.send("Целевой канал не найден или не является текстовым.", ephemeral=True)
         return

@@ -8,12 +8,58 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeCh
 
 
 @pytest.fixture(autouse=True)
-def isolated_feedback_categories(monkeypatch):
-    monkeypatch.setenv("CHANNEL_COMPLAINT_PLAY", "500")
-    monkeypatch.setenv("ROLE_PLAYERS", "111")
-    import feedback_menu
+def isolated_feedback_categories(tmp_path, monkeypatch):
+    import feedback_categories
 
-    monkeypatch.setattr(feedback_menu, "_feedback_categories_cache", None)
+    monkeypatch.setattr(feedback_categories, "CONFIG_FILE", str(tmp_path / "feedback_categories.json"))
+    feedback_categories.save_categories(
+        {
+            "players": {
+                "title": "Жалоба на участника",
+                "button_label": "Жалоба на участника",
+                "channel_id": "500",
+                "case_prefix": "PR",
+                "case_title": "Жалоба на участника",
+                "thread_name": "player-report",
+                "review_role_ids": ["111"],
+                "review_user_ids": [],
+                "approved_text": "Участник наказан.",
+                "denied_text": "Жалоба отклонена.",
+                "modal_title": "Жалоба на участника",
+                "fields": [
+                    {
+                        "key": "offender",
+                        "label": "Ник / ID участника",
+                        "style": "short",
+                        "required": True,
+                        "max_length": 120,
+                    },
+                    {
+                        "key": "complaint",
+                        "label": "Суть жалобы",
+                        "style": "paragraph",
+                        "required": True,
+                        "max_length": 1000,
+                    },
+                    {
+                        "key": "datetime",
+                        "label": "Дата и время ситуации",
+                        "style": "short",
+                        "required": False,
+                        "max_length": 120,
+                    },
+                    {
+                        "key": "proof",
+                        "label": "Доказательства",
+                        "style": "paragraph",
+                        "required": False,
+                        "max_length": 1000,
+                    },
+                ],
+                "mini_summary_key": "offender",
+            },
+        }
+    )
     yield
 
 
