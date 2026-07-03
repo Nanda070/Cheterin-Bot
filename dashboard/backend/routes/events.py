@@ -178,3 +178,48 @@ async def notify_event_route(request: web.Request) -> web.Response:
         status_code = {"not_found": 404, "no_participants": 400}.get(result["error"], 400)
         return web.json_response({"error": result["error"]}, status=status_code)
     return web.json_response({"ok": True, "success": result["success"], "failed": result["failed"]})
+
+
+@routes.post("/api/events")
+@require_dashboard_access
+async def create_event(request: web.Request) -> web.Response:
+    bot = request.app["bot"]
+    guild = bot.get_guild(request.app["guild_id"])
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    error = events_core.validate_event_spec(body)
+    if error:
+        return web.json_response({"error": error}, status=400)
+
+    channel_id_raw = body.get("channel_id")
+    try:
+        channel_id = int(channel_id_raw)
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+    channel = guild.get_channel(channel_id)
+    if channel is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+
+    role_reward_raw = body.get("role_reward")
+    if role_reward_raw:
+        try:
+            role_id = int(role_reward_raw)
+        except (TypeError, ValueError):
+            return web.json_response({"error": "invalid_request"}, status=400)
+        if guild.get_role(role_id) is None:
+            return web.json_response({"error": "role_not_found"}, status=404)
+
+    moderator = request["moderator"]
+    message = await events_core.publish_event(bot, channel, body, author_id=moderator.id)
+
+    data = await events.load_events()
+    ev = data["events"][str(message.id)]
+    return web.json_response(serialize_event_detail(str(message.id), ev), status=201)
