@@ -1,5 +1,6 @@
 from aiohttp import web
 
+import feedback_categories
 import feedback_core
 import feedback_menu
 from ..access_middleware import require_dashboard_access
@@ -122,3 +123,67 @@ async def decide_feedback_case(request: web.Request) -> web.Response:
         return web.json_response({"error": result["error"]}, status=status_code)
 
     return web.json_response({"ok": True})
+
+
+def _validate_category_relations(spec: dict, guild) -> web.Response | None:
+    """Discord-existence checks. Must run AFTER validate_category_spec."""
+    try:
+        channel_id = int(spec.get("channel_id"))
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if guild.get_channel(channel_id) is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+
+    for role_id_raw in spec.get("review_role_ids") or []:
+        try:
+            role_id = int(role_id_raw)
+        except (TypeError, ValueError):
+            return web.json_response({"error": "invalid_request"}, status=400)
+        if guild.get_role(role_id) is None:
+            return web.json_response({"error": "role_not_found"}, status=404)
+    return None
+
+
+def serialize_category(key: str, entry: dict) -> dict:
+    return {"key": key, **entry}
+
+
+@routes.get("/api/feedback-categories")
+@require_dashboard_access
+async def list_feedback_categories(request: web.Request) -> web.Response:
+    categories = feedback_categories.load_categories()
+    return web.json_response(
+        {"categories": [serialize_category(key, entry) for key, entry in categories.items()]}
+    )
+
+
+@routes.post("/api/feedback-categories")
+@require_dashboard_access
+async def create_feedback_category(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    categories = feedback_categories.load_categories()
+    error = feedback_categories.validate_category_spec(body, categories, existing_key=None)
+    if error:
+        status_code = 409 if error in ("key_taken", "case_prefix_taken") else 400
+        return web.json_response({"error": error}, status=status_code)
+
+    error_response = _validate_category_relations(body, guild)
+    if error_response:
+        return error_response
+
+    key = body["key"]
+    entry = {k: v for k, v in body.items() if k != "key"}
+    categories[key] = entry
+    feedback_categories.save_categories(categories)
+
+    return web.json_response(serialize_category(key, entry), status=201)
