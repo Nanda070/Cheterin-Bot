@@ -174,13 +174,29 @@ class EventPublishSelect(discord.ui.ChannelSelect):
 
     async def callback(self, interaction: discord.Interaction):
         channel = self.values[0]
-        if not self.builder_view.draft.title or not self.builder_view.draft.description:
-            await interaction.response.send_message("Сначала укажите название и описание!", ephemeral=True)
+        draft = self.builder_view.draft
+        spec = {
+            "type": draft.type,
+            "title": draft.title,
+            "description": draft.description,
+            "banner_url": draft.banner_url,
+            "mode": draft.mode,
+            "require_info": draft.require_info,
+            "max_limit": draft.max_limit,
+            "team_size": draft.team_size,
+            "role_reward": draft.role_reward,
+            "ping": draft.ping,
+            "options": draft.options,
+            "multi_select": draft.multi_select,
+        }
+        error = events_core.validate_event_spec(spec)
+        if error:
+            await interaction.response.send_message(
+                "❌ Проверьте настройки события (название, описание, варианты и т.д.) — что-то заполнено некорректно.",
+                ephemeral=True,
+            )
             return
-        if self.builder_view.draft.type == "poll" and not self.builder_view.draft.options:
-            await interaction.response.send_message("Для опроса нужны варианты ответа!", ephemeral=True)
-            return
-            
+
         await interaction.response.defer(ephemeral=True)
         await self.builder_view.publish(interaction, channel)
 
@@ -308,31 +324,7 @@ class EventBuilderView(discord.ui.View):
 
     async def publish(self, interaction: discord.Interaction, channel: discord.TextChannel):
         d = self.draft
-        emb = discord.Embed(
-            title=d.title,
-            description=d.description,
-            color=discord.Color.brand_red() if d.type == "tournament" else discord.Color.blurple()
-        )
-        if d.banner_url:
-            emb.set_image(url=d.banner_url)
-            
-        if d.type == "tournament":
-            mode_str = {"solo": "Соло", "team_captain": "Командный", "team_code": "Командный (по коду)"}.get(d.mode)
-            emb.add_field(name="Формат", value=mode_str, inline=True)
-            if d.max_limit > 0:
-                emb.add_field(name="Лимит", value=f"0 / {d.max_limit}", inline=True)
-            else:
-                emb.add_field(name="Участники", value="0", inline=True)
-        else:
-            for opt in d.options:
-                emb.add_field(name=opt, value="░░░░░░░░░░ 0% (0 гол.)", inline=False)
-                
-        emb.set_footer(text="🟢 Статус: Открыто")
-        
-        content = None
-        if d.ping == "everyone": content = "@everyone"
-        elif d.ping == "here": content = "@here"
-        
+
         # ChannelSelect возвращает AppCommandChannel, у которого нет .send()
         # Нужно получить полный объект TextChannel
         resolved_channel = self.bot.get_channel(channel.id)
@@ -342,17 +334,9 @@ class EventBuilderView(discord.ui.View):
             except Exception:
                 await interaction.edit_original_response(content="❌ Не удалось получить доступ к выбранному каналу.")
                 return
-        
-        msg = await resolved_channel.send(content=content, embed=emb)
-        
-        data = await load_events()
-        if "events" not in data:
-            data["events"] = {}
-            
-        event_obj = {
+
+        spec = {
             "type": d.type,
-            "channel_id": resolved_channel.id,
-            "author_id": d.author_id,
             "title": d.title,
             "description": d.description,
             "banner_url": d.banner_url,
@@ -360,24 +344,18 @@ class EventBuilderView(discord.ui.View):
             "require_info": d.require_info,
             "max_limit": d.max_limit,
             "team_size": d.team_size,
-            "role_reward": int(d.role_reward) if d.role_reward else None,
+            "role_reward": d.role_reward,
             "ping": d.ping,
-            "status": "open",
-            "participants": [],
             "options": d.options,
             "multi_select": d.multi_select,
-            "votes": {}
         }
-        data["events"][str(msg.id)] = event_obj
-        await save_events(data)
-        
-        view = create_participation_view(str(msg.id), event_obj)
-        await msg.edit(view=view)
-        
+        msg = await events_core.publish_event(self.bot, resolved_channel, spec, author_id=d.author_id)
+
         self.clear_items()
         await interaction.edit_original_response(
             content=f"✅ Успешно опубликовано в {resolved_channel.mention}!\nID сообщения: `{msg.id}`",
-            embed=None, view=None
+            embed=None,
+            view=None,
         )
 
 
