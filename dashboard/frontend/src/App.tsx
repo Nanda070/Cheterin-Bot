@@ -8,6 +8,7 @@ import { HomePage } from './pages/Home'
 import { MembersPage } from './pages/Members'
 import { LockdownPage } from './pages/Lockdown'
 import { MessageBuilderPage } from './pages/MessageBuilder'
+import { FeedbackCasesPage } from './pages/FeedbackCases'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="members" element={<MembersPage />} />
             <Route path="lockdown" element={<LockdownPage />} />
             <Route path="reaction-roles" element={<MessageBuilderPage />} />
+            <Route path="feedback" element={<FeedbackCasesPage />} />
           </Route>
         </Routes>
       </AuthProvider>
