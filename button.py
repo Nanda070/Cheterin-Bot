@@ -6,6 +6,8 @@ import os
 import json
 import aiohttp
 
+import bot_config
+
 BUTTONS_FILE = "buttons_config.json"
 COOLDOWN_SECONDS = 5
 
@@ -26,8 +28,8 @@ def _save_buttons_config(data: dict):
 
 
 def _get_allowed_role_ids() -> set[int]:
-    raw = os.getenv("BUTTON_CREATE_ALLOWED_ROLES", "")
-    return {int(x.strip()) for x in raw.split(",") if x.strip()}
+    raw = bot_config.get("BUTTON_CREATE_ALLOWED_ROLES", [])
+    return {int(x) for x in raw}
 
 
 # ─────────────────────────────────────────────
@@ -69,7 +71,7 @@ class DynamicQuestionsModal(discord.ui.Modal):
             embed.add_field(name=q[:256] if q else "Вопрос", value=a[:1024] if a else "—", inline=False)
         embed.set_footer(text="404 Helper · Button Form")
 
-        webhook_url = os.getenv("BUTTON_WEBHOOK_URL")
+        webhook_url = bot_config.get("BUTTON_WEBHOOK_URL")
         if not webhook_url:
             await interaction.response.send_message("BUTTON_WEBHOOK_URL не задан в переменных окружения.", ephemeral=True)
             return

@@ -4,6 +4,8 @@ from discord import app_commands
 import os
 import logging
 
+import bot_config
+
 logger = logging.getLogger("chetbot.memobb")
 
 
@@ -13,7 +15,7 @@ class CTDCloseView(discord.ui.View):
 
     @discord.ui.button(label="Закрыть Тикет", style=discord.ButtonStyle.danger, custom_id="ctd_close_ticket")
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        raw_role_id = os.getenv("CTD_ROLE_ID")
+        raw_role_id = bot_config.get("CTD_ROLE_ID")
         if not raw_role_id:
             await interaction.response.send_message("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
             return
@@ -45,7 +47,7 @@ class CTDView(discord.ui.View):
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         channel = interaction.channel
-        raw_role_id = os.getenv("CTD_ROLE_ID")
+        raw_role_id = bot_config.get("CTD_ROLE_ID")
         if not raw_role_id:
             await interaction.followup.send("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
             return
@@ -152,7 +154,7 @@ class CTD(commands.Cog):
     @app_commands.command(name="ctd_setup", description="Установить панель тикетов CTD")
     @app_commands.default_permissions(manage_guild=True)
     async def ctd_setup(self, interaction: discord.Interaction):
-        raw_channel_id = os.getenv("CTD_CHANNEL_ID")
+        raw_channel_id = bot_config.get("CTD_CHANNEL_ID")
         if not raw_channel_id:
             await interaction.response.send_message("CTD_CHANNEL_ID не задан в переменных окружения.", ephemeral=True)
             return
