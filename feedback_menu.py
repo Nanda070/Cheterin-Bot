@@ -60,33 +60,14 @@ class FeedbackMenu(commands.Cog):
             await interaction.response.send_message("Нужен обычный текстовый канал.", ephemeral=True)
             return
 
-        embed = discord.Embed(
-            description=(
-                "### <:IconModeration:1356540597770518538>・Выберите тип связи со стаффом.\n\n"
-                "```\n"
-                "В создавшемся обращении, как можно точнее опишите его суть "
-                "и по возможности прикрепите фото и/или видео для дальнейшего ознакомления.\n"
-                "```"
-            ),
-            color=discord.Color.from_rgb(44, 47, 51),
-        )
-        embed.set_image(url=PANEL_BANNER_URL)
-
         # Сначала отвечаем на interaction, потом отправляем панель
         await interaction.response.send_message("Панель опубликована.", ephemeral=True)
-        message = await target_channel.send(embed=embed, view=FeedbackView(self.bot))
-
-        log_embed = discord.Embed(
-            title="🧩 Панель feedback опубликована",
-            description=(
-                f"**Кто:** {interaction.user.mention} (`{interaction.user.id}`)\n"
-                f"**Канал:** {target_channel.mention}\n"
-                f"**Сообщение:** [Открыть]({message.jump_url})"
-            ),
-            color=discord.Color.blurple(),
-            timestamp=self.bot.utcnow(),
+        await feedback_core.publish_feedback_panel(
+            self.bot,
+            target_channel,
+            published_by_id=interaction.user.id,
+            published_by_mention=interaction.user.mention,
         )
-        await self.bot.send_log(log_embed)
 
 
 class FeedbackView(discord.ui.View):

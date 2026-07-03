@@ -198,3 +198,23 @@ async def test_decide_case_survives_missing_public_channel():
     assert result == {"ok": True, "error": None}
     assert bot.feedback_cases["PR-0001"]["status"] == "approved"
     assert len(submitter.send_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_publish_feedback_panel_sends_embed_and_logs():
+    channel = FakeChannel(500, name="reports")
+    guild = FakeGuild(channels=[channel])
+    bot = FakeBot(guild)
+
+    message = await feedback_core.publish_feedback_panel(
+        bot, channel, published_by_id=10, published_by_mention="<@10>"
+    )
+
+    assert len(channel.send_calls) == 1
+    assert channel.send_calls[0]["embed"].color.value == discord.Color.from_rgb(44, 47, 51).value
+    assert channel.send_calls[0]["view"] is not None
+    assert message.id in channel._messages
+    assert len(bot.sent_logs) == 1
+    assert "<@10>" in bot.sent_logs[0].description
+    assert "(`10`)" in bot.sent_logs[0].description
+    assert "<#500>" in bot.sent_logs[0].description

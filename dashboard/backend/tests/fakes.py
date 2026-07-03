@@ -80,6 +80,10 @@ class FakeMessage:
         self.edit_calls = []
         self.edit_raises = None
 
+    @property
+    def jump_url(self):
+        return f"https://discord.com/channels/0/0/{self.id}"
+
     async def add_reaction(self, emoji):
         if self.add_reaction_raises:
             raise self.add_reaction_raises
@@ -115,6 +119,10 @@ class FakeChannel:
         self._next_message_id = next_message_id
         self.send_calls = []
         self.send_raises = None
+
+    @property
+    def mention(self):
+        return f"<#{self.id}>"
 
     async def fetch_message(self, message_id):
         import discord

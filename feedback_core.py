@@ -122,3 +122,35 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
             logger.warning("Не удалось закрыть тред %s: %s", thread.id, e)
 
     return {"ok": True, "error": None}
+
+
+async def publish_feedback_panel(bot, channel, published_by_id: int, published_by_mention: str) -> discord.Message:
+    from feedback_menu import FeedbackView, PANEL_BANNER_URL
+
+    embed = discord.Embed(
+        description=(
+            "### <:IconModeration:1356540597770518538>・Выберите тип связи со стаффом.\n\n"
+            "```\n"
+            "В создавшемся обращении, как можно точнее опишите его суть "
+            "и по возможности прикрепите фото и/или видео для дальнейшего ознакомления.\n"
+            "```"
+        ),
+        color=discord.Color.from_rgb(44, 47, 51),
+    )
+    embed.set_image(url=PANEL_BANNER_URL)
+
+    message = await channel.send(embed=embed, view=FeedbackView(bot))
+
+    log_embed = discord.Embed(
+        title="🧩 Панель feedback опубликована",
+        description=(
+            f"**Кто:** {published_by_mention} (`{published_by_id}`)\n"
+            f"**Канал:** {channel.mention}\n"
+            f"**Сообщение:** [Открыть]({message.jump_url})"
+        ),
+        color=discord.Color.blurple(),
+        timestamp=bot.utcnow(),
+    )
+    await bot.send_log(log_embed)
+
+    return message
