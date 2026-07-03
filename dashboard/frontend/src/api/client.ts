@@ -301,3 +301,47 @@ export function fetchFeedbackCaseDetail(caseId: string): Promise<FeedbackCaseDet
 export async function decideFeedbackCase(caseId: string, approved: boolean): Promise<void> {
   await apiFetch(`/api/feedback-cases/${caseId}/decide`, jsonInit('POST', { approved }))
 }
+
+export interface FeedbackCategoryFieldSpec {
+  key: string
+  label: string
+  style: 'short' | 'paragraph'
+  required: boolean
+  max_length: number
+}
+
+export interface FeedbackCategorySpec {
+  key: string
+  title: string
+  button_label: string
+  channel_id: string
+  case_prefix: string
+  case_title: string
+  thread_name: string
+  review_role_ids: string[]
+  approved_text: string
+  denied_text: string
+  modal_title: string
+  fields: FeedbackCategoryFieldSpec[]
+  mini_summary_key: string
+}
+
+export async function fetchFeedbackCategories(): Promise<FeedbackCategorySpec[]> {
+  const body = await apiFetch<{ categories: FeedbackCategorySpec[] }>('/api/feedback-categories')
+  return body.categories
+}
+
+export function createFeedbackCategory(spec: FeedbackCategorySpec): Promise<FeedbackCategorySpec> {
+  return apiFetch('/api/feedback-categories', jsonInit('POST', spec))
+}
+
+export function updateFeedbackCategory(
+  key: string,
+  spec: Omit<FeedbackCategorySpec, 'key'>,
+): Promise<FeedbackCategorySpec> {
+  return apiFetch(`/api/feedback-categories/${key}`, jsonInit('PUT', spec))
+}
+
+export async function deleteFeedbackCategory(key: string): Promise<void> {
+  await apiFetch(`/api/feedback-categories/${key}`, jsonInit('DELETE'))
+}
