@@ -424,3 +424,23 @@ export async function notifyEventParticipants(
   const result = await apiFetch<{ success: number; failed: number }>(`/api/events/${messageId}/notify`, jsonInit('POST', { message }))
   return { success: result.success, failed: result.failed }
 }
+
+export interface CreateEventSpec {
+  channel_id: string
+  type: 'tournament' | 'poll'
+  title: string
+  description: string
+  banner_url: string
+  ping: 'none' | 'everyone' | 'here'
+  mode: 'solo' | 'team_captain' | 'team_code'
+  require_info: boolean
+  max_limit: number
+  team_size: number
+  role_reward: string | null
+  options: string[]
+  multi_select: boolean
+}
+
+export function createEvent(spec: CreateEventSpec): Promise<EventDetail> {
+  return apiFetch('/api/events', jsonInit('POST', spec))
+}
