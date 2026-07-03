@@ -181,3 +181,115 @@ async def test_get_event_detail_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/events/900")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_close_event_route_success(aiohttp_client):
+    await events.save_events({"events": {"900": _tournament_event()}})
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/events/900/close")
+    assert resp.status == 200
+    assert (await resp.json()) == {"ok": True}
+    data = await events.load_events()
+    assert data["events"]["900"]["status"] == "closed"
+
+
+@pytest.mark.asyncio
+async def test_close_event_route_404(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/events/missing/close")
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_close_event_route_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/events/900/close")
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_delete_event_route_success(aiohttp_client):
+    await events.save_events({"events": {"900": _tournament_event()}})
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.delete("/api/events/900")
+    assert resp.status == 200
+    data = await events.load_events()
+    assert "900" not in data["events"]
+
+
+@pytest.mark.asyncio
+async def test_delete_event_route_404(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.delete("/api/events/missing")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_event_route_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.delete("/api/events/900")
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_notify_event_route_success(aiohttp_client):
+    ev = _tournament_event(participants=[{"user_id": 20, "ign": "a"}])
+    await events.save_events({"events": {"900": ev}})
+    member = FakeMember(20, name="p1")
+    guild = FakeGuild(members=[FakeMember(10, name="mod", role_ids=[111]), member])
+    app = make_moderation_app(FakeBot(guild), [events_routes])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/events/900/notify", json={"message": "Hello"})
+    assert resp.status == 200
+    body = await resp.json()
+    assert body == {"ok": True, "success": 1, "failed": 0}
+
+
+@pytest.mark.asyncio
+async def test_notify_event_route_rejects_missing_message(aiohttp_client):
+    await events.save_events({"events": {"900": _tournament_event(participants=[{"user_id": 20}])}})
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/events/900/notify", json={})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_notify_event_route_400_when_no_participants(aiohttp_client):
+    await events.save_events({"events": {"900": _tournament_event(participants=[])}})
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/events/900/notify", json={"message": "Hello"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "no_participants"
+
+
+@pytest.mark.asyncio
+async def test_notify_event_route_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/events/900/notify", json={"message": "hi"})
+    assert resp.status == 401

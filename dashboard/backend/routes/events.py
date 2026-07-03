@@ -1,6 +1,7 @@
 from aiohttp import web
 
 import events
+import events_core
 
 from ..access_middleware import require_dashboard_access
 
@@ -129,3 +130,51 @@ async def get_event(request: web.Request) -> web.Response:
     if ev is None:
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response(serialize_event_detail(message_id, ev))
+
+
+@routes.post("/api/events/{message_id}/close")
+@require_dashboard_access
+async def close_event_route(request: web.Request) -> web.Response:
+    message_id = request.match_info["message_id"]
+    bot = request.app["bot"]
+    result = await events_core.close_event(bot, message_id)
+    if not result["ok"]:
+        return web.json_response({"error": result["error"]}, status=404)
+    return web.json_response({"ok": True})
+
+
+@routes.delete("/api/events/{message_id}")
+@require_dashboard_access
+async def delete_event_route(request: web.Request) -> web.Response:
+    message_id = request.match_info["message_id"]
+    bot = request.app["bot"]
+    guild = bot.get_guild(request.app["guild_id"])
+    result = await events_core.delete_event(bot, guild, message_id)
+    if not result["ok"]:
+        return web.json_response({"error": result["error"]}, status=404)
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/events/{message_id}/notify")
+@require_dashboard_access
+async def notify_event_route(request: web.Request) -> web.Response:
+    message_id = request.match_info["message_id"]
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    message = body.get("message")
+    if not isinstance(message, str) or not message.strip():
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    bot = request.app["bot"]
+    guild = bot.get_guild(request.app["guild_id"])
+    result = await events_core.notify_participants(bot, guild, message_id, message.strip())
+    if not result["ok"]:
+        status_code = {"not_found": 404, "no_participants": 400}.get(result["error"], 400)
+        return web.json_response({"error": result["error"]}, status=status_code)
+    return web.json_response({"ok": True, "success": result["success"], "failed": result["failed"]})
