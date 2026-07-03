@@ -6,11 +6,14 @@ import {
   fetchRoles,
   type ChannelInfo,
   type CreateEventSpec,
+  type EmbedFieldSpec,
+  type EmbedSpec,
   type EventSummary,
   type RoleInfo,
 } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { EmbedPreview } from '../components/EmbedPreview'
 import { Modal } from '../components/ui/Modal'
 import { EventDetailPanel } from './EventDetailPanel'
 
@@ -31,6 +34,41 @@ function emptyCreateSpec(): CreateEventSpec {
     role_reward: null,
     options: [],
     multi_select: false,
+  }
+}
+
+const MODE_LABELS: Record<CreateEventSpec['mode'], string> = {
+  solo: 'Соло',
+  team_captain: 'Командный',
+  team_code: 'Командный (по коду)',
+}
+
+function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string): EmbedSpec {
+  const fields: EmbedFieldSpec[] =
+    spec.type === 'tournament'
+      ? [
+          { name: 'Формат', value: MODE_LABELS[spec.mode], inline: true },
+          spec.max_limit > 0
+            ? { name: 'Лимит', value: `0 / ${spec.max_limit}`, inline: true }
+            : { name: 'Участники', value: '0', inline: true },
+        ]
+      : optionsText
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((opt) => ({ name: opt, value: '░░░░░░░░░░ 0% (0 гол.)', inline: false }))
+
+  return {
+    title: spec.title,
+    description: spec.description,
+    url: '',
+    color: spec.type === 'tournament' ? '#ed4245' : '#5865f2',
+    author: { name: '', url: '', icon_url: '' },
+    footer: { text: '🟢 Статус: Открыто', icon_url: '' },
+    image: { url: spec.banner_url },
+    thumbnail: { url: '' },
+    timestamp: null,
+    fields,
   }
 }
 
@@ -156,6 +194,10 @@ export function EventsPage() {
             </Button>
           </div>
 
+          <div data-testid="event-embed-preview">
+            <EmbedPreview content="" embed={buildEventEmbedPreview(createSpec, optionsText)} />
+          </div>
+
           <label className="text-sm text-muted" htmlFor="event-title">
             Название
           </label>
@@ -173,7 +215,7 @@ export function EventsPage() {
             id="event-description"
             value={createSpec.description}
             onChange={(e) => setCreateSpec((prev) => ({ ...prev, description: e.target.value }))}
-            rows={3}
+            rows={6}
             className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
           />
 

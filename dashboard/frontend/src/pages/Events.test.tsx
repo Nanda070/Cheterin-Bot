@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { EventsPage } from './Events'
@@ -152,5 +152,73 @@ describe('EventsPage create flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Создать' }))
 
     await waitFor(() => screen.getByText('Не удалось создать событие — проверьте поля'))
+  })
+
+  it('shows a live preview of the tournament embed as fields are filled in', async () => {
+    vi.spyOn(client, 'fetchEvents').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'tourneys' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    render(<EventsPage />)
+
+    await waitFor(() => screen.getByText('Создать событие'))
+    fireEvent.click(screen.getByText('Создать событие'))
+
+    await waitFor(() => screen.getByLabelText('Название'))
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Летний турнир' } })
+    fireEvent.change(screen.getByLabelText('Описание'), { target: { value: 'Описание турнира' } })
+
+    const preview = within(screen.getByTestId('event-embed-preview'))
+    expect(preview.getByText('Летний турнир')).toBeInTheDocument()
+    expect(preview.getByText('Описание турнира')).toBeInTheDocument()
+    expect(preview.getByText('Участники')).toBeInTheDocument()
+    expect(preview.getByText('0')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Макс. участников/команд (0 = безлимит)'), { target: { value: '20' } })
+
+    expect(preview.getByText('Лимит')).toBeInTheDocument()
+    expect(preview.getByText('0 / 20')).toBeInTheDocument()
+  })
+
+  it('shows a live preview of poll options as they are typed', async () => {
+    vi.spyOn(client, 'fetchEvents').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    render(<EventsPage />)
+
+    await waitFor(() => screen.getByText('Создать событие'))
+    fireEvent.click(screen.getByText('Создать событие'))
+
+    await waitFor(() => screen.getByText('Опрос'))
+    fireEvent.click(screen.getByText('Опрос'))
+
+    fireEvent.change(screen.getByLabelText('Варианты ответа (каждый с новой строки, 2–10)'), {
+      target: { value: 'Да\nНет' },
+    })
+
+    const preview = within(screen.getByTestId('event-embed-preview'))
+    expect(preview.getByText('Да')).toBeInTheDocument()
+    expect(preview.getByText('Нет')).toBeInTheDocument()
+    expect(preview.getAllByText('░░░░░░░░░░ 0% (0 гол.)')).toHaveLength(2)
+  })
+
+  it('preview hides tournament fields when the type is switched to poll', async () => {
+    vi.spyOn(client, 'fetchEvents').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    render(<EventsPage />)
+
+    await waitFor(() => screen.getByText('Создать событие'))
+    fireEvent.click(screen.getByText('Создать событие'))
+
+    await waitFor(() => screen.getByLabelText('Формат'))
+    const preview = within(screen.getByTestId('event-embed-preview'))
+    expect(preview.getByText('Участники')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Опрос'))
+
+    expect(preview.queryByText('Участники')).not.toBeInTheDocument()
   })
 })
