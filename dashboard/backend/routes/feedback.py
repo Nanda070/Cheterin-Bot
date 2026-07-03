@@ -101,6 +101,9 @@ async def decide_feedback_case(request: web.Request) -> web.Response:
     except ValueError:
         return web.json_response({"error": "invalid_request"}, status=400)
 
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
     approved = body.get("approved")
     if not isinstance(approved, bool):
         return web.json_response({"error": "invalid_request"}, status=400)
@@ -115,7 +118,7 @@ async def decide_feedback_case(request: web.Request) -> web.Response:
         decided_by_mention=f"<@{moderator.id}>",
     )
     if not result["ok"]:
-        status_code = 404 if result["error"] == "not_found" else 409
+        status_code = {"not_found": 404, "already_decided": 409}.get(result["error"], 400)
         return web.json_response({"error": result["error"]}, status=status_code)
 
     return web.json_response({"ok": True})

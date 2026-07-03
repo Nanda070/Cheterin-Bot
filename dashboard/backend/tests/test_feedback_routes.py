@@ -214,3 +214,31 @@ async def test_decide_feedback_case_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_rejects_non_dict_body(aiohttp_client):
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json=[1, 2, 3])
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_decide_feedback_case_unknown_error_maps_to_400(aiohttp_client, monkeypatch):
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+
+    async def fake_decide_case(*args, **kwargs):
+        return {"ok": False, "error": "some_future_error"}
+
+    monkeypatch.setattr(feedback_core, "decide_case", fake_decide_case)
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
+    assert resp.status == 400
