@@ -16,10 +16,10 @@ describe('MessageBuilderPage', () => {
 
     render(<MessageBuilderPage />)
 
-    await waitFor(() => screen.getByText('Reaction Roles'))
+    await waitFor(() => screen.getByRole('button', { name: 'Reaction Roles' }))
     expect(screen.getByText('Пока ничего не настроено.')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('Эмбеды'))
+    fireEvent.click(screen.getByRole('button', { name: 'Эмбеды' }))
     await waitFor(() => screen.getByLabelText('Title'))
   })
 })

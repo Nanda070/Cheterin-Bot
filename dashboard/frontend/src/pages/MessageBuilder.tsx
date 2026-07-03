@@ -17,7 +17,7 @@ export function MessageBuilderPage() {
             tab === 'reaction-roles' ? 'border-b-2 border-primary text-foreground' : 'text-muted hover:text-foreground'
           }`}
         >
-          Roles
+          Reaction Roles
         </button>
         <button
           type="button"
