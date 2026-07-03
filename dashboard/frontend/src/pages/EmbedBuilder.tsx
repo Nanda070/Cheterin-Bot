@@ -39,6 +39,13 @@ function validateEmbedSpec(spec: EmbedSpec): string | null {
     if (field.name.length > 256) return 'Название поля длиннее 256 символов'
     if (field.value.length > 1024) return 'Значение поля длиннее 1024 символов'
   }
+  const totalLength =
+    spec.title.length +
+    spec.description.length +
+    spec.footer.text.length +
+    spec.author.name.length +
+    spec.fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0)
+  if (totalLength > 6000) return 'Суммарная длина текста эмбеда превышает 6000 символов'
   return null
 }
 

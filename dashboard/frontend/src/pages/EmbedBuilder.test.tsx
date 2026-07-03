@@ -99,4 +99,21 @@ describe('EmbedBuilderPage', () => {
     fireEvent.change(await screen.findByLabelText('Title'), { target: { value: 'Preview Title' } })
     await waitFor(() => expect(screen.getByText('Preview Title')).toBeInTheDocument())
   })
+
+  it('rejects a spec that exceeds the aggregate 6000-character budget', async () => {
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'general' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    const createSpy = vi.spyOn(client, 'createEmbedMessage')
+
+    render(<EmbedBuilderPage />)
+
+    await waitFor(() => screen.getByLabelText('Канал'))
+    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'x'.repeat(4096) } })
+    fireEvent.change(screen.getByLabelText('Footer'), { target: { value: 'y'.repeat(1905) } })
+    fireEvent.click(screen.getByText('Отправить'))
+
+    expect(await screen.findByText(/Суммарная длина/)).toBeInTheDocument()
+    expect(createSpy).not.toHaveBeenCalled()
+  })
 })
