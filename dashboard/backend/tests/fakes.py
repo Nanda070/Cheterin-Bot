@@ -105,6 +105,9 @@ class FakeMessage:
         if "view" in kwargs:
             self.components = kwargs["view"]
 
+    async def delete(self):
+        pass
+
 
 class FakeComponentRow:
     def __init__(self, children):

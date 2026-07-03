@@ -11,6 +11,8 @@ from typing import Optional
 import random
 import string
 
+import events_core
+
 logger = logging.getLogger("chetbot.events")
 EVENTS_FILE = "events_data.json"
 
@@ -540,7 +542,7 @@ async def handle_registration(interaction: discord.Interaction, message_id: str,
 # PARTICIPATION UI
 # ==========================================
 
-def create_participation_view(message_id: str, event_data: dict) -> discord.ui.View:
+def create_participation_view(message_id: str, event_data: dict, disabled: bool = False) -> discord.ui.View:
     view = discord.ui.View(timeout=None)
     
     async def cb_reg_solo(interaction: discord.Interaction):
@@ -706,7 +708,10 @@ def create_participation_view(message_id: str, event_data: dict) -> discord.ui.V
                 
             b.callback = cb_vote
             view.add_item(b)
-            
+
+    if disabled:
+        for item in view.children:
+            item.disabled = True
     return view
 
 
@@ -729,37 +734,27 @@ class EventNotifyModal(discord.ui.Modal, title="Рассылка участни�
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         text = self.inp_text.value.strip()
+
         data = await load_events()
         ev = data.get("events", {}).get(self.message_id)
         if not ev:
             await interaction.followup.send("❌ Событие не найдено.", ephemeral=True)
             return
-            
-        participants = ev.get("participants", [])
-        if not participants:
+        if not ev.get("participants"):
             await interaction.followup.send("❌ Список участников пуст. Рассылать некому.", ephemeral=True)
             return
-            
-        user_ids = list(set(p.get("user_id") for p in participants if p.get("user_id")))
-        
-        await interaction.followup.send(f"Начинаю рассылку для {len(user_ids)} участников... Пожалуйста, подождите.", ephemeral=True)
-        
-        success = 0
-        failed = 0
-        
-        for uid in user_ids:
-            try:
-                user = interaction.guild.get_member(uid) or await self.bot.fetch_user(uid)
-                if user:
-                    await user.send(f"**📢 Уведомление о событии «{ev.get('title')}»:**\n\n{text}")
-                    success += 1
-                else:
-                    failed += 1
-            except Exception:
-                failed += 1
-            await asyncio.sleep(0.1)
-            
-        await interaction.followup.send(f"✅ Рассылка завершена!\nУспешно: {success}\nНе удалось (ЛС закрыты): {failed}", ephemeral=True)
+
+        user_ids = list(set(p.get("user_id") for p in ev.get("participants", []) if p.get("user_id")))
+        await interaction.followup.send(
+            f"Начинаю рассылку для {len(user_ids)} участников... Пожалуйста, подождите.", ephemeral=True
+        )
+
+        result = await events_core.notify_participants(self.bot, interaction.guild, self.message_id, text)
+
+        await interaction.followup.send(
+            f"✅ Рассылка завершена!\nУспешно: {result['success']}\nНе удалось (ЛС закрыты): {result['failed']}",
+            ephemeral=True,
+        )
 
 
 class EventManageSelect(discord.ui.Select):
@@ -790,54 +785,11 @@ class EventManageSelect(discord.ui.Select):
             await i.response.send_modal(EventNotifyModal(self.bot, msg_id))
             
         async def cb_close(i: discord.Interaction):
-            data = await load_events()
-            ev_to_close = data["events"].get(msg_id)
-            if ev_to_close:
-                ev_to_close["status"] = "closed"
-                await save_events(data)
-                try:
-                    ch = self.bot.get_channel(ev_to_close["channel_id"])
-                    if not ch:
-                        try:
-                            ch = await self.bot.fetch_channel(ev_to_close["channel_id"])
-                        except Exception:
-                            pass
-                    if ch:
-                        msg = await ch.fetch_message(int(msg_id))
-                        e = msg.embeds[0]
-                        e.set_footer(text="🔴 Статус: Закрыто")
-                        v = discord.ui.View.from_message(msg)
-                        for item in v.children: item.disabled = True
-                        await msg.edit(embed=e, view=v)
-                except Exception: pass
+            await events_core.close_event(self.bot, msg_id)
             await i.response.send_message("✅ Событие закрыто.", ephemeral=True)
 
         async def cb_delete(i: discord.Interaction):
-            data = await load_events()
-            ev_to_delete = data["events"].pop(msg_id, None)
-            if ev_to_delete:
-                await save_events(data)
-                role_id = ev_to_delete.get("role_reward")
-                if role_id:
-                    role = i.guild.get_role(role_id)
-                    if role:
-                        parts = ev_to_delete.get("participants", [])
-                        for p in parts:
-                            try:
-                                mem = i.guild.get_member(p["user_id"])
-                                if mem: await mem.remove_roles(role)
-                            except Exception: pass
-                try:
-                    ch = self.bot.get_channel(ev_to_delete["channel_id"])
-                    if not ch:
-                        try:
-                            ch = await self.bot.fetch_channel(ev_to_delete["channel_id"])
-                        except Exception:
-                            pass
-                    if ch:
-                        msg = await ch.fetch_message(int(msg_id))
-                        await msg.delete()
-                except Exception: pass
+            await events_core.delete_event(self.bot, i.guild, msg_id)
             await i.response.send_message("🗑️ Событие удалено.", ephemeral=True)
 
         btn_notify.callback = cb_notify
