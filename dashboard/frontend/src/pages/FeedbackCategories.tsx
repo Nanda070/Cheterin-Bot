@@ -147,7 +147,7 @@ export function FeedbackCategoriesPage() {
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => openEdit(category)}>
-                Edit
+                Редактировать
               </Button>
               <Button variant="danger" onClick={() => setPendingDelete(category.key)}>
                 Удалить

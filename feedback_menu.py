@@ -336,7 +336,12 @@ async def close_case(interaction: discord.Interaction, bot, case_id: str, approv
             decided_by_mention=interaction.user.mention,
         )
         if not result["ok"]:
-            await interaction.followup.send("Обращение не найдено или уже закрыто.", ephemeral=True)
+            if result["error"] == "category_deleted":
+                await interaction.followup.send(
+                    "❌ Категория этого обращения была удалена. Обращение нельзя обработать.", ephemeral=True
+                )
+            else:
+                await interaction.followup.send("Обращение не найдено или уже закрыто.", ephemeral=True)
     except Exception as e:
         logger.error("Ошибка при закрытии обращения %s: %s", case_id, e)
         await interaction.followup.send(

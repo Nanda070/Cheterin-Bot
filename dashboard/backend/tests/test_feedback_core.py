@@ -99,6 +99,25 @@ async def test_decide_case_already_decided_returns_error():
 
 
 @pytest.mark.asyncio
+async def test_decide_case_category_deleted_returns_error_without_mutating_status():
+    import feedback_categories
+
+    guild = FakeGuild()
+    bot = FakeBot(guild)
+    bot.feedback_cases["PR-0001"] = _build_case(900, 901, status="pending")
+
+    # Category "players" is deleted from the categories config after the case was created.
+    feedback_categories.save_categories({})
+
+    result = await feedback_core.decide_case(
+        bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
+    )
+
+    assert result == {"ok": False, "error": "category_deleted"}
+    assert bot.feedback_cases["PR-0001"]["status"] == "pending"
+
+
+@pytest.mark.asyncio
 async def test_decide_case_approve_updates_status_persists_and_notifies():
     submitter = FakeMember(50, name="submitter")
     public_message = FakeMessage(900, embeds=[_base_embed()])

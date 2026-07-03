@@ -243,6 +243,23 @@ async def test_decide_feedback_case_409_when_already_decided(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_decide_feedback_case_409_when_category_deleted(aiohttp_client):
+    import feedback_categories
+
+    guild, app = build_with_channels()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+
+    # Category "players" is deleted from the categories config after the case was created.
+    feedback_categories.save_categories({})
+
+    resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
+    assert resp.status == 409
+    assert (await resp.json()) == {"error": "category_deleted"}
+
+
+@pytest.mark.asyncio
 async def test_decide_feedback_case_rejects_non_boolean_approved(aiohttp_client):
     guild, app = build_with_channels()
     client = await aiohttp_client(app)

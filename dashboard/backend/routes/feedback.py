@@ -119,7 +119,7 @@ async def decide_feedback_case(request: web.Request) -> web.Response:
         decided_by_mention=f"<@{moderator.id}>",
     )
     if not result["ok"]:
-        status_code = {"not_found": 404, "already_decided": 409}.get(result["error"], 400)
+        status_code = {"not_found": 404, "already_decided": 409, "category_deleted": 409}.get(result["error"], 400)
         return web.json_response({"error": result["error"]}, status=status_code)
 
     return web.json_response({"ok": True})

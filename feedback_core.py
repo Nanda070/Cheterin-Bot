@@ -23,7 +23,9 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
         return {"ok": False, "error": "already_decided"}
 
     category_key = case_data["category_key"]
-    config = get_feedback_categories()[category_key]
+    config = get_feedback_categories().get(category_key)
+    if config is None:
+        return {"ok": False, "error": "category_deleted"}
     status_text = "Принято" if approved else "Отклонено"
     reviewed_status = f"Рассмотрено · {status_text}"
 
