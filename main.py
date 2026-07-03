@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import feedback_categories
 import json
 import os
 import asyncio
@@ -61,6 +62,7 @@ class ChetBot(commands.Bot):
             await ch.send(embed=embed)
 
     async def setup_hook(self):
+        feedback_categories.migrate_from_env_if_needed()
         await self.load_extension("feedback_menu")
         await self.load_extension("welcome")
         await self.load_extension("button")
