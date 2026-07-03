@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands, tasks
-import os
 import asyncio
 from datetime import timedelta
 import logging
+
+import bot_config
 
 logger = logging.getLogger("chetbot.spam")
 
@@ -16,10 +17,6 @@ class Spam(commands.Cog):
         # Набор user_id, для которых уже запущено наказание (защита от двойного срабатывания)
         self._processing: set[int] = set()
 
-        env_val = os.getenv("SPAM_EXCEPTION_CHANNELS", "")
-        self.exception_channels = [
-            int(c.strip()) for c in env_val.split(",") if c.strip().isdigit()
-        ]
         self._cleanup_cache.start()
 
     def cog_unload(self):
@@ -142,7 +139,7 @@ class Spam(commands.Cog):
             return
 
         # Не реагируем на канал Tempban
-        tempban_channel_id = os.getenv("TEMPBAN_CHANNEL_ID")
+        tempban_channel_id = bot_config.get("TEMPBAN_CHANNEL_ID")
         if tempban_channel_id and message.channel.id == int(tempban_channel_id):
             return
 
@@ -158,7 +155,8 @@ class Spam(commands.Cog):
             return
 
         # Игнорируем каналы-исключения
-        if message.channel.id in self.exception_channels:
+        exception_channels = [int(c) for c in bot_config.get("SPAM_EXCEPTION_CHANNELS", [])]
+        if message.channel.id in exception_channels:
             return
 
         user_id = message.author.id
@@ -216,8 +214,8 @@ class Spam(commands.Cog):
     async def _punish(self, message: discord.Message, matches: list, limit: int):
         member = message.author
         guild = message.guild
-        log_channel_id = os.getenv("SPAM_LOG_CHANNEL_ID")
-        role_ping_id = os.getenv("SPAM_LOG_ROLE_ID")
+        log_channel_id = bot_config.get("SPAM_LOG_CHANNEL_ID")
+        role_ping_id = bot_config.get("SPAM_LOG_ROLE_ID")
         signature = matches[0]["signature"]
 
         # Таймаут на 24 часа

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import bot_config
 import feedback_categories
 import json
 import os
@@ -54,7 +55,7 @@ class ChetBot(commands.Bot):
         return datetime.now(timezone.utc)
 
     async def send_log(self, embed: discord.Embed):
-        raw = os.getenv("LOG_CHANNEL_ID")
+        raw = bot_config.get("LOG_CHANNEL_ID")
         if not raw:
             return
         ch = self.get_channel(int(raw))
@@ -63,6 +64,7 @@ class ChetBot(commands.Bot):
 
     async def setup_hook(self):
         feedback_categories.migrate_from_env_if_needed()
+        bot_config.migrate_from_env_if_needed()
         await self.load_extension("feedback_menu")
         await self.load_extension("welcome")
         await self.load_extension("button")
