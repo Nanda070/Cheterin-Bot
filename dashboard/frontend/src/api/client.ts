@@ -218,3 +218,49 @@ export async function fetchChannels(): Promise<ChannelInfo[]> {
   const body = await apiFetch<{ channels: ChannelInfo[] }>('/api/channels')
   return body.channels
 }
+
+export interface EmbedFieldSpec {
+  name: string
+  value: string
+  inline: boolean
+}
+
+export interface EmbedSpec {
+  title: string
+  description: string
+  url: string
+  color: string
+  author: { name: string; url: string; icon_url: string }
+  footer: { text: string; icon_url: string }
+  image: { url: string }
+  thumbnail: { url: string }
+  timestamp: string | null
+  fields: EmbedFieldSpec[]
+}
+
+export interface EmbedMessagePayload {
+  content: string
+  embed: EmbedSpec
+  role_ids: string[]
+}
+
+export interface EmbedMessageResult {
+  message_id: string
+  channel_id: string
+}
+
+export function createEmbedMessage(channelId: string, payload: EmbedMessagePayload): Promise<EmbedMessageResult> {
+  return apiFetch('/api/embed-messages', jsonInit('POST', { channel_id: channelId, ...payload }))
+}
+
+export function fetchEmbedMessage(channelId: string, messageId: string): Promise<EmbedMessagePayload> {
+  return apiFetch(`/api/embed-messages/${channelId}/${messageId}`)
+}
+
+export function updateEmbedMessage(
+  channelId: string,
+  messageId: string,
+  payload: EmbedMessagePayload,
+): Promise<EmbedMessageResult> {
+  return apiFetch(`/api/embed-messages/${channelId}/${messageId}`, jsonInit('PUT', payload))
+}
