@@ -8,4 +8,5 @@ dashboard/frontend/dist/
 invites_stats.json
 antispam_backup.json
 buttons_config.json
+events_data.json
 bot.log
