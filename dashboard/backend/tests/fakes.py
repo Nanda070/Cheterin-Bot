@@ -139,6 +139,51 @@ class FakeChannel:
         return message
 
 
+class FakeThread:
+    def __init__(self, thread_id, name="thread", messages=None, next_message_id=2000):
+        self.id = thread_id
+        self.name = name
+        self._messages = messages or {}
+        self._next_message_id = next_message_id
+        self.send_calls = []
+        self.send_raises = None
+        self.edit_calls = []
+        self.edit_raises = None
+        self.archived = False
+        self.locked = False
+
+    async def fetch_message(self, message_id):
+        import discord
+
+        message = self._messages.get(message_id)
+        if message is None:
+            raise discord.NotFound.__new__(discord.NotFound)
+        return message
+
+    async def send(self, **kwargs):
+        if self.send_raises:
+            raise self.send_raises
+        self.send_calls.append(kwargs)
+        message = FakeMessage(
+            self._next_message_id,
+            embeds=[kwargs["embed"]] if kwargs.get("embed") else [],
+            components=kwargs.get("view"),
+            content=kwargs.get("content"),
+        )
+        self._messages[message.id] = message
+        self._next_message_id += 1
+        return message
+
+    async def edit(self, **kwargs):
+        if self.edit_raises:
+            raise self.edit_raises
+        self.edit_calls.append(kwargs)
+        if "archived" in kwargs:
+            self.archived = kwargs["archived"]
+        if "locked" in kwargs:
+            self.locked = kwargs["locked"]
+
+
 class FakeMember:
     def __init__(
         self,
@@ -164,6 +209,8 @@ class FakeMember:
         self.top_role = top_role or (self.roles[-1] if len(self.roles) > 1 else default_role)
         self.action_calls = []
         self.action_raises = None
+        self.send_calls = []
+        self.send_raises = None
 
     async def _record(self, action, **kwargs):
         if self.action_raises:
@@ -182,15 +229,23 @@ class FakeMember:
     async def remove_roles(self, role, **kwargs):
         await self._record("remove_roles", role=role, **kwargs)
 
+    async def send(self, **kwargs):
+        if self.send_raises:
+            raise self.send_raises
+        self.send_calls.append(kwargs)
+
 
 class FakeGuild:
-    def __init__(self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None):
+    def __init__(
+        self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None, threads=None
+    ):
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
         self.channels = channels or []
         self.emojis = emojis or []
         self._fetchable_members = fetchable_members or []
+        self.threads = threads or []
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)
@@ -213,15 +268,37 @@ class FakeGuild:
 
 
 class FakeBot:
-    def __init__(self, guild, user=None):
+    def __init__(self, guild, user=None, fetchable_users=None):
         self._guild = guild
         self.user = user or FakeMember(999999, name="ChetBot", bot=True)
         self.stats = {}
         self.feedback_cases = {}
         self.sent_logs = []
+        self._fetchable_users = fetchable_users or []
+        self.update_file_calls = 0
 
     def get_guild(self, guild_id):
         return self._guild
+
+    def get_channel(self, channel_id):
+        found = self._guild.get_channel(channel_id)
+        if found is not None:
+            return found
+        return next((t for t in self._guild.threads if t.id == channel_id), None)
+
+    async def fetch_user(self, user_id):
+        import discord
+
+        member = self._guild.get_member(user_id)
+        if member is not None:
+            return member
+        found = next((u for u in self._fetchable_users if u.id == user_id), None)
+        if found is not None:
+            return found
+        raise discord.NotFound.__new__(discord.NotFound)
+
+    async def update_file(self):
+        self.update_file_calls += 1
 
     async def send_log(self, embed):
         self.sent_logs.append(embed)
