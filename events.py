@@ -15,39 +15,26 @@ logger = logging.getLogger("chetbot.events")
 EVENTS_FILE = "events_data.json"
 
 
-_EVENTS_CACHE = None
-_EVENTS_LOCK = asyncio.Lock()
-
 async def load_events() -> dict:
-    global _EVENTS_CACHE
-    if _EVENTS_CACHE is not None:
-        return _EVENTS_CACHE
-        
-    async with _EVENTS_LOCK:
-        if _EVENTS_CACHE is not None:
-            return _EVENTS_CACHE
-        def _read():
-            if os.path.exists(EVENTS_FILE):
-                with open(EVENTS_FILE, "r", encoding="utf-8") as f:
-                    try:
-                        return json.load(f)
-                    except json.JSONDecodeError:
-                        return {}
-            return {}
-        _EVENTS_CACHE = await asyncio.to_thread(_read)
-        if "events" not in _EVENTS_CACHE:
-            _EVENTS_CACHE["events"] = {}
-        return _EVENTS_CACHE
+    def _read():
+        if os.path.exists(EVENTS_FILE):
+            with open(EVENTS_FILE, "r", encoding="utf-8") as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return {}
+        return {}
+    data = await asyncio.to_thread(_read)
+    if "events" not in data:
+        data["events"] = {}
+    return data
 
 
 async def save_events(data: dict):
-    global _EVENTS_CACHE
-    _EVENTS_CACHE = data
-    async with _EVENTS_LOCK:
-        def _write():
-            with open(EVENTS_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        await asyncio.to_thread(_write)
+    def _write():
+        with open(EVENTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    await asyncio.to_thread(_write)
 
 
 def upsert_embed_field(embed: discord.Embed, name: str, value: str, inline: bool = False):
