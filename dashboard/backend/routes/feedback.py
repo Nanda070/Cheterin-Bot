@@ -235,4 +235,16 @@ async def delete_feedback_category(request: web.Request) -> web.Response:
 
     del categories[category_key]
     feedback_categories.save_categories(categories)
+
+    bot = request.app["bot"]
+    removed_case_ids = [
+        case_id
+        for case_id, case_data in bot.feedback_cases.items()
+        if case_data.get("category_key") == category_key and case_data.get("status") == "pending"
+    ]
+    if removed_case_ids:
+        for case_id in removed_case_ids:
+            del bot.feedback_cases[case_id]
+        await bot.update_file()
+
     return web.json_response({"ok": True})

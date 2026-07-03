@@ -219,3 +219,39 @@ async def test_delete_feedback_category_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.delete("/api/feedback-categories/players")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_delete_feedback_category_removes_pending_cases(aiohttp_client):
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    bot = app["bot"]
+    bot.feedback_cases["PR-0001"] = {"case_id": "PR-0001", "category_key": "players", "status": "pending"}
+    bot.feedback_cases["PR-0002"] = {"case_id": "PR-0002", "category_key": "players", "status": "approved"}
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post("/api/feedback-categories", json=_spec())
+    resp = await client.delete("/api/feedback-categories/players")
+
+    assert resp.status == 200
+    assert "PR-0001" not in bot.feedback_cases
+    assert "PR-0002" in bot.feedback_cases
+    assert bot.update_file_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_delete_feedback_category_no_update_file_call_when_no_pending_cases(aiohttp_client):
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    bot = app["bot"]
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post("/api/feedback-categories", json=_spec())
+    resp = await client.delete("/api/feedback-categories/players")
+
+    assert resp.status == 200
+    assert bot.update_file_calls == 0
