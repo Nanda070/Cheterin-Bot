@@ -345,3 +345,7 @@ export function updateFeedbackCategory(
 export async function deleteFeedbackCategory(key: string): Promise<void> {
   await apiFetch(`/api/feedback-categories/${key}`, jsonInit('DELETE'))
 }
+
+export function publishFeedbackPanel(channelId: string): Promise<{ ok: boolean; message_id: string }> {
+  return apiFetch('/api/feedback-panel/publish', jsonInit('POST', { channel_id: channelId }))
+}
