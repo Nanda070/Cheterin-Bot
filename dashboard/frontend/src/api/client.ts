@@ -264,3 +264,40 @@ export function updateEmbedMessage(
 ): Promise<EmbedMessageResult> {
   return apiFetch(`/api/embed-messages/${channelId}/${messageId}`, jsonInit('PUT', payload))
 }
+
+export interface FeedbackCaseSummary {
+  case_id: string
+  category_key: string
+  category_title: string
+  submitter_id: string
+  submitter_display: string
+  status: 'pending' | 'approved' | 'denied'
+  created_at: string | null
+}
+
+export interface FeedbackCaseField {
+  key: string
+  label: string
+  value: string
+}
+
+export interface FeedbackCaseDetail extends FeedbackCaseSummary {
+  fields: FeedbackCaseField[]
+  public_channel_id: string | null
+  public_message_id: string | null
+  thread_id: string | null
+}
+
+export async function fetchFeedbackCases(status?: string): Promise<FeedbackCaseSummary[]> {
+  const path = status ? `/api/feedback-cases?status=${status}` : '/api/feedback-cases'
+  const body = await apiFetch<{ cases: FeedbackCaseSummary[] }>(path)
+  return body.cases
+}
+
+export function fetchFeedbackCaseDetail(caseId: string): Promise<FeedbackCaseDetail> {
+  return apiFetch(`/api/feedback-cases/${caseId}`)
+}
+
+export async function decideFeedbackCase(caseId: string, approved: boolean): Promise<void> {
+  await apiFetch(`/api/feedback-cases/${caseId}/decide`, jsonInit('POST', { approved }))
+}
