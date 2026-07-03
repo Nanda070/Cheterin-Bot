@@ -5,6 +5,7 @@ import {
   fetchChannels,
   fetchFeedbackCategories,
   fetchRoles,
+  publishFeedbackPanel,
   updateFeedbackCategory,
   type ChannelInfo,
   type FeedbackCategoryFieldSpec,
@@ -16,6 +17,27 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 
 const EMPTY_FIELD: FeedbackCategoryFieldSpec = { key: '', label: '', style: 'short', required: true, max_length: 200 }
+
+const DEFAULT_TEMPLATE: FeedbackCategorySpec = {
+  key: 'players',
+  title: 'Жалоба на участника',
+  button_label: '            Жалоба на участника            ',
+  channel_id: '',
+  case_prefix: 'PR',
+  case_title: 'Жалоба на участника',
+  thread_name: 'player-report',
+  review_role_ids: [],
+  approved_text: 'Участник наказан.',
+  denied_text: 'Жалоба отклонена.',
+  modal_title: 'Жалоба на участника',
+  fields: [
+    { key: 'offender', label: 'Ник / ID участника', style: 'short', required: true, max_length: 120 },
+    { key: 'complaint', label: 'Суть жалобы', style: 'paragraph', required: true, max_length: 1000 },
+    { key: 'datetime', label: 'Дата и время ситуации', style: 'short', required: false, max_length: 120 },
+    { key: 'proof', label: 'Доказательства', style: 'paragraph', required: false, max_length: 1000 },
+  ],
+  mini_summary_key: 'offender',
+}
 
 function emptySpec(): FeedbackCategorySpec {
   return {
@@ -45,6 +67,10 @@ export function FeedbackCategoriesPage() {
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [publishOpen, setPublishOpen] = useState(false)
+  const [publishChannelId, setPublishChannelId] = useState('')
+  const [publishBusy, setPublishBusy] = useState(false)
+  const [publishError, setPublishError] = useState('')
 
   const reload = () => {
     fetchFeedbackCategories().then(setCategories).catch(() => setError('Не удалось загрузить категории'))
@@ -61,6 +87,36 @@ export function FeedbackCategoriesPage() {
     setSpec(emptySpec())
     setError('')
     setFormOpen(true)
+  }
+
+  const openDefaultTemplate = () => {
+    setEditingKey(null)
+    setSpec({ ...DEFAULT_TEMPLATE, fields: DEFAULT_TEMPLATE.fields.map((f) => ({ ...f })) })
+    setError('')
+    setFormOpen(true)
+  }
+
+  const openPublish = () => {
+    setPublishChannelId('')
+    setPublishError('')
+    setPublishOpen(true)
+  }
+
+  const publish = async () => {
+    if (!publishChannelId) {
+      setPublishError('Выберите канал')
+      return
+    }
+    setPublishBusy(true)
+    setPublishError('')
+    try {
+      await publishFeedbackPanel(publishChannelId)
+      setPublishOpen(false)
+    } catch {
+      setPublishError('Не удалось опубликовать панель')
+    } finally {
+      setPublishBusy(false)
+    }
   }
 
   const openEdit = (category: FeedbackCategorySpec) => {
@@ -129,9 +185,17 @@ export function FeedbackCategoriesPage() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">Категории обращений</h1>
-        <Button variant="primary" onClick={openCreate}>
-          Создать категорию
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={openDefaultTemplate}>
+            Дефолтный шаблон
+          </Button>
+          <Button variant="secondary" onClick={openPublish}>
+            Опубликовать
+          </Button>
+          <Button variant="primary" onClick={openCreate}>
+            Создать категорию
+          </Button>
+        </div>
       </div>
 
       {error && !formOpen && <p className="mb-4 text-sm text-danger">{error}</p>}
@@ -383,6 +447,38 @@ export function FeedbackCategoriesPage() {
           <Button variant="danger" onClick={confirmDelete}>
             Удалить категорию
           </Button>
+        </div>
+      </Modal>
+
+      <Modal open={publishOpen} title="Опубликовать панель обращений" onClose={() => setPublishOpen(false)}>
+        <div className="flex flex-col gap-3">
+          <label className="text-sm text-muted" htmlFor="fc-publish-channel">
+            Канал
+          </label>
+          <select
+            id="fc-publish-channel"
+            value={publishChannelId}
+            onChange={(e) => setPublishChannelId(e.target.value)}
+            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">Выберите канал…</option>
+            {channels.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {publishError && <p className="text-sm text-danger">{publishError}</p>}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setPublishOpen(false)} disabled={publishBusy}>
+              Отмена
+            </Button>
+            <Button variant="primary" onClick={publish} disabled={publishBusy}>
+              {publishBusy ? 'Публикуем…' : 'Опубликовать'}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

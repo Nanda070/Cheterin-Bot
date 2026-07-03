@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FeedbackCategoriesPage } from './FeedbackCategories'
@@ -78,5 +78,41 @@ describe('FeedbackCategoriesPage', () => {
     fireEvent.click(screen.getByText('Удалить категорию'))
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith('players'))
+  })
+
+  it('opens the create form pre-filled with the default category template', async () => {
+    vi.spyOn(client, 'fetchFeedbackCategories').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'reports' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    render(<FeedbackCategoriesPage />)
+
+    await waitFor(() => screen.getByText('Дефолтный шаблон'))
+    fireEvent.click(screen.getByText('Дефолтный шаблон'))
+
+    await waitFor(() => screen.getByLabelText('Ключ'))
+    expect((screen.getByLabelText('Ключ') as HTMLInputElement).value).toBe('players')
+    expect((screen.getByLabelText('Префикс дела') as HTMLInputElement).value).toBe('PR')
+    expect((screen.getByLabelText('Имя треда') as HTMLInputElement).value).toBe('player-report')
+  })
+
+  it('publishes the panel to the selected channel', async () => {
+    vi.spyOn(client, 'fetchFeedbackCategories').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'reports' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    const publishSpy = vi.spyOn(client, 'publishFeedbackPanel').mockResolvedValue({ ok: true, message_id: '999' })
+
+    render(<FeedbackCategoriesPage />)
+
+    await waitFor(() => screen.getByRole('button', { name: 'Опубликовать' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }))
+
+    await waitFor(() => screen.getByLabelText('Канал'))
+    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+
+    const dialog = screen.getByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Опубликовать' }))
+
+    await waitFor(() => expect(publishSpy).toHaveBeenCalledWith('500'))
   })
 })
