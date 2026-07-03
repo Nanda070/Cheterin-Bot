@@ -349,3 +349,78 @@ export async function deleteFeedbackCategory(key: string): Promise<void> {
 export function publishFeedbackPanel(channelId: string): Promise<{ ok: boolean; message_id: string }> {
   return apiFetch('/api/feedback-panel/publish', jsonInit('POST', { channel_id: channelId }))
 }
+
+export interface EventParticipantSolo {
+  user_id: string
+  ign: string
+}
+
+export interface EventParticipantTeamCaptain {
+  user_id: string
+  team_name: string
+  members: string
+}
+
+export interface EventParticipantTeamCodeMember {
+  user_id: string
+  ign: string
+  is_captain: boolean
+}
+
+export interface EventParticipantTeamCode {
+  team_code: string
+  team_name: string
+  members: EventParticipantTeamCodeMember[]
+}
+
+export interface EventPollOption {
+  label: string
+  votes: number
+  percent: number
+}
+
+export interface EventSummary {
+  message_id: string
+  type: 'tournament' | 'poll'
+  title: string
+  status: 'open' | 'closed'
+  channel_id: string
+  count: number
+}
+
+export interface EventDetail extends EventSummary {
+  description: string
+  role_reward: string | null
+  mode?: 'solo' | 'team_captain' | 'team_code'
+  max_limit?: number
+  team_size?: number
+  participants?: (EventParticipantSolo | EventParticipantTeamCaptain | EventParticipantTeamCode)[]
+  multi_select?: boolean
+  options?: EventPollOption[]
+}
+
+export async function fetchEvents(status?: string): Promise<EventSummary[]> {
+  const path = status ? `/api/events?status=${status}` : '/api/events'
+  const body = await apiFetch<{ events: EventSummary[] }>(path)
+  return body.events
+}
+
+export function fetchEventDetail(messageId: string): Promise<EventDetail> {
+  return apiFetch(`/api/events/${messageId}`)
+}
+
+export async function closeEvent(messageId: string): Promise<void> {
+  await apiFetch(`/api/events/${messageId}/close`, jsonInit('POST'))
+}
+
+export async function deleteEvent(messageId: string): Promise<void> {
+  await apiFetch(`/api/events/${messageId}`, jsonInit('DELETE'))
+}
+
+export async function notifyEventParticipants(
+  messageId: string,
+  message: string,
+): Promise<{ success: number; failed: number }> {
+  const result = await apiFetch<{ success: number; failed: number }>(`/api/events/${messageId}/notify`, jsonInit('POST', { message }))
+  return { success: result.success, failed: result.failed }
+}
