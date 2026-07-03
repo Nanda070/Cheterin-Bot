@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import os
+
+import bot_config
 
 
 class Welcome(commands.Cog):
@@ -46,7 +47,7 @@ class Welcome(commands.Cog):
                 break
         self.cached_invites[guild.id] = new_invites
 
-        welcome_ch_id = os.getenv("WELCOME_CHANNEL_ID")
+        welcome_ch_id = bot_config.get("WELCOME_CHANNEL_ID")
         if welcome_ch_id:
             welcome_ch = self.bot.get_channel(int(welcome_ch_id))
             if welcome_ch:
@@ -69,7 +70,7 @@ class Welcome(commands.Cog):
                 color=discord.Color.blurple(),
                 timestamp=self.bot.utcnow(),
             )
-            inv_ch_id = os.getenv("INVITE_LOG_CHANNEL_ID")
+            inv_ch_id = bot_config.get("INVITE_LOG_CHANNEL_ID")
             if inv_ch_id:
                 inv_ch = self.bot.get_channel(int(inv_ch_id))
                 if inv_ch:
@@ -83,10 +84,10 @@ class Welcome(commands.Cog):
         )
         dm_embed.set_thumbnail(url="https://i.imgur.com/4ydti00.png")
 
-        dm_embed.add_field(name="〘❗〙 Объявления", value=f"<#{os.getenv('ANNOUNCEMENTS_CHANNEL_ID', '0')}> — все важные новости и анонсы", inline=False)
-        dm_embed.add_field(name="〘📜〙 Правила", value=f"<#{os.getenv('RULES_CHANNEL_ID', '0')}> — ознакомься перед общением", inline=False)
-        dm_embed.add_field(name="〘❗〙 Роли", value=f"<#{os.getenv('ROLES_CHANNEL_ID', '0')}> — получи доступ к привилегиям", inline=False)
-        dm_embed.add_field(name="〘🔎〙 Поиск игроков", value=f"<#{os.getenv('SEARCH_PLAYERS_CHANNEL_ID', '0')}> — найдёшь тиммейтов под свои задачи", inline=False)
+        dm_embed.add_field(name="〘❗〙 Объявления", value=f"<#{bot_config.get('ANNOUNCEMENTS_CHANNEL_ID') or '0'}> — все важные новости и анонсы", inline=False)
+        dm_embed.add_field(name="〘📜〙 Правила", value=f"<#{bot_config.get('RULES_CHANNEL_ID') or '0'}> — ознакомься перед общением", inline=False)
+        dm_embed.add_field(name="〘❗〙 Роли", value=f"<#{bot_config.get('ROLES_CHANNEL_ID') or '0'}> — получи доступ к привилегиям", inline=False)
+        dm_embed.add_field(name="〘🔎〙 Поиск игроков", value=f"<#{bot_config.get('SEARCH_PLAYERS_CHANNEL_ID') or '0'}> — найдёшь тиммейтов под свои задачи", inline=False)
         dm_embed.add_field(name="📈 Система уровней", value=("Наращивай активность в голосовых чатах и зарабатывай опыт — твоя роль и цвет ника будут расти вместе с тобой."), inline=False)
         dm_embed.add_field(name="💡 Советы по вливанию", value=("1. Представься в чате.\n2. Загляни в раздел «Правила» и ставь реакцию ✔️.\n3. Выбери роли, которые тебе интересны.\n4. Не стесняйся задавать вопросы — мы тут все на «ты» :)"), inline=False)
         dm_embed.set_footer(text="Для помощи — обращайся к Администрации. По вопросам ботов — пиши Nanda070.")

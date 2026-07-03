@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
-import os
 import asyncio
 import logging
+
+import bot_config
 
 logger = logging.getLogger("chetbot.tempban")
 
@@ -49,7 +50,7 @@ class TempBan(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        tempban_channel_id = os.getenv("TEMPBAN_CHANNEL_ID")
+        tempban_channel_id = bot_config.get("TEMPBAN_CHANNEL_ID")
         if not tempban_channel_id or message.channel.id != int(tempban_channel_id):
             return
 
@@ -74,7 +75,7 @@ class TempBan(commands.Cog):
         guild = message.guild
         member = message.author
 
-        log_channel_id = os.getenv("SPAM_LOG_CHANNEL_ID")
+        log_channel_id = bot_config.get("SPAM_LOG_CHANNEL_ID")
         log_channel = None
         if log_channel_id:
             log_channel = guild.get_channel(int(log_channel_id))
@@ -82,7 +83,7 @@ class TempBan(commands.Cog):
         content_preview = message.content[:1024] if message.content else "Пусто/Медиа"
         now = discord.utils.utcnow()
 
-        invite_link = os.getenv("SERVER_INVITE_LINK", "https://discord.gg/cheterin")
+        invite_link = bot_config.get("SERVER_INVITE_LINK") or "https://discord.gg/cheterin"
         dm_status = "✅ Успешно"
         try:
             await member.send(
