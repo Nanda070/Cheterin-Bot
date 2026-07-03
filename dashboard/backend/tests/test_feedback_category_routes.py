@@ -140,3 +140,82 @@ async def test_list_feedback_categories_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/feedback-categories")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_update_feedback_category_success(aiohttp_client):
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post("/api/feedback-categories", json=_spec())
+    updated = _spec()
+    updated["title"] = "Обновлённая жалоба"
+
+    resp = await client.put("/api/feedback-categories/players", json=updated)
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["title"] == "Обновлённая жалоба"
+    assert feedback_categories.load_categories()["players"]["title"] == "Обновлённая жалоба"
+
+
+@pytest.mark.asyncio
+async def test_update_feedback_category_404_when_unknown(aiohttp_client):
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put("/api/feedback-categories/missing", json=_spec())
+    assert resp.status == 404
+    assert (await resp.json())["error"] == "not_found"
+
+
+@pytest.mark.asyncio
+async def test_update_feedback_category_keeps_own_case_prefix(aiohttp_client):
+    # Editing a category and re-submitting its own unchanged case_prefix must
+    # NOT be rejected as a duplicate against itself.
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post("/api/feedback-categories", json=_spec())
+    resp = await client.put("/api/feedback-categories/players", json=_spec())
+    assert resp.status == 200
+
+
+@pytest.mark.asyncio
+async def test_delete_feedback_category_removes_it(aiohttp_client):
+    role = FakeRole(111, name="Reviewers")
+    channel = FakeChannel(500, name="reports")
+    _, app = build(roles=[role], channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.post("/api/feedback-categories", json=_spec())
+    resp = await client.delete("/api/feedback-categories/players")
+    assert resp.status == 200
+    assert feedback_categories.load_categories() == {}
+
+
+@pytest.mark.asyncio
+async def test_delete_feedback_category_404_when_unknown(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.delete("/api/feedback-categories/missing")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_feedback_category_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.delete("/api/feedback-categories/players")
+    assert resp.status == 401

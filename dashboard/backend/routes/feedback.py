@@ -187,3 +187,52 @@ async def create_feedback_category(request: web.Request) -> web.Response:
     feedback_categories.save_categories(categories)
 
     return web.json_response(serialize_category(key, entry), status=201)
+
+
+@routes.put("/api/feedback-categories/{category_key}")
+@require_dashboard_access
+async def update_feedback_category(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    category_key = request.match_info["category_key"]
+    categories = feedback_categories.load_categories()
+    if category_key not in categories:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    spec = {**body, "key": category_key}
+    error = feedback_categories.validate_category_spec(spec, categories, existing_key=category_key)
+    if error:
+        status_code = 409 if error in ("key_taken", "case_prefix_taken") else 400
+        return web.json_response({"error": error}, status=status_code)
+
+    error_response = _validate_category_relations(spec, guild)
+    if error_response:
+        return error_response
+
+    entry = {k: v for k, v in body.items() if k != "key"}
+    categories[category_key] = entry
+    feedback_categories.save_categories(categories)
+
+    return web.json_response(serialize_category(category_key, entry))
+
+
+@routes.delete("/api/feedback-categories/{category_key}")
+@require_dashboard_access
+async def delete_feedback_category(request: web.Request) -> web.Response:
+    category_key = request.match_info["category_key"]
+    categories = feedback_categories.load_categories()
+    if category_key not in categories:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    del categories[category_key]
+    feedback_categories.save_categories(categories)
+    return web.json_response({"ok": True})
