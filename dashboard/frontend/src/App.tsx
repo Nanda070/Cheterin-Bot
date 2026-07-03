@@ -7,7 +7,7 @@ import { DashboardShell } from './pages/DashboardShell'
 import { HomePage } from './pages/Home'
 import { MembersPage } from './pages/Members'
 import { LockdownPage } from './pages/Lockdown'
-import { ReactionRolesPage } from './pages/ReactionRoles'
+import { MessageBuilderPage } from './pages/MessageBuilder'
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="lockdown" element={<LockdownPage />} />
-            <Route path="reaction-roles" element={<ReactionRolesPage />} />
+            <Route path="reaction-roles" element={<MessageBuilderPage />} />
           </Route>
         </Routes>
       </AuthProvider>
