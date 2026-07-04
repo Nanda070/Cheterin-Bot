@@ -1,4 +1,5 @@
 import socket
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -87,8 +88,8 @@ async def test_start_dashboard_closes_http_session_on_bind_failure():
     captured = {}
     orig_create_app = app_module.create_app
 
-    def spy_create_app(bot, config, guild_id):
-        app = orig_create_app(bot, config, guild_id)
+    def spy_create_app(bot, config, guild_id, frontend_dist=None):
+        app = orig_create_app(bot, config, guild_id, frontend_dist=frontend_dist)
         captured["app"] = app
         return app
 
@@ -114,3 +115,93 @@ async def test_bracket_routes_are_registered(aiohttp_client):
     # 401 (not 404) proves the route exists and is reachable, and that the
     # dashboard-access auth gate is the thing rejecting it — not a missing route.
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_health_route_not_shadowed_by_static_fallback(aiohttp_client, tmp_path):
+    from dashboard.backend.config import load_dashboard_config
+
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "index.html").write_text("<html>SPA</html>", encoding="utf-8")
+
+    config = load_dashboard_config(VALID_ENV)
+    app = create_app(FakeBot(), config, guild_id=1, frontend_dist=dist_dir)
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/api/health")
+
+    assert resp.status == 200
+    body = await resp.json()
+    assert body == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_unmatched_path_falls_back_to_index_when_frontend_dist_set(aiohttp_client, tmp_path):
+    from dashboard.backend.config import load_dashboard_config
+
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "index.html").write_text("<html>SPA</html>", encoding="utf-8")
+
+    config = load_dashboard_config(VALID_ENV)
+    app = create_app(FakeBot(), config, guild_id=1, frontend_dist=dist_dir)
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/brackets/abc123")
+
+    assert resp.status == 200
+    text = await resp.text()
+    assert text == "<html>SPA</html>"
+
+
+@pytest.mark.asyncio
+async def test_no_static_fallback_when_frontend_dist_is_none(aiohttp_client):
+    from dashboard.backend.config import load_dashboard_config
+
+    config = load_dashboard_config(VALID_ENV)
+    app = create_app(FakeBot(), config, guild_id=1)
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/some/nonexistent/path")
+
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_start_dashboard_passes_frontend_dist_from_config(tmp_path):
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "index.html").write_text("<html>SPA</html>", encoding="utf-8")
+
+    captured = {}
+    orig_create_app = app_module.create_app
+
+    def spy_create_app(bot, config, guild_id, frontend_dist=None):
+        captured["frontend_dist"] = frontend_dist
+        return orig_create_app(bot, config, guild_id, frontend_dist=frontend_dist)
+
+    env = dict(VALID_ENV, DASHBOARD_FRONTEND_DIST=str(dist_dir))
+    with patch.object(app_module, "create_app", side_effect=spy_create_app):
+        runner = await start_dashboard(FakeBot(), guild_id=1, env=env)
+
+    assert runner is not None
+    assert captured["frontend_dist"] == dist_dir
+    await runner.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_start_dashboard_passes_none_frontend_dist_when_unset():
+    captured = {}
+    orig_create_app = app_module.create_app
+
+    def spy_create_app(bot, config, guild_id, frontend_dist=None):
+        captured["frontend_dist"] = frontend_dist
+        return orig_create_app(bot, config, guild_id, frontend_dist=frontend_dist)
+
+    with patch.object(app_module, "create_app", side_effect=spy_create_app):
+        runner = await start_dashboard(FakeBot(), guild_id=1, env=VALID_ENV)
+
+    assert runner is not None
+    assert captured["frontend_dist"] is None
+    await runner.cleanup()

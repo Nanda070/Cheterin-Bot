@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import aiohttp
 from aiohttp import web
@@ -17,6 +18,7 @@ from .routes.config import routes as config_routes
 from .routes.welcome import routes as welcome_routes
 from .routes.auto_roles import routes as auto_roles_routes
 from .session import setup_session
+from .static import setup_static_routes
 
 logger = logging.getLogger("dashboard")
 
@@ -32,7 +34,12 @@ async def json_error_middleware(request, handler):
         return web.json_response({"error": "internal_error"}, status=500)
 
 
-def create_app(bot, config: DashboardConfig, guild_id: int) -> web.Application:
+def create_app(
+    bot,
+    config: DashboardConfig,
+    guild_id: int,
+    frontend_dist: Path | None = None,
+) -> web.Application:
     app = web.Application(middlewares=[json_error_middleware])
     app["bot"] = bot
     app["dashboard_config"] = config
@@ -56,6 +63,9 @@ def create_app(bot, config: DashboardConfig, guild_id: int) -> web.Application:
 
     app.router.add_get("/api/health", health)
 
+    if frontend_dist is not None and frontend_dist.is_dir():
+        setup_static_routes(app, frontend_dist)
+
     async def cleanup_http_session(cleanup_app: web.Application) -> None:
         await cleanup_app["http_session"].close()
 
@@ -71,9 +81,11 @@ async def start_dashboard(bot, guild_id: int, env: dict | None = None) -> web.Ap
         logger.error("Dashboard disabled: %s", exc)
         return None
 
+    frontend_dist = Path(config.frontend_dist) if config.frontend_dist else None
+
     runner = None
     try:
-        app = create_app(bot, config, guild_id)
+        app = create_app(bot, config, guild_id, frontend_dist=frontend_dist)
         runner = web.AppRunner(app)
         await runner.setup()
         try:
