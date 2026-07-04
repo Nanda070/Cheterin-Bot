@@ -11,7 +11,7 @@ import {
   type Icon,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { logout } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
@@ -54,10 +54,10 @@ export function DashboardShell() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div className="flex items-center gap-2 text-foreground">
+        <Link to="/" className="flex items-center gap-2 text-foreground">
           <Sparkle size={20} weight="fill" className="text-primary" />
-          <span className="font-semibold">404 Bot Dashboard</span>
-        </div>
+          <span className="font-semibold">Cheterin</span>
+        </Link>
 
         <Dropdown
           trigger={
