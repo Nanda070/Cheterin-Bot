@@ -2,9 +2,10 @@ __pycache__/
 *.pyc
 node_modules/
 dashboard/frontend/dist/
-.env
 .agents/
 .superpowers/
+.pytest_cache/
+.claude/
 invites_stats.json
 antispam_backup.json
 buttons_config.json
