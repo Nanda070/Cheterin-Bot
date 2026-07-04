@@ -136,6 +136,22 @@ export async function deactivateLockdown(): Promise<void> {
   await apiFetch('/api/lockdown/deactivate', jsonInit('POST'))
 }
 
+export interface ModerationLogEntry {
+  type: 'spam_punish' | 'tempban' | 'manual_ban' | 'manual_kick'
+  timestamp: string
+  user_id: string
+  user_display: string
+  moderator_id: string | null
+  moderator_display: string | null
+  reason: string
+  extra: string
+}
+
+export async function fetchModerationLog(): Promise<ModerationLogEntry[]> {
+  const body = await apiFetch<{ events: ModerationLogEntry[] }>('/api/moderation-log')
+  return body.events
+}
+
 export type MassAssignTarget = 'all' | 'all_except_bots' | 'selected'
 
 export interface MassAssignStatus {

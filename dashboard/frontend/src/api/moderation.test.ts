@@ -4,6 +4,7 @@ import {
   banMember,
   fetchLockdownStatus,
   fetchMembers,
+  fetchModerationLog,
   grantRole,
 } from './client'
 
@@ -61,5 +62,26 @@ describe('moderation api client', () => {
     )
     await expect(fetchLockdownStatus()).rejects.toMatchObject({ status: 403 })
     await expect(fetchLockdownStatus()).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('fetchModerationLog unwraps the events array', async () => {
+    const events = [
+      {
+        type: 'manual_ban',
+        timestamp: '2026-07-04T12:00:00+00:00',
+        user_id: '70',
+        user_display: 'rulebreaker',
+        moderator_id: '10',
+        moderator_display: 'mod',
+        reason: 'спам',
+        extra: '',
+      },
+    ]
+    const fetchMock = vi.fn().mockResolvedValue(okJson({ events }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await fetchModerationLog()
+    expect(result).toEqual(events)
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/moderation-log')
   })
 })
