@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 import bot_config
+import moderation_log
 
 logger = logging.getLogger("chetbot.tempban")
 
@@ -155,6 +156,14 @@ class TempBan(commands.Cog):
             )
         embed.set_footer(text="Пользователь кикнут (сообщения за 20 минут удалены).")
         embed.timestamp = now
+
+        moderation_log.append_event(
+            "tempban",
+            member.id,
+            member.name,
+            TEMPBAN_REASON,
+            extra=f"Канал: <#{message.channel.id}>; unban: {'ok' if not unban_error else unban_error}",
+        )
 
         await self.bot.send_log(embed)
 
