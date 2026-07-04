@@ -6,6 +6,7 @@ import {
   SignOut,
   Sparkle,
   Stack,
+  Trophy,
   UsersThree,
   type Icon,
 } from '@phosphor-icons/react'
@@ -25,6 +26,7 @@ const SECTIONS: Section[] = [
   { label: 'Feedback и тикеты', icon: ChatCircleText, to: '/feedback' },
   { label: 'Конструктор кнопок и эмбедов', icon: Stack, to: '/reaction-roles' },
   { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
+  { label: 'Сетки', icon: Trophy, to: '/brackets' },
   { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
   { label: 'Участники и роли', icon: UsersThree, to: '/members' },
   { label: 'Конфигурация', icon: GearSix, to: '/config' },

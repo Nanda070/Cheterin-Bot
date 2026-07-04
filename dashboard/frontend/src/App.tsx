@@ -11,6 +11,9 @@ import { MessageBuilderPage } from './pages/MessageBuilder'
 import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
 import { ConfigPage } from './pages/Config'
+import { BracketsPage } from './pages/Brackets'
+import { BracketDetailPage } from './pages/BracketDetail'
+import { PublicBracketPage } from './pages/PublicBracket'
 
 function App() {
   return (
@@ -19,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
+          <Route path="/bracket/:token" element={<PublicBracketPage />} />
           <Route
             path="/"
             element={
@@ -33,6 +37,8 @@ function App() {
             <Route path="reaction-roles" element={<MessageBuilderPage />} />
             <Route path="feedback" element={<FeedbackPage />} />
             <Route path="events" element={<EventsPage />} />
+            <Route path="brackets" element={<BracketsPage />} />
+            <Route path="brackets/:id" element={<BracketDetailPage />} />
             <Route path="config" element={<ConfigPage />} />
           </Route>
         </Routes>
