@@ -5,6 +5,7 @@ from datetime import timedelta
 import logging
 
 import bot_config
+import moderation_log
 
 logger = logging.getLogger("chetbot.spam")
 
@@ -229,6 +230,15 @@ class Spam(commands.Cog):
 
         # Purge сообщений за последние 20 минут в фоне (текстовые каналы + треды)
         asyncio.create_task(self.purge_recent_messages(guild, member))
+
+        channels_spammed_for_log = list(set(f"<#{e['channel_id']}>" for e in matches))
+        moderation_log.append_event(
+            "spam_punish",
+            member.id,
+            member.name,
+            f"Спам массовыми тегами ({limit} одинаковых сообщений за 60 сек.)",
+            extra=", ".join(channels_spammed_for_log),
+        )
 
         # Лог
         if not log_channel_id:
