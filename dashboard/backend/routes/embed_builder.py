@@ -68,7 +68,8 @@ async def create_embed_message(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
 
     spec = body.get("embed") or {}
-    error_code = embed_builder.validate_embed_spec(spec)
+    content = body.get("content") or ""
+    error_code = embed_builder.validate_embed_spec(spec, content)
     if error_code:
         return web.json_response({"error": error_code}, status=400)
 
@@ -84,12 +85,11 @@ async def create_embed_message(request: web.Request) -> web.Response:
     if error:
         return error
 
-    content = body.get("content") or None
-    embed = embed_builder.build_embed(spec)
+    embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
 
     try:
-        message = await channel.send(content=content, embed=embed, view=view)
+        message = await channel.send(content=content or None, embed=embed, view=view)
     except discord.HTTPException as exc:
         logger.warning("Failed to send embed message to channel %s: %s", channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
@@ -147,7 +147,8 @@ async def update_embed_message(request: web.Request) -> web.Response:
         return error
 
     spec = body.get("embed") or {}
-    error_code = embed_builder.validate_embed_spec(spec)
+    content = body.get("content") or ""
+    error_code = embed_builder.validate_embed_spec(spec, content)
     if error_code:
         return web.json_response({"error": error_code}, status=400)
 
@@ -170,12 +171,11 @@ async def update_embed_message(request: web.Request) -> web.Response:
     if error:
         return error
 
-    content = body.get("content") or None
-    embed = embed_builder.build_embed(spec)
+    embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
 
     try:
-        await message.edit(content=content, embed=embed, view=view)
+        await message.edit(content=content or None, embed=embed, view=view)
     except discord.HTTPException as exc:
         logger.warning("Failed to edit embed message %s in channel %s: %s", message_id, channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
