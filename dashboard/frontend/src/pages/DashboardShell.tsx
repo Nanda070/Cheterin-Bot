@@ -2,11 +2,13 @@ import {
   CalendarCheck,
   ChatCircleText,
   GearSix,
+  HandWaving,
   ShieldWarning,
   SignOut,
   Sparkle,
   Stack,
   Trophy,
+  UserCirclePlus,
   UsersThree,
   type Icon,
 } from '@phosphor-icons/react'
@@ -27,6 +29,8 @@ const SECTIONS: Section[] = [
   { label: 'Конструктор кнопок и эмбедов', icon: Stack, to: '/reaction-roles' },
   { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
   { label: 'Сетки', icon: Trophy, to: '/brackets' },
+  { label: 'Приветствие и прощание', icon: HandWaving, to: '/welcome' },
+  { label: 'Авто-роли', icon: UserCirclePlus, to: '/auto-roles' },
   { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
   { label: 'Участники и роли', icon: UsersThree, to: '/members' },
   { label: 'Конфигурация', icon: GearSix, to: '/config' },
@@ -82,6 +86,16 @@ export function DashboardShell() {
 
       <div className="flex flex-1">
         <aside className="w-72 shrink-0 border-r border-border p-4">
+          <div className="mb-4 flex items-center gap-3 rounded-control border border-border bg-surface p-3">
+            {user?.avatar ? (
+              <img src={user.avatar} alt="" className="h-9 w-9 rounded-full" />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-muted text-sm font-semibold text-primary">
+                {user?.username?.slice(0, 1).toUpperCase()}
+              </span>
+            )}
+            <span className="truncate text-sm font-medium text-foreground">{user?.username}</span>
+          </div>
           <nav className="flex flex-col gap-2">
             {SECTIONS.map(({ label, icon: SectionIcon, to }, index) =>
               to ? (
