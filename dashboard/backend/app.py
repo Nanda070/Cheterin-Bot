@@ -14,6 +14,7 @@ from .routes.embed_builder import routes as embed_builder_routes
 from .routes.feedback import routes as feedback_routes
 from .routes.events import routes as events_routes
 from .routes.config import routes as config_routes
+from .routes.welcome import routes as welcome_routes
 from .session import setup_session
 
 logger = logging.getLogger("dashboard")
@@ -46,6 +47,7 @@ def create_app(bot, config: DashboardConfig, guild_id: int) -> web.Application:
     app.add_routes(feedback_routes)
     app.add_routes(events_routes)
     app.add_routes(config_routes)
+    app.add_routes(welcome_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})
