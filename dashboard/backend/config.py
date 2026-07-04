@@ -14,6 +14,7 @@ class DashboardConfig:
     session_secret: str
     access_role_ids: frozenset
     frontend_url: str
+    frontend_dist: str = ""
 
 
 REQUIRED_KEYS = (
@@ -58,4 +59,5 @@ def load_dashboard_config(env: dict) -> DashboardConfig:
         session_secret=session_secret,
         access_role_ids=role_ids,
         frontend_url=env.get("DASHBOARD_FRONTEND_URL", ""),
+        frontend_dist=env.get("DASHBOARD_FRONTEND_DIST", ""),
     )

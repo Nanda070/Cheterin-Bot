@@ -53,3 +53,14 @@ def test_frontend_url_picked_up_when_present():
     env = dict(VALID_ENV, DASHBOARD_FRONTEND_URL="http://localhost:5173")
     config = load_dashboard_config(env)
     assert config.frontend_url == "http://localhost:5173"
+
+
+def test_frontend_dist_defaults_to_empty_string():
+    config = load_dashboard_config(VALID_ENV)
+    assert config.frontend_dist == ""
+
+
+def test_frontend_dist_picked_up_when_present():
+    env = dict(VALID_ENV, DASHBOARD_FRONTEND_DIST="/srv/chetmain/dashboard/frontend/dist")
+    config = load_dashboard_config(env)
+    assert config.frontend_dist == "/srv/chetmain/dashboard/frontend/dist"
