@@ -11,7 +11,7 @@ export function LoginPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold text-foreground">Панель управления ботом</h1>
+          <h1 className="text-xl font-semibold text-foreground">404 Bot Dashboard</h1>
           <p className="text-sm text-muted">
             Войдите через Discord, чтобы получить доступ к панели модерации сервера.
           </p>

@@ -54,7 +54,7 @@ export function DashboardShell() {
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
         <div className="flex items-center gap-2 text-foreground">
           <Sparkle size={20} weight="fill" className="text-primary" />
-          <span className="font-semibold">Панель управления ботом</span>
+          <span className="font-semibold">404 Bot Dashboard</span>
         </div>
 
         <Dropdown
