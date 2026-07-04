@@ -310,3 +310,69 @@ async def test_set_match_winner_requires_auth(aiohttp_client):
 
     resp = await client.post(f"/api/brackets/{bracket['id']}/matches/0/0/winner", json={"winner": "a"})
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_enable_share_generates_a_token(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(f"/api/brackets/{bracket['id']}/share")
+    assert resp.status == 200
+    token = (await resp.json())["share_token"]
+    assert token
+    assert brackets.load_brackets()[bracket["id"]]["share_token"] == token
+
+
+@pytest.mark.asyncio
+async def test_disable_share_clears_the_token(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
+    bracket["share_token"] = "existing-token"
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.delete(f"/api/brackets/{bracket['id']}/share")
+    assert resp.status == 200
+    assert brackets.load_brackets()[bracket["id"]]["share_token"] is None
+
+
+@pytest.mark.asyncio
+async def test_public_bracket_returns_data_with_no_auth(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
+    bracket["share_token"] = "my-token"
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    # deliberately no force_login call
+
+    resp = await client.get("/api/public/brackets/my-token")
+    assert resp.status == 200
+    assert (await resp.json())["title"] == "T1"
+
+
+@pytest.mark.asyncio
+async def test_public_bracket_404s_on_unknown_token(aiohttp_client):
+    app = build()
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/api/public/brackets/no-such-token")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_public_bracket_404s_after_share_disabled(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
+    bracket["share_token"] = "my-token"
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    await client.delete(f"/api/brackets/{bracket['id']}/share")
+    resp = await client.get("/api/public/brackets/my-token")
+    assert resp.status == 404

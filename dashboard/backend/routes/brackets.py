@@ -1,3 +1,5 @@
+import secrets
+
 from aiohttp import web
 
 import brackets
@@ -145,4 +147,39 @@ async def set_match_winner(request: web.Request) -> web.Response:
 
     brackets.set_winner(bracket, round_index, match_index, winner)
     brackets.save_brackets(data)
+    return web.json_response(serialize_bracket_detail(bracket))
+
+
+@routes.post("/api/brackets/{id}/share")
+@require_dashboard_access
+async def enable_share(request: web.Request) -> web.Response:
+    data = brackets.load_brackets()
+    bracket = data.get(request.match_info["id"])
+    if bracket is None:
+        return web.json_response({"error": "bracket_not_found"}, status=404)
+    token = secrets.token_urlsafe(32)
+    bracket["share_token"] = token
+    brackets.save_brackets(data)
+    return web.json_response({"share_token": token})
+
+
+@routes.delete("/api/brackets/{id}/share")
+@require_dashboard_access
+async def disable_share(request: web.Request) -> web.Response:
+    data = brackets.load_brackets()
+    bracket = data.get(request.match_info["id"])
+    if bracket is None:
+        return web.json_response({"error": "bracket_not_found"}, status=404)
+    bracket["share_token"] = None
+    brackets.save_brackets(data)
+    return web.json_response({"ok": True})
+
+
+@routes.get("/api/public/brackets/{token}")
+async def get_public_bracket(request: web.Request) -> web.Response:
+    data = brackets.load_brackets()
+    token = request.match_info["token"]
+    bracket = next((b for b in data.values() if b.get("share_token") == token), None)
+    if bracket is None:
+        return web.json_response({"error": "bracket_not_found"}, status=404)
     return web.json_response(serialize_bracket_detail(bracket))
