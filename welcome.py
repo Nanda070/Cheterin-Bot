@@ -47,11 +47,22 @@ class Welcome(commands.Cog):
                 break
         self.cached_invites[guild.id] = new_invites
 
-        welcome_ch_id = bot_config.get("WELCOME_CHANNEL_ID")
-        if welcome_ch_id:
-            welcome_ch = self.bot.get_channel(int(welcome_ch_id))
-            if welcome_ch:
-                await welcome_ch.send(f"Приветствую тебя {member.mention} на сервере **{guild.name}**! Теперь нас {guild.member_count}!")
+        if bot_config.get("WELCOME_CHANNEL_ENABLED", True):
+            welcome_ch_id = bot_config.get("WELCOME_CHANNEL_ID")
+            if welcome_ch_id:
+                welcome_ch = self.bot.get_channel(int(welcome_ch_id))
+                if welcome_ch:
+                    await welcome_ch.send(f"Приветствую тебя {member.mention} на сервере **{guild.name}**! Теперь нас {guild.member_count}!")
+
+        auto_role_ids = bot_config.get("AUTO_ROLE_IDS", [])
+        if auto_role_ids:
+            roles_to_add = [guild.get_role(int(rid)) for rid in auto_role_ids]
+            roles_to_add = [r for r in roles_to_add if r is not None]
+            if roles_to_add:
+                try:
+                    await member.add_roles(*roles_to_add, reason="Авто-роль при входе")
+                except discord.Forbidden:
+                    pass
 
         if used and used.inviter:
             inviter_id = str(used.inviter.id)
@@ -93,11 +104,12 @@ class Welcome(commands.Cog):
         dm_embed.set_footer(text="Для помощи — обращайся к Администрации. По вопросам ботов — пиши Nanda070.")
 
         dm_sent = False
-        try:
-            await member.send(embed=dm_embed)
-            dm_sent = True
-        except discord.Forbidden:
-            dm_sent = False
+        if bot_config.get("WELCOME_DM_ENABLED", True):
+            try:
+                await member.send(embed=dm_embed)
+                dm_sent = True
+            except discord.Forbidden:
+                dm_sent = False
 
         dm_log = discord.Embed(
             title="📩 DM Log",
