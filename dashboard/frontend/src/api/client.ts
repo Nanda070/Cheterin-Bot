@@ -558,3 +558,28 @@ export async function disableBracketShare(id: string): Promise<void> {
 export function fetchPublicBracket(token: string): Promise<BracketDetail> {
   return apiFetch(`/api/public/brackets/${token}`)
 }
+
+export interface WelcomeSettings {
+  channel_enabled: boolean
+  dm_enabled: boolean
+}
+
+export function fetchWelcomeSettings(): Promise<WelcomeSettings> {
+  return apiFetch('/api/welcome-settings')
+}
+
+export function updateWelcomeSettings(settings: WelcomeSettings): Promise<WelcomeSettings> {
+  return apiFetch('/api/welcome-settings', jsonInit('PUT', settings))
+}
+
+export interface AutoRolesSettings {
+  role_ids: string[]
+}
+
+export function fetchAutoRoles(): Promise<AutoRolesSettings> {
+  return apiFetch('/api/auto-roles')
+}
+
+export function updateAutoRoles(roleIds: string[]): Promise<AutoRolesSettings> {
+  return apiFetch('/api/auto-roles', jsonInit('PUT', { role_ids: roleIds }))
+}
