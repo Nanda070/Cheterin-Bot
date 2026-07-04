@@ -214,9 +214,13 @@ export function EventsPage() {
           <textarea
             id="event-description"
             value={createSpec.description}
-            onChange={(e) => setCreateSpec((prev) => ({ ...prev, description: e.target.value }))}
-            rows={6}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            onChange={(e) => {
+              setCreateSpec((prev) => ({ ...prev, description: e.target.value }))
+              e.target.style.height = 'auto'
+              e.target.style.height = `${e.target.scrollHeight}px`
+            }}
+            rows={8}
+            className="min-h-[180px] resize-none overflow-hidden rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
           />
 
           <label className="text-sm text-muted" htmlFor="event-banner">
