@@ -139,3 +139,48 @@ def test_create_bracket_builds_expected_shape():
     assert len(bracket["rounds"]) == 2
     assert "id" in bracket
     assert "created_at" in bracket
+
+
+def _bracket_from_entries(entries):
+    return brackets.create_bracket("Test", entries, None, 1)
+
+
+def test_set_winner_advances_entry_to_next_round():
+    bracket = _bracket_from_entries(["A", "B", "C", "D"])
+    brackets.set_winner(bracket, 0, 0, "a")
+    assert bracket["rounds"][0][0]["winner"] == "a"
+    assert bracket["rounds"][1][0]["slot_a"] == "A"
+    assert bracket["rounds"][1][0]["winner"] is None
+
+
+def test_set_winner_completes_the_final_match():
+    bracket = _bracket_from_entries(["A", "B", "C", "D"])
+    brackets.set_winner(bracket, 0, 0, "a")
+    brackets.set_winner(bracket, 0, 1, "a")
+    brackets.set_winner(bracket, 1, 0, "a")
+    assert bracket["rounds"][1][0]["winner"] == "a"
+    assert bracket["rounds"][1][0]["slot_a"] == "A"
+
+
+def test_set_winner_overwriting_a_pick_clears_the_downstream_pick():
+    bracket = _bracket_from_entries(["A", "B", "C", "D"])
+    brackets.set_winner(bracket, 0, 0, "a")  # A advances
+    brackets.set_winner(bracket, 0, 1, "a")  # B advances
+    brackets.set_winner(bracket, 1, 0, "a")  # A wins the final
+    assert bracket["rounds"][1][0]["winner"] == "a"
+
+    brackets.set_winner(bracket, 0, 0, "b")  # correction: D actually won, not A
+    assert bracket["rounds"][1][0]["slot_a"] == "D"
+    assert bracket["rounds"][1][0]["winner"] is None  # the final's pick was cleared
+
+
+def test_set_winner_changing_the_other_semifinal_also_clears_the_final():
+    bracket = _bracket_from_entries(["A", "B", "C", "D"])
+    brackets.set_winner(bracket, 0, 0, "a")  # A advances
+    brackets.set_winner(bracket, 0, 1, "a")  # B advances
+    brackets.set_winner(bracket, 1, 0, "a")  # A wins the final
+    assert bracket["rounds"][1][0]["winner"] == "a"
+
+    brackets.set_winner(bracket, 0, 1, "b")  # correction: C advances instead of B
+    assert bracket["rounds"][1][0]["slot_b"] == "C"
+    assert bracket["rounds"][1][0]["winner"] is None

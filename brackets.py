@@ -127,5 +127,21 @@ def create_bracket(title: str, entries: list[str], source_event_id: str | None, 
 
 
 def set_winner(bracket: dict, round_index: int, match_index: int, winner: str) -> None:
-    """Placeholder for set_winner. Task 2 tests this in more depth."""
-    pass
+    match = bracket["rounds"][round_index][match_index]
+    match["winner"] = winner
+    entry = match["slot_a"] if winner == "a" else match["slot_b"]
+    _propagate(bracket, round_index, match_index, entry)
+
+
+def _propagate(bracket: dict, round_index: int, match_index: int, entry) -> None:
+    rounds = bracket["rounds"]
+    next_round_index = round_index + 1
+    if next_round_index >= len(rounds):
+        return
+    next_match_index = match_index // 2
+    slot_key = "slot_a" if match_index % 2 == 0 else "slot_b"
+    next_match = rounds[next_round_index][next_match_index]
+    next_match[slot_key] = entry
+    if next_match["winner"] is not None:
+        next_match["winner"] = None
+        _propagate(bracket, next_round_index, next_match_index, None)
