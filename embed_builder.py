@@ -72,16 +72,23 @@ def embed_to_spec(embed: discord.Embed) -> dict:
     }
 
 
-def validate_embed_spec(spec: dict) -> str | None:
+def is_embed_spec_empty(spec: dict) -> bool:
+    title = spec.get("title") or ""
+    description = spec.get("description") or ""
+    image_url = (spec.get("image") or {}).get("url") or ""
+    thumbnail_url = (spec.get("thumbnail") or {}).get("url") or ""
+    fields = spec.get("fields") or []
+    return not (title or description or fields or image_url or thumbnail_url)
+
+
+def validate_embed_spec(spec: dict, content: str = "") -> str | None:
     title = spec.get("title") or ""
     description = spec.get("description") or ""
     author_name = (spec.get("author") or {}).get("name") or ""
     footer_text = (spec.get("footer") or {}).get("text") or ""
-    image_url = (spec.get("image") or {}).get("url") or ""
-    thumbnail_url = (spec.get("thumbnail") or {}).get("url") or ""
     fields = spec.get("fields") or []
 
-    if not (title or description or fields or image_url or thumbnail_url):
+    if is_embed_spec_empty(spec) and not content.strip():
         return "empty_embed"
     if len(title) > 256:
         return "title_too_long"

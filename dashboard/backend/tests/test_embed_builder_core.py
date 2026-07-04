@@ -105,3 +105,19 @@ def test_embed_to_spec_returns_empty_color_when_absent():
     embed = embed_builder.build_embed({"title": "Hi"})
     spec = embed_builder.embed_to_spec(embed)
     assert spec["color"] == ""
+
+
+def test_is_embed_spec_empty_true_for_blank_spec():
+    assert embed_builder.is_embed_spec_empty({}) is True
+
+
+def test_is_embed_spec_empty_false_when_title_present():
+    assert embed_builder.is_embed_spec_empty({"title": "Hi"}) is False
+
+
+def test_validate_embed_spec_accepts_empty_embed_with_content():
+    assert embed_builder.validate_embed_spec({}, content="Just text") is None
+
+
+def test_validate_embed_spec_rejects_empty_embed_and_blank_content():
+    assert embed_builder.validate_embed_spec({}, content="   ") == "empty_embed"
