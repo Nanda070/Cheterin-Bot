@@ -487,3 +487,74 @@ export function fetchConfig(): Promise<BotConfig> {
 export function updateConfig(config: BotConfig): Promise<BotConfig> {
   return apiFetch('/api/config', jsonInit('PUT', config))
 }
+
+export interface BracketMatch {
+  slot_a: string | null
+  slot_b: string | null
+  winner: 'a' | 'b' | null
+}
+
+export interface BracketSummary {
+  id: string
+  title: string
+  source_event_id: string | null
+  entry_count: number
+  created_at: string
+}
+
+export interface BracketDetail {
+  id: string
+  title: string
+  source_event_id: string | null
+  entries: string[]
+  rounds: BracketMatch[][]
+  share_token: string | null
+}
+
+export async function fetchBrackets(): Promise<BracketSummary[]> {
+  const body = await apiFetch<{ brackets: BracketSummary[] }>('/api/brackets')
+  return body.brackets
+}
+
+export function fetchBracketDetail(id: string): Promise<BracketDetail> {
+  return apiFetch(`/api/brackets/${id}`)
+}
+
+export async function fetchEventEntries(eventId: string): Promise<string[]> {
+  const body = await apiFetch<{ entries: string[] }>(`/api/brackets/entries-from-event/${eventId}`)
+  return body.entries
+}
+
+export function createBracket(
+  title: string,
+  entries: string[],
+  sourceEventId: string | null,
+): Promise<BracketDetail> {
+  return apiFetch('/api/brackets', jsonInit('POST', { title, entries, source_event_id: sourceEventId }))
+}
+
+export async function deleteBracket(id: string): Promise<void> {
+  await apiFetch(`/api/brackets/${id}`, jsonInit('DELETE'))
+}
+
+export function setBracketMatchWinner(
+  id: string,
+  roundIndex: number,
+  matchIndex: number,
+  winner: 'a' | 'b',
+): Promise<BracketDetail> {
+  return apiFetch(`/api/brackets/${id}/matches/${roundIndex}/${matchIndex}/winner`, jsonInit('POST', { winner }))
+}
+
+export async function enableBracketShare(id: string): Promise<string> {
+  const result = await apiFetch<{ share_token: string }>(`/api/brackets/${id}/share`, jsonInit('POST'))
+  return result.share_token
+}
+
+export async function disableBracketShare(id: string): Promise<void> {
+  await apiFetch(`/api/brackets/${id}/share`, jsonInit('DELETE'))
+}
+
+export function fetchPublicBracket(token: string): Promise<BracketDetail> {
+  return apiFetch(`/api/public/brackets/${token}`)
+}
