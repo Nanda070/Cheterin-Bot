@@ -46,6 +46,8 @@ async def create_bracket_route(request: web.Request) -> web.Response:
         body = await request.json()
     except ValueError:
         return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
 
     title = (body.get("title") or "").strip()
     entries = body.get("entries") or []

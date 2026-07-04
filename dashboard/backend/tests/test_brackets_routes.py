@@ -224,3 +224,14 @@ async def test_entries_from_event_preview(aiohttp_client):
     resp = await client.get("/api/brackets/entries-from-event/900")
     assert resp.status == 200
     assert (await resp.json())["entries"] == ["Alpha", "Beta"]
+
+
+@pytest.mark.asyncio
+async def test_create_bracket_rejects_non_dict_json_body(aiohttp_client):
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/brackets", data="[]", headers={"Content-Type": "application/json"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
