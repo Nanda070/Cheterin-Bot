@@ -83,4 +83,20 @@ describe('BracketsPage', () => {
     fireEvent.click(screen.getByText('Сгенерировать'))
     await waitFor(() => expect(createSpy).toHaveBeenCalledWith('From Event', ['Beta', 'Alpha'], '900'))
   })
+
+  it('includes closed tournament events in the event dropdown, not just open ones', async () => {
+    vi.spyOn(client, 'fetchBrackets').mockResolvedValue([])
+    vi.spyOn(client, 'fetchEvents').mockImplementation((status) =>
+      Promise.resolve(
+        status === 'closed'
+          ? [{ message_id: '901', type: 'tournament', title: 'Закрытый кубок', status: 'closed', channel_id: '1', count: 4 }]
+          : [],
+      ),
+    )
+
+    renderPage()
+    fireEvent.click(await screen.findByText('Создать сетку'))
+
+    expect(await screen.findByText('Закрытый кубок')).toBeInTheDocument()
+  })
 })

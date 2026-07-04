@@ -47,7 +47,9 @@ export function BracketsPage() {
 
   useEffect(reload, [])
   useEffect(() => {
-    fetchEvents('open').then(setEvents).catch(() => {})
+    Promise.all([fetchEvents('open'), fetchEvents('closed')])
+      .then(([open, closed]) => setEvents([...open, ...closed]))
+      .catch(() => {})
   }, [])
 
   const openCreate = () => {
