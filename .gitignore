@@ -11,3 +11,5 @@ buttons_config.json
 events_data.json
 config.json
 bot.log
+feedback_categories.json
+reaction_roles.json
