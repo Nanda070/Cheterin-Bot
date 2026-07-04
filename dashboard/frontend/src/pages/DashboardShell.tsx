@@ -27,7 +27,7 @@ const SECTIONS: Section[] = [
   { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
   { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
   { label: 'Участники и роли', icon: UsersThree, to: '/members' },
-  { label: 'Конфигурация', icon: GearSix },
+  { label: 'Конфигурация', icon: GearSix, to: '/config' },
 ]
 
 export function DashboardShell() {

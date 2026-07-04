@@ -10,6 +10,7 @@ import { LockdownPage } from './pages/Lockdown'
 import { MessageBuilderPage } from './pages/MessageBuilder'
 import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
+import { ConfigPage } from './pages/Config'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="reaction-roles" element={<MessageBuilderPage />} />
             <Route path="feedback" element={<FeedbackPage />} />
             <Route path="events" element={<EventsPage />} />
+            <Route path="config" element={<ConfigPage />} />
           </Route>
         </Routes>
       </AuthProvider>
