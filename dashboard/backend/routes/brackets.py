@@ -109,3 +109,40 @@ async def delete_bracket(request: web.Request) -> web.Response:
     del data[bracket_id]
     brackets.save_brackets(data)
     return web.json_response({"ok": True})
+
+
+@routes.post("/api/brackets/{id}/matches/{round_index}/{match_index}/winner")
+@require_dashboard_access
+async def set_match_winner(request: web.Request) -> web.Response:
+    data = brackets.load_brackets()
+    bracket = data.get(request.match_info["id"])
+    if bracket is None:
+        return web.json_response({"error": "bracket_not_found"}, status=404)
+
+    try:
+        round_index = int(request.match_info["round_index"])
+        match_index = int(request.match_info["match_index"])
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    winner = body.get("winner")
+    if winner not in ("a", "b"):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    rounds = bracket.get("rounds", [])
+    if round_index < 0 or round_index >= len(rounds):
+        return web.json_response({"error": "match_not_found"}, status=404)
+    if match_index < 0 or match_index >= len(rounds[round_index]):
+        return web.json_response({"error": "match_not_found"}, status=404)
+
+    match = rounds[round_index][match_index]
+    if match["slot_a"] is None or match["slot_b"] is None:
+        return web.json_response({"error": "match_not_ready"}, status=400)
+
+    brackets.set_winner(bracket, round_index, match_index, winner)
+    brackets.save_brackets(data)
+    return web.json_response(serialize_bracket_detail(bracket))

@@ -235,3 +235,78 @@ async def test_create_bracket_rejects_non_dict_json_body(aiohttp_client):
     resp = await client.post("/api/brackets", data="[]", headers={"Content-Type": "application/json"})
     assert resp.status == 400
     assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_advances_entry(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(f"/api/brackets/{bracket['id']}/matches/0/0/winner", json={"winner": "a"})
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["rounds"][0][0]["winner"] == "a"
+    assert body["rounds"][1][0]["slot_a"] == "A"
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_rejects_invalid_winner_value(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(f"/api/brackets/{bracket['id']}/matches/0/0/winner", json={"winner": "c"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_rejects_a_match_that_is_not_ready(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    # Round 1, match 0 (0-1) has not been decided yet, so round 2 match 0 is not ready.
+    resp = await client.post(f"/api/brackets/{bracket['id']}/matches/1/0/winner", json={"winner": "a"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "match_not_ready"
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_404_when_bracket_missing(aiohttp_client):
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/brackets/does-not-exist/matches/0/0/winner", json={"winner": "a"})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_404_for_out_of_range_indices(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(f"/api/brackets/{bracket['id']}/matches/5/0/winner", json={"winner": "a"})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_set_match_winner_requires_auth(aiohttp_client):
+    bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
+    brackets.save_brackets({bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+
+    resp = await client.post(f"/api/brackets/{bracket['id']}/matches/0/0/winner", json={"winner": "a"})
+    assert resp.status == 401
