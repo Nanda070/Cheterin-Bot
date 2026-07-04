@@ -101,3 +101,16 @@ async def test_start_dashboard_closes_http_session_on_bind_failure():
         assert http_session.closed is True
     finally:
         blocker.close()
+
+
+@pytest.mark.asyncio
+async def test_bracket_routes_are_registered(aiohttp_client):
+    from dashboard.backend.config import load_dashboard_config
+
+    config = load_dashboard_config(VALID_ENV)
+    app = create_app(FakeBot(), config, guild_id=1)
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/brackets")
+    # 401 (not 404) proves the route exists and is reachable, and that the
+    # dashboard-access auth gate is the thing rejecting it — not a missing route.
+    assert resp.status == 401
