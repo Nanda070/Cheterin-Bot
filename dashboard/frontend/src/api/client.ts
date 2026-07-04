@@ -444,3 +444,30 @@ export interface CreateEventSpec {
 export function createEvent(spec: CreateEventSpec): Promise<EventDetail> {
   return apiFetch('/api/events', jsonInit('POST', spec))
 }
+
+export interface BotConfig {
+  LOG_CHANNEL_ID: string
+  SPAM_EXCEPTION_CHANNELS: string[]
+  TEMPBAN_CHANNEL_ID: string
+  SPAM_LOG_CHANNEL_ID: string
+  SPAM_LOG_ROLE_ID: string
+  WELCOME_CHANNEL_ID: string
+  INVITE_LOG_CHANNEL_ID: string
+  ANNOUNCEMENTS_CHANNEL_ID: string
+  RULES_CHANNEL_ID: string
+  ROLES_CHANNEL_ID: string
+  SEARCH_PLAYERS_CHANNEL_ID: string
+  CTD_ROLE_ID: string
+  CTD_CHANNEL_ID: string
+  BUTTON_CREATE_ALLOWED_ROLES: string[]
+  BUTTON_WEBHOOK_URL: string
+  SERVER_INVITE_LINK: string
+}
+
+export function fetchConfig(): Promise<BotConfig> {
+  return apiFetch('/api/config')
+}
+
+export function updateConfig(config: BotConfig): Promise<BotConfig> {
+  return apiFetch('/api/config', jsonInit('PUT', config))
+}
