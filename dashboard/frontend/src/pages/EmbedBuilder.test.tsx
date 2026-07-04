@@ -116,4 +116,39 @@ describe('EmbedBuilderPage', () => {
     expect(await screen.findByText(/Суммарная длина/)).toBeInTheDocument()
     expect(createSpy).not.toHaveBeenCalled()
   })
+
+  it('allows saving content-only messages without any embed field', async () => {
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'general' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    const createSpy = vi
+      .spyOn(client, 'createEmbedMessage')
+      .mockResolvedValue({ message_id: '999', channel_id: '500' })
+
+    render(<EmbedBuilderPage />)
+
+    await waitFor(() => screen.getByLabelText('Канал'))
+    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.change(screen.getByLabelText('Текст сообщения'), { target: { value: 'Just text' } })
+    fireEvent.click(screen.getByText('Отправить'))
+
+    await waitFor(() =>
+      expect(createSpy).toHaveBeenCalledWith('500', expect.objectContaining({ content: 'Just text' })),
+    )
+  })
+
+  it('rejects blank content and a blank embed together', async () => {
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'general' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    const createSpy = vi.spyOn(client, 'createEmbedMessage')
+
+    render(<EmbedBuilderPage />)
+
+    await waitFor(() => screen.getByLabelText('Канал'))
+    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.change(screen.getByLabelText('Текст сообщения'), { target: { value: '   ' } })
+    fireEvent.click(screen.getByText('Отправить'))
+
+    expect(await screen.findByText(/Заполните хотя бы/)).toBeInTheDocument()
+    expect(createSpy).not.toHaveBeenCalled()
+  })
 })

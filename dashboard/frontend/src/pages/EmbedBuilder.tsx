@@ -26,9 +26,12 @@ const EMPTY_EMBED_SPEC: EmbedSpec = {
   fields: [],
 }
 
-function validateEmbedSpec(spec: EmbedSpec): string | null {
-  if (!(spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url)) {
-    return 'Заполните хотя бы title, description, поле или изображение'
+function validateEmbedSpec(spec: EmbedSpec, content: string): string | null {
+  const hasEmbedContent = Boolean(
+    spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url,
+  )
+  if (!hasEmbedContent && !content.trim()) {
+    return 'Заполните хотя бы текст сообщения, title, description, поле или изображение'
   }
   if (spec.title.length > 256) return 'Title длиннее 256 символов'
   if (spec.description.length > 4096) return 'Description длиннее 4096 символов'
@@ -121,7 +124,7 @@ export function EmbedBuilderPage() {
       setError('Не больше 5 роль-кнопок')
       return
     }
-    const validationError = validateEmbedSpec(embed)
+    const validationError = validateEmbedSpec(embed, content)
     if (validationError) {
       setError(validationError)
       return
