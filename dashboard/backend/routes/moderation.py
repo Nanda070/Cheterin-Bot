@@ -4,6 +4,7 @@ import uuid
 import discord
 from aiohttp import web
 
+import moderation_log
 from ..access_middleware import require_dashboard_access
 from .. import mass_role_jobs
 
@@ -122,7 +123,9 @@ def dashboard_reason(reason: str, moderator) -> str:
     return f"Dashboard: {reason} — by {moderator.name} ({moderator.id})"
 
 
-async def _send_action_log(bot, title: str, target, moderator, reason: str, extra: str = ""):
+async def _send_action_log(
+    bot, title: str, target, moderator, reason: str, extra: str = "", event_type: str | None = None
+):
     embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=bot.utcnow())
     embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
     embed.add_field(name="Кого", value=f"{target.name} (`{target.id}`)", inline=False)
@@ -131,6 +134,28 @@ async def _send_action_log(bot, title: str, target, moderator, reason: str, extr
         embed.add_field(name="Дополнительно", value=extra, inline=False)
     embed.set_footer(text="Dashboard · Moderation")
     await bot.send_log(embed)
+    if event_type:
+        moderation_log.append_event(
+            event_type,
+            target.id,
+            target.name,
+            reason,
+            moderator_id=moderator.id,
+            moderator_display=moderator.name,
+            extra=extra,
+        )
+
+
+@routes.get("/api/moderation-log")
+@require_dashboard_access
+async def get_moderation_log(request: web.Request) -> web.Response:
+    try:
+        limit = int(request.query.get("limit", 50))
+    except ValueError:
+        limit = 50
+    limit = max(0, min(limit, moderation_log.MAX_ENTRIES))
+    events = moderation_log.load_events()[:limit]
+    return web.json_response({"events": events})
 
 
 def _get_target_or_response(request):
@@ -180,7 +205,7 @@ async def ban_member(request: web.Request) -> web.Response:
 
     await _send_action_log(
         request.app["bot"], "🔨 Бан через дашборд", target, moderator, reason,
-        extra=f"Удаление сообщений: {days} дн.",
+        extra=f"Удаление сообщений: {days} дн.", event_type="manual_ban",
     )
     return web.json_response({"ok": True})
 
@@ -207,7 +232,7 @@ async def kick_member(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], "👢 Кик через дашборд", target, moderator, reason
+        request.app["bot"], "👢 Кик через дашборд", target, moderator, reason, event_type="manual_kick"
     )
     return web.json_response({"ok": True})
 
