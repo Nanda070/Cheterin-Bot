@@ -478,6 +478,14 @@ export interface BotConfig {
   BUTTON_CREATE_ALLOWED_ROLES: string[]
   BUTTON_WEBHOOK_URL: string
   SERVER_INVITE_LINK: string
+  VOICE_LOBBY_CHANNEL_ID: string
+  VOICE_PANEL_CHANNEL_ID: string
+  VOICE_LOG_CHANNEL_ID: string
+  VOICE_PANEL_THUMB_URL: string
+  SUPPLY_ROLE_ID: string
+  SUPPLY_VOICE_CHANNEL_ID: string
+  SUPPLY_LOG_CHANNEL_ID: string
+  SUPPLY_REMINDER_MINUTES: string
 }
 
 export function fetchConfig(): Promise<BotConfig> {
@@ -486,6 +494,106 @@ export function fetchConfig(): Promise<BotConfig> {
 
 export function updateConfig(config: BotConfig): Promise<BotConfig> {
   return apiFetch('/api/config', jsonInit('PUT', config))
+}
+
+export interface SupplyMember {
+  id: string
+  display: string
+}
+
+export interface Supply {
+  id: string
+  initiator_id: string
+  initiator_display: string
+  opponent: string
+  limit: number
+  time_str: string
+  target_ts: number
+  status: 'active' | 'finished' | 'cancelled'
+  participants: SupplyMember[]
+  reserve: SupplyMember[]
+  channel_id: string
+  created_at: string
+  closed_at: string | null
+}
+
+export interface SupplyStatEntry {
+  user_id: string
+  display: string
+  count: number
+}
+
+export interface SupplyOverview {
+  active: Supply[]
+  history: Supply[]
+  stats: SupplyStatEntry[]
+}
+
+export function fetchSupplyOverview(): Promise<SupplyOverview> {
+  return apiFetch('/api/supply')
+}
+
+export function createSupply(input: {
+  channel_id: string
+  opponent: string
+  limit: number
+  time_str: string
+}): Promise<Supply> {
+  return apiFetch('/api/supply', jsonInit('POST', input))
+}
+
+export async function closeSupply(id: string): Promise<void> {
+  await apiFetch(`/api/supply/${id}/close`, jsonInit('POST'))
+}
+
+export async function cancelSupply(id: string): Promise<void> {
+  await apiFetch(`/api/supply/${id}/cancel`, jsonInit('POST'))
+}
+
+export interface VoiceRoom {
+  channel_id: string
+  name: string
+  owner_id: string
+  owner_display: string
+  is_closed: boolean
+  user_limit: number
+  member_count: number
+  exists: boolean
+}
+
+export async function fetchVoiceRooms(): Promise<VoiceRoom[]> {
+  const body = await apiFetch<{ rooms: VoiceRoom[] }>('/api/voice/rooms')
+  return body.rooms
+}
+
+export async function deleteVoiceRoom(channelId: string): Promise<void> {
+  await apiFetch(`/api/voice/rooms/${channelId}`, { method: 'DELETE' })
+}
+
+export async function publishVoicePanel(): Promise<void> {
+  await apiFetch('/api/voice/panel/publish', jsonInit('POST'))
+}
+
+export interface NewsMapping {
+  source_channel_id: string
+  target_channel_id: string
+  label: string
+}
+
+export interface NewsSettings {
+  enabled: boolean
+  source_guild_id: string
+  source_bot_ids: string[]
+  log_channel_id: string
+  mappings: NewsMapping[]
+}
+
+export function fetchNewsSettings(): Promise<NewsSettings> {
+  return apiFetch('/api/news')
+}
+
+export function updateNewsSettings(settings: NewsSettings): Promise<NewsSettings> {
+  return apiFetch('/api/news', jsonInit('PUT', settings))
 }
 
 export interface BracketMatch {

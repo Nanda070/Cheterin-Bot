@@ -16,6 +16,12 @@ import { AutoRolesPage } from './pages/AutoRoles'
 import { BracketsPage } from './pages/Brackets'
 import { BracketDetailPage } from './pages/BracketDetail'
 import { PublicBracketPage } from './pages/PublicBracket'
+import { SupplyPage } from './pages/Supply'
+import { VoiceRoomsPage } from './pages/VoiceRooms'
+import { NewsPage } from './pages/News'
+import { DocsPage } from './pages/Docs'
+import { TermsPage } from './pages/Terms'
+import { PrivacyPage } from './pages/Privacy'
 
 function App() {
   return (
@@ -25,6 +31,10 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route path="/bracket/:token" element={<PublicBracketPage />} />
+          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/docs/:sectionId" element={<DocsPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route
             path="/"
             element={
@@ -41,6 +51,9 @@ function App() {
             <Route path="events" element={<EventsPage />} />
             <Route path="brackets" element={<BracketsPage />} />
             <Route path="brackets/:id" element={<BracketDetailPage />} />
+            <Route path="supply" element={<SupplyPage />} />
+            <Route path="voice-rooms" element={<VoiceRoomsPage />} />
+            <Route path="news" element={<NewsPage />} />
             <Route path="welcome" element={<WelcomePage />} />
             <Route path="auto-roles" element={<AutoRolesPage />} />
             <Route path="config" element={<ConfigPage />} />

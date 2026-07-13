@@ -17,17 +17,23 @@ CHANNEL_FIELDS = [
     "ROLES_CHANNEL_ID",
     "SEARCH_PLAYERS_CHANNEL_ID",
     "CTD_CHANNEL_ID",
+    "VOICE_LOBBY_CHANNEL_ID",
+    "VOICE_PANEL_CHANNEL_ID",
+    "VOICE_LOG_CHANNEL_ID",
+    "SUPPLY_VOICE_CHANNEL_ID",
+    "SUPPLY_LOG_CHANNEL_ID",
 ]
 
 ROLE_FIELDS = [
     "SPAM_LOG_ROLE_ID",
     "CTD_ROLE_ID",
+    "SUPPLY_ROLE_ID",
 ]
 
 LIST_CHANNEL_FIELDS = ["SPAM_EXCEPTION_CHANNELS"]
 LIST_ROLE_FIELDS = ["BUTTON_CREATE_ALLOWED_ROLES"]
 
-TEXT_FIELDS = ["BUTTON_WEBHOOK_URL", "SERVER_INVITE_LINK"]
+TEXT_FIELDS = ["BUTTON_WEBHOOK_URL", "SERVER_INVITE_LINK", "VOICE_PANEL_THUMB_URL", "SUPPLY_REMINDER_MINUTES"]
 
 ALL_FIELDS = CHANNEL_FIELDS + ROLE_FIELDS + LIST_CHANNEL_FIELDS + LIST_ROLE_FIELDS + TEXT_FIELDS
 ALL_LIST_FIELDS = LIST_CHANNEL_FIELDS + LIST_ROLE_FIELDS
@@ -131,7 +137,11 @@ async def update_config(request: web.Request) -> web.Response:
     if error_response:
         return error_response
 
-    data = {key: body.get(key, [] if key in ALL_LIST_FIELDS else "") for key in ALL_FIELDS}
+    # Обновляем только свои поля, не затирая ключи других разделов
+    # (AUTO_ROLE_IDS, WELCOME_CHANNEL_ENABLED и т.п. живут в том же config.json).
+    data = bot_config.load_config()
+    for key in ALL_FIELDS:
+        data[key] = body.get(key, [] if key in ALL_LIST_FIELDS else "")
     bot_config.save_config(data)
 
     result = {key: (list(data[key]) if key in ALL_LIST_FIELDS else str(data[key] or "")) for key in ALL_FIELDS}

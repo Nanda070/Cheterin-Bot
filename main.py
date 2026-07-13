@@ -74,6 +74,9 @@ class ChetBot(commands.Bot):
         await self.load_extension("spam")
         await self.load_extension("events")
         await self.load_extension("reaction_roles")
+        await self.load_extension("news")
+        await self.load_extension("voice_rooms")
+        await self.load_extension("supply")
         guild_id = os.getenv("GUILD_ID")
         if not guild_id:
             raise RuntimeError("Переменная окружения GUILD_ID не задана.")

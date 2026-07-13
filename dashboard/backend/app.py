@@ -17,6 +17,9 @@ from .routes.events import routes as events_routes
 from .routes.config import routes as config_routes
 from .routes.welcome import routes as welcome_routes
 from .routes.auto_roles import routes as auto_roles_routes
+from .routes.supply import routes as supply_routes
+from .routes.voice import routes as voice_routes
+from .routes.news import routes as news_routes
 from .session import setup_session
 from .static import setup_static_routes
 
@@ -57,6 +60,9 @@ def create_app(
     app.add_routes(config_routes)
     app.add_routes(welcome_routes)
     app.add_routes(auto_roles_routes)
+    app.add_routes(supply_routes)
+    app.add_routes(voice_routes)
+    app.add_routes(news_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

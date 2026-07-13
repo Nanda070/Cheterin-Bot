@@ -28,6 +28,14 @@ const EMPTY_CONFIG: BotConfig = {
   BUTTON_CREATE_ALLOWED_ROLES: [],
   BUTTON_WEBHOOK_URL: '',
   SERVER_INVITE_LINK: '',
+  VOICE_LOBBY_CHANNEL_ID: '',
+  VOICE_PANEL_CHANNEL_ID: '',
+  VOICE_LOG_CHANNEL_ID: '',
+  VOICE_PANEL_THUMB_URL: '',
+  SUPPLY_ROLE_ID: '',
+  SUPPLY_VOICE_CHANNEL_ID: '',
+  SUPPLY_LOG_CHANNEL_ID: '',
+  SUPPLY_REMINDER_MINUTES: '',
 }
 
 export function ConfigPage() {
@@ -201,6 +209,22 @@ export function ConfigPage() {
         </div>
         {textField('URL вебхука для кнопок', 'BUTTON_WEBHOOK_URL')}
         {textField('Ссылка-приглашение сервера', 'SERVER_INVITE_LINK')}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">Приватные комнаты</h2>
+        {channelField('Голосовое лобби (вход = создать комнату)', 'VOICE_LOBBY_CHANNEL_ID')}
+        {channelField('Канал панели управления', 'VOICE_PANEL_CHANNEL_ID')}
+        {channelField('Канал логов приватных комнат', 'VOICE_LOG_CHANNEL_ID')}
+        {textField('URL картинки панели (thumbnail)', 'VOICE_PANEL_THUMB_URL')}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">Поставки</h2>
+        {roleField('Роль для пинга при сборе', 'SUPPLY_ROLE_ID')}
+        {channelField('Голосовой канал сбора', 'SUPPLY_VOICE_CHANNEL_ID')}
+        {channelField('Канал логов поставок', 'SUPPLY_LOG_CHANNEL_ID')}
+        {textField('Напоминание за N минут до начала (пусто = 10)', 'SUPPLY_REMINDER_MINUTES')}
       </Card>
 
       <div>

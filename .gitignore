@@ -16,3 +16,9 @@ feedback_categories.json
 reaction_roles.json
 moderation_log.json
 brackets_data.json
+supply_data.json
+news_relay.json
+voice_panel.json
+private_rooms.db
+venv/
+NEW/

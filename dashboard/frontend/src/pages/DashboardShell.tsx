@@ -3,6 +3,9 @@ import {
   ChatCircleText,
   GearSix,
   HandWaving,
+  Headset,
+  Megaphone,
+  Package,
   ShieldWarning,
   SignOut,
   Sparkle,
@@ -29,6 +32,9 @@ const SECTIONS: Section[] = [
   { label: 'Конструктор кнопок и эмбедов', icon: Stack, to: '/reaction-roles' },
   { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
   { label: 'Сетки', icon: Trophy, to: '/brackets' },
+  { label: 'Поставки', icon: Package, to: '/supply' },
+  { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
+  { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
   { label: 'Приветствие и прощание', icon: HandWaving, to: '/welcome' },
   { label: 'Авто-роли', icon: UserCirclePlus, to: '/auto-roles' },
   { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
@@ -58,10 +64,23 @@ export function DashboardShell() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <Link to="/" className="flex items-center gap-2 text-foreground">
-          <Sparkle size={20} weight="fill" className="text-primary" />
-          <span className="font-semibold">Cheterin</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center gap-2 text-foreground">
+            <Sparkle size={20} weight="fill" className="text-primary" />
+            <span className="font-semibold">Cheterin</span>
+          </Link>
+          <nav className="hidden items-center gap-3 text-sm text-muted sm:flex">
+            <Link to="/docs" className="transition-colors hover:text-foreground">
+              Документация
+            </Link>
+            <Link to="/terms" className="transition-colors hover:text-foreground">
+              Условия
+            </Link>
+            <Link to="/privacy" className="transition-colors hover:text-foreground">
+              Приватность
+            </Link>
+          </nav>
+        </div>
 
         <Dropdown
           trigger={

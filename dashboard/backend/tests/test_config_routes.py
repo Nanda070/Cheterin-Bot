@@ -187,3 +187,29 @@ async def test_update_config_round_trips_via_get(aiohttp_client):
     body = await resp.json()
     assert body["LOG_CHANNEL_ID"] == "500"
     assert body["CTD_ROLE_ID"] == "200"
+
+
+@pytest.mark.asyncio
+async def test_put_config_preserves_foreign_keys(aiohttp_client):
+    """PUT /api/config не должен затирать ключи других разделов (авто-роли, приветствия)."""
+    bot_config.save_config(
+        {
+            "AUTO_ROLE_IDS": ["42"],
+            "WELCOME_CHANNEL_ENABLED": False,
+            "WELCOME_DM_ENABLED": True,
+        }
+    )
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/config")
+    body = await resp.json()
+
+    resp = await client.put("/api/config", json=body)
+    assert resp.status == 200
+
+    stored = bot_config.load_config()
+    assert stored["AUTO_ROLE_IDS"] == ["42"]
+    assert stored["WELCOME_CHANNEL_ENABLED"] is False
+    assert stored["WELCOME_DM_ENABLED"] is True
