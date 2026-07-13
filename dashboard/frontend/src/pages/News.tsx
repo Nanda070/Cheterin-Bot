@@ -1,4 +1,5 @@
-import { Megaphone, Plus, Trash } from '@phosphor-icons/react'
+﻿import { Megaphone, Plus, Trash } from '@phosphor-icons/react'
+import { ChannelOptions } from '../components/ChannelOptions'
 import { useEffect, useState } from 'react'
 import {
   fetchChannels,
@@ -141,11 +142,7 @@ export function NewsPage() {
             className={inputClass}
           >
             <option value="">Не задано</option>
-            {channels.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            <ChannelOptions channels={channels} />
           </select>
         </div>
       </Card>
@@ -177,11 +174,7 @@ export function NewsPage() {
                 className={inputClass}
               >
                 <option value="">Выберите канал</option>
-                {channels.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                <ChannelOptions channels={channels} />
               </select>
             </div>
             <div className="flex min-w-28 flex-1 flex-col gap-1">

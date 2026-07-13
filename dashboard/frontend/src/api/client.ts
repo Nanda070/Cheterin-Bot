@@ -199,6 +199,7 @@ export interface CustomEmoji {
 export interface ChannelInfo {
   id: string
   name: string
+  category?: string
 }
 
 export async function fetchReactionRoles(): Promise<ReactionRoleEntry[]> {

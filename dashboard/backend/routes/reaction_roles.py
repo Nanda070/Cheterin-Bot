@@ -224,6 +224,19 @@ async def list_channels(request: web.Request) -> web.Response:
     guild = _get_guild_or_none(request)
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
-    return web.json_response(
-        {"channels": [{"id": str(c.id), "name": c.name} for c in guild.channels]}
-    )
+
+    channels = []
+    if hasattr(guild, "by_category"):
+        # Порядок как в интерфейсе Discord: каналы без категории, затем
+        # категории по позициям, внутри — текстовые и голосовые по позициям.
+        for category, category_channels in guild.by_category():
+            for channel in category_channels:
+                channels.append({
+                    "id": str(channel.id),
+                    "name": channel.name,
+                    "category": category.name if category else "",
+                })
+    else:
+        channels = [{"id": str(c.id), "name": c.name, "category": ""} for c in guild.channels]
+
+    return web.json_response({"channels": channels})

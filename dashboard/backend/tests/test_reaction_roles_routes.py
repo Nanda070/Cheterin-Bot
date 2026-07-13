@@ -1,4 +1,4 @@
-import discord
+﻿import discord
 import pytest
 
 import reaction_roles
@@ -319,4 +319,4 @@ async def test_list_channels(aiohttp_client):
     resp = await client.get("/api/channels")
     assert resp.status == 200
     body = await resp.json()
-    assert body["channels"] == [{"id": "500", "name": "general"}]
+    assert body["channels"] == [{"id": "500", "name": "general", "category": ""}]

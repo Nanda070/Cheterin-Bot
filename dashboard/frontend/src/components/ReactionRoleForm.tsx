@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
+import { ChannelOptions } from './ChannelOptions'
 import {
   createReactionRole,
   fetchChannels,
@@ -111,11 +112,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground disabled:opacity-50"
         >
           <option value="">Выберите канал…</option>
-          {channels.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
+          <ChannelOptions channels={channels} />
         </select>
 
         <label className="text-sm text-muted" htmlFor="rr-message-id">
