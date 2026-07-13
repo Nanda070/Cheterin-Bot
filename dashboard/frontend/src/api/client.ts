@@ -1,4 +1,4 @@
-export interface DashboardUser {
+﻿export interface DashboardUser {
   id: string
   username: string
   avatar: string | null
@@ -600,12 +600,24 @@ export function updateNewsSettings(settings: NewsSettings): Promise<NewsSettings
 export interface BracketMatch {
   slot_a: string | null
   slot_b: string | null
-  winner: 'a' | 'b' | null
+  winner: 'a' | 'b' | 'draw' | null
+}
+
+export type BracketFormat = 'single_elim' | 'double_elim' | 'round_robin'
+
+export interface BracketStandingsRow {
+  entry: string
+  played: number
+  wins: number
+  draws: number
+  losses: number
+  points: number
 }
 
 export interface BracketSummary {
   id: string
   title: string
+  format: BracketFormat
   source_event_id: string | null
   entry_count: number
   created_at: string
@@ -614,10 +626,18 @@ export interface BracketSummary {
 export interface BracketDetail {
   id: string
   title: string
+  format: BracketFormat
   source_event_id: string | null
   entries: string[]
   rounds: BracketMatch[][]
   share_token: string | null
+  de?: {
+    winners: BracketMatch[][]
+    losers: BracketMatch[][]
+    final: BracketMatch
+  }
+  rr_rounds?: BracketMatch[][]
+  standings?: BracketStandingsRow[]
 }
 
 export async function fetchBrackets(): Promise<BracketSummary[]> {
@@ -638,8 +658,9 @@ export function createBracket(
   title: string,
   entries: string[],
   sourceEventId: string | null,
+  format: BracketFormat = 'single_elim',
 ): Promise<BracketDetail> {
-  return apiFetch('/api/brackets', jsonInit('POST', { title, entries, source_event_id: sourceEventId }))
+  return apiFetch('/api/brackets', jsonInit('POST', { title, entries, source_event_id: sourceEventId, format }))
 }
 
 export async function deleteBracket(id: string): Promise<void> {
@@ -650,9 +671,13 @@ export function setBracketMatchWinner(
   id: string,
   roundIndex: number,
   matchIndex: number,
-  winner: 'a' | 'b',
+  winner: 'a' | 'b' | 'draw' | null,
+  segment: 'W' | 'L' | 'F' = 'W',
 ): Promise<BracketDetail> {
-  return apiFetch(`/api/brackets/${id}/matches/${roundIndex}/${matchIndex}/winner`, jsonInit('POST', { winner }))
+  return apiFetch(
+    `/api/brackets/${id}/matches/${roundIndex}/${matchIndex}/winner`,
+    jsonInit('POST', { winner, segment }),
+  )
 }
 
 export async function enableBracketShare(id: string): Promise<string> {
@@ -691,4 +716,251 @@ export function fetchAutoRoles(): Promise<AutoRolesSettings> {
 
 export function updateAutoRoles(roleIds: string[]): Promise<AutoRolesSettings> {
   return apiFetch('/api/auto-roles', jsonInit('PUT', { role_ids: roleIds }))
+}
+
+// ────────────────────────── Логирование событий ──────────────────────────
+
+export interface ServerLogEventConfig {
+  enabled: boolean
+  channel_id: string
+}
+
+export interface ServerLogSettings {
+  labels: Record<string, string>
+  events: Record<string, ServerLogEventConfig>
+}
+
+export function fetchServerLog(): Promise<ServerLogSettings> {
+  return apiFetch('/api/serverlog')
+}
+
+export function updateServerLog(events: Record<string, ServerLogEventConfig>): Promise<ServerLogSettings> {
+  return apiFetch('/api/serverlog', jsonInit('PUT', { events }))
+}
+
+// ────────────────────────── Система уровней ──────────────────────────
+
+export interface XpScopeSettings {
+  enabled: boolean
+  ignored_roles: string[]
+  target_channels: string[]
+  ignored_channels: string[]
+  multiplier: number
+}
+
+export interface XpVoiceSettings extends XpScopeSettings {
+  max_count: number
+}
+
+export interface XpLevelReward {
+  level: number
+  role_ids: string[]
+}
+
+export interface XpVoiceReward {
+  minutes: number
+  role_ids: string[]
+}
+
+export interface XpSettings {
+  enabled: boolean
+  public_leaderboard: boolean
+  reset_on_leave: boolean
+  text: XpScopeSettings
+  voice: XpVoiceSettings
+  announce: {
+    enabled: boolean
+    channel_id: string
+    template: string
+    delete_after: number
+  }
+  level_rewards: XpLevelReward[]
+  voice_rewards: XpVoiceReward[]
+}
+
+export interface XpOverview {
+  settings: XpSettings
+  member_count: number
+  has_card_bg: boolean
+}
+
+export interface XpLeaderboardEntry {
+  user_id: string
+  display: string
+  avatar: string | null
+  on_server: boolean
+  xp: number
+  level: number
+  xp_into_level: number
+  xp_step: number
+  messages: number
+  voice_seconds: number
+  voice_time_text: string
+  rank: number
+}
+
+export interface XpLeaderboardPage {
+  total: number
+  page: number
+  page_size: number
+  entries: XpLeaderboardEntry[]
+}
+
+export function fetchXpOverview(): Promise<XpOverview> {
+  return apiFetch('/api/xp')
+}
+
+export function updateXpSettings(settings: XpSettings): Promise<{ settings: XpSettings }> {
+  return apiFetch('/api/xp', jsonInit('PUT', settings))
+}
+
+export function fetchXpLeaderboard(page: number): Promise<XpLeaderboardPage> {
+  return apiFetch(`/api/xp/leaderboard?page=${page}`)
+}
+
+export async function setMemberXp(userId: string, xp: number): Promise<void> {
+  await apiFetch(`/api/xp/members/${userId}`, jsonInit('PUT', { xp }))
+}
+
+export async function resetMemberXp(userId: string): Promise<void> {
+  await apiFetch(`/api/xp/members/${userId}/reset`, jsonInit('POST'))
+}
+
+export async function resetAllXp(): Promise<void> {
+  await apiFetch('/api/xp/reset-all', jsonInit('POST'))
+}
+
+export async function uploadCardBg(file: Blob): Promise<void> {
+  const response = await fetch('/api/xp/card-bg', { method: 'POST', credentials: 'include', body: file })
+  if (!response.ok) throw new ApiError(response.status, 'upload_failed')
+}
+
+export async function deleteCardBg(): Promise<void> {
+  await apiFetch('/api/xp/card-bg', { method: 'DELETE' })
+}
+
+export interface PublicLeaderboardEntry {
+  rank: number
+  display: string
+  avatar: string | null
+  level: number
+  xp: number
+  voice_time_text: string
+}
+
+export function fetchPublicLeaderboard(): Promise<{ guild_name: string; entries: PublicLeaderboardEntry[] }> {
+  return apiFetch('/api/public/leaderboard')
+}
+
+// ────────────────────────── Статистика войса ──────────────────────────
+
+export interface VoiceStats {
+  days: number
+  session_count: number
+  total_seconds: number
+  total_time_text: string
+  peak_concurrent: number
+  by_hour_minutes: number[]
+  by_weekday_minutes: number[]
+  top_channels: { name: string; seconds: number; time_text: string }[]
+  top_users: { user_id: string; display: string; avatar: string | null; seconds: number; time_text: string }[]
+}
+
+export function fetchVoiceStats(days: number): Promise<VoiceStats> {
+  return apiFetch(`/api/voice-stats?days=${days}`)
+}
+
+// ────────────────────────── Аудит ──────────────────────────
+
+export interface AuditEntry {
+  ts: number
+  moderator_id: string
+  moderator_name: string
+  method: string
+  path: string
+  action: string
+  status: number
+  details: string
+}
+
+export interface AuditPage {
+  total: number
+  page: number
+  page_size: number
+  entries: AuditEntry[]
+}
+
+export function fetchAudit(page: number, moderator?: string): Promise<AuditPage> {
+  const params = new URLSearchParams({ page: String(page) })
+  if (moderator) params.set('moderator', moderator)
+  return apiFetch(`/api/audit?${params}`)
+}
+
+// ────────────────────────── Стрим-уведомления ──────────────────────────
+
+export interface StreamSubscription {
+  id: string
+  platform: 'twitch' | 'youtube'
+  identifier: string
+  display_name: string
+  avatar_url: string
+  enabled: boolean
+  channel_id: string
+  ping_role_id: string
+  template: string
+  keywords: string[]
+  keyword_mode: 'any' | 'all'
+  min_interval_minutes: number
+  last_stream_id: string
+}
+
+export function fetchStreams(): Promise<{ twitch_configured: boolean; subscriptions: StreamSubscription[] }> {
+  return apiFetch('/api/streams')
+}
+
+export function createStreamSubscription(input: {
+  platform: 'twitch' | 'youtube'
+  query: string
+  channel_id: string
+}): Promise<StreamSubscription> {
+  return apiFetch('/api/streams', jsonInit('POST', input))
+}
+
+export function updateStreamSubscription(
+  id: string,
+  fields: Partial<Pick<StreamSubscription, 'enabled' | 'channel_id' | 'ping_role_id' | 'template' | 'keywords' | 'keyword_mode' | 'min_interval_minutes'>>,
+): Promise<StreamSubscription> {
+  return apiFetch(`/api/streams/${id}`, jsonInit('PATCH', fields))
+}
+
+export async function deleteStreamSubscription(id: string): Promise<void> {
+  await apiFetch(`/api/streams/${id}`, { method: 'DELETE' })
+}
+
+// ────────────────────────── Шаблоны эмбедов ──────────────────────────
+
+export interface EmbedTemplate {
+  id: string
+  name: string
+  content: string
+  embed: EmbedSpec
+  role_ids: string[]
+}
+
+export async function fetchEmbedTemplates(): Promise<EmbedTemplate[]> {
+  const body = await apiFetch<{ templates: EmbedTemplate[] }>('/api/embed-templates')
+  return body.templates
+}
+
+export function saveEmbedTemplate(input: {
+  name: string
+  content: string
+  embed: EmbedSpec
+  role_ids: string[]
+}): Promise<EmbedTemplate> {
+  return apiFetch('/api/embed-templates', jsonInit('POST', input))
+}
+
+export async function deleteEmbedTemplate(id: string): Promise<void> {
+  await apiFetch(`/api/embed-templates/${id}`, { method: 'DELETE' })
 }

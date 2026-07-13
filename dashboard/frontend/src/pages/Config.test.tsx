@@ -42,10 +42,10 @@ describe('ConfigPage', () => {
 
     render(<ConfigPage />)
 
-    expect(await screen.findByText('Модерация/спам')).toBeInTheDocument()
-    expect(screen.getByText('Приветствия/онбординг')).toBeInTheDocument()
-    expect(screen.getByText('CTD')).toBeInTheDocument()
-    expect(screen.getByText('Кнопки/вебхуки')).toBeInTheDocument()
+    expect(await screen.findByText('Модерация и спам')).toBeInTheDocument()
+    expect(screen.getByText('Приветствия и онбординг')).toBeInTheDocument()
+    expect(screen.getByText('Тикеты CTD')).toBeInTheDocument()
+    expect(screen.getByText('Кнопки и вебхуки')).toBeInTheDocument()
     expect(screen.getByText('Приватные комнаты')).toBeInTheDocument()
     expect(screen.getByText('Поставки')).toBeInTheDocument()
   })
@@ -80,6 +80,17 @@ describe('ConfigPage', () => {
     )
   })
 
+  it('keeps the save button disabled until something changes', async () => {
+    vi.spyOn(client, 'fetchConfig').mockResolvedValue(emptyConfig)
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    render(<ConfigPage />)
+
+    await waitFor(() => screen.getByRole('button', { name: 'Сохранить' }))
+    expect(screen.getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+  })
+
   it('shows an error when save fails', async () => {
     vi.spyOn(client, 'fetchConfig').mockResolvedValue(emptyConfig)
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
@@ -88,7 +99,8 @@ describe('ConfigPage', () => {
 
     render(<ConfigPage />)
 
-    await waitFor(() => screen.getByRole('button', { name: 'Сохранить' }))
+    await waitFor(() => screen.getByLabelText('Ссылка-приглашение сервера'))
+    fireEvent.change(screen.getByLabelText('Ссылка-приглашение сервера'), { target: { value: 'https://discord.gg/x' } })
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() => screen.getByText('Не удалось сохранить конфигурацию — проверьте поля'))

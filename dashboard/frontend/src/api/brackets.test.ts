@@ -52,7 +52,7 @@ describe('brackets api client', () => {
       '/api/brackets',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ title: 'T1', entries: ['A', 'B'], source_event_id: null }),
+        body: JSON.stringify({ title: 'T1', entries: ['A', 'B'], source_event_id: null, format: 'single_elim' }),
       }),
     )
   })
@@ -72,7 +72,7 @@ describe('brackets api client', () => {
     await setBracketMatchWinner('1', 0, 2, 'a')
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/brackets/1/matches/0/2/winner',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ winner: 'a' }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ winner: 'a', segment: 'W' }) }),
     )
   })
 

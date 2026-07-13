@@ -5,6 +5,8 @@ from pathlib import Path
 import aiohttp
 from aiohttp import web
 
+import stats_db
+
 from .auth import routes as auth_routes
 from .config import ConfigError, DashboardConfig, load_dashboard_config
 from .routes.brackets import routes as brackets_routes
@@ -20,6 +22,12 @@ from .routes.auto_roles import routes as auto_roles_routes
 from .routes.supply import routes as supply_routes
 from .routes.voice import routes as voice_routes
 from .routes.news import routes as news_routes
+from .routes.serverlog import routes as serverlog_routes
+from .routes.xp import routes as xp_routes
+from .routes.voice_stats import routes as voice_stats_routes
+from .routes.audit import routes as audit_routes
+from .routes.streams import routes as streams_routes
+from .audit_middleware import audit_middleware
 from .session import setup_session
 from .static import setup_static_routes
 
@@ -43,7 +51,9 @@ def create_app(
     guild_id: int,
     frontend_dist: Path | None = None,
 ) -> web.Application:
-    app = web.Application(middlewares=[json_error_middleware])
+    stats_db.init()
+
+    app = web.Application(middlewares=[json_error_middleware, audit_middleware])
     app["bot"] = bot
     app["dashboard_config"] = config
     app["guild_id"] = guild_id
@@ -63,6 +73,11 @@ def create_app(
     app.add_routes(supply_routes)
     app.add_routes(voice_routes)
     app.add_routes(news_routes)
+    app.add_routes(serverlog_routes)
+    app.add_routes(xp_routes)
+    app.add_routes(voice_stats_routes)
+    app.add_routes(audit_routes)
+    app.add_routes(streams_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

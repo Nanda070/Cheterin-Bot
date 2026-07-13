@@ -1,9 +1,14 @@
 import {
+  Broadcast,
   CalendarCheck,
+  ChartBar,
+  ChartLine,
   ChatCircleText,
+  ClipboardText,
   GearSix,
   HandWaving,
   Headset,
+  ListMagnifyingGlass,
   Megaphone,
   Package,
   ShieldWarning,
@@ -24,22 +29,52 @@ import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
 interface Section {
   label: string
   icon: Icon
-  to?: string
+  to: string
 }
 
-const SECTIONS: Section[] = [
-  { label: 'Feedback и тикеты', icon: ChatCircleText, to: '/feedback' },
-  { label: 'Конструктор кнопок и эмбедов', icon: Stack, to: '/reaction-roles' },
-  { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
-  { label: 'Сетки', icon: Trophy, to: '/brackets' },
-  { label: 'Поставки', icon: Package, to: '/supply' },
-  { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
-  { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
-  { label: 'Приветствие и прощание', icon: HandWaving, to: '/welcome' },
-  { label: 'Авто-роли', icon: UserCirclePlus, to: '/auto-roles' },
-  { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
-  { label: 'Участники и роли', icon: UsersThree, to: '/members' },
-  { label: 'Конфигурация', icon: GearSix, to: '/config' },
+interface NavGroup {
+  title: string
+  items: Section[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    title: 'Активность',
+    items: [
+      { label: 'Рейтинг участников', icon: ChartBar, to: '/levels' },
+      { label: 'Статистика войса', icon: ChartLine, to: '/voice-stats' },
+    ],
+  },
+  {
+    title: 'Сообщество',
+    items: [
+      { label: 'Feedback и тикеты', icon: ChatCircleText, to: '/feedback' },
+      { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
+      { label: 'Сетки', icon: Trophy, to: '/brackets' },
+      { label: 'Поставки', icon: Package, to: '/supply' },
+      { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
+    ],
+  },
+  {
+    title: 'Контент',
+    items: [
+      { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
+      { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
+      { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
+      { label: 'Приветствие и прощание', icon: HandWaving, to: '/welcome' },
+      { label: 'Авто-роли', icon: UserCirclePlus, to: '/auto-roles' },
+    ],
+  },
+  {
+    title: 'Администрирование',
+    items: [
+      { label: 'Логирование', icon: ListMagnifyingGlass, to: '/serverlog' },
+      { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
+      { label: 'Участники и роли', icon: UsersThree, to: '/members' },
+      { label: 'Аудит дашборда', icon: ClipboardText, to: '/audit' },
+      { label: 'Конфигурация', icon: GearSix, to: '/config' },
+    ],
+  },
 ]
 
 export function DashboardShell() {
@@ -59,7 +94,7 @@ export function DashboardShell() {
   }
 
   const itemBase =
-    'flex items-center justify-between gap-3 rounded-control border border-border bg-surface p-3 text-sm transition-colors duration-200 ease-out'
+    'flex items-center gap-2.5 rounded-control px-2.5 py-2 text-sm transition-colors duration-200 ease-out'
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -115,40 +150,32 @@ export function DashboardShell() {
             )}
             <span className="truncate text-sm font-medium text-foreground">{user?.username}</span>
           </div>
-          <nav className="flex flex-col gap-2">
-            {SECTIONS.map(({ label, icon: SectionIcon, to }, index) =>
-              to ? (
-                <NavLink
-                  key={label}
-                  to={to}
-                  style={{ animationDelay: `${index * 40}ms` }}
-                  className={({ isActive }) =>
-                    `animate-fade-in-up ${itemBase} cursor-pointer hover:bg-surface-hover ${
-                      isActive ? 'border-primary/60 bg-primary-muted text-foreground' : 'text-foreground'
-                    }`
-                  }
-                >
-                  <span className="flex items-center gap-3">
-                    <SectionIcon size={18} className="text-muted" />
-                    {label}
-                  </span>
-                </NavLink>
-              ) : (
-                <div
-                  key={label}
-                  style={{ animationDelay: `${index * 40}ms` }}
-                  className={`animate-fade-in-up ${itemBase} text-muted`}
-                >
-                  <span className="flex items-center gap-3">
-                    <SectionIcon size={18} className="text-muted" />
-                    {label}
-                  </span>
-                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted">
-                    скоро
-                  </span>
+          <nav className="flex flex-col gap-4">
+            {NAV_GROUPS.map((group, groupIndex) => (
+              <div key={group.title} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
+                <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {group.title}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {group.items.map(({ label, icon: SectionIcon, to }) => (
+                    <NavLink
+                      key={label}
+                      to={to}
+                      className={({ isActive }) =>
+                        `${itemBase} cursor-pointer ${
+                          isActive
+                            ? 'bg-primary-muted font-medium text-foreground'
+                            : 'text-muted hover:bg-surface-hover hover:text-foreground'
+                        }`
+                      }
+                    >
+                      <SectionIcon size={17} className="shrink-0" />
+                      {label}
+                    </NavLink>
+                  ))}
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </nav>
         </aside>
 

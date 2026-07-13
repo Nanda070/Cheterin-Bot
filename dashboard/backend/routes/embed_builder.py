@@ -97,6 +97,48 @@ async def create_embed_message(request: web.Request) -> web.Response:
     return web.json_response({"message_id": str(message.id), "channel_id": str(channel_id)}, status=201)
 
 
+@routes.get("/api/embed-templates")
+@require_dashboard_access
+async def list_embed_templates(request: web.Request) -> web.Response:
+    return web.json_response({"templates": embed_builder.list_templates()})
+
+
+@routes.post("/api/embed-templates")
+@require_dashboard_access
+async def create_embed_template(request: web.Request) -> web.Response:
+    body, error = await _parse_body(request)
+    if error:
+        return error
+
+    name = body.get("name", "")
+    if not isinstance(name, str) or not name.strip() or len(name) > 60:
+        return web.json_response({"error": "invalid_name"}, status=400)
+
+    spec = body.get("embed") or {}
+    content = body.get("content") or ""
+    error_code = embed_builder.validate_embed_spec(spec, content)
+    if error_code:
+        return web.json_response({"error": error_code}, status=400)
+
+    role_ids_raw = body.get("role_ids") or []
+    _, error = _validate_role_ids_structure(role_ids_raw)
+    if error:
+        return error
+
+    result = embed_builder.save_template(name.strip(), content, spec, [str(r) for r in role_ids_raw])
+    if isinstance(result, str):
+        return web.json_response({"error": result}, status=409 if result == "duplicate_name" else 400)
+    return web.json_response(result, status=201)
+
+
+@routes.delete("/api/embed-templates/{template_id}")
+@require_dashboard_access
+async def delete_embed_template(request: web.Request) -> web.Response:
+    if not embed_builder.delete_template(request.match_info["template_id"]):
+        return web.json_response({"error": "not_found"}, status=404)
+    return web.json_response({"ok": True})
+
+
 @routes.get("/api/embed-messages/{channel_id}/{message_id}")
 @require_dashboard_access
 async def get_embed_message(request: web.Request) -> web.Response:

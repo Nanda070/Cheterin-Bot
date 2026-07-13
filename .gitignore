@@ -20,5 +20,10 @@ supply_data.json
 news_relay.json
 voice_panel.json
 private_rooms.db
+stats.db
+xp_config.json
+serverlog_config.json
+streams_config.json
+xp_card_bg.png
 venv/
 NEW/

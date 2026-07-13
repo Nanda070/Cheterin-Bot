@@ -5,9 +5,16 @@ import {
   fetchBrackets,
   fetchEventEntries,
   fetchEvents,
+  type BracketFormat,
   type BracketSummary,
   type EventSummary,
 } from '../api/client'
+
+const FORMAT_LABEL: Record<BracketFormat, string> = {
+  single_elim: 'Single Elimination',
+  double_elim: 'Double Elimination',
+  round_robin: 'Round Robin',
+}
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -36,6 +43,7 @@ export function BracketsPage() {
   const [title, setTitle] = useState('')
   const [entries, setEntries] = useState<string[]>([])
   const [step, setStep] = useState<'source' | 'seed'>('source')
+  const [format, setFormat] = useState<BracketFormat>('single_elim')
   const [createError, setCreateError] = useState('')
   const [createBusy, setCreateBusy] = useState(false)
 
@@ -102,7 +110,7 @@ export function BracketsPage() {
     setCreateBusy(true)
     setCreateError('')
     try {
-      await createBracket(title, entries, tab === 'event' ? selectedEventId || null : null)
+      await createBracket(title, entries, tab === 'event' ? selectedEventId || null : null, format)
       setCreateOpen(false)
       reload()
     } catch {
@@ -127,7 +135,9 @@ export function BracketsPage() {
         {brackets.map((b) => (
           <Card key={b.id} interactive className="!p-3" onClick={() => navigate(`/brackets/${b.id}`)}>
             <p className="text-sm text-foreground">{b.title}</p>
-            <p className="text-xs text-muted">{b.entry_count} участников</p>
+            <p className="text-xs text-muted">
+              {b.entry_count} участников · {FORMAT_LABEL[b.format] ?? b.format}
+            </p>
           </Card>
         ))}
         {brackets.length === 0 && <p className="text-sm text-muted">Сеток пока нет.</p>}
@@ -193,6 +203,27 @@ export function BracketsPage() {
               onChange={(e) => setTitle(e.target.value)}
               className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
             />
+
+            <label className="text-sm text-muted" htmlFor="bracket-format">
+              Формат
+            </label>
+            <select
+              id="bracket-format"
+              value={format}
+              onChange={(e) => setFormat(e.target.value as BracketFormat)}
+              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+            >
+              {(Object.keys(FORMAT_LABEL) as BracketFormat[]).map((f) => (
+                <option key={f} value={f}>
+                  {FORMAT_LABEL[f]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted">
+              {format === 'single_elim' && 'Классическая сетка на вылет: одно поражение — выбывание.'}
+              {format === 'double_elim' && 'Верхняя и нижняя сетки: выбывание после двух поражений, гранд-финал.'}
+              {format === 'round_robin' && 'Круговая система: каждый играет с каждым, таблица очков (победа 3, ничья 1). До 20 участников.'}
+            </p>
 
             {createError && <p className="text-sm text-danger">{createError}</p>}
 

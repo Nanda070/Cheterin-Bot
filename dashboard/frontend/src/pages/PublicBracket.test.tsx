@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+﻿import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import * as client from '../api/client'
@@ -7,6 +7,7 @@ import { PublicBracketPage } from './PublicBracket'
 const baseBracket: client.BracketDetail = {
   id: '1',
   title: 'Летний турнир',
+  format: 'single_elim' as const,
   source_event_id: null,
   entries: ['A', 'B'],
   rounds: [[{ slot_a: 'A', slot_b: 'B', winner: 'a' }]],

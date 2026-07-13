@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import * as client from '../api/client'
@@ -17,6 +17,7 @@ function renderAt(id: string) {
 const baseBracket: client.BracketDetail = {
   id: '1',
   title: 'Летний турнир',
+  format: 'single_elim' as const,
   source_event_id: null,
   entries: ['A', 'B', 'C', 'D'],
   rounds: [
@@ -55,7 +56,7 @@ describe('BracketDetailPage', () => {
 
     renderAt('1')
     fireEvent.click(await screen.findByText('A'))
-    await waitFor(() => expect(winnerSpy).toHaveBeenCalledWith('1', 0, 0, 'a'))
+    await waitFor(() => expect(winnerSpy).toHaveBeenCalledWith('1', 0, 0, 'a', 'W'))
   })
 
   it('does not render a click handler for a match with a pending slot', async () => {
@@ -66,7 +67,7 @@ describe('BracketDetailPage', () => {
     const pendingSlots = screen.getAllByText('—')
     expect(pendingSlots).toHaveLength(2)
     for (const slot of pendingSlots) {
-      expect(slot.closest('button')).toBeDisabled()
+      expect(slot.closest('button')).toBeNull()
     }
   })
 

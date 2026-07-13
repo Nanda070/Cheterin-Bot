@@ -143,3 +143,74 @@ def parse_role_button_ids(message) -> list[int]:
                 except ValueError:
                     continue
     return role_ids
+
+
+# ────────────────────────── Шаблоны эмбедов ──────────────────────────
+
+import json as _json
+import os as _os
+
+TEMPLATES_FILE = "embed_templates.json"
+MAX_TEMPLATES = 50
+
+
+def _load_templates_data() -> dict:
+    if _os.path.exists(TEMPLATES_FILE):
+        with open(TEMPLATES_FILE, "r", encoding="utf-8") as f:
+            try:
+                data = _json.load(f)
+            except _json.JSONDecodeError:
+                data = {}
+    else:
+        data = {}
+    data.setdefault("seq", 0)
+    data.setdefault("templates", [])
+    return data
+
+
+def _save_templates_data(data: dict) -> None:
+    with open(TEMPLATES_FILE, "w", encoding="utf-8") as f:
+        _json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def list_templates() -> list[dict]:
+    return [
+        {
+            "id": str(t.get("id") or ""),
+            "name": str(t.get("name") or ""),
+            "content": str(t.get("content") or ""),
+            "embed": t.get("embed") or {},
+            "role_ids": [str(r) for r in t.get("role_ids", [])],
+        }
+        for t in _load_templates_data()["templates"]
+    ]
+
+
+def save_template(name: str, content: str, embed_spec: dict, role_ids: list[str]) -> dict | str:
+    """Сохраняет шаблон. Возвращает шаблон или код ошибки строкой."""
+    data = _load_templates_data()
+    if len(data["templates"]) >= MAX_TEMPLATES:
+        return "too_many_templates"
+    if any(t.get("name") == name for t in data["templates"]):
+        return "duplicate_name"
+    data["seq"] += 1
+    template = {
+        "id": str(data["seq"]),
+        "name": name,
+        "content": content,
+        "embed": embed_spec,
+        "role_ids": list(role_ids),
+    }
+    data["templates"].append(template)
+    _save_templates_data(data)
+    return template
+
+
+def delete_template(template_id: str) -> bool:
+    data = _load_templates_data()
+    before = len(data["templates"])
+    data["templates"] = [t for t in data["templates"] if str(t.get("id")) != str(template_id)]
+    if len(data["templates"]) != before:
+        _save_templates_data(data)
+        return True
+    return False

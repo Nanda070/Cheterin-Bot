@@ -17,21 +17,42 @@ def serialize_bracket_summary(bracket: dict) -> dict:
     return {
         "id": bracket["id"],
         "title": bracket["title"],
+        "format": bracket.get("format", brackets.FORMAT_SINGLE),
         "source_event_id": bracket.get("source_event_id"),
         "entry_count": len(bracket.get("entries", [])),
         "created_at": bracket["created_at"],
     }
 
 
-def serialize_bracket_detail(bracket: dict) -> dict:
+def _serialize_de_match(match: dict) -> dict:
     return {
+        "slot_a": match["slot_a"],
+        "slot_b": match["slot_b"],
+        "winner": match["winner"] if not match.get("void") else None,
+    }
+
+
+def serialize_bracket_detail(bracket: dict) -> dict:
+    result = {
         "id": bracket["id"],
         "title": bracket["title"],
+        "format": bracket.get("format", brackets.FORMAT_SINGLE),
         "source_event_id": bracket.get("source_event_id"),
         "entries": bracket.get("entries", []),
         "rounds": bracket.get("rounds", []),
         "share_token": bracket.get("share_token"),
     }
+    if "de" in bracket:
+        de = bracket["de"]
+        result["de"] = {
+            "winners": [[_serialize_de_match(m) for m in rnd] for rnd in de["winners"]],
+            "losers": [[_serialize_de_match(m) for m in rnd] for rnd in de["losers"]],
+            "final": _serialize_de_match(de["final"]),
+        }
+    if "rr_rounds" in bracket:
+        result["rr_rounds"] = bracket["rr_rounds"]
+        result["standings"] = brackets.rr_standings(bracket)
+    return result
 
 
 @routes.get("/api/brackets")
@@ -54,11 +75,16 @@ async def create_bracket_route(request: web.Request) -> web.Response:
     title = (body.get("title") or "").strip()
     entries = body.get("entries") or []
     source_event_id = body.get("source_event_id")
+    bracket_format = body.get("format") or brackets.FORMAT_SINGLE
 
     if not title:
         return web.json_response({"error": "invalid_request"}, status=400)
+    if bracket_format not in brackets.FORMATS:
+        return web.json_response({"error": "invalid_format"}, status=400)
     if len(entries) < 2:
         return web.json_response({"error": "not_enough_entries"}, status=400)
+    if bracket_format == brackets.FORMAT_ROUND_ROBIN and len(entries) > 20:
+        return web.json_response({"error": "too_many_entries"}, status=400)
 
     if source_event_id:
         events_data = await events.load_events()
@@ -71,8 +97,8 @@ async def create_bracket_route(request: web.Request) -> web.Response:
             return web.json_response({"error": "entries_mismatch"}, status=400)
 
     moderator = request["moderator"]
-    bracket = brackets.create_bracket(
-        title, entries, str(source_event_id) if source_event_id else None, moderator.id
+    bracket = brackets.create_bracket_v2(
+        title, entries, str(source_event_id) if source_event_id else None, moderator.id, bracket_format
     )
     data = brackets.load_brackets()
     data[bracket["id"]] = bracket
@@ -132,8 +158,27 @@ async def set_match_winner(request: web.Request) -> web.Response:
     except ValueError:
         return web.json_response({"error": "invalid_request"}, status=400)
     winner = body.get("winner")
+    segment = body.get("segment") or "W"
+    bracket_format = bracket.get("format", brackets.FORMAT_SINGLE)
+
+    if bracket_format == brackets.FORMAT_ROUND_ROBIN:
+        if winner not in ("a", "b", "draw", None):
+            return web.json_response({"error": "invalid_request"}, status=400)
+        if not brackets.set_winner_rr(bracket, round_index, match_index, winner):
+            return web.json_response({"error": "match_not_found"}, status=404)
+        brackets.save_brackets(data)
+        return web.json_response(serialize_bracket_detail(bracket))
+
     if winner not in ("a", "b"):
         return web.json_response({"error": "invalid_request"}, status=400)
+
+    if bracket_format == brackets.FORMAT_DOUBLE:
+        if segment not in ("W", "L", "F"):
+            return web.json_response({"error": "invalid_request"}, status=400)
+        if not brackets.set_winner_de(bracket, segment, round_index, match_index, winner):
+            return web.json_response({"error": "match_not_ready"}, status=400)
+        brackets.save_brackets(data)
+        return web.json_response(serialize_bracket_detail(bracket))
 
     rounds = bracket.get("rounds", [])
     if round_index < 0 or round_index >= len(rounds):

@@ -8,9 +8,15 @@ import {
   setBracketMatchWinner,
   type BracketDetail,
 } from '../api/client'
+import { BracketView, type PickHandler } from '../components/BracketView'
 import { Button } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+
+const FORMAT_LABEL: Record<string, string> = {
+  single_elim: 'Single Elimination',
+  double_elim: 'Double Elimination',
+  round_robin: 'Round Robin',
+}
 
 export function BracketDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,10 +39,10 @@ export function BracketDetailPage() {
 
   useEffect(reload, [id])
 
-  const pickWinner = async (roundIndex: number, matchIndex: number, winner: 'a' | 'b') => {
+  const pickWinner: PickHandler = async (segment, roundIndex, matchIndex, winner) => {
     if (!id) return
     try {
-      const updated = await setBracketMatchWinner(id, roundIndex, matchIndex, winner)
+      const updated = await setBracketMatchWinner(id, roundIndex, matchIndex, winner, segment)
       setBracket(updated)
     } catch {
       setError('Не удалось сохранить результат')
@@ -83,6 +89,9 @@ export function BracketDetailPage() {
     <div>
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-lg font-semibold text-foreground">{bracket.title}</h1>
+        <span className="rounded-full bg-primary-muted px-2.5 py-0.5 text-xs text-foreground">
+          {FORMAT_LABEL[bracket.format] ?? bracket.format}
+        </span>
         <Button variant="secondary" onClick={toggleShare} disabled={shareBusy} className="ml-auto">
           {bracket.share_token ? 'Отключить ссылку' : 'Поделиться ссылкой'}
         </Button>
@@ -99,42 +108,7 @@ export function BracketDetailPage() {
 
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
-      <div className="flex gap-6 overflow-x-auto">
-        {bracket.rounds.map((round, roundIndex) => (
-          <div key={roundIndex} className="flex flex-col justify-around gap-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted">
-              {roundIndex === bracket.rounds.length - 1 ? 'Финал' : `Раунд ${roundIndex + 1}`}
-            </p>
-            {round.map((match, matchIndex) => {
-              const ready = match.slot_a !== null && match.slot_b !== null
-              return (
-                <Card key={matchIndex} className="!p-2 w-48">
-                  <button
-                    type="button"
-                    disabled={!ready}
-                    onClick={() => ready && pickWinner(roundIndex, matchIndex, 'a')}
-                    className={`block w-full rounded-control px-2 py-1 text-left text-sm ${
-                      match.winner === 'a' ? 'font-semibold text-foreground' : 'text-muted'
-                    } ${ready ? 'cursor-pointer hover:bg-surface-hover' : ''}`}
-                  >
-                    {match.slot_a ?? '—'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!ready}
-                    onClick={() => ready && pickWinner(roundIndex, matchIndex, 'b')}
-                    className={`block w-full rounded-control px-2 py-1 text-left text-sm ${
-                      match.winner === 'b' ? 'font-semibold text-foreground' : 'text-muted'
-                    } ${ready ? 'cursor-pointer hover:bg-surface-hover' : ''}`}
-                  >
-                    {match.slot_b ?? '—'}
-                  </button>
-                </Card>
-              )
-            })}
-          </div>
-        ))}
-      </div>
+      <BracketView bracket={bracket} onPick={pickWinner} />
 
       <Modal open={confirmingDelete} title="Удалить сетку?" onClose={() => setConfirmingDelete(false)}>
         <p className="mb-4 text-sm text-muted">Это действие необратимо.</p>

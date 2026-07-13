@@ -22,6 +22,12 @@ import { NewsPage } from './pages/News'
 import { DocsPage } from './pages/Docs'
 import { TermsPage } from './pages/Terms'
 import { PrivacyPage } from './pages/Privacy'
+import { ServerLogPage } from './pages/ServerLog'
+import { LevelsPage } from './pages/Levels'
+import { VoiceStatsPage } from './pages/VoiceStats'
+import { AuditPage } from './pages/Audit'
+import { StreamsPage } from './pages/Streams'
+import { LeaderboardPage } from './pages/Leaderboard'
 
 function App() {
   return (
@@ -35,6 +41,7 @@ function App() {
           <Route path="/docs/:sectionId" element={<DocsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route
             path="/"
             element={
@@ -54,6 +61,11 @@ function App() {
             <Route path="supply" element={<SupplyPage />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
             <Route path="news" element={<NewsPage />} />
+            <Route path="levels" element={<LevelsPage />} />
+            <Route path="streams" element={<StreamsPage />} />
+            <Route path="serverlog" element={<ServerLogPage />} />
+            <Route path="voice-stats" element={<VoiceStatsPage />} />
+            <Route path="audit" element={<AuditPage />} />
             <Route path="welcome" element={<WelcomePage />} />
             <Route path="auto-roles" element={<AutoRolesPage />} />
             <Route path="config" element={<ConfigPage />} />

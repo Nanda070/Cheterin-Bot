@@ -3,5 +3,6 @@ python-dotenv>=1.0.1
 aiohttp>=3.9
 aiohttp-session>=2.12
 cryptography>=42.0
+Pillow>=10.0
 pytest>=8.0
 pytest-aiohttp>=1.0

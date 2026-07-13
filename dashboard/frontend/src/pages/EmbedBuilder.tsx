@@ -2,13 +2,17 @@
 import { ChannelOptions } from '../components/ChannelOptions'
 import {
   createEmbedMessage,
+  deleteEmbedTemplate,
   fetchChannels,
   fetchEmbedMessage,
+  fetchEmbedTemplates,
   fetchRoles,
+  saveEmbedTemplate,
   updateEmbedMessage,
   type ChannelInfo,
   type EmbedFieldSpec,
   type EmbedSpec,
+  type EmbedTemplate,
   type RoleInfo,
 } from '../api/client'
 import { Button } from '../components/ui/Button'
@@ -65,11 +69,59 @@ export function EmbedBuilderPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [savedResult, setSavedResult] = useState<{ message_id: string; channel_id: string } | null>(null)
+  const [templates, setTemplates] = useState<EmbedTemplate[]>([])
+  const [templateName, setTemplateName] = useState('')
+  const [templateNotice, setTemplateNotice] = useState('')
 
   useEffect(() => {
     fetchChannels().then(setChannels).catch(() => {})
     fetchRoles().then(setRoles).catch(() => {})
+    fetchEmbedTemplates().then(setTemplates).catch(() => {})
   }, [])
+
+  const applyTemplate = (id: string) => {
+    const template = templates.find((t) => t.id === id)
+    if (!template) return
+    setContent(template.content)
+    setEmbed({ ...EMPTY_EMBED_SPEC, ...template.embed })
+    setRoleIds(template.role_ids)
+    setTemplateNotice(`Шаблон «${template.name}» загружен.`)
+  }
+
+  const handleSaveTemplate = async () => {
+    setError('')
+    setTemplateNotice('')
+    const name = templateName.trim()
+    if (!name) {
+      setError('Укажите название шаблона')
+      return
+    }
+    const validationError = validateEmbedSpec(embed, content)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+    setBusy(true)
+    try {
+      const created = await saveEmbedTemplate({ name, content, embed, role_ids: roleIds })
+      setTemplates((prev) => [...prev, created])
+      setTemplateName('')
+      setTemplateNotice(`Шаблон «${created.name}» сохранён.`)
+    } catch (e) {
+      setError(e instanceof Error && e.message === 'duplicate_name' ? 'Шаблон с таким именем уже есть' : 'Не удалось сохранить шаблон')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      await deleteEmbedTemplate(id)
+      setTemplates((prev) => prev.filter((t) => t.id !== id))
+    } catch {
+      setError('Не удалось удалить шаблон')
+    }
+  }
 
   const updateEmbedField = <K extends keyof EmbedSpec>(key: K, value: EmbedSpec[K]) => {
     setEmbed((prev) => ({ ...prev, [key]: value }))
@@ -156,6 +208,51 @@ export function EmbedBuilderPage() {
           <Button variant={mode === 'edit' ? 'primary' : 'secondary'} onClick={() => setMode('edit')}>
             Редактировать существующее
           </Button>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-control border border-border bg-surface p-3">
+          <p className="text-sm font-medium text-foreground">Шаблоны</p>
+          <div className="flex gap-2">
+            <select
+              value=""
+              onChange={(e) => e.target.value && applyTemplate(e.target.value)}
+              className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+            >
+              <option value="">Загрузить шаблон…</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            {templates.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => e.target.value && handleDeleteTemplate(e.target.value)}
+                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-danger"
+                aria-label="Удалить шаблон"
+              >
+                <option value="">Удалить…</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Название нового шаблона"
+              className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            />
+            <Button variant="secondary" onClick={handleSaveTemplate} disabled={busy}>
+              Сохранить как шаблон
+            </Button>
+          </div>
+          {templateNotice && <p className="text-xs text-primary">{templateNotice}</p>}
         </div>
 
         <label className="text-sm text-muted" htmlFor="eb-channel">
