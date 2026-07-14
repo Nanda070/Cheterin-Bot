@@ -1,6 +1,12 @@
-﻿import type { ReactNode } from 'react'
-import { NavLink, useParams } from 'react-router-dom'
+﻿import { ArrowLeft, ArrowRight, Check, Copy, Info, Warning } from '@phosphor-icons/react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { PublicLayout } from '../components/PublicLayout'
+import { DocsBanner } from '../components/docs/DocsBanner'
+import type { DocNavItem } from '../components/docs/docsNav'
+import { DocsSearch } from '../components/docs/DocsSearch'
+import { DocsSidebar } from '../components/docs/DocsSidebar'
+import { DocsToc } from '../components/docs/DocsToc'
 
 interface DocSection {
   id: string
@@ -9,12 +15,40 @@ interface DocSection {
   content: ReactNode
 }
 
+function HeadingAnchor() {
+  return (
+    <button
+      type="button"
+      aria-label="Скопировать ссылку на раздел"
+      onClick={(event) => {
+        const id = event.currentTarget.parentElement?.id
+        if (!id) return
+        history.replaceState(null, '', `#${id}`)
+        event.currentTarget.parentElement?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      }}
+      className="ml-2 cursor-pointer text-muted opacity-0 transition-opacity group-hover:opacity-60 hover:!opacity-100"
+    >
+      #
+    </button>
+  )
+}
+
 function H(props: { children: ReactNode }) {
-  return <h2 className="mt-6 text-base font-semibold text-foreground first:mt-0">{props.children}</h2>
+  return (
+    <h2 className="group mt-6 flex items-center text-base font-semibold text-foreground first:mt-0">
+      {props.children}
+      <HeadingAnchor />
+    </h2>
+  )
 }
 
 function H3(props: { children: ReactNode }) {
-  return <h3 className="mt-4 text-sm font-semibold text-foreground">{props.children}</h3>
+  return (
+    <h3 className="group mt-4 flex items-center text-sm font-semibold text-foreground">
+      {props.children}
+      <HeadingAnchor />
+    </h3>
+  )
 }
 
 function P(props: { children: ReactNode }) {
@@ -43,16 +77,18 @@ function Pre(props: { children: string }) {
 
 function Note(props: { children: ReactNode }) {
   return (
-    <div className="mt-3 rounded-control border border-primary/40 bg-primary-muted p-3 text-sm leading-relaxed text-foreground">
-      {props.children}
+    <div className="mt-3 flex gap-2.5 rounded-control border border-primary/40 bg-primary-muted p-3 text-sm leading-relaxed text-foreground">
+      <Info size={18} weight="fill" className="mt-0.5 shrink-0 text-primary" />
+      <div className="min-w-0">{props.children}</div>
     </div>
   )
 }
 
 function Warn(props: { children: ReactNode }) {
   return (
-    <div className="mt-3 rounded-control border border-warning/40 bg-warning/10 p-3 text-sm leading-relaxed text-foreground">
-      {props.children}
+    <div className="mt-3 flex gap-2.5 rounded-control border border-warning/40 bg-warning/10 p-3 text-sm leading-relaxed text-foreground">
+      <Warning size={18} weight="fill" className="mt-0.5 shrink-0 text-warning" />
+      <div className="min-w-0">{props.children}</div>
     </div>
   )
 }
@@ -148,7 +184,9 @@ const SECTIONS: DocSection[] = [
             ['Embed Builder', 'Конструктор эмбедов, кнопки-формы, шаблоны', 'Кнопки и эмбеды'],
             ['События', 'Ивенты и голосования с кнопками участия', 'События и голосования'],
             ['Турнирные сетки', 'Single/Double Elimination и Round Robin с публичной ссылкой', 'Сетки'],
+            ['Мафия', 'Ролевая игра: лобби, ночные действия по ссылке, открытое дневное голосование', 'Мафия'],
             ['Поставки', 'Сборы участников с резервом и напоминаниями', 'Поставки'],
+            ['Семья', 'Ростер по ролям, заявки на вступление тикетами, дни рождения', 'Семья'],
             ['Приватные комнаты', 'Личные голосовые каналы с панелью управления', 'Приватные комнаты'],
             ['Ретрансляция новостей', 'Пересылка сообщений с сервера-источника', 'Ретрансляция новостей'],
             ['Массовая выдача ролей', 'Фоновая выдача роли множеству участников', 'Участники и роли'],
@@ -195,7 +233,9 @@ const SECTIONS: DocSection[] = [
             ['Feedback и тикеты', 'Заявки обратной связи, категории, панель тикетов'],
             ['События и голосования', 'Создание ивентов, участники, роли-награды'],
             ['Сетки', 'Турнирные сетки трёх форматов и публичные ссылки'],
+            ['Мафия', 'Тумблер модуля, дефолты игроков и таймеров, лог-канал, активные игры'],
             ['Поставки', 'Активные сборы, история, топ участников, создание сбора'],
+            ['Семья', 'Тумблер модуля, ростер по ролям, заявки-тикеты, дни рождения'],
             ['Приватные комнаты', 'Активные комнаты, публикация панели управления'],
             ['Кнопки и эмбеды', 'Embed Builder, шаблоны, кнопки-формы, роли по реакциям'],
             ['Публикации и подписки', 'Подписки на стримеров Twitch и каналы YouTube'],
@@ -739,6 +779,68 @@ const SECTIONS: DocSection[] = [
     ),
   },
   {
+    id: 'mafia',
+    title: 'Мафия',
+    group: 'Модули',
+    content: (
+      <>
+        <H>🎭 Ролевая игра «Мафия»</H>
+        <P>
+          Классическая социальная игра с ролями: Мафия, Мирный житель, Доктор, Шериф. Модуль{' '}
+          <strong>выключен по умолчанию</strong> — общий тумблер и дефолтные настройки находятся в разделе «Мафия».
+        </P>
+
+        <H3>Запуск</H3>
+        <UL>
+          <li>
+            Команда <Code>/мафия-игра</Code> создаёт лобби с кнопкой «Присоединиться». Запустить может любой участник
+            сервера.
+          </li>
+          <li>
+            Опциональные параметры команды — минимум/максимум игроков (5–99) и три таймера (ночь, обсуждение,
+            голосование). Если не указаны — берутся дефолты из настроек модуля в дашборде.
+          </li>
+          <li>
+            Игра стартует автоматически при заполнении максимума или досрочно по кнопке «Начать сейчас»/командой{' '}
+            <Code>/мафия-стоп</Code> — только у модераторов (право «Управление сервером»).
+          </li>
+        </UL>
+
+        <H3>Роли</H3>
+        <Table
+          headers={['Роль', 'Что делает']}
+          rows={[
+            ['Мафия', 'Ночью команда мафии выбирает жертву; решает большинство голосов команды.'],
+            ['Доктор', 'Ночью лечит одного игрока (включая себя), защищая от убийства мафией.'],
+            ['Шериф', 'Ночью проверяет одного игрока — узнаёт, состоит ли он в мафии.'],
+            ['Мирный житель', 'Ночных действий не имеет — участвует только в дневном обсуждении и голосовании.'],
+          ]}
+        />
+        <P>Ровно 1 Доктор и 1 Шериф независимо от числа игроков; Мафия — около 25% состава (минимум 1).</P>
+
+        <H3>Ночные действия</H3>
+        <P>
+          Мафия/Доктор/Шериф получают в личные сообщения персональную ссылку на дашборд (без входа через Discord) —
+          она действует всю игру. На странице по ссылке видна роль, текущая фаза, таймер и список живых игроков для
+          выбора цели. Не успел выбрать до конца таймера — действие просто не засчитывается.
+        </P>
+
+        <H3>День</H3>
+        <UL>
+          <li>Бот создаёт временный голосовой канал на игру для обсуждения.</li>
+          <li>После обсуждения публикуется открытое голосование — выбор цели через выпадающий список в Discord.</li>
+          <li>Большинство голосов — казнь; ничья — никто не казнён в этот день.</li>
+        </UL>
+
+        <H3>Победа</H3>
+        <P>
+          Мирные побеждают, когда мафии не осталось. Мафия побеждает, когда её численность сравнивается с
+          численностью остальных живых игроков. Роли раскрываются при выбывании и в финальном итоге.
+        </P>
+      </>
+    ),
+  },
+  {
     id: 'supply',
     title: 'Поставки',
     group: 'Модули',
@@ -806,6 +908,59 @@ const SECTIONS: DocSection[] = [
           </li>
           <li>В дашборде: активные сборы с составами, история (последние завершённые), топ участников, кнопки «Завершить» и «Отменить».</li>
           <li>Все события (запись, отзыв, резерв, продвижение, закрытие) логируются в <Code>SUPPLY_LOG_CHANNEL_ID</Code>.</li>
+        </UL>
+      </>
+    ),
+  },
+  {
+    id: 'family',
+    title: 'Семья',
+    group: 'Модули',
+    content: (
+      <>
+        <H>👨‍👩‍👧 Управление «Семьёй»</H>
+        <P>
+          Модуль для GTA5RP-фракции «Семья»: живой ростер участников по ролям, приём в семью через заявки-тикеты и
+          список дней рождения. Как и «Рейтинг участников», модуль <strong>выключен по умолчанию</strong> — общий
+          тумблер и вся конфигурация находятся на странице «Семья» (не в общей «Конфигурации»).
+        </P>
+
+        <H3>Ростер</H3>
+        <UL>
+          <li>
+            В настройках задаётся произвольный список пар «название группы → роль» (например, «Верхушка» →
+            определённая роль).
+          </li>
+          <li>
+            Команда <Code>/список</Code> публикует live-сообщение со списком участников по каждой роли; сообщение
+            обновляется автоматически (с debounce) при выдаче/снятии ролей и выходе участников с сервера.
+          </li>
+          <li>В дашборде: вкладка «Ростер» — предпросмотр текущего состава по каждой роли.</li>
+        </UL>
+
+        <H3>Заявки на вступление</H3>
+        <OL>
+          <li>Участник открывает заявку кнопкой в канале заявок и заполняет двухшаговую анкету (модальные окна).</li>
+          <li>Бот создаёт приватный тред с эмбедом анкеты и пингует роли команды/тикет-менеджера.</li>
+          <li>
+            Кнопки <strong>Принять</strong> / <strong>Отказать</strong> / <strong>Закрыть</strong> — выдают или
+            снимают настроенные роли, архивируют тред и пишут итог в канал логов.
+          </li>
+        </OL>
+        <P>
+          В дашборде — вкладка «Заявки»: список тикетов с фильтром по статусу (открыта / принята / отклонена /
+          закрыта) и теми же кнопками решения, что и в Discord — оба пути ведут к одной и той же логике.
+        </P>
+
+        <H3>Дни рождения</H3>
+        <UL>
+          <li>
+            Команды <Code>/добавить-др</Code>, <Code>/установить-др</Code>, <Code>/удалить-др</Code> — участник
+            указывает дату (день и месяц, без года).
+          </li>
+          <li>Live-сообщение со списком ближайших дней рождения обновляется при каждом изменении.</li>
+          <li>Каждый день в полночь по МСК бот поздравляет именинников в настроенном канале.</li>
+          <li>В дашборде — вкладка «Дни рождения»: поиск участника, добавление и удаление даты за любого игрока.</li>
         </UL>
       </>
     ),
@@ -1127,6 +1282,9 @@ DISCORD_OAUTH_REDIRECT_URI=http://localhost:8080/api/auth/discord/callback
 DASHBOARD_SESSION_SECRET=случайная_строка_32+_символа
 DASHBOARD_ACCESS_ROLE_IDS=ID_ролей_с_доступом_через_запятую
 
+# Опционально — адрес фронтенда для персональных ссылок игры «Мафия» (ЛС с ролью) и т.д.
+DASHBOARD_FRONTEND_URL=https://cheterin.online
+
 # Опционально — для стрим-уведомлений Twitch (dev.twitch.tv → Register Application)
 TWITCH_CLIENT_ID=client_id_приложения
 TWITCH_CLIENT_SECRET=client_secret_приложения`}</Pre>
@@ -1165,11 +1323,15 @@ python main.py`}</Pre>
             ['serverlog_config.json', 'Настройки тотального логирования (тумблеры и каналы).'],
             ['streams_config.json', 'Подписки на стримеров и их настройки.'],
             ['embed_templates.json', 'Сохранённые шаблоны эмбедов.'],
+            ['family_config.json', 'Настройки модуля «Семья»: тумблер, ростер, заявки, дни рождения.'],
+            ['family.db', 'SQLite: ростер-сообщение, заявки-тикеты, дни рождения.'],
+            ['mafia_config.json', 'Настройки модуля «Мафия»: тумблер, дефолты игроков и таймеров, лог-канал.'],
+            ['mafia.db', 'SQLite: игры, игроки и роли, ночные действия, дневные голоса.'],
           ]}
         />
 
         <H>Тесты</H>
-        <Pre>{`# backend (480+ тестов)
+        <Pre>{`# backend (650+ тестов)
 python -m pytest
 
 # frontend
@@ -1185,7 +1347,9 @@ npm run lint`}</Pre>
           <Code>/api/feedback</Code>, <Code>/api/events</Code>, <Code>/api/brackets</Code>,{' '}
           <Code>/api/supply</Code>, <Code>/api/voice</Code>, <Code>/api/news</Code>, <Code>/api/xp</Code>,{' '}
           <Code>/api/serverlog</Code>, <Code>/api/voice-stats</Code>, <Code>/api/streams</Code>,{' '}
-          <Code>/api/audit</Code>, <Code>/api/reaction-roles</Code>, <Code>/api/embed-builder</Code>. Каждое
+          <Code>/api/audit</Code>, <Code>/api/reaction-roles</Code>, <Code>/api/embed-builder</Code>,{' '}
+          <Code>/api/family</Code>, <Code>/api/mafia</Code> (плюс публичный{' '}
+          <Code>/api/public/mafia/&lt;токен&gt;</Code> для персональных ссылок игроков). Каждое
           мутирующее действие автоматически попадает в аудит. Ошибки возвращаются в формате{' '}
           <Code>{'{"error": "код_ошибки"}'}</Code> с соответствующим HTTP-статусом.
         </P>
@@ -1196,40 +1360,95 @@ npm run lint`}</Pre>
 
 const GROUPS = ['Общее', 'Модули', 'Справка']
 
+const NAV_ITEMS: DocNavItem[] = SECTIONS.map((s) => ({ id: s.id, title: s.title, group: s.group }))
+
 export function DocsPage() {
   const { sectionId } = useParams()
   const active = SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0]
+  const activeIndex = SECTIONS.indexOf(active)
+  const prevSection = activeIndex > 0 ? SECTIONS[activeIndex - 1] : null
+  const nextSection = activeIndex < SECTIONS.length - 1 ? SECTIONS[activeIndex + 1] : null
+
+  const articleRef = useRef<HTMLElement>(null)
+  const [copied, setCopied] = useState(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    }
+  }, [])
+
+  const copyPage = async () => {
+    const text = articleRef.current?.innerText ?? ''
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard API unavailable (permissions/http context) — non-critical affordance, ignore.
+    }
+  }
 
   return (
     <PublicLayout>
-      <div className="flex flex-col gap-6 md:flex-row">
-        <aside className="shrink-0 md:w-60">
-          {GROUPS.map((group) => (
-            <div key={group} className="mb-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{group}</p>
-              <nav className="flex flex-row flex-wrap gap-1 md:flex-col">
-                {SECTIONS.filter((s) => s.group === group).map((section) => (
-                  <NavLink
-                    key={section.id}
-                    to={`/docs/${section.id}`}
-                    className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
-                      section.id === active.id
-                        ? 'bg-primary-muted text-foreground'
-                        : 'text-muted hover:bg-surface-hover hover:text-foreground'
-                    }`}
-                  >
-                    {section.title}
-                  </NavLink>
-                ))}
-              </nav>
-            </div>
-          ))}
+      <DocsBanner />
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <aside className="shrink-0 lg:w-60">
+          <DocsSearch items={NAV_ITEMS} />
+          <DocsSidebar items={NAV_ITEMS} groups={GROUPS} activeId={active.id} />
         </aside>
 
-        <article className="animate-fade-in-up min-w-0 flex-1 rounded-card border border-border bg-surface p-6">
-          <h1 className="text-lg font-semibold text-foreground">{active.title}</h1>
+        <article
+          key={active.id}
+          ref={articleRef}
+          className="animate-fade-in-up min-w-0 flex-1 rounded-card border border-border bg-surface p-6"
+        >
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <h1 className="text-lg font-semibold text-foreground">{active.title}</h1>
+            <button
+              type="button"
+              onClick={copyPage}
+              className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-border px-2.5 py-1.5 text-xs text-muted transition-colors hover:border-primary hover:text-foreground"
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+              {copied ? 'Скопировано' : 'Скопировать страницу'}
+            </button>
+          </div>
           {active.content}
+
+          {(prevSection || nextSection) && (
+            <div
+              role="navigation"
+              aria-label="Пейджер"
+              className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-4"
+            >
+              {prevSection ? (
+                <Link
+                  to={`/docs/${prevSection.id}`}
+                  className="flex items-center gap-1.5 rounded-control px-3 py-2 text-sm text-muted transition-colors hover:text-foreground"
+                >
+                  <ArrowLeft size={14} />
+                  {prevSection.title}
+                </Link>
+              ) : (
+                <span />
+              )}
+              {nextSection && (
+                <Link
+                  to={`/docs/${nextSection.id}`}
+                  className="flex items-center gap-1.5 rounded-control px-3 py-2 text-right text-sm text-muted transition-colors hover:text-foreground"
+                >
+                  {nextSection.title}
+                  <ArrowRight size={14} />
+                </Link>
+              )}
+            </div>
+          )}
         </article>
+
+        <DocsToc containerRef={articleRef} activeId={active.id} />
       </div>
     </PublicLayout>
   )

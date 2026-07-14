@@ -10,7 +10,9 @@ import {
   type RoleInfo,
 } from '../api/client'
 import { Button } from './ui/Button'
+import { Checkbox } from './ui/Checkbox'
 import { Modal } from './ui/Modal'
+import { Select } from './ui/Select'
 
 interface Props {
   open: boolean
@@ -115,19 +117,7 @@ export function MassAssignModal({ open, onClose }: Props) {
           <label className="text-sm text-muted" htmlFor="mass-role">
             Роль
           </label>
-          <select
-            id="mass-role"
-            value={roleId}
-            onChange={(e) => setRoleId(e.target.value)}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="">Выберите роль…</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
+          <Select id="mass-role" value={roleId} onChange={(id) => setRoleId(id)} options={roles} placeholder="Выберите роль…" />
 
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-2 text-sm text-foreground">
@@ -136,11 +126,18 @@ export function MassAssignModal({ open, onClose }: Props) {
                 name="target"
                 checked={target === 'selected'}
                 onChange={() => setTarget('selected')}
+                className="accent-primary"
               />
               Выбранные участники
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
-              <input type="radio" name="target" checked={target === 'all'} onChange={() => setTarget('all')} />
+              <input
+                type="radio"
+                name="target"
+                checked={target === 'all'}
+                onChange={() => setTarget('all')}
+                className="accent-primary"
+              />
               Все участники
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
@@ -149,6 +146,7 @@ export function MassAssignModal({ open, onClose }: Props) {
                 name="target"
                 checked={target === 'all_except_bots'}
                 onChange={() => setTarget('all_except_bots')}
+                className="accent-primary"
               />
               Все кроме ботов
             </label>
@@ -163,16 +161,14 @@ export function MassAssignModal({ open, onClose }: Props) {
                 className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
               <p className="text-xs text-muted">Выбрано: {selectedIds.size}</p>
-              <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+              <div className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
                 {searchResults.map((member) => (
-                  <label key={member.id} className="flex items-center gap-2 text-sm text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(member.id)}
-                      onChange={() => toggleSelected(member.id)}
-                    />
-                    {member.display_name}
-                  </label>
+                  <Checkbox
+                    key={member.id}
+                    checked={selectedIds.has(member.id)}
+                    onChange={() => toggleSelected(member.id)}
+                    label={member.display_name}
+                  />
                 ))}
               </div>
             </div>

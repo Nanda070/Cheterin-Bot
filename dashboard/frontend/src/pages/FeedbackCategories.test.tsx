@@ -108,7 +108,8 @@ describe('FeedbackCategoriesPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }))
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'reports' }))
 
     const dialog = screen.getByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Опубликовать' }))

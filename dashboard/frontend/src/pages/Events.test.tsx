@@ -32,7 +32,8 @@ describe('EventsPage', () => {
     render(<EventsPage />)
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('open'))
 
-    fireEvent.change(screen.getByLabelText('Статус'), { target: { value: 'closed' } })
+    fireEvent.click(screen.getByLabelText('Статус'))
+    fireEvent.click(screen.getByRole('option', { name: 'Закрытые' }))
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('closed'))
   })
@@ -66,7 +67,8 @@ describe('EventsPage create flow', () => {
     await waitFor(() => screen.getByLabelText('Название'))
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Летний турнир' } })
     fireEvent.change(screen.getByLabelText('Описание'), { target: { value: 'desc' } })
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: /tourneys|polls/ }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Создать' }))
 
@@ -102,7 +104,8 @@ describe('EventsPage create flow', () => {
 
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Опрос' } })
     fireEvent.change(screen.getByLabelText('Описание'), { target: { value: 'desc' } })
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: /tourneys|polls/ }))
     fireEvent.change(screen.getByLabelText('Варианты ответа (каждый с новой строки, 2–10)'), {
       target: { value: 'Да\nНет' },
     })
@@ -147,7 +150,8 @@ describe('EventsPage create flow', () => {
     await waitFor(() => screen.getByLabelText('Название'))
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'T' } })
     fireEvent.change(screen.getByLabelText('Описание'), { target: { value: 'd' } })
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: /tourneys|polls/ }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Создать' }))
 

@@ -1,5 +1,4 @@
 ﻿import { useEffect, useState } from 'react'
-import { ChannelOptions } from '../components/ChannelOptions'
 import {
   createFeedbackCategory,
   deleteFeedbackCategory,
@@ -15,6 +14,8 @@ import {
 } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Checkbox } from '../components/ui/Checkbox'
+import { Select } from '../components/ui/Select'
 import { Modal } from '../components/ui/Modal'
 
 const EMPTY_FIELD: FeedbackCategoryFieldSpec = { key: '', label: '', style: 'short', required: true, max_length: 200 }
@@ -305,28 +306,24 @@ export function FeedbackCategoriesPage() {
           <label className="text-sm text-muted" htmlFor="fc-channel">
             Канал
           </label>
-          <select
+          <Select
             id="fc-channel"
             value={spec.channel_id}
-            onChange={(e) => setSpec((prev) => ({ ...prev, channel_id: e.target.value }))}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="">Выберите канал…</option>
-            <ChannelOptions channels={channels} />
-          </select>
+            onChange={(id) => setSpec((prev) => ({ ...prev, channel_id: id }))}
+            options={channels}
+            placeholder="Выберите канал…"
+          />
 
           <div>
             <p className="mb-1 text-sm text-muted">Роли-ревьюеры</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {roles.map((role) => (
-                <label key={role.id} className="flex items-center gap-1 text-xs text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={spec.review_role_ids.includes(role.id)}
-                    onChange={() => toggleRole(role.id)}
-                  />
-                  {role.name}
-                </label>
+                <Checkbox
+                  key={role.id}
+                  checked={spec.review_role_ids.includes(role.id)}
+                  onChange={() => toggleRole(role.id)}
+                  label={role.name}
+                />
               ))}
             </div>
           </div>
@@ -367,23 +364,21 @@ export function FeedbackCategoriesPage() {
                   placeholder="Название поля"
                   className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
                 />
-                <select
-                  aria-label="Тип поля"
+                <Select
+                  ariaLabel="Тип поля"
                   value={field.style}
-                  onChange={(e) => updateField(index, { style: e.target.value as 'short' | 'paragraph' })}
-                  className="rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
-                >
-                  <option value="short">Короткий</option>
-                  <option value="paragraph">Многострочный</option>
-                </select>
-                <label className="flex items-center gap-1 text-xs text-muted">
-                  <input
-                    type="checkbox"
-                    checked={field.required}
-                    onChange={(e) => updateField(index, { required: e.target.checked })}
-                  />
-                  обязательное
-                </label>
+                  onChange={(id) => updateField(index, { style: id as 'short' | 'paragraph' })}
+                  options={[
+                    { id: 'short', name: 'Короткий' },
+                    { id: 'paragraph', name: 'Многострочный' },
+                  ]}
+                  className="w-40"
+                />
+                <Checkbox
+                  checked={field.required}
+                  onChange={(v) => updateField(index, { required: v })}
+                  label="обязательное"
+                />
                 <button
                   type="button"
                   onClick={() => removeField(index)}
@@ -407,21 +402,13 @@ export function FeedbackCategoriesPage() {
           <label className="text-sm text-muted" htmlFor="fc-mini-summary">
             Поле для краткого превью
           </label>
-          <select
+          <Select
             id="fc-mini-summary"
             value={spec.mini_summary_key}
-            onChange={(e) => setSpec((prev) => ({ ...prev, mini_summary_key: e.target.value }))}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="">Выберите поле…</option>
-            {spec.fields
-              .filter((f) => f.key)
-              .map((f) => (
-                <option key={f.key} value={f.key}>
-                  {f.label || f.key}
-                </option>
-              ))}
-          </select>
+            onChange={(id) => setSpec((prev) => ({ ...prev, mini_summary_key: id }))}
+            options={spec.fields.filter((f) => f.key).map((f) => ({ id: f.key, name: f.label || f.key }))}
+            placeholder="Выберите поле…"
+          />
 
           {error && <p className="text-sm text-danger">{error}</p>}
 
@@ -452,15 +439,13 @@ export function FeedbackCategoriesPage() {
           <label className="text-sm text-muted" htmlFor="fc-publish-channel">
             Канал
           </label>
-          <select
+          <Select
             id="fc-publish-channel"
             value={publishChannelId}
-            onChange={(e) => setPublishChannelId(e.target.value)}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="">Выберите канал…</option>
-            <ChannelOptions channels={channels} />
-          </select>
+            onChange={(id) => setPublishChannelId(id)}
+            options={channels}
+            placeholder="Выберите канал…"
+          />
 
           {publishError && <p className="text-sm text-danger">{publishError}</p>}
 

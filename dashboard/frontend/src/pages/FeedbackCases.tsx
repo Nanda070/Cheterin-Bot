@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchFeedbackCases, type FeedbackCaseSummary } from '../api/client'
 import { Card } from '../components/ui/Card'
+import { Select } from '../components/ui/Select'
 import { FeedbackCaseDetailPanel } from './FeedbackCaseDetailPanel'
 
 type StatusFilter = 'pending' | 'approved' | 'denied' | 'all'
@@ -27,17 +28,18 @@ export function FeedbackCasesPage() {
           <label className="ml-auto text-sm text-muted" htmlFor="feedback-status">
             Статус
           </label>
-          <select
+          <Select
             id="feedback-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="pending">На рассмотрении</option>
-            <option value="approved">Принято</option>
-            <option value="denied">Отклонено</option>
-            <option value="all">Все</option>
-          </select>
+            onChange={(id) => setStatus(id as StatusFilter)}
+            options={[
+              { id: 'pending', name: 'На рассмотрении' },
+              { id: 'approved', name: 'Принято' },
+              { id: 'denied', name: 'Отклонено' },
+              { id: 'all', name: 'Все' },
+            ]}
+            className="w-52"
+          />
         </div>
 
         {error && <p className="mb-4 text-sm text-danger">{error}</p>}

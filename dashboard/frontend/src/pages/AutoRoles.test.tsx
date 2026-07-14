@@ -15,10 +15,10 @@ describe('AutoRolesPage', () => {
 
     render(<AutoRolesPage />)
 
-    const memberCheckbox = (await screen.findByLabelText('Member')) as HTMLInputElement
-    const vipCheckbox = screen.getByLabelText('VIP') as HTMLInputElement
-    expect(memberCheckbox.checked).toBe(true)
-    expect(vipCheckbox.checked).toBe(false)
+    const memberCheckbox = await screen.findByLabelText('Member')
+    const vipCheckbox = screen.getByLabelText('VIP')
+    expect(memberCheckbox).toHaveAttribute('aria-checked', 'true')
+    expect(vipCheckbox).toHaveAttribute('aria-checked', 'false')
   })
 
   it('toggles a role and saves the selection', async () => {

@@ -44,6 +44,11 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("POST", "/api/streams", "Действие с подпиской на стримы"),
     ("PATCH", "/api/streams", "Изменение подписки на стримы"),
     ("DELETE", "/api/streams", "Удаление подписки на стримы"),
+    ("PUT", "/api/family", "Настройки модуля «Семья»"),
+    ("POST", "/api/family/tickets/", "Решение по заявке в семью"),
+    ("POST", "/api/family/birthdays", "Установка дня рождения"),
+    ("DELETE", "/api/family/birthdays", "Удаление дня рождения"),
+    ("PUT", "/api/mafia", "Настройки модуля «Мафия»"),
 ]
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}

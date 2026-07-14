@@ -1,5 +1,4 @@
 ﻿import { useEffect, useState } from 'react'
-import { ChannelOptions } from '../components/ChannelOptions'
 import {
   createEvent,
   fetchChannels,
@@ -16,6 +15,8 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { EmbedPreview } from '../components/EmbedPreview'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
+import { Toggle } from '../components/ui/Toggle'
 import { EventDetailPanel } from './EventDetailPanel'
 
 type StatusFilter = 'open' | 'closed'
@@ -135,15 +136,16 @@ export function EventsPage() {
           <label className="text-sm text-muted" htmlFor="event-status">
             Статус
           </label>
-          <select
+          <Select
             id="event-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="open">Активные</option>
-            <option value="closed">Закрытые</option>
-          </select>
+            onChange={(id) => setStatus(id as StatusFilter)}
+            options={[
+              { id: 'open', name: 'Активные' },
+              { id: 'closed', name: 'Закрытые' },
+            ]}
+            className="w-40"
+          />
         </div>
 
         {error && <p className="mb-4 text-sm text-danger">{error}</p>}
@@ -237,58 +239,49 @@ export function EventsPage() {
           <label className="text-sm text-muted" htmlFor="event-ping">
             Пинг
           </label>
-          <select
+          <Select
             id="event-ping"
             value={createSpec.ping}
-            onChange={(e) =>
-              setCreateSpec((prev) => ({ ...prev, ping: e.target.value as CreateEventSpec['ping'] }))
-            }
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="none">Нет</option>
-            <option value="everyone">@everyone</option>
-            <option value="here">@here</option>
-          </select>
+            onChange={(id) => setCreateSpec((prev) => ({ ...prev, ping: id as CreateEventSpec['ping'] }))}
+            options={[
+              { id: 'none', name: 'Нет' },
+              { id: 'everyone', name: '@everyone' },
+              { id: 'here', name: '@here' },
+            ]}
+          />
 
           <label className="text-sm text-muted" htmlFor="event-channel">
             Канал
           </label>
-          <select
+          <Select
             id="event-channel"
             value={createSpec.channel_id}
-            onChange={(e) => setCreateSpec((prev) => ({ ...prev, channel_id: e.target.value }))}
-            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-          >
-            <option value="">Выберите канал…</option>
-            <ChannelOptions channels={channels} />
-          </select>
+            onChange={(id) => setCreateSpec((prev) => ({ ...prev, channel_id: id }))}
+            options={channels}
+            placeholder="Выберите канал…"
+          />
 
           {createSpec.type === 'tournament' ? (
             <>
               <label className="text-sm text-muted" htmlFor="event-mode">
                 Формат
               </label>
-              <select
+              <Select
                 id="event-mode"
                 value={createSpec.mode}
-                onChange={(e) =>
-                  setCreateSpec((prev) => ({ ...prev, mode: e.target.value as CreateEventSpec['mode'] }))
-                }
-                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="solo">Соло</option>
-                <option value="team_captain">Командный (Капитан)</option>
-                <option value="team_code">Командный (По коду)</option>
-              </select>
+                onChange={(id) => setCreateSpec((prev) => ({ ...prev, mode: id as CreateEventSpec['mode'] }))}
+                options={[
+                  { id: 'solo', name: 'Соло' },
+                  { id: 'team_captain', name: 'Командный (Капитан)' },
+                  { id: 'team_code', name: 'Командный (По коду)' },
+                ]}
+              />
 
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={createSpec.require_info}
-                  onChange={(e) => setCreateSpec((prev) => ({ ...prev, require_info: e.target.checked }))}
-                />
-                Анкета (запрашивать игровой ник)
-              </label>
+              <Toggle
+                checked={createSpec.require_info}
+                onChange={(v) => setCreateSpec((prev) => ({ ...prev, require_info: v }))}
+                label="Анкета (запрашивать игровой ник)"
+              />
 
               <label className="text-sm text-muted" htmlFor="event-max-limit">
                 Макс. участников/команд (0 = безлимит)
@@ -321,19 +314,13 @@ export function EventsPage() {
               <label className="text-sm text-muted" htmlFor="event-role-reward">
                 Выдаваемая роль (опционально)
               </label>
-              <select
+              <Select
                 id="event-role-reward"
                 value={createSpec.role_reward ?? ''}
-                onChange={(e) => setCreateSpec((prev) => ({ ...prev, role_reward: e.target.value || null }))}
-                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Без роли</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setCreateSpec((prev) => ({ ...prev, role_reward: id || null }))}
+                options={roles}
+                placeholder="Без роли"
+              />
             </>
           ) : (
             <>
@@ -348,14 +335,11 @@ export function EventsPage() {
                 className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
 
-              <label className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={createSpec.multi_select}
-                  onChange={(e) => setCreateSpec((prev) => ({ ...prev, multi_select: e.target.checked }))}
-                />
-                Мульти-выбор
-              </label>
+              <Toggle
+                checked={createSpec.multi_select}
+                onChange={(v) => setCreateSpec((prev) => ({ ...prev, multi_select: v }))}
+                label="Мульти-выбор"
+              />
             </>
           )}
 

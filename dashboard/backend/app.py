@@ -5,6 +5,8 @@ from pathlib import Path
 import aiohttp
 from aiohttp import web
 
+import family_db
+import mafia_db
 import stats_db
 
 from .auth import routes as auth_routes
@@ -27,6 +29,8 @@ from .routes.xp import routes as xp_routes
 from .routes.voice_stats import routes as voice_stats_routes
 from .routes.audit import routes as audit_routes
 from .routes.streams import routes as streams_routes
+from .routes.family import routes as family_routes
+from .routes.mafia import routes as mafia_routes
 from .audit_middleware import audit_middleware
 from .session import setup_session
 from .static import setup_static_routes
@@ -52,6 +56,8 @@ def create_app(
     frontend_dist: Path | None = None,
 ) -> web.Application:
     stats_db.init()
+    family_db.init()
+    mafia_db.init()
 
     app = web.Application(middlewares=[json_error_middleware, audit_middleware])
     app["bot"] = bot
@@ -78,6 +84,8 @@ def create_app(
     app.add_routes(voice_stats_routes)
     app.add_routes(audit_routes)
     app.add_routes(streams_routes)
+    app.add_routes(family_routes)
+    app.add_routes(mafia_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

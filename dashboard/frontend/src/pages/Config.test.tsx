@@ -72,7 +72,8 @@ describe('ConfigPage', () => {
     render(<ConfigPage />)
 
     await waitFor(() => screen.getByLabelText('Канал логов'))
-    fireEvent.change(screen.getByLabelText('Канал логов'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал логов'))
+    fireEvent.click(await screen.findByRole('option', { name: 'logs' }))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() =>

@@ -149,19 +149,61 @@ async def xp_put(request: web.Request) -> web.Response:
 @routes.get("/api/xp/leaderboard")
 @require_dashboard_access
 async def xp_leaderboard(request: web.Request) -> web.Response:
+    """Вкладка «Участники» дашборда: весь ростер гильдии, а не только те,
+    кто уже где-то отметился — иначе большая часть сервера невидима админу.
+    Публичный топ (/api/public/leaderboard) не трогаем — там осознанно
+    только реально заработавшие XP."""
     guild = request.app["bot"].get_guild(request.app["guild_id"])
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
     try:
         page = max(1, int(request.query.get("page", "1")))
     except ValueError:
         page = 1
+    search = request.query.get("search", "").strip().lower()
+
+    xp_by_user = {row["user_id"]: row for row in stats_db.xp_all_members()}
+
+    rows: list[dict] = []
+    for member in guild.members:
+        if member.bot:
+            continue
+        row = xp_by_user.pop(member.id, None)
+        rows.append({
+            "user_id": member.id,
+            "xp": row["xp"] if row else 0,
+            "messages": row["messages"] if row else 0,
+            "voice_seconds": row["voice_seconds"] if row else 0,
+        })
+    # Оставшиеся записи — участники, покинувшие сервер, но ещё числящиеся в рейтинге.
+    for user_id, row in xp_by_user.items():
+        rows.append({
+            "user_id": user_id,
+            "xp": row["xp"],
+            "messages": row["messages"],
+            "voice_seconds": row["voice_seconds"],
+        })
+
+    if search:
+        def matches(row: dict) -> bool:
+            member = guild.get_member(row["user_id"])
+            haystack = member.display_name.lower() if member else str(row["user_id"])
+            return search in haystack
+
+        rows = [r for r in rows if matches(r)]
+
+    rows.sort(key=lambda r: r["xp"], reverse=True)
+
+    total = len(rows)
     offset = (page - 1) * PAGE_SIZE
-    rows = stats_db.xp_leaderboard(limit=PAGE_SIZE, offset=offset)
-    total = stats_db.xp_member_count()
+    page_rows = rows[offset:offset + PAGE_SIZE]
+
     return web.json_response({
         "total": total,
         "page": page,
         "page_size": PAGE_SIZE,
-        "entries": [_serialize_row(row, guild, offset + i + 1) for i, row in enumerate(rows)],
+        "entries": [_serialize_row(row, guild, offset + i + 1) for i, row in enumerate(page_rows)],
     })
 
 

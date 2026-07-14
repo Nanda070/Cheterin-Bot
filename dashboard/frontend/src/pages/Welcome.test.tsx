@@ -10,12 +10,10 @@ describe('WelcomePage', () => {
     vi.spyOn(client, 'fetchWelcomeSettings').mockResolvedValue({ channel_enabled: true, dm_enabled: false })
     render(<WelcomePage />)
 
-    const channelToggle = (await screen.findByLabelText(
-      'Отправлять приветствие в канал',
-    )) as HTMLInputElement
-    const dmToggle = screen.getByLabelText('Отправлять приветствие в личные сообщения') as HTMLInputElement
-    expect(channelToggle.checked).toBe(true)
-    expect(dmToggle.checked).toBe(false)
+    const channelToggle = await screen.findByLabelText('Отправлять приветствие в канал')
+    const dmToggle = screen.getByLabelText('Отправлять приветствие в личные сообщения')
+    expect(channelToggle).toHaveAttribute('aria-checked', 'true')
+    expect(dmToggle).toHaveAttribute('aria-checked', 'false')
   })
 
   it('toggles and saves the settings', async () => {

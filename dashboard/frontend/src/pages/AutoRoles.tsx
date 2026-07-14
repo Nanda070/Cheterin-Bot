@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchAutoRoles, fetchRoles, updateAutoRoles, type RoleInfo } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Checkbox } from '../components/ui/Checkbox'
 
 export function AutoRolesPage() {
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -52,16 +53,14 @@ export function AutoRolesPage() {
 
       <Card className="flex flex-col gap-3">
         <p className="text-sm text-muted">Роли, которые автоматически выдаются при входе на сервер</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {roles.map((r) => (
-            <label key={r.id} className="flex items-center gap-1 text-xs text-foreground">
-              <input
-                type="checkbox"
-                checked={selectedRoleIds.includes(r.id)}
-                onChange={() => toggleRole(r.id)}
-              />
-              {r.name}
-            </label>
+            <Checkbox
+              key={r.id}
+              checked={selectedRoleIds.includes(r.id)}
+              onChange={() => toggleRole(r.id)}
+              label={r.name}
+            />
           ))}
         </div>
       </Card>

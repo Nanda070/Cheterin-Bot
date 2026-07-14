@@ -14,6 +14,7 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 
 type PendingAction = 'ban' | 'kick' | null
 
@@ -180,16 +181,16 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
               <label className="text-sm text-muted" htmlFor="mod-days">
                 Удалить сообщения за
               </label>
-              <select
+              <Select
                 id="mod-days"
-                value={deleteDays}
-                onChange={(e) => setDeleteDays(Number(e.target.value) as 0 | 1 | 7)}
-                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value={0}>Не удалять</option>
-                <option value={1}>1 день</option>
-                <option value={7}>7 дней</option>
-              </select>
+                value={String(deleteDays)}
+                onChange={(id) => setDeleteDays(Number(id) as 0 | 1 | 7)}
+                options={[
+                  { id: '0', name: 'Не удалять' },
+                  { id: '1', name: '1 день' },
+                  { id: '7', name: '7 дней' },
+                ]}
+              />
             </>
           )}
           {error && <p className="text-sm text-danger">{error}</p>}

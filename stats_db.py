@@ -118,6 +118,12 @@ def xp_leaderboard(limit: int = 100, offset: int = 0):
         ).fetchall()
 
 
+def xp_all_members():
+    """Все строки xp_members без пагинации — для мёржа с полным ростером гильдии."""
+    with closing(connect()) as conn:
+        return conn.execute("SELECT * FROM xp_members").fetchall()
+
+
 def xp_member_count() -> int:
     with closing(connect()) as conn:
         return conn.execute("SELECT COUNT(*) AS c FROM xp_members").fetchone()["c"]

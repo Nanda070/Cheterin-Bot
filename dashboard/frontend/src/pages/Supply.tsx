@@ -1,5 +1,4 @@
 ﻿import { Package, Plus, Trophy, XCircle } from '@phosphor-icons/react'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { useEffect, useState } from 'react'
 import {
   cancelSupply,
@@ -14,6 +13,7 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 
 const STATUS_LABEL: Record<Supply['status'], string> = {
   active: 'Активен',
@@ -214,15 +214,13 @@ export function SupplyPage() {
             <label className="text-sm text-muted" htmlFor="supply-channel">
               Канал публикации
             </label>
-            <select
+            <Select
               id="supply-channel"
               value={form.channel_id}
-              onChange={(e) => setForm((f) => ({ ...f, channel_id: e.target.value }))}
-              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              <option value="">Выберите канал</option>
-              <ChannelOptions channels={channels} />
-            </select>
+              onChange={(id) => setForm((f) => ({ ...f, channel_id: id }))}
+              options={channels}
+              placeholder="Выберите канал"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="supply-opponent">

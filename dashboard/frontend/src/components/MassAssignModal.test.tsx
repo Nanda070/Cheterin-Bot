@@ -10,7 +10,7 @@ describe('MassAssignModal', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([{ id: '7', name: 'VIP', color: '#5865f2', position: 5 }])
     render(<MassAssignModal open onClose={() => {}} />)
 
-    await waitFor(() => screen.getByText('VIP'))
+    await screen.findByLabelText('Роль')
     fireEvent.click(screen.getByText('Начать'))
     expect(await screen.findByText('Выберите роль')).toBeInTheDocument()
   })
@@ -29,9 +29,9 @@ describe('MassAssignModal', () => {
     })
 
     render(<MassAssignModal open onClose={() => {}} />)
-    await waitFor(() => screen.getByText('VIP'))
 
-    fireEvent.change(screen.getByLabelText('Роль'), { target: { value: '7' } })
+    fireEvent.click(screen.getByLabelText('Роль'))
+    fireEvent.click(await screen.findByRole('option', { name: 'VIP' }))
     fireEvent.click(screen.getByLabelText('Все кроме ботов'))
     fireEvent.click(screen.getByText('Начать'))
 
@@ -43,8 +43,8 @@ describe('MassAssignModal', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([{ id: '7', name: 'VIP', color: '#5865f2', position: 5 }])
     render(<MassAssignModal open onClose={() => {}} />)
 
-    await waitFor(() => screen.getByText('VIP'))
-    fireEvent.change(screen.getByLabelText('Роль'), { target: { value: '7' } })
+    fireEvent.click(screen.getByLabelText('Роль'))
+    fireEvent.click(await screen.findByRole('option', { name: 'VIP' }))
     fireEvent.click(screen.getByLabelText('Выбранные участники'))
     fireEvent.click(screen.getByText('Начать'))
 

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 
 from aiohttp import web
@@ -26,6 +27,7 @@ class FakeRole:
     def __init__(self, role_id, name="role", position=1, color_value=0, managed=False, default=False):
         self.id = role_id
         self.name = name
+        self.mention = f"<@&{role_id}>"
         self.position = position
         self.color = FakeColor(color_value)
         self.managed = managed
@@ -154,6 +156,7 @@ class FakeThread:
     def __init__(self, thread_id, name="thread", messages=None, next_message_id=2000):
         self.id = thread_id
         self.name = name
+        self.mention = f"<#{thread_id}>"
         self._messages = messages or {}
         self._next_message_id = next_message_id
         self.send_calls = []
@@ -210,6 +213,7 @@ class FakeMember:
         self.id = member_id
         self.name = name
         self.display_name = display_name if display_name is not None else name
+        self.mention = f"<@{member_id}>"
         self.bot = bot
         self.joined_at = datetime(2025, 1, 15, tzinfo=timezone.utc)
         self.created_at = datetime(2020, 6, 1, tzinfo=timezone.utc)
@@ -248,8 +252,10 @@ class FakeMember:
 
 class FakeGuild:
     def __init__(
-        self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None, threads=None
+        self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None, threads=None,
+        guild_id=1,
     ):
+        self.id = guild_id  # По умолчанию 1 — совпадает с app["guild_id"] в make_moderation_app.
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
@@ -288,8 +294,16 @@ class FakeBot:
         self._fetchable_users = fetchable_users or []
         self.update_file_calls = 0
 
+    @property
+    def loop(self):
+        return asyncio.get_event_loop()
+
     def get_guild(self, guild_id):
         return self._guild
+
+    def get_cog(self, name):
+        # Тесты, которым нужен конкретный ког, переопределяют этот метод (bot.get_cog = ...).
+        return None
 
     def get_channel(self, channel_id):
         found = self._guild.get_channel(channel_id)

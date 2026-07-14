@@ -1,4 +1,5 @@
 import { X } from '@phosphor-icons/react'
+import { Select } from './ui/Select'
 
 interface Option {
   id: string
@@ -39,18 +40,14 @@ export function ChipPicker({ label, hint, options, selected, onChange }: ChipPic
             </button>
           </span>
         ))}
-        <select
+        <Select
           value=""
-          onChange={(e) => e.target.value && onChange([...selected, e.target.value])}
-          className="min-w-36 flex-1 bg-transparent px-1 py-1 text-sm text-muted outline-none"
-        >
-          <option value="">+ Добавить…</option>
-          {available.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.category ? `${o.category} / ${o.name}` : o.name}
-            </option>
-          ))}
-        </select>
+          onChange={(id) => onChange([...selected, id])}
+          options={available.map((o) => ({ ...o, name: o.category ? `${o.category} / ${o.name}` : o.name }))}
+          placeholder="+ Добавить…"
+          variant="bare"
+          className="min-w-36 flex-1"
+        />
       </div>
       {hint && <span className="text-xs text-muted">{hint}</span>}
     </div>

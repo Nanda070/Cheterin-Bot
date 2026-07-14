@@ -1,5 +1,4 @@
 ﻿import { Megaphone, Plus, Trash } from '@phosphor-icons/react'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { useEffect, useState } from 'react'
 import {
   fetchChannels,
@@ -10,6 +9,8 @@ import {
 } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Select } from '../components/ui/Select'
+import { Toggle } from '../components/ui/Toggle'
 
 export function NewsPage() {
   const [settings, setSettings] = useState<NewsSettings | null>(null)
@@ -98,14 +99,11 @@ export function NewsPage() {
       {saved && <p className="text-sm text-primary">{saved}</p>}
 
       <Card className="flex flex-col gap-3">
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input
-            type="checkbox"
-            checked={settings.enabled}
-            onChange={(e) => setField('enabled', e.target.checked)}
-          />
-          Ретрансляция включена
-        </label>
+        <Toggle
+          checked={settings.enabled}
+          onChange={(v) => setField('enabled', v)}
+          label="Ретрансляция включена"
+        />
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-muted" htmlFor="news-guild">
@@ -135,15 +133,13 @@ export function NewsPage() {
           <label className="text-sm text-muted" htmlFor="news-log">
             Лог-канал ретрансляции
           </label>
-          <select
+          <Select
             id="news-log"
             value={settings.log_channel_id}
-            onChange={(e) => setField('log_channel_id', e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Не задано</option>
-            <ChannelOptions channels={channels} />
-          </select>
+            onChange={(id) => setField('log_channel_id', id)}
+            options={channels}
+            placeholder="Не задано"
+          />
         </div>
       </Card>
 
@@ -168,14 +164,12 @@ export function NewsPage() {
             </div>
             <div className="flex min-w-40 flex-1 flex-col gap-1">
               <label className="text-xs text-muted">Канал-приёмник</label>
-              <select
+              <Select
                 value={m.target_channel_id}
-                onChange={(e) => setMapping(index, 'target_channel_id', e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Выберите канал</option>
-                <ChannelOptions channels={channels} />
-              </select>
+                onChange={(id) => setMapping(index, 'target_channel_id', id)}
+                options={channels}
+                placeholder="Выберите канал"
+              />
             </div>
             <div className="flex min-w-28 flex-1 flex-col gap-1">
               <label className="text-xs text-muted">Метка</label>

@@ -18,9 +18,9 @@ import {
   type ChannelInfo,
   type RoleInfo,
 } from '../api/client'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { ChipPicker } from '../components/ChipPicker'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Select'
 
 const EMPTY_CONFIG: BotConfig = {
   LOG_CHANNEL_ID: '',
@@ -120,10 +120,13 @@ export function ConfigPage() {
       <label className="text-sm text-muted" htmlFor={key}>
         {label}
       </label>
-      <select id={key} value={config[key] as string} onChange={(e) => setField(key, e.target.value)} className={inputClass}>
-        <option value="">Не задано</option>
-        <ChannelOptions channels={channels} />
-      </select>
+      <Select
+        id={key}
+        value={config[key] as string}
+        onChange={(id) => setField(key, id)}
+        options={channels}
+        placeholder="Не задано"
+      />
     </div>
   )
 
@@ -132,14 +135,13 @@ export function ConfigPage() {
       <label className="text-sm text-muted" htmlFor={key}>
         {label}
       </label>
-      <select id={key} value={config[key] as string} onChange={(e) => setField(key, e.target.value)} className={inputClass}>
-        <option value="">Не задано</option>
-        {roles.map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.name}
-          </option>
-        ))}
-      </select>
+      <Select
+        id={key}
+        value={config[key] as string}
+        onChange={(id) => setField(key, id)}
+        options={roles}
+        placeholder="Не задано"
+      />
     </div>
   )
 

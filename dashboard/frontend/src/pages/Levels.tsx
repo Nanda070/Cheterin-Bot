@@ -17,11 +17,11 @@ import {
   type XpLeaderboardPage,
   type XpSettings,
 } from '../api/client'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { ChipPicker } from '../components/ChipPicker'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 
 type Tab = 'settings' | 'level-rewards' | 'voice-rewards' | 'card' | 'members'
@@ -66,6 +66,8 @@ export function LevelsPage() {
 
   const [board, setBoard] = useState<XpLeaderboardPage | null>(null)
   const [boardPage, setBoardPage] = useState(1)
+  const [boardSearch, setBoardSearch] = useState('')
+  const [boardSearchDraft, setBoardSearchDraft] = useState('')
   const [editing, setEditing] = useState<XpLeaderboardEntry | null>(null)
   const [editXp, setEditXp] = useState('')
   const [confirmResetAll, setConfirmResetAll] = useState(false)
@@ -91,10 +93,18 @@ export function LevelsPage() {
 
   useEffect(() => {
     if (tab !== 'members') return
-    fetchXpLeaderboard(boardPage)
+    fetchXpLeaderboard(boardPage, boardSearch)
       .then(setBoard)
       .catch(() => setError('Не удалось загрузить рейтинг'))
-  }, [tab, boardPage])
+  }, [tab, boardPage, boardSearch])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setBoardPage(1)
+      setBoardSearch(boardSearchDraft)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [boardSearchDraft])
 
   if (!settings) {
     return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
@@ -125,7 +135,7 @@ export function LevelsPage() {
     try {
       await fn()
       if (reload && tab === 'members') {
-        setBoard(await fetchXpLeaderboard(boardPage))
+        setBoard(await fetchXpLeaderboard(boardPage, boardSearch))
       }
     } catch {
       setError('Операция не удалась')
@@ -311,15 +321,13 @@ export function LevelsPage() {
               <label className="text-sm text-muted" htmlFor="announce-channel">
                 Канал уведомлений (пусто = канал сообщения)
               </label>
-              <select
+              <Select
                 id="announce-channel"
                 value={settings.announce.channel_id}
-                onChange={(e) => patch((p) => ({ ...p, announce: { ...p.announce, channel_id: e.target.value } }))}
-                className={inputClass}
-              >
-                <option value="">Канал сообщения участника</option>
-                <ChannelOptions channels={channels} />
-              </select>
+                onChange={(id) => patch((p) => ({ ...p, announce: { ...p.announce, channel_id: id } }))}
+                options={channels}
+                placeholder="Канал сообщения участника"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="announce-template">
@@ -552,12 +560,18 @@ export function LevelsPage() {
 
       {tab === 'members' && (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted">Всего в рейтинге: {board?.total ?? memberCount}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted">Участников сервера в списке: {board?.total ?? memberCount}</p>
             <Button variant="danger" onClick={() => setConfirmResetAll(true)} disabled={busy}>
               Сбросить весь рейтинг
             </Button>
           </div>
+          <input
+            value={boardSearchDraft}
+            onChange={(e) => setBoardSearchDraft(e.target.value)}
+            placeholder="Поиск участника…"
+            className={inputClass}
+          />
 
           <Card className="p-0">
             {!board && <p className="p-4 text-sm text-muted">Загрузка…</p>}

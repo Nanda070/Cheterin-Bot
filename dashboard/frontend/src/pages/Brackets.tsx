@@ -18,6 +18,7 @@ const FORMAT_LABEL: Record<BracketFormat, string> = {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 
 type SourceTab = 'event' | 'manual'
 
@@ -160,21 +161,15 @@ export function BracketsPage() {
                 <label className="text-sm text-muted" htmlFor="bracket-event">
                   Событие
                 </label>
-                <select
+                <Select
                   id="bracket-event"
                   value={selectedEventId}
-                  onChange={(e) => loadEventEntries(e.target.value)}
-                  className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-                >
-                  <option value="">Выберите событие…</option>
-                  {events
+                  onChange={(id) => loadEventEntries(id)}
+                  options={events
                     .filter((ev) => ev.type === 'tournament')
-                    .map((ev) => (
-                      <option key={ev.message_id} value={ev.message_id}>
-                        {ev.title}
-                      </option>
-                    ))}
-                </select>
+                    .map((ev) => ({ id: ev.message_id, name: ev.title }))}
+                  placeholder="Выберите событие…"
+                />
                 {entries.length > 0 && (
                   <p className="text-xs text-muted">Загружено участников: {entries.length}</p>
                 )}
@@ -207,18 +202,12 @@ export function BracketsPage() {
             <label className="text-sm text-muted" htmlFor="bracket-format">
               Формат
             </label>
-            <select
+            <Select
               id="bracket-format"
               value={format}
-              onChange={(e) => setFormat(e.target.value as BracketFormat)}
-              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              {(Object.keys(FORMAT_LABEL) as BracketFormat[]).map((f) => (
-                <option key={f} value={f}>
-                  {FORMAT_LABEL[f]}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => setFormat(id as BracketFormat)}
+              options={(Object.keys(FORMAT_LABEL) as BracketFormat[]).map((f) => ({ id: f, name: FORMAT_LABEL[f] }))}
+            />
             <p className="text-xs text-muted">
               {format === 'single_elim' && 'Классическая сетка на вылет: одно поражение — выбывание.'}
               {format === 'double_elim' && 'Верхняя и нижняя сетки: выбывание после двух поражений, гранд-финал.'}

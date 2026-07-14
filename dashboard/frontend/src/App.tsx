@@ -28,6 +28,10 @@ import { VoiceStatsPage } from './pages/VoiceStats'
 import { AuditPage } from './pages/Audit'
 import { StreamsPage } from './pages/Streams'
 import { LeaderboardPage } from './pages/Leaderboard'
+import { NotFoundPage } from './pages/NotFound'
+import { FamilyPage } from './pages/Family'
+import { MafiaPage } from './pages/Mafia'
+import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
 
 function App() {
   return (
@@ -37,6 +41,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route path="/bracket/:token" element={<PublicBracketPage />} />
+          <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/docs/:sectionId" element={<DocsPage />} />
           <Route path="/terms" element={<TermsPage />} />
@@ -59,6 +64,8 @@ function App() {
             <Route path="brackets" element={<BracketsPage />} />
             <Route path="brackets/:id" element={<BracketDetailPage />} />
             <Route path="supply" element={<SupplyPage />} />
+            <Route path="family" element={<FamilyPage />} />
+            <Route path="mafia" element={<MafiaPage />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="levels" element={<LevelsPage />} />
@@ -70,6 +77,7 @@ function App() {
             <Route path="auto-roles" element={<AutoRolesPage />} />
             <Route path="config" element={<ConfigPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

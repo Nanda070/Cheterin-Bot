@@ -1,5 +1,4 @@
 ﻿import { useEffect, useState } from 'react'
-import { ChannelOptions } from '../components/ChannelOptions'
 import {
   createEmbedMessage,
   deleteEmbedTemplate,
@@ -16,6 +15,9 @@ import {
   type RoleInfo,
 } from '../api/client'
 import { Button } from '../components/ui/Button'
+import { Checkbox } from '../components/ui/Checkbox'
+import { Select } from '../components/ui/Select'
+import { Toggle } from '../components/ui/Toggle'
 import { EmbedPreview } from '../components/EmbedPreview'
 
 const EMPTY_EMBED_SPEC: EmbedSpec = {
@@ -213,32 +215,21 @@ export function EmbedBuilderPage() {
         <div className="flex flex-col gap-2 rounded-control border border-border bg-surface p-3">
           <p className="text-sm font-medium text-foreground">Шаблоны</p>
           <div className="flex gap-2">
-            <select
+            <Select
               value=""
-              onChange={(e) => e.target.value && applyTemplate(e.target.value)}
-              className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              <option value="">Загрузить шаблон…</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => applyTemplate(id)}
+              options={templates}
+              placeholder="Загрузить шаблон…"
+              className="flex-1"
+            />
             {templates.length > 0 && (
-              <select
+              <Select
                 value=""
-                onChange={(e) => e.target.value && handleDeleteTemplate(e.target.value)}
-                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-danger"
-                aria-label="Удалить шаблон"
-              >
-                <option value="">Удалить…</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => handleDeleteTemplate(id)}
+                options={templates}
+                placeholder="Удалить…"
+                ariaLabel="Удалить шаблон"
+              />
             )}
           </div>
           <div className="flex gap-2">
@@ -258,15 +249,13 @@ export function EmbedBuilderPage() {
         <label className="text-sm text-muted" htmlFor="eb-channel">
           Канал
         </label>
-        <select
+        <Select
           id="eb-channel"
           value={channelId}
-          onChange={(e) => setChannelId(e.target.value)}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-        >
-          <option value="">Выберите канал…</option>
-          <ChannelOptions channels={channels} />
-        </select>
+          onChange={(id) => setChannelId(id)}
+          options={channels}
+          placeholder="Выберите канал…"
+        />
 
         {mode === 'edit' && (
           <div className="flex gap-2">
@@ -375,14 +364,11 @@ export function EmbedBuilderPage() {
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
 
-        <label className="flex items-center gap-2 text-sm text-muted">
-          <input
-            type="checkbox"
-            checked={embed.timestamp !== null}
-            onChange={(e) => updateEmbedField('timestamp', e.target.checked ? new Date().toISOString() : null)}
-          />
-          Текущее время
-        </label>
+        <Toggle
+          checked={embed.timestamp !== null}
+          onChange={(v) => updateEmbedField('timestamp', v ? new Date().toISOString() : null)}
+          label="Текущее время"
+        />
 
         <div className="flex flex-col gap-2">
           {embed.fields.map((field, index) => (
@@ -399,10 +385,7 @@ export function EmbedBuilderPage() {
                 placeholder="Значение поля"
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
-              <label className="flex items-center gap-1 text-xs text-muted">
-                <input type="checkbox" checked={field.inline} onChange={(e) => updateField(index, { inline: e.target.checked })} />
-                inline
-              </label>
+              <Checkbox checked={field.inline} onChange={(v) => updateField(index, { inline: v })} label="inline" />
               <button type="button" onClick={() => removeField(index)} className="cursor-pointer text-muted hover:text-danger">
                 ×
               </button>
@@ -415,12 +398,14 @@ export function EmbedBuilderPage() {
 
         <div>
           <p className="mb-1 text-sm text-muted">Роль-кнопки (до 5)</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {roles.map((role) => (
-              <label key={role.id} className="flex items-center gap-1 text-xs text-foreground">
-                <input type="checkbox" checked={roleIds.includes(role.id)} onChange={() => toggleRole(role.id)} />
-                {role.name}
-              </label>
+              <Checkbox
+                key={role.id}
+                checked={roleIds.includes(role.id)}
+                onChange={() => toggleRole(role.id)}
+                label={role.name}
+              />
             ))}
           </div>
         </div>

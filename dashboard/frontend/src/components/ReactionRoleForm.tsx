@@ -1,5 +1,4 @@
 ﻿import { useEffect, useState } from 'react'
-import { ChannelOptions } from './ChannelOptions'
 import {
   createReactionRole,
   fetchChannels,
@@ -14,6 +13,7 @@ import {
 } from '../api/client'
 import { Button } from './ui/Button'
 import { Modal } from './ui/Modal'
+import { Select } from './ui/Select'
 
 interface Props {
   open: boolean
@@ -104,16 +104,14 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
         <label className="text-sm text-muted" htmlFor="rr-channel">
           Канал
         </label>
-        <select
+        <Select
           id="rr-channel"
           value={channelId}
-          onChange={(e) => setChannelId(e.target.value)}
+          onChange={(id) => setChannelId(id)}
           disabled={!!editing}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground disabled:opacity-50"
-        >
-          <option value="">Выберите канал…</option>
-          <ChannelOptions channels={channels} />
-        </select>
+          options={channels}
+          placeholder="Выберите канал…"
+        />
 
         <label className="text-sm text-muted" htmlFor="rr-message-id">
           Message ID
@@ -136,35 +134,25 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
                 placeholder="Эмодзи (вставьте unicode или выберите ниже)"
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
-              <select
-                aria-label="Свой эмодзи сервера"
+              <Select
+                ariaLabel="Свой эмодзи сервера"
                 value=""
-                onChange={(e) => {
-                  const custom = emojis.find((em) => em.id === e.target.value)
+                onChange={(id) => {
+                  const custom = emojis.find((em) => em.id === id)
                   if (custom) updatePair(index, { emoji: `<:${custom.name}:${custom.id}>` })
                 }}
-                className="min-w-0 flex-1 basis-28 rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
-              >
-                <option value="">Свой эмодзи…</option>
-                {emojis.map((em) => (
-                  <option key={em.id} value={em.id}>
-                    {em.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Роль для этой пары"
+                options={emojis}
+                placeholder="Свой эмодзи…"
+                className="min-w-0 flex-1 basis-28"
+              />
+              <Select
+                ariaLabel="Роль для этой пары"
                 value={pair.role_id}
-                onChange={(e) => updatePair(index, { role_id: e.target.value })}
-                className="min-w-0 flex-1 basis-28 rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground"
-              >
-                <option value="">Роль…</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => updatePair(index, { role_id: id })}
+                options={roles}
+                placeholder="Роль…"
+                className="min-w-0 flex-1 basis-28"
+              />
               <button
                 type="button"
                 onClick={() => removePair(index)}

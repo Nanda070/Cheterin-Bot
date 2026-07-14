@@ -814,8 +814,10 @@ export function updateXpSettings(settings: XpSettings): Promise<{ settings: XpSe
   return apiFetch('/api/xp', jsonInit('PUT', settings))
 }
 
-export function fetchXpLeaderboard(page: number): Promise<XpLeaderboardPage> {
-  return apiFetch(`/api/xp/leaderboard?page=${page}`)
+export function fetchXpLeaderboard(page: number, search = ''): Promise<XpLeaderboardPage> {
+  const params = new URLSearchParams({ page: String(page) })
+  if (search) params.set('search', search)
+  return apiFetch(`/api/xp/leaderboard?${params}`)
 }
 
 export async function setMemberXp(userId: string, xp: number): Promise<void> {
@@ -963,4 +965,181 @@ export function saveEmbedTemplate(input: {
 
 export async function deleteEmbedTemplate(id: string): Promise<void> {
   await apiFetch(`/api/embed-templates/${id}`, { method: 'DELETE' })
+}
+
+// ────────────────────────── Семья ──────────────────────────
+
+export interface FamilyTargetRole {
+  label: string
+  role_id: string
+}
+
+export interface FamilySettings {
+  enabled: boolean
+  roster: {
+    list_channel_id: string
+    target_roles: FamilyTargetRole[]
+  }
+  applications: {
+    application_channel_id: string
+    log_channel_id: string
+    staff_role_ids: string[]
+    ticket_manager_role_id: string
+    notify_role_id: string
+    ticket_active_role_id: string
+    approve_role_ids: string[]
+    yes_emoji_id: string
+    no_emoji_id: string
+    thread_archive_minutes: number
+  }
+  birthdays: {
+    channel_id: string
+    list_channel_id: string
+  }
+}
+
+export function fetchFamilySettings(): Promise<FamilySettings> {
+  return apiFetch('/api/family')
+}
+
+export function updateFamilySettings(settings: FamilySettings): Promise<FamilySettings> {
+  return apiFetch('/api/family', jsonInit('PUT', settings))
+}
+
+export interface FamilyRosterGroup {
+  label: string
+  role_id: string
+  role_found: boolean
+  members: { id: string; display: string }[]
+}
+
+export function fetchFamilyRoster(): Promise<{ groups: FamilyRosterGroup[] }> {
+  return apiFetch('/api/family/roster')
+}
+
+export type FamilyTicketStatus = 'open' | 'approved' | 'denied' | 'closed'
+
+export interface FamilyTicket {
+  user_id: string
+  display: string
+  status: FamilyTicketStatus
+  nickname: string
+  game_level: string
+  faction_pref: string
+  online_timezone: string
+  real_name: string
+  real_age: string
+  about_text: string
+  why_join: string
+  inviter_nickname: string | null
+  created_at: string
+  handled_by: string | null
+  thread_id: string | null
+}
+
+export interface FamilyTicketsPage {
+  total: number
+  page: number
+  page_size: number
+  entries: FamilyTicket[]
+}
+
+export function fetchFamilyTickets(status: FamilyTicketStatus | '', page: number): Promise<FamilyTicketsPage> {
+  const params = new URLSearchParams({ page: String(page) })
+  if (status) params.set('status', status)
+  return apiFetch(`/api/family/tickets?${params}`)
+}
+
+export async function decideFamilyTicket(userId: string, decision: 'approve' | 'deny' | 'close'): Promise<void> {
+  await apiFetch(`/api/family/tickets/${userId}/${decision}`, jsonInit('POST'))
+}
+
+export interface FamilyBirthday {
+  user_id: string
+  display: string
+  day: number
+  month: number
+  date_display: string
+}
+
+export function fetchFamilyBirthdays(): Promise<{ entries: FamilyBirthday[] }> {
+  return apiFetch('/api/family/birthdays')
+}
+
+export async function setFamilyBirthday(userId: string, date: string): Promise<{ date_display: string }> {
+  return apiFetch('/api/family/birthdays', jsonInit('POST', { user_id: userId, date }))
+}
+
+export async function deleteFamilyBirthday(userId: string): Promise<void> {
+  await apiFetch(`/api/family/birthdays/${userId}`, { method: 'DELETE' })
+}
+
+// ────────────────────────── Мафия ──────────────────────────
+
+export interface MafiaSettings {
+  enabled: boolean
+  default_min_players: number
+  default_max_players: number
+  default_night_timer_sec: number
+  default_day_discussion_timer_sec: number
+  default_day_vote_timer_sec: number
+  log_channel_id: string
+}
+
+export function fetchMafiaSettings(): Promise<MafiaSettings> {
+  return apiFetch('/api/mafia')
+}
+
+export function updateMafiaSettings(settings: MafiaSettings): Promise<MafiaSettings> {
+  return apiFetch('/api/mafia', jsonInit('PUT', settings))
+}
+
+export type MafiaGameStatus = 'lobby' | 'active' | 'finished' | 'cancelled'
+export type MafiaGamePhase = 'lobby' | 'night' | 'day_discussion' | 'day_vote' | 'ended'
+
+export interface MafiaGameSummary {
+  id: number
+  channel_id: string
+  channel_name: string
+  status: MafiaGameStatus
+  phase: MafiaGamePhase
+  round_number: number
+  player_count: number
+  alive_count: number
+  created_at: string
+}
+
+export async function fetchMafiaGames(): Promise<MafiaGameSummary[]> {
+  const body = await apiFetch<{ games: MafiaGameSummary[] }>('/api/mafia/games')
+  return body.games
+}
+
+export type MafiaRole = 'mafia' | 'citizen' | 'doctor' | 'sheriff'
+
+export interface MafiaPlayerRef {
+  user_id: string
+  display_name: string
+}
+
+export interface MafiaPublicState {
+  game_status: MafiaGameStatus
+  phase: MafiaGamePhase
+  round_number: number
+  phase_deadline_ts: number | null
+  your_role: MafiaRole | null
+  your_alive: boolean
+  action_required: boolean
+  your_action_submitted: boolean
+  your_submitted_target: string | null
+  alive_players: MafiaPlayerRef[]
+  teammates?: MafiaPlayerRef[]
+  mafia_votes?: { actor: string; target: string | null }[]
+}
+
+export function fetchPublicMafia(token: string): Promise<MafiaPublicState> {
+  return apiFetch(`/api/public/mafia/${token}`)
+}
+
+export async function submitMafiaAction(token: string, targetUserId: string | null): Promise<void> {
+  await apiFetch(`/api/public/mafia/${token}/action`, jsonInit('POST', { target_user_id: targetUserId }))
 }

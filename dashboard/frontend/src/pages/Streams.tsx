@@ -11,10 +11,10 @@ import {
   type RoleInfo,
   type StreamSubscription,
 } from '../api/client'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 
 const inputClass =
@@ -162,29 +162,21 @@ export function StreamsPage() {
               <div className="flex flex-col gap-3 border-t border-border pt-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-muted">Канал публикации</label>
-                  <select
+                  <Select
                     value={sub.channel_id}
-                    onChange={(e) => patchSub(sub.id, { channel_id: e.target.value })}
-                    className={inputClass}
-                  >
-                    <option value="">Не выбран</option>
-                    <ChannelOptions channels={channels} />
-                  </select>
+                    onChange={(id) => patchSub(sub.id, { channel_id: id })}
+                    options={channels}
+                    placeholder="Не выбран"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-muted">Роль для пинга</label>
-                  <select
+                  <Select
                     value={sub.ping_role_id}
-                    onChange={(e) => patchSub(sub.id, { ping_role_id: e.target.value })}
-                    className={inputClass}
-                  >
-                    <option value="">Без пинга</option>
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(id) => patchSub(sub.id, { ping_role_id: id })}
+                    options={roles}
+                    placeholder="Без пинга"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-muted">Шаблон сообщения (пусто = стандартный)</label>
@@ -218,14 +210,14 @@ export function StreamsPage() {
                 <div className="flex gap-3">
                   <div className="flex flex-1 flex-col gap-1">
                     <label className="text-xs text-muted">Режим фильтра</label>
-                    <select
+                    <Select
                       value={sub.keyword_mode}
-                      onChange={(e) => patchSub(sub.id, { keyword_mode: e.target.value as 'any' | 'all' })}
-                      className={inputClass}
-                    >
-                      <option value="any">Любое из слов</option>
-                      <option value="all">Все слова</option>
-                    </select>
+                      onChange={(id) => patchSub(sub.id, { keyword_mode: id as 'any' | 'all' })}
+                      options={[
+                        { id: 'any', name: 'Любое из слов' },
+                        { id: 'all', name: 'Все слова' },
+                      ]}
+                    />
                   </div>
                   <div className="flex flex-1 flex-col gap-1">
                     <label className="text-xs text-muted">Мин. интервал (минут)</label>
@@ -285,15 +277,13 @@ export function StreamsPage() {
             <label className="text-sm text-muted" htmlFor="stream-channel">
               Канал для уведомлений
             </label>
-            <select
+            <Select
               id="stream-channel"
               value={addForm.channel_id}
-              onChange={(e) => setAddForm((f) => ({ ...f, channel_id: e.target.value }))}
-              className={inputClass}
-            >
-              <option value="">Выберите канал</option>
-              <ChannelOptions channels={channels} />
-            </select>
+              onChange={(id) => setAddForm((f) => ({ ...f, channel_id: id }))}
+              options={channels}
+              placeholder="Выберите канал"
+            />
           </div>
 
           <div className="flex justify-end gap-2">

@@ -18,7 +18,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Hello' } })
     fireEvent.click(screen.getByText('Отправить'))
 
@@ -39,7 +40,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.click(screen.getByText('Отправить'))
 
     expect(await screen.findByText(/Заполните хотя бы/)).toBeInTheDocument()
@@ -82,7 +84,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     fireEvent.click(await screen.findByText('Редактировать существующее'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByPlaceholderText('ID существующего сообщения'), { target: { value: '999' } })
     fireEvent.click(screen.getByText('Загрузить'))
 
@@ -108,7 +111,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'x'.repeat(4096) } })
     fireEvent.change(screen.getByLabelText('Footer'), { target: { value: 'y'.repeat(1905) } })
     fireEvent.click(screen.getByText('Отправить'))
@@ -127,7 +131,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Текст сообщения'), { target: { value: 'Just text' } })
     fireEvent.click(screen.getByText('Отправить'))
 
@@ -144,7 +149,8 @@ describe('EmbedBuilderPage', () => {
     render(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Текст сообщения'), { target: { value: '   ' } })
     fireEvent.click(screen.getByText('Отправить'))
 

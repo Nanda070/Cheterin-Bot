@@ -7,9 +7,9 @@ import {
   type ChannelInfo,
   type ServerLogEventConfig,
 } from '../api/client'
-import { ChannelOptions } from '../components/ChannelOptions'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 
 export function ServerLogPage() {
@@ -83,14 +83,13 @@ export function ServerLogPage() {
       <Card className="flex flex-col gap-1 p-0">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <span className="text-sm text-muted">Назначить всем один канал:</span>
-          <select
-            onChange={(e) => e.target.value && setAllTo(e.target.value)}
+          <Select
             value=""
-            className="rounded-control border border-border bg-background px-3 py-1.5 text-sm text-foreground"
-          >
-            <option value="">Выбрать канал…</option>
-            <ChannelOptions channels={channels} />
-          </select>
+            onChange={(id) => setAllTo(id)}
+            options={channels}
+            placeholder="Выбрать канал…"
+            className="w-56"
+          />
         </div>
 
         {Object.entries(labels).map(([type, label]) => {
@@ -102,16 +101,13 @@ export function ServerLogPage() {
               className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-2.5 last:border-b-0"
             >
               <Toggle checked={cfg.enabled} onChange={(v) => setEvent(type, { enabled: v })} label={label} />
-              <select
+              <Select
                 value={cfg.channel_id}
-                onChange={(e) => setEvent(type, { channel_id: e.target.value })}
-                className={`w-56 rounded-control border border-border bg-background px-3 py-1.5 text-sm ${
-                  cfg.enabled ? 'text-foreground' : 'text-muted'
-                }`}
-              >
-                <option value="">Канал не выбран</option>
-                <ChannelOptions channels={channels} />
-              </select>
+                onChange={(id) => setEvent(type, { channel_id: id })}
+                options={channels}
+                placeholder="Канал не выбран"
+                className="w-56"
+              />
             </div>
           )
         })}

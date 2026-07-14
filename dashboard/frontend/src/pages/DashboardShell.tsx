@@ -1,23 +1,30 @@
 import {
   Broadcast,
   CalendarCheck,
+  Car,
   ChartBar,
   ChartLine,
   ChatCircleText,
   ClipboardText,
+  FilmSlate,
   GearSix,
   HandWaving,
   Headset,
+  House,
   ListMagnifyingGlass,
   Megaphone,
   Package,
   ShieldWarning,
   SignOut,
+  Skull,
   Sparkle,
   Stack,
+  TrendUp,
   Trophy,
   UserCirclePlus,
+  Users,
   UsersThree,
+  Wrench,
   type Icon,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
@@ -34,29 +41,41 @@ interface Section {
 
 interface NavGroup {
   title: string
+  icon: Icon
   items: Section[]
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Активность',
+    icon: TrendUp,
     items: [
       { label: 'Рейтинг участников', icon: ChartBar, to: '/levels' },
       { label: 'Статистика войса', icon: ChartLine, to: '/voice-stats' },
     ],
   },
   {
+    title: 'GTA5RP',
+    icon: Car,
+    items: [
+      { label: 'Семья', icon: House, to: '/family' },
+      { label: 'Поставки', icon: Package, to: '/supply' },
+    ],
+  },
+  {
     title: 'Сообщество',
+    icon: Users,
     items: [
       { label: 'Feedback и тикеты', icon: ChatCircleText, to: '/feedback' },
       { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
       { label: 'Сетки', icon: Trophy, to: '/brackets' },
-      { label: 'Поставки', icon: Package, to: '/supply' },
+      { label: 'Мафия', icon: Skull, to: '/mafia' },
       { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
     ],
   },
   {
     title: 'Контент',
+    icon: FilmSlate,
     items: [
       { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
       { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
@@ -67,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: 'Администрирование',
+    icon: Wrench,
     items: [
       { label: 'Логирование', icon: ListMagnifyingGlass, to: '/serverlog' },
       { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
@@ -94,7 +114,7 @@ export function DashboardShell() {
   }
 
   const itemBase =
-    'flex items-center gap-2.5 rounded-control px-2.5 py-2 text-sm transition-colors duration-200 ease-out'
+    'flex items-center gap-2.5 rounded-control border-l-2 px-2.5 py-2 text-sm transition-colors duration-200 ease-out'
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -150,10 +170,11 @@ export function DashboardShell() {
             )}
             <span className="truncate text-sm font-medium text-foreground">{user?.username}</span>
           </div>
-          <nav className="flex flex-col gap-4">
+          <nav className="flex flex-col gap-5">
             {NAV_GROUPS.map((group, groupIndex) => (
               <div key={group.title} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
-                <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  <group.icon size={13} weight="bold" className="shrink-0" />
                   {group.title}
                 </p>
                 <div className="flex flex-col gap-0.5">
@@ -164,13 +185,17 @@ export function DashboardShell() {
                       className={({ isActive }) =>
                         `${itemBase} cursor-pointer ${
                           isActive
-                            ? 'bg-primary-muted font-medium text-foreground'
-                            : 'text-muted hover:bg-surface-hover hover:text-foreground'
+                            ? 'border-primary bg-primary-muted font-medium text-foreground'
+                            : 'border-transparent text-muted hover:bg-surface-hover hover:text-foreground'
                         }`
                       }
                     >
-                      <SectionIcon size={17} className="shrink-0" />
-                      {label}
+                      {({ isActive }) => (
+                        <>
+                          <SectionIcon size={17} weight={isActive ? 'fill' : 'regular'} className={`shrink-0 ${isActive ? 'text-primary' : ''}`} />
+                          {label}
+                        </>
+                      )}
                     </NavLink>
                   ))}
                 </div>

@@ -55,9 +55,13 @@ describe('BracketsPage', () => {
 
   it('loads entries from a selected event and allows reordering', async () => {
     vi.spyOn(client, 'fetchBrackets').mockResolvedValue([])
-    vi.spyOn(client, 'fetchEvents').mockResolvedValue([
-      { message_id: '900', type: 'tournament', title: 'Кубок', status: 'closed', channel_id: '1', count: 2 },
-    ])
+    vi.spyOn(client, 'fetchEvents').mockImplementation((status) =>
+      Promise.resolve(
+        status === 'closed'
+          ? [{ message_id: '900', type: 'tournament', title: 'Кубок', status: 'closed', channel_id: '1', count: 2 }]
+          : [],
+      ),
+    )
     vi.spyOn(client, 'fetchEventEntries').mockResolvedValue(['Alpha', 'Beta'])
     const createSpy = vi.spyOn(client, 'createBracket').mockResolvedValue({
       id: '1',
@@ -71,7 +75,8 @@ describe('BracketsPage', () => {
 
     renderPage()
     fireEvent.click(await screen.findByText('Создать сетку'))
-    fireEvent.change(await screen.findByLabelText('Событие'), { target: { value: '900' } })
+    fireEvent.click(await screen.findByLabelText('Событие'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Кубок' }))
     await screen.findByText('Загружено участников: 2')
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'From Event' } })
     fireEvent.click(screen.getByText('Далее'))
@@ -98,7 +103,8 @@ describe('BracketsPage', () => {
 
     renderPage()
     fireEvent.click(await screen.findByText('Создать сетку'))
+    fireEvent.click(await screen.findByLabelText('Событие'))
 
-    expect(await screen.findByText('Закрытый кубок')).toBeInTheDocument()
+    expect(await screen.findByRole('option', { name: 'Закрытый кубок' })).toBeInTheDocument()
   })
 })

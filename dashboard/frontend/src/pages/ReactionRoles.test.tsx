@@ -46,12 +46,14 @@ describe('ReactionRolesPage', () => {
     fireEvent.click(screen.getByText('Создать reaction role'))
 
     await waitFor(() => screen.getByLabelText('Канал'))
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Message ID'), { target: { value: '999' } })
     fireEvent.change(screen.getByPlaceholderText('Эмодзи (вставьте unicode или выберите ниже)'), {
       target: { value: '📖' },
     })
-    fireEvent.change(screen.getByLabelText('Роль для этой пары'), { target: { value: '7' } })
+    fireEvent.click(screen.getByLabelText('Роль для этой пары'))
+    fireEvent.click(await screen.findByRole('option', { name: 'VIP' }))
     fireEvent.click(screen.getByText('Сохранить'))
 
     await waitFor(() => expect(createSpy).toHaveBeenCalledWith('500', '999', [{ emoji: '📖', role_id: '7' }]))
@@ -77,18 +79,21 @@ describe('ReactionRolesPage', () => {
     fireEvent.click(screen.getByText('Создать reaction role'))
     await waitFor(() => screen.getByLabelText('Канал'))
 
-    fireEvent.change(screen.getByLabelText('Канал'), { target: { value: '500' } })
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
     fireEvent.change(screen.getByLabelText('Message ID'), { target: { value: '999' } })
     fireEvent.change(screen.getByPlaceholderText('Эмодзи (вставьте unicode или выберите ниже)'), {
       target: { value: '📖' },
     })
-    fireEvent.change(screen.getByLabelText('Роль для этой пары'), { target: { value: '7' } })
+    fireEvent.click(screen.getByLabelText('Роль для этой пары'))
+    fireEvent.click(await screen.findByRole('option', { name: 'VIP' }))
 
     fireEvent.click(screen.getByText('+ Добавить пару'))
     const emojiInputs = screen.getAllByPlaceholderText('Эмодзи (вставьте unicode или выберите ниже)')
     fireEvent.change(emojiInputs[1], { target: { value: '📖' } })
     const roleSelects = screen.getAllByLabelText('Роль для этой пары')
-    fireEvent.change(roleSelects[1], { target: { value: '8' } })
+    fireEvent.click(roleSelects[1])
+    fireEvent.click(await screen.findByRole('option', { name: 'Other' }))
 
     fireEvent.click(screen.getByText('Сохранить'))
 

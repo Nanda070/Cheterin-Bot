@@ -35,7 +35,8 @@ describe('FeedbackCasesPage', () => {
     render(<FeedbackCasesPage />)
 
     await waitFor(() => screen.getByLabelText('Статус'))
-    fireEvent.change(screen.getByLabelText('Статус'), { target: { value: 'approved' } })
+    fireEvent.click(screen.getByLabelText('Статус'))
+    fireEvent.click(screen.getByRole('option', { name: 'Принято' }))
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('approved'))
   })

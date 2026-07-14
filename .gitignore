@@ -25,5 +25,9 @@ xp_config.json
 serverlog_config.json
 streams_config.json
 xp_card_bg.png
+family_config.json
+family.db
+mafia_config.json
+mafia.db
 venv/
 NEW/
