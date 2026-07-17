@@ -14,13 +14,8 @@ import daily_topic_core
 logger = logging.getLogger("daily_topic")
 
 
-def build_topic_embed(text: str) -> discord.Embed:
-    return discord.Embed(
-        title="💬 Тема дня",
-        description=text,
-        color=discord.Color.blurple(),
-        timestamp=discord.utils.utcnow(),
-    )
+def build_topic_message(text: str) -> str:
+    return f"💬 **Тема дня**\n{text}"
 
 
 class DailyTopicCog(commands.Cog):
@@ -49,7 +44,7 @@ class DailyTopicCog(commands.Cog):
             return None
 
         try:
-            await channel.send(embed=build_topic_embed(topic["text"]))
+            await channel.send(content=build_topic_message(topic["text"]))
         except discord.HTTPException:
             logger.warning("Не удалось опубликовать тему дня в канал %s", channel_id)
             return None
