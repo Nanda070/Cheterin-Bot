@@ -63,6 +63,7 @@ export function LevelsPage() {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
+  const [newMultiplierUserId, setNewMultiplierUserId] = useState('')
 
   const [board, setBoard] = useState<XpLeaderboardPage | null>(null)
   const [boardPage, setBoardPage] = useState(1)
@@ -306,6 +307,84 @@ export function LevelsPage() {
                 onChange={(e) => patch((p) => ({ ...p, voice: { ...p.voice, max_count: Number(e.target.value) } }))}
                 className={`${inputClass} w-32`}
               />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-muted" htmlFor="voice-base">
+                Базовый XP за минуту на одного активного (1–100)
+              </label>
+              <input
+                id="voice-base"
+                type="number"
+                min={1}
+                max={100}
+                value={settings.voice.base_per_minute}
+                onChange={(e) => patch((p) => ({ ...p, voice: { ...p.voice, base_per_minute: Number(e.target.value) } }))}
+                className={`${inputClass} w-32`}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted">
+                Индивидуальные множители участников (%): переопределяют скорость голосового XP для конкретного
+                участника (100 = обычная, 0 = не получает, максимум 1000).
+              </p>
+              {Object.entries(settings.voice.member_multipliers).map(([userId, mult]) => (
+                <div key={userId} className="flex items-center gap-2">
+                  <input value={userId} readOnly className={`${inputClass} w-52 opacity-70`} aria-label="ID участника" />
+                  <input
+                    type="number"
+                    min={0}
+                    max={1000}
+                    value={mult}
+                    aria-label={`Множитель для ${userId}`}
+                    onChange={(e) =>
+                      patch((p) => ({
+                        ...p,
+                        voice: {
+                          ...p.voice,
+                          member_multipliers: { ...p.voice.member_multipliers, [userId]: Number(e.target.value) },
+                        },
+                      }))
+                    }
+                    className={`${inputClass} w-28`}
+                  />
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      patch((p) => {
+                        const next = { ...p.voice.member_multipliers }
+                        delete next[userId]
+                        return { ...p, voice: { ...p.voice, member_multipliers: next } }
+                      })
+                    }
+                  >
+                    Удалить
+                  </Button>
+                </div>
+              ))}
+              <div className="flex items-center gap-2">
+                <input
+                  value={newMultiplierUserId}
+                  onChange={(e) => setNewMultiplierUserId(e.target.value.trim())}
+                  placeholder="ID участника"
+                  className={`${inputClass} w-52`}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (!/^\d+$/.test(newMultiplierUserId)) return
+                    patch((p) => ({
+                      ...p,
+                      voice: {
+                        ...p.voice,
+                        member_multipliers: { ...p.voice.member_multipliers, [newMultiplierUserId]: 100 },
+                      },
+                    }))
+                    setNewMultiplierUserId('')
+                  }}
+                >
+                  Добавить участника
+                </Button>
+              </div>
             </div>
           </Card>
 

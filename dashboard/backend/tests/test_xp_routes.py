@@ -129,3 +129,48 @@ async def test_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/xp/leaderboard")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_put_settings_voice_base_and_member_multipliers(aiohttp_client):
+    _, app = build([])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    payload = xp_core.get_settings()
+    payload["voice"]["base_per_minute"] = 10
+    payload["voice"]["member_multipliers"] = {"42": 150, "77": 0}
+
+    resp = await client.put("/api/xp", json=payload)
+    assert resp.status == 200
+    saved = (await resp.json())["settings"]["voice"]
+    assert saved["base_per_minute"] == 10
+    assert saved["member_multipliers"] == {"42": 150, "77": 0}
+
+
+@pytest.mark.asyncio
+async def test_put_settings_rejects_bad_voice_base_and_multipliers(aiohttp_client):
+    _, app = build([])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    payload = xp_core.get_settings()
+    payload["voice"]["base_per_minute"] = 0
+    resp = await client.put("/api/xp", json=payload)
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_voice_base_per_minute"
+
+    payload = xp_core.get_settings()
+    payload["voice"]["member_multipliers"] = {"abc": 100}
+    resp = await client.put("/api/xp", json=payload)
+    assert resp.status == 400
+
+    payload = xp_core.get_settings()
+    payload["voice"]["member_multipliers"] = {"42": 5000}
+    resp = await client.put("/api/xp", json=payload)
+    assert resp.status == 400
+
+    payload = xp_core.get_settings()
+    payload["voice"]["member_multipliers"] = ["42"]
+    resp = await client.put("/api/xp", json=payload)
+    assert resp.status == 400

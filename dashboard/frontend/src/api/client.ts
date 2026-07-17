@@ -751,6 +751,8 @@ export interface XpScopeSettings {
 
 export interface XpVoiceSettings extends XpScopeSettings {
   max_count: number
+  base_per_minute: number
+  member_multipliers: Record<string, number>
 }
 
 export interface XpLevelReward {
@@ -1634,4 +1636,20 @@ export async function announceBunkerAbility(
   await apiFetch(`/api/public/bunker/${token}/ability`, jsonInit('POST', {
     card_index: cardIndex, target_user_id: targetUserId, note,
   }))
+}
+
+// ────────────────────────── Развлечения ──────────────────────────
+
+export interface FunSettings {
+  enabled: boolean
+  roulette_timeout_minutes: number
+  roulette_cooldown_sec: number
+}
+
+export function fetchFunSettings(): Promise<FunSettings> {
+  return apiFetch('/api/fun')
+}
+
+export function updateFunSettings(settings: FunSettings): Promise<FunSettings> {
+  return apiFetch('/api/fun', jsonInit('PUT', settings))
 }

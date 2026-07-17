@@ -79,6 +79,14 @@ async def xp_put(request: web.Request) -> web.Response:
             return web.json_response({"error": f"invalid_{scope_name}_multiplier"}, status=400)
     if not _int_in(body.get("voice", {}).get("max_count", 5), 0, 99):
         return web.json_response({"error": "invalid_voice_max_count"}, status=400)
+    if not _int_in(body.get("voice", {}).get("base_per_minute", xp_core.VOICE_XP_PER_ACTIVE_MINUTE), 1, 100):
+        return web.json_response({"error": "invalid_voice_base_per_minute"}, status=400)
+    member_multipliers = body.get("voice", {}).get("member_multipliers", {})
+    if not isinstance(member_multipliers, dict):
+        return web.json_response({"error": "invalid_voice_member_multipliers"}, status=400)
+    for user_id, mult in member_multipliers.items():
+        if not isinstance(user_id, str) or not user_id.isdigit() or not _int_in(mult, 0, 1000):
+            return web.json_response({"error": "invalid_voice_member_multipliers"}, status=400)
 
     announce = body.get("announce", {})
     if not isinstance(announce, dict) or not isinstance(announce.get("enabled", True), bool):
@@ -131,6 +139,8 @@ async def xp_put(request: web.Request) -> web.Response:
             "ignored_channels": body["voice"].get("ignored_channels", []),
             "multiplier": body["voice"].get("multiplier", 100),
             "max_count": body["voice"].get("max_count", 5),
+            "base_per_minute": body["voice"].get("base_per_minute", xp_core.VOICE_XP_PER_ACTIVE_MINUTE),
+            "member_multipliers": member_multipliers,
         },
         "announce": {
             "enabled": announce.get("enabled", True),

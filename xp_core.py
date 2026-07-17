@@ -22,7 +22,7 @@ TEXT_XP_MIN = 15
 TEXT_XP_MAX = 25
 TEXT_XP_COOLDOWN = 60  # секунд
 
-VOICE_XP_PER_ACTIVE_MINUTE = 5  # базовый XP за минуту на одного активного в канале
+VOICE_XP_PER_ACTIVE_MINUTE = 6  # дефолт базового XP за минуту на одного активного (паритет с Juniper)
 
 DEFAULT_ANNOUNCE_TEMPLATE = (
     "Поздравляю {{member}}! 🎉\n"
@@ -84,6 +84,10 @@ def get_settings() -> dict:
             "ignored_channels": [str(v) for v in voice.get("ignored_channels", [])],
             "multiplier": int(voice.get("multiplier", 100)),
             "max_count": int(voice.get("max_count", 5)),
+            "base_per_minute": int(voice.get("base_per_minute", VOICE_XP_PER_ACTIVE_MINUTE)),
+            "member_multipliers": {
+                str(k): int(v) for k, v in dict(voice.get("member_multipliers", {})).items()
+            },
         },
         "announce": {
             "enabled": bool(announce.get("enabled", True)),
@@ -143,12 +147,27 @@ def roll_text_xp(multiplier: int) -> int:
     return max(0, round(base * multiplier / 100))
 
 
-def voice_xp_per_minute(active_count: int, max_count: int, multiplier: int) -> int:
-    """XP за минуту голосовой активности при active_count активных участниках."""
+def voice_xp_per_minute(
+    active_count: int,
+    max_count: int,
+    multiplier: int,
+    base_per_minute: int = VOICE_XP_PER_ACTIVE_MINUTE,
+    member_multiplier: int = 100,
+) -> int:
+    """XP за минуту голосовой активности при active_count активных участниках.
+
+    Формула Juniper: база × число активных (кап max_count) × общий множитель ×
+    индивидуальный множитель участника. Минимум два активных участника.
+    """
     if active_count < 2:
         return 0
     effective = min(active_count, max_count) if max_count > 0 else active_count
-    return max(0, round(VOICE_XP_PER_ACTIVE_MINUTE * effective * multiplier / 100))
+    return max(0, round(base_per_minute * effective * multiplier / 100 * member_multiplier / 100))
+
+
+def voice_member_multiplier(scope: dict, user_id: int) -> int:
+    """Индивидуальный множитель участника (в процентах, 100 = без изменения)."""
+    return int(scope.get("member_multipliers", {}).get(str(user_id), 100))
 
 
 # ────────────────────────── Награды ──────────────────────────

@@ -53,6 +53,36 @@ def test_voice_xp_requires_two_active():
     assert xp_core.voice_xp_per_minute(10, 5, 100) == xp_core.voice_xp_per_minute(5, 5, 100)
 
 
+def test_voice_xp_juniper_formula_exact():
+    # база × активные × множитель/100: 6 × 3 × 1.0 = 18
+    assert xp_core.voice_xp_per_minute(3, 5, 100, base_per_minute=6) == 18
+    assert xp_core.voice_xp_per_minute(3, 5, 200, base_per_minute=6) == 36
+
+
+def test_voice_xp_configurable_base():
+    assert xp_core.voice_xp_per_minute(2, 5, 100, base_per_minute=10) == 20
+    assert xp_core.voice_xp_per_minute(2, 5, 100, base_per_minute=1) == 2
+
+
+def test_voice_xp_member_multiplier():
+    base = xp_core.voice_xp_per_minute(2, 5, 100, base_per_minute=6)
+    assert xp_core.voice_xp_per_minute(2, 5, 100, base_per_minute=6, member_multiplier=200) == base * 2
+    assert xp_core.voice_xp_per_minute(2, 5, 100, base_per_minute=6, member_multiplier=0) == 0
+
+
+def test_voice_member_multiplier_lookup():
+    scope = {"member_multipliers": {"42": 150}}
+    assert xp_core.voice_member_multiplier(scope, 42) == 150
+    assert xp_core.voice_member_multiplier(scope, 99) == 100
+    assert xp_core.voice_member_multiplier({}, 42) == 100
+
+
+def test_get_settings_voice_new_fields_defaults():
+    settings = xp_core.get_settings()
+    assert settings["voice"]["base_per_minute"] == xp_core.VOICE_XP_PER_ACTIVE_MINUTE
+    assert settings["voice"]["member_multipliers"] == {}
+
+
 def test_deserved_roles():
     settings = {
         "level_rewards": [

@@ -34,6 +34,7 @@ import { MafiaPage } from './pages/Mafia'
 import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
 import { BunkerPage } from './pages/Bunker'
 import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
+import { FunPage } from './pages/Fun'
 import { SuperAdminPage } from './pages/SuperAdmin'
 import { GiveawaysPage } from './pages/Giveaways'
 import { DailyTopicPage } from './pages/DailyTopic'
@@ -74,6 +75,7 @@ function App() {
             <Route path="family" element={<FamilyPage />} />
             <Route path="mafia" element={<MafiaPage />} />
             <Route path="bunker" element={<BunkerPage />} />
+            <Route path="fun" element={<FunPage />} />
             <Route path="giveaways" element={<GiveawaysPage />} />
             <Route path="daily-topic" element={<DailyTopicPage />} />
             <Route path="automod" element={<AutoModPage />} />

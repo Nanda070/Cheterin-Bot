@@ -39,6 +39,7 @@ from .routes.daily_topic import routes as daily_topic_routes
 from .routes.automod import routes as automod_routes
 from .routes.warns import routes as warns_routes
 from .routes.bunker import routes as bunker_routes
+from .routes.fun import routes as fun_routes
 from .audit_middleware import audit_middleware
 from .session import setup_session
 from .static import setup_static_routes
@@ -102,6 +103,7 @@ def create_app(
     app.add_routes(automod_routes)
     app.add_routes(warns_routes)
     app.add_routes(bunker_routes)
+    app.add_routes(fun_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

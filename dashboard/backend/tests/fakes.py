@@ -241,6 +241,9 @@ class FakeMember:
     async def add_roles(self, role, **kwargs):
         await self._record("add_roles", role=role, **kwargs)
 
+    async def timeout(self, duration, **kwargs):
+        await self._record("timeout", duration=duration, **kwargs)
+
     async def remove_roles(self, role, **kwargs):
         await self._record("remove_roles", role=role, **kwargs)
 

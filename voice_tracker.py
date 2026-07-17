@@ -129,7 +129,9 @@ class VoiceTracker(commands.Cog):
 
                         if xp_enabled and self._xp_channel_allowed(channel.id, voice_scope) and not self._xp_member_ignored(member, voice_scope):
                             session.xp_accum += xp_core.voice_xp_per_minute(
-                                active_count, voice_scope["max_count"], voice_scope["multiplier"]
+                                active_count, voice_scope["max_count"], voice_scope["multiplier"],
+                                base_per_minute=voice_scope["base_per_minute"],
+                                member_multiplier=xp_core.voice_member_multiplier(voice_scope, member.id),
                             ) * (TICK_SECONDS / 60)
 
     @_tick.before_loop
