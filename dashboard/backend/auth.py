@@ -4,7 +4,7 @@ from aiohttp import web
 from aiohttp_session import get_session
 
 from .discord_oauth import DiscordOAuthError, exchange_code_for_token, fetch_discord_identity
-from .access import has_dashboard_access
+from .access import has_dashboard_access, has_super_admin_access
 from .member_lookup import resolve_guild_member
 
 routes = web.RouteTableDef()
@@ -107,5 +107,6 @@ async def me(request: web.Request) -> web.Response:
             "username": member.name,
             "avatar": str(member.display_avatar.url) if member.display_avatar else None,
             "is_admin": member.guild_permissions.administrator,
+            "is_super_admin": has_super_admin_access(member),
         }
     )

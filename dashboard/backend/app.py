@@ -5,9 +5,11 @@ from pathlib import Path
 import aiohttp
 from aiohttp import web
 
+import bunker_db
 import family_db
 import mafia_db
 import stats_db
+import warns_db
 
 from .auth import routes as auth_routes
 from .config import ConfigError, DashboardConfig, load_dashboard_config
@@ -31,6 +33,12 @@ from .routes.audit import routes as audit_routes
 from .routes.streams import routes as streams_routes
 from .routes.family import routes as family_routes
 from .routes.mafia import routes as mafia_routes
+from .routes.superadmin import routes as superadmin_routes
+from .routes.giveaways import routes as giveaways_routes
+from .routes.daily_topic import routes as daily_topic_routes
+from .routes.automod import routes as automod_routes
+from .routes.warns import routes as warns_routes
+from .routes.bunker import routes as bunker_routes
 from .audit_middleware import audit_middleware
 from .session import setup_session
 from .static import setup_static_routes
@@ -58,6 +66,8 @@ def create_app(
     stats_db.init()
     family_db.init()
     mafia_db.init()
+    warns_db.db_init()
+    bunker_db.init()
 
     app = web.Application(middlewares=[json_error_middleware, audit_middleware])
     app["bot"] = bot
@@ -86,6 +96,12 @@ def create_app(
     app.add_routes(streams_routes)
     app.add_routes(family_routes)
     app.add_routes(mafia_routes)
+    app.add_routes(superadmin_routes)
+    app.add_routes(giveaways_routes)
+    app.add_routes(daily_topic_routes)
+    app.add_routes(automod_routes)
+    app.add_routes(warns_routes)
+    app.add_routes(bunker_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

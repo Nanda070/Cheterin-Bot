@@ -301,6 +301,15 @@ def get_day_votes(game_id: int, round_number: int) -> list[dict]:
         return [dict(r) for r in rows]
 
 
+def get_day_vote(game_id: int, round_number: int, voter_user_id: int) -> dict | None:
+    with closing(connect()) as conn:
+        row = conn.execute(
+            "SELECT * FROM day_votes WHERE game_id = ? AND round_number = ? AND voter_user_id = ?",
+            (game_id, round_number, voter_user_id),
+        ).fetchone()
+        return dict(row) if row else None
+
+
 # ────────────────────────── События раунда ──────────────────────────
 
 def add_round_event(game_id: int, round_number: int, event_type: str, payload: str = "") -> None:

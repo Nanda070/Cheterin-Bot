@@ -33,8 +33,7 @@ def _setup_game(guild, channel, phase="night", round_number=1, players=None):
     )
     for user_id, role in (players or {}).items():
         mafia_db.add_player(game["id"], user_id)
-        token = f"tok-{user_id}" if role in mafia_core.NIGHT_ACTION_ROLES else None
-        mafia_db.assign_player_role(game["id"], user_id, role, token)
+        mafia_db.assign_player_role(game["id"], user_id, role, f"tok-{user_id}")
     return mafia_db.get_game(game["id"])
 
 
@@ -71,15 +70,83 @@ async def test_public_state_mafia_sees_teammates_and_votes(aiohttp_client):
 
 
 @pytest.mark.asyncio
-async def test_public_state_no_action_outside_night(aiohttp_client):
+async def test_public_state_no_action_during_discussion(aiohttp_client):
     doctor = FakeMember(20, name="doctor")
     bot, guild, channel, app = build(members=[doctor])
-    _setup_game(guild, channel, phase="day_vote", players={20: "doctor"})
+    _setup_game(guild, channel, phase="day_discussion", players={20: "doctor"})
 
     client = await aiohttp_client(app)
     resp = await client.get("/api/public/mafia/tok-20")
     body = await resp.json()
     assert body["action_required"] is False
+
+
+@pytest.mark.asyncio
+async def test_public_state_citizen_no_night_action_but_day_vote_required(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    game = _setup_game(guild, channel, phase="night", players={20: "citizen"})
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["action_required"] is False
+
+    mafia_db.update_game(game["id"], phase="day_vote")
+
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["action_required"] is True
+
+
+@pytest.mark.asyncio
+async def test_public_state_includes_roster_with_hidden_alive_roles(aiohttp_client):
+    mafia1 = FakeMember(20, name="mafia1")
+    citizen = FakeMember(22, name="citizen")
+    bot, guild, channel, app = build(members=[mafia1, citizen])
+    game = _setup_game(guild, channel, players={20: "mafia", 22: "citizen"})
+    mafia_db.eliminate_player(game["id"], 22, 1, "lynched")
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+
+    roster_by_id = {p["user_id"]: p for p in body["roster"]}
+    assert roster_by_id["20"]["alive"] is True
+    assert roster_by_id["20"]["role"] == "mafia"  # видит свою роль
+    assert roster_by_id["22"]["alive"] is False
+    assert roster_by_id["22"]["role"] == "citizen"  # роль погибшего раскрыта всем
+
+
+@pytest.mark.asyncio
+async def test_public_state_hides_other_alive_player_roles(aiohttp_client):
+    mafia1 = FakeMember(20, name="mafia1")
+    doctor = FakeMember(21, name="doctor")
+    bot, guild, channel, app = build(members=[mafia1, doctor])
+    _setup_game(guild, channel, players={20: "mafia", 21: "doctor"})
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+
+    roster_by_id = {p["user_id"]: p for p in body["roster"]}
+    assert "role" not in roster_by_id["21"]  # доктор жив и не ты — роль скрыта
+
+
+@pytest.mark.asyncio
+async def test_public_state_vote_tally_during_day_vote(aiohttp_client):
+    mafia1 = FakeMember(20, name="mafia1")
+    citizen = FakeMember(22, name="citizen")
+    bot, guild, channel, app = build(members=[mafia1, citizen])
+    game = _setup_game(guild, channel, phase="day_vote", players={20: "mafia", 22: "citizen"})
+    mafia_db.upsert_day_vote(game["id"], 1, 20, 22)
+    mafia_db.upsert_day_vote(game["id"], 1, 22, 22)
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+
+    assert body["vote_tally"] == [{"target": "22", "target_display": "citizen", "count": 2}]
 
 
 @pytest.mark.asyncio
@@ -244,6 +311,150 @@ async def test_action_triggers_early_night_resolution(aiohttp_client):
     assert victim["eliminated_reason"] == "killed"
 
     assert len(channel.send_calls) >= 1
+
+    task = cog._timers.get(game["id"])
+    if task:
+        task.cancel()
+
+
+# ────────────────────────── POST дневной голос ──────────────────────────
+
+@pytest.mark.asyncio
+async def test_vote_happy_path_and_resubmit(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    target = FakeMember(22, name="target")
+    bot, guild, channel, app = build(members=[citizen, target])
+    _setup_game(guild, channel, phase="day_vote", players={20: "citizen", 22: "citizen"})
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": "22"})
+    assert resp.status == 200
+
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["your_submitted_target"] == "22"
+
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": None})
+    assert resp.status == 200
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["your_action_submitted"] is True
+    assert body["your_submitted_target"] is None
+
+
+@pytest.mark.asyncio
+async def test_vote_unknown_token(aiohttp_client):
+    _, _, _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/nope/vote", json={"target_user_id": None})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_vote_wrong_phase(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    _setup_game(guild, channel, phase="night", players={20: "citizen"})
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": None})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "wrong_phase"
+
+
+@pytest.mark.asyncio
+async def test_vote_dead_player(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    game = _setup_game(guild, channel, phase="day_vote", players={20: "citizen"})
+    mafia_db.eliminate_player(game["id"], 20, 1, "killed")
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": None})
+    assert resp.status == 403
+
+
+@pytest.mark.asyncio
+async def test_vote_game_not_active(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    game = _setup_game(guild, channel, phase="day_vote", players={20: "citizen"})
+    mafia_db.update_game(game["id"], status="finished")
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": None})
+    assert resp.status == 410
+
+
+@pytest.mark.asyncio
+async def test_vote_invalid_target_not_alive(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    _setup_game(guild, channel, phase="day_vote", players={20: "citizen"})
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": "999"})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_target"
+
+
+@pytest.mark.asyncio
+async def test_vote_self_target_allowed(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    _setup_game(guild, channel, phase="day_vote", players={20: "citizen"})
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": "20"})
+    assert resp.status == 200
+
+
+@pytest.mark.asyncio
+async def test_vote_deadline_passed(aiohttp_client):
+    citizen = FakeMember(20, name="citizen")
+    bot, guild, channel, app = build(members=[citizen])
+    game = _setup_game(guild, channel, phase="day_vote", players={20: "citizen"})
+    mafia_db.update_game(game["id"], phase_deadline_ts=int(time.time()) - 10)
+
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/public/mafia/tok-20/vote", json={"target_user_id": None})
+    assert resp.status == 409
+
+
+@pytest.mark.asyncio
+async def test_vote_triggers_early_day_vote_resolution(aiohttp_client):
+    # 1 мафия + 3 мирных: после казни одного мирного паритет ещё не наступает, игра продолжается.
+    mafia1 = FakeMember(20, name="mafia1")
+    citizen1 = FakeMember(21, name="citizen1")
+    citizen2 = FakeMember(22, name="citizen2")
+    citizen3 = FakeMember(23, name="citizen3")
+    bot, guild, channel, app = build(members=[mafia1, citizen1, citizen2, citizen3])
+    game = _setup_game(
+        guild, channel, phase="day_vote",
+        players={20: "mafia", 21: "citizen", 22: "citizen", 23: "citizen"},
+    )
+
+    client = await aiohttp_client(app)
+
+    cog = MafiaCog(bot)
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+
+    for uid in (20, 21, 22):
+        resp = await client.post(f"/api/public/mafia/tok-{uid}/vote", json={"target_user_id": "22"})
+        assert resp.status == 200
+    # Ещё не все проголосовали -- фаза не должна смениться.
+    assert mafia_db.get_game(game["id"])["phase"] == "day_vote"
+
+    resp = await client.post("/api/public/mafia/tok-23/vote", json={"target_user_id": "22"})
+    assert resp.status == 200
+
+    updated = mafia_db.get_game(game["id"])
+    assert updated["phase"] == "night"
+    assert updated["round_number"] == 2
+
+    victim = mafia_db.get_player(game["id"], 22)
+    assert victim["alive"] == 0
+    assert victim["eliminated_reason"] == "lynched"
 
     task = cog._timers.get(game["id"])
     if task:

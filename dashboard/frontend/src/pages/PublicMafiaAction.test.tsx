@@ -18,6 +18,10 @@ const baseState: client.MafiaPublicState = {
     { user_id: '10', display_name: 'Alice' },
     { user_id: '20', display_name: 'Bob' },
   ],
+  roster: [
+    { user_id: '10', display_name: 'Alice', alive: true },
+    { user_id: '20', display_name: 'Bob', alive: true, role: 'doctor' },
+  ],
 }
 
 function renderAt(token: string) {
@@ -58,7 +62,7 @@ describe('PublicMafiaActionPage', () => {
     fireEvent.click(await screen.findByRole('option', { name: 'Alice' }))
     fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
 
-    await screen.findByText('Действие отправлено.')
+    await screen.findByText('Отправлено.')
     expect(submitSpy).toHaveBeenCalledWith('my-token', '10')
   })
 
@@ -72,7 +76,7 @@ describe('PublicMafiaActionPage', () => {
 
     await screen.findByText('Доктор')
     expect(screen.queryByRole('button', { name: 'Отправить' })).not.toBeInTheDocument()
-    expect(screen.getByText('Сейчас день — обсуждение и голосование проходят в Discord.')).toBeInTheDocument()
+    expect(screen.getByText('Сейчас обсуждение — скоро начнётся голосование.')).toBeInTheDocument()
   })
 
   it('shows teammates during the night for mafia players', async () => {
@@ -86,5 +90,43 @@ describe('PublicMafiaActionPage', () => {
 
     expect(await screen.findByText('Команда мафии')).toBeInTheDocument()
     expect(screen.getByText('Charlie')).toBeInTheDocument()
+  })
+
+  it('shows the roster with revealed roles for dead players only', async () => {
+    vi.spyOn(client, 'fetchPublicMafia').mockResolvedValue({
+      ...baseState,
+      roster: [
+        { user_id: '10', display_name: 'Alice', alive: true },
+        { user_id: '20', display_name: 'Bob', alive: true, role: 'doctor' },
+        { user_id: '30', display_name: 'Carol', alive: false, role: 'mafia' },
+      ],
+    })
+    renderAt('my-token')
+
+    expect(await screen.findByText('Игроки (2/3)')).toBeInTheDocument()
+    expect(screen.getByText(/Carol/)).toHaveTextContent('Carol — Мафия 💀')
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+  })
+
+  it('shows the day-vote card and submits a vote', async () => {
+    vi.spyOn(client, 'fetchPublicMafia').mockResolvedValue({
+      ...baseState,
+      your_role: 'citizen',
+      phase: 'day_vote',
+      vote_tally: [{ target: '10', target_display: 'Alice', count: 2 }],
+    })
+    const voteSpy = vi.spyOn(client, 'submitMafiaVote').mockResolvedValue()
+    renderAt('my-token')
+
+    expect(await screen.findByText('Дневное голосование')).toBeInTheDocument()
+    expect(screen.getByText('Текущие голоса')).toBeInTheDocument()
+    expect(screen.getByText('Alice: 2')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Пропустить' }))
+    fireEvent.click(await screen.findByRole('option', { name: 'Bob' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+
+    await screen.findByText('Отправлено.')
+    expect(voteSpy).toHaveBeenCalledWith('my-token', '20')
   })
 })

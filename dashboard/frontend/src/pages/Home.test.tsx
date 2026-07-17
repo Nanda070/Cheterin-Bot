@@ -6,7 +6,7 @@ import { AuthProvider } from '../context/AuthContext'
 import { HomePage } from './Home'
 
 function renderPage() {
-  const userPayload = { id: '1', username: 'tester', avatar: null, is_admin: false }
+  const userPayload = { id: '1', username: 'tester', avatar: null, is_admin: false, is_super_admin: false }
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => userPayload }),

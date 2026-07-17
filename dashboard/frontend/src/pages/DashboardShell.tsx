@@ -6,14 +6,18 @@ import {
   ChartLine,
   ChatCircleText,
   ClipboardText,
+  Crown,
   FilmSlate,
   GearSix,
+  Gift,
   HandWaving,
   Headset,
   House,
+  Lightbulb,
   ListMagnifyingGlass,
   Megaphone,
   Package,
+  Shield,
   ShieldWarning,
   SignOut,
   Skull,
@@ -24,6 +28,7 @@ import {
   UserCirclePlus,
   Users,
   UsersThree,
+  Vault,
   Wrench,
   type Icon,
 } from '@phosphor-icons/react'
@@ -43,6 +48,7 @@ interface NavGroup {
   title: string
   icon: Icon
   items: Section[]
+  superAdminOnly?: boolean
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -70,7 +76,10 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
       { label: 'Сетки', icon: Trophy, to: '/brackets' },
       { label: 'Мафия', icon: Skull, to: '/mafia' },
+      { label: 'Бункер', icon: Vault, to: '/bunker' },
+      { label: 'Гивевеи', icon: Gift, to: '/giveaways' },
       { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
+      { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
     ],
   },
   {
@@ -90,10 +99,17 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Логирование', icon: ListMagnifyingGlass, to: '/serverlog' },
       { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
+      { label: 'Автомодерация', icon: Shield, to: '/automod' },
       { label: 'Участники и роли', icon: UsersThree, to: '/members' },
       { label: 'Аудит дашборда', icon: ClipboardText, to: '/audit' },
       { label: 'Конфигурация', icon: GearSix, to: '/config' },
     ],
+  },
+  {
+    title: 'Супер-админ',
+    icon: Crown,
+    superAdminOnly: true,
+    items: [{ label: 'Серверы бота', icon: Crown, to: '/superadmin' }],
   },
 ]
 
@@ -171,7 +187,7 @@ export function DashboardShell() {
             <span className="truncate text-sm font-medium text-foreground">{user?.username}</span>
           </div>
           <nav className="flex flex-col gap-5">
-            {NAV_GROUPS.map((group, groupIndex) => (
+            {NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).map((group, groupIndex) => (
               <div key={group.title} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
                 <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
                   <group.icon size={13} weight="bold" className="shrink-0" />

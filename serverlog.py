@@ -9,6 +9,7 @@ import logging
 import os
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 logger = logging.getLogger("serverlog")
@@ -23,24 +24,34 @@ EVENT_TYPES: dict[str, str] = {
     "member_leave": "Выход участника с сервера",
     "member_ban": "Бан участника",
     "member_unban": "Разбан участника",
+    "member_timeout": "Тайм-аут участника (выдан/снят)",
     "nickname_change": "Смена никнейма",
     "roles_change": "Изменение ролей участника",
     "voice_join": "Вход в голосовой канал",
     "voice_leave": "Выход из голосового канала",
-    "voice_move": "Перемещение между голосовыми",
-    "voice_state": "Мут/деф в голосовых",
+    "voice_move": "Переключение между голосовыми (сам участник)",
+    "voice_move_admin": "Перемещение между голосовыми администратором",
+    "voice_disconnect_admin": "Отключение из голосового администратором",
+    "voice_state": "Мут/деф от администратора",
     "role_create": "Создание роли",
     "role_delete": "Удаление роли",
     "role_update": "Изменение роли",
     "channel_create": "Создание канала",
     "channel_delete": "Удаление канала",
     "channel_update": "Изменение канала",
+    "channel_permissions_update": "Изменение прав канала",
+    "thread_create": "Создание треда",
+    "thread_delete": "Удаление треда",
+    "thread_update": "Изменение треда",
     "emoji_update": "Изменение эмодзи",
     "invite_create": "Создание приглашения",
     "invite_delete": "Удаление приглашения",
+    "guild_update": "Изменение настроек сервера",
+    "moderation_command": "Использование модераторской команды",
 }
 
 MAX_CONTENT = 1000
+AUDIT_LOOKUP_WINDOW_SECONDS = 5
 
 _cache: dict | None = None
 _cache_mtime: float | None = None
@@ -102,6 +113,44 @@ def _clip(text: str | None) -> str:
     if not text:
         return "*пусто*"
     return text if len(text) <= MAX_CONTENT else text[:MAX_CONTENT] + "…"
+
+
+async def _recent_audit_actor(
+    guild: discord.Guild,
+    action: discord.AuditLogAction,
+    channel: discord.abc.GuildChannel | None = None,
+) -> discord.abc.User | None:
+    """Эвристика: ищет только что созданную запись аудита по действию.
+
+    Discord не привязывает записи member_move/member_disconnect к конкретному
+    участнику (только канал + счётчик), поэтому если подходящая запись создана
+    в последние несколько секунд — считаем её причиной текущего изменения войса.
+    При групповых действиях (несколько участников разом) модератор может быть
+    определён неточно — это ограничение самого Discord API.
+    """
+    try:
+        async for entry in guild.audit_logs(action=action, limit=5):
+            age = (discord.utils.utcnow() - entry.created_at).total_seconds()
+            if age > AUDIT_LOOKUP_WINDOW_SECONDS:
+                break
+            entry_channel = getattr(entry.extra, "channel", None)
+            if channel is not None and entry_channel is not None and entry_channel.id != channel.id:
+                continue
+            return entry.user
+    except (discord.Forbidden, discord.HTTPException):
+        pass
+    return None
+
+
+def _is_moderation_command(command: app_commands.Command) -> bool:
+    perms = command.default_permissions
+    if perms is None:
+        root = command.root_parent
+        if root is not None:
+            perms = root.default_permissions
+    if perms is None:
+        return False
+    return perms.administrator or perms.manage_guild
 
 
 class ServerLog(commands.Cog):
@@ -199,6 +248,18 @@ class ServerLog(commands.Cog):
                     embed.add_field(name="Сняты", value=_clip(" ".join(r.mention for r in removed)), inline=False)
                 await self.emit("roles_change", embed)
 
+        if before.timed_out_until != after.timed_out_until:
+            now = discord.utils.utcnow()
+            was_active = before.timed_out_until is not None and before.timed_out_until > now
+            is_active = after.timed_out_until is not None and after.timed_out_until > now
+            if is_active and not was_active:
+                embed = self._embed("⏳ Тайм-аут выдан", discord.Color.red(), after)
+                embed.add_field(name="До", value=f"<t:{int(after.timed_out_until.timestamp())}:F>", inline=False)
+                await self.emit("member_timeout", embed)
+            elif was_active and not is_active:
+                embed = self._embed("✅ Тайм-аут снят", discord.Color.green(), after)
+                await self.emit("member_timeout", embed)
+
     # ────────────────── Войс ──────────────────
 
     @commands.Cog.listener()
@@ -210,27 +271,45 @@ class ServerLog(commands.Cog):
             embed = self._embed("🔊 Зашёл в голосовой", discord.Color.green(), member)
             embed.add_field(name="Канал", value=after.channel.mention, inline=False)
             await self.emit("voice_join", embed)
+
         elif before.channel is not None and after.channel is None:
-            embed = self._embed("🔇 Вышел из голосового", discord.Color.dark_grey(), member)
-            embed.add_field(name="Канал", value=before.channel.mention, inline=False)
-            await self.emit("voice_leave", embed)
+            if not (event_channel_id("voice_leave") or event_channel_id("voice_disconnect_admin")):
+                return
+            actor = await _recent_audit_actor(member.guild, discord.AuditLogAction.member_disconnect)
+            if actor is not None:
+                embed = self._embed("🚫 Отключён от голосового администратором", discord.Color.red(), member)
+                embed.add_field(name="Канал", value=before.channel.mention, inline=False)
+                embed.add_field(name="Кем", value=f"{actor.mention} (`{actor.id}`)", inline=False)
+                await self.emit("voice_disconnect_admin", embed)
+            else:
+                embed = self._embed("🔇 Вышел из голосового", discord.Color.dark_grey(), member)
+                embed.add_field(name="Канал", value=before.channel.mention, inline=False)
+                await self.emit("voice_leave", embed)
+
         elif before.channel is not None and after.channel is not None and before.channel.id != after.channel.id:
-            embed = self._embed("↔️ Перешёл между голосовыми", discord.Color.blurple(), member)
-            embed.add_field(name="Из", value=before.channel.mention, inline=True)
-            embed.add_field(name="В", value=after.channel.mention, inline=True)
-            await self.emit("voice_move", embed)
+            if not (event_channel_id("voice_move") or event_channel_id("voice_move_admin")):
+                return
+            actor = await _recent_audit_actor(member.guild, discord.AuditLogAction.member_move, after.channel)
+            if actor is not None:
+                embed = self._embed("↔️ Перемещён администратором", discord.Color.red(), member)
+                embed.add_field(name="Из", value=before.channel.mention, inline=True)
+                embed.add_field(name="В", value=after.channel.mention, inline=True)
+                embed.add_field(name="Кем", value=f"{actor.mention} (`{actor.id}`)", inline=False)
+                await self.emit("voice_move_admin", embed)
+            else:
+                embed = self._embed("↔️ Переключился между голосовыми", discord.Color.blurple(), member)
+                embed.add_field(name="Из", value=before.channel.mention, inline=True)
+                embed.add_field(name="В", value=after.channel.mention, inline=True)
+                await self.emit("voice_move", embed)
+
         else:
             changes = []
-            if before.self_mute != after.self_mute:
-                changes.append("🎙️ выключил микрофон" if after.self_mute else "🎙️ включил микрофон")
-            if before.self_deaf != after.self_deaf:
-                changes.append("🎧 выключил звук" if after.self_deaf else "🎧 включил звук")
             if before.mute != after.mute:
-                changes.append("замьючен сервером" if after.mute else "размьючен сервером")
+                changes.append("замьючен администратором" if after.mute else "размьючен администратором")
             if before.deaf != after.deaf:
-                changes.append("заглушен сервером" if after.deaf else "разглушен сервером")
+                changes.append("заглушен администратором" if after.deaf else "разглушен администратором")
             if changes and after.channel is not None:
-                embed = self._embed("🎚️ Изменение состояния в войсе", discord.Color.dark_grey(), member)
+                embed = self._embed("🎚️ Мут/деф от администратора", discord.Color.dark_grey(), member)
                 embed.add_field(name="Канал", value=after.channel.mention, inline=False)
                 embed.add_field(name="Изменения", value="\n".join(changes), inline=False)
                 await self.emit("voice_state", embed)
@@ -290,14 +369,83 @@ class ServerLog(commands.Cog):
             changes.append(f"Название: **#{before.name}** → **#{after.name}**")
         if getattr(before, "topic", None) != getattr(after, "topic", None):
             changes.append("Описание изменено")
+        if changes:
+            embed = self._embed("🔧 Канал изменён", discord.Color.orange())
+            embed.add_field(name="Канал", value=f"{after.mention} (`{after.id}`)", inline=False)
+            embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
+            await self.emit("channel_update", embed)
+
         if before.overwrites != after.overwrites:
-            changes.append("Права доступа изменены")
+            embed = self._embed("🔐 Права канала изменены", discord.Color.orange())
+            embed.add_field(name="Канал", value=f"{after.mention} (`{after.id}`)", inline=False)
+            await self.emit("channel_permissions_update", embed)
+
+    # ────────────────── Треды ──────────────────
+
+    @commands.Cog.listener()
+    async def on_thread_create(self, thread: discord.Thread):
+        embed = self._embed("➕ Тред создан", discord.Color.green())
+        embed.add_field(name="Тред", value=f"{thread.mention} (`{thread.id}`)", inline=False)
+        parent = thread.parent
+        if parent is not None:
+            embed.add_field(name="Канал", value=parent.mention, inline=False)
+        await self.emit("thread_create", embed)
+
+    @commands.Cog.listener()
+    async def on_thread_delete(self, thread: discord.Thread):
+        embed = self._embed("➖ Тред удалён", discord.Color.red())
+        embed.add_field(name="Тред", value=f"{thread.name} (`{thread.id}`)", inline=False)
+        await self.emit("thread_delete", embed)
+
+    @commands.Cog.listener()
+    async def on_thread_update(self, before: discord.Thread, after: discord.Thread):
+        changes = []
+        if before.name != after.name:
+            changes.append(f"Название: **{before.name}** → **{after.name}**")
+        if before.archived != after.archived:
+            changes.append("Закрыт" if after.archived else "Открыт заново")
+        if before.locked != after.locked:
+            changes.append("Заблокирован" if after.locked else "Разблокирован")
         if not changes:
             return
-        embed = self._embed("🔧 Канал изменён", discord.Color.orange())
-        embed.add_field(name="Канал", value=f"{after.mention} (`{after.id}`)", inline=False)
+        embed = self._embed("🧵 Тред изменён", discord.Color.orange())
+        embed.add_field(name="Тред", value=f"{after.mention} (`{after.id}`)", inline=False)
         embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
-        await self.emit("channel_update", embed)
+        await self.emit("thread_update", embed)
+
+    # ────────────────── Сервер ──────────────────
+
+    @commands.Cog.listener()
+    async def on_guild_update(self, before: discord.Guild, after: discord.Guild):
+        changes = []
+        if before.name != after.name:
+            changes.append(f"Название: **{before.name}** → **{after.name}**")
+        if before.icon != after.icon:
+            changes.append("Иконка сервера изменена")
+        if before.verification_level != after.verification_level:
+            changes.append(f"Уровень верификации: **{before.verification_level}** → **{after.verification_level}**")
+        if before.afk_channel != after.afk_channel:
+            changes.append("AFK-канал изменён")
+        if before.system_channel != after.system_channel:
+            changes.append("Системный канал изменён")
+        if not changes:
+            return
+        embed = self._embed("⚙️ Настройки сервера изменены", discord.Color.orange())
+        embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
+        await self.emit("guild_update", embed)
+
+    # ────────────────── Команды модерации ──────────────────
+
+    @commands.Cog.listener()
+    async def on_app_command_completion(self, interaction: discord.Interaction, command):
+        if not isinstance(command, app_commands.Command) or not _is_moderation_command(command):
+            return
+        embed = self._embed("🛠️ Модераторская команда использована", discord.Color.blurple(), interaction.user)
+        embed.add_field(name="Команда", value=f"`/{command.qualified_name}`", inline=False)
+        channel = interaction.channel
+        if channel is not None:
+            embed.add_field(name="Канал", value=getattr(channel, "mention", str(channel)), inline=False)
+        await self.emit("moderation_command", embed)
 
     # ────────────────── Эмодзи и приглашения ──────────────────
 

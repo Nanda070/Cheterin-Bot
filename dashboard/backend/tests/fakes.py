@@ -250,12 +250,29 @@ class FakeMember:
         self.send_calls.append(kwargs)
 
 
+class FakeVoiceChannel:
+    def __init__(self, channel_id, name="voice"):
+        self.id = channel_id
+        self.name = name
+        self.mention = f"<#{channel_id}>"
+        self.deleted = False
+        self.delete_reason = None
+
+    async def delete(self, reason=None):
+        self.deleted = True
+        self.delete_reason = reason
+
+
 class FakeGuild:
     def __init__(
         self, members=None, roles=None, me=None, channels=None, emojis=None, fetchable_members=None, threads=None,
-        guild_id=1,
+        guild_id=1, name="Test Guild", icon=None, member_count=None, owner_id=None,
     ):
         self.id = guild_id  # По умолчанию 1 — совпадает с app["guild_id"] в make_moderation_app.
+        self.name = name
+        self.icon = icon
+        self.member_count = member_count if member_count is not None else len(members or [])
+        self.owner_id = owner_id
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
@@ -263,6 +280,10 @@ class FakeGuild:
         self.emojis = emojis or []
         self._fetchable_members = fetchable_members or []
         self.threads = threads or []
+        self.default_role = FakeRole(0, name="@everyone", position=0, default=True)
+        self.created_voice_channels = []
+        self._next_voice_channel_id = 9000
+        self.create_voice_channel_raises = None
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)
@@ -272,6 +293,15 @@ class FakeGuild:
 
     def get_channel(self, channel_id):
         return next((c for c in self.channels if c.id == channel_id), None)
+
+    async def create_voice_channel(self, name, **kwargs):
+        if self.create_voice_channel_raises:
+            raise self.create_voice_channel_raises
+        voice_channel = FakeVoiceChannel(self._next_voice_channel_id, name=name)
+        self._next_voice_channel_id += 1
+        self.created_voice_channels.append(voice_channel)
+        self.channels.append(voice_channel)
+        return voice_channel
 
     async def fetch_member(self, user_id):
         import discord
@@ -285,8 +315,9 @@ class FakeGuild:
 
 
 class FakeBot:
-    def __init__(self, guild, user=None, fetchable_users=None):
+    def __init__(self, guild, user=None, fetchable_users=None, guilds=None):
         self._guild = guild
+        self.guilds = guilds if guilds is not None else [guild]
         self.user = user or FakeMember(999999, name="ChetBot", bot=True)
         self.stats = {}
         self.feedback_cases = {}

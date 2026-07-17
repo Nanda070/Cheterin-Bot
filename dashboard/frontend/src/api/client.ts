@@ -3,6 +3,7 @@
   username: string
   avatar: string | null
   is_admin: boolean
+  is_super_admin: boolean
 }
 
 export async function fetchCurrentUser(): Promise<DashboardUser | null> {
@@ -1121,6 +1122,19 @@ export interface MafiaPlayerRef {
   display_name: string
 }
 
+export interface MafiaRosterEntry {
+  user_id: string
+  display_name: string
+  alive: boolean
+  role?: MafiaRole
+}
+
+export interface MafiaVoteTallyEntry {
+  target: string | null
+  target_display: string | null
+  count: number
+}
+
 export interface MafiaPublicState {
   game_status: MafiaGameStatus
   phase: MafiaGamePhase
@@ -1132,8 +1146,10 @@ export interface MafiaPublicState {
   your_action_submitted: boolean
   your_submitted_target: string | null
   alive_players: MafiaPlayerRef[]
+  roster: MafiaRosterEntry[]
   teammates?: MafiaPlayerRef[]
   mafia_votes?: { actor: string; target: string | null }[]
+  vote_tally?: MafiaVoteTallyEntry[]
 }
 
 export function fetchPublicMafia(token: string): Promise<MafiaPublicState> {
@@ -1142,4 +1158,480 @@ export function fetchPublicMafia(token: string): Promise<MafiaPublicState> {
 
 export async function submitMafiaAction(token: string, targetUserId: string | null): Promise<void> {
   await apiFetch(`/api/public/mafia/${token}/action`, jsonInit('POST', { target_user_id: targetUserId }))
+}
+
+export async function submitMafiaVote(token: string, targetUserId: string | null): Promise<void> {
+  await apiFetch(`/api/public/mafia/${token}/vote`, jsonInit('POST', { target_user_id: targetUserId }))
+}
+
+// ────────────────────────── Супер-админ ──────────────────────────
+
+export interface SuperAdminGuild {
+  id: string
+  name: string
+  icon: string | null
+  member_count: number
+  owner_id: string | null
+}
+
+export async function fetchSuperAdminGuilds(): Promise<SuperAdminGuild[]> {
+  const body = await apiFetch<{ guilds: SuperAdminGuild[] }>('/api/superadmin/guilds')
+  return body.guilds
+}
+
+// ────────────────────────── Гивевеи ──────────────────────────
+
+export interface GiveawayEntrant {
+  id: string
+  display: string
+}
+
+export type GiveawayStatus = 'active' | 'finished' | 'cancelled'
+
+export interface Giveaway {
+  id: string
+  initiator_id: string
+  initiator_display: string
+  prize: string
+  winners_count: number
+  duration_str: string
+  target_ts: number
+  status: GiveawayStatus
+  entrants: GiveawayEntrant[]
+  winners: GiveawayEntrant[]
+  channel_id: string
+  created_at: string
+  closed_at: string | null
+}
+
+export interface GiveawayOverview {
+  active: Giveaway[]
+  history: Giveaway[]
+}
+
+export function fetchGiveawayOverview(): Promise<GiveawayOverview> {
+  return apiFetch('/api/giveaways')
+}
+
+export function createGiveaway(payload: {
+  channel_id: string
+  prize: string
+  duration_str: string
+  winners_count: number
+}): Promise<Giveaway> {
+  return apiFetch('/api/giveaways', jsonInit('POST', payload))
+}
+
+export async function rerollGiveaway(id: string): Promise<{ winners: string[] }> {
+  return apiFetch(`/api/giveaways/${id}/reroll`, jsonInit('POST'))
+}
+
+export async function endGiveaway(id: string): Promise<void> {
+  await apiFetch(`/api/giveaways/${id}/end`, jsonInit('POST'))
+}
+
+// ────────────────────────── Ежедневная рубрика ──────────────────────────
+
+export interface DailyTopic {
+  id: string
+  text: string
+}
+
+export interface DailyTopicSettings {
+  enabled: boolean
+  channel_id: string
+  post_times: string[]
+  topics: DailyTopic[]
+}
+
+export function fetchDailyTopic(): Promise<DailyTopicSettings> {
+  return apiFetch('/api/daily-topic')
+}
+
+export function updateDailyTopicSettings(input: {
+  enabled: boolean
+  channel_id: string
+  post_times: string[]
+}): Promise<DailyTopicSettings> {
+  return apiFetch('/api/daily-topic/settings', jsonInit('PUT', input))
+}
+
+export function createDailyTopic(text: string): Promise<DailyTopic> {
+  return apiFetch('/api/daily-topic/topics', jsonInit('POST', { text }))
+}
+
+export function updateDailyTopic(id: string, text: string): Promise<DailyTopic> {
+  return apiFetch(`/api/daily-topic/topics/${id}`, jsonInit('PATCH', { text }))
+}
+
+export async function deleteDailyTopic(id: string): Promise<void> {
+  await apiFetch(`/api/daily-topic/topics/${id}`, { method: 'DELETE' })
+}
+
+export function postDailyTopicNow(): Promise<{ ok: boolean; topic: DailyTopic }> {
+  return apiFetch('/api/daily-topic/post-now', jsonInit('POST'))
+}
+
+// ────────────────────────── Автомодерация ──────────────────────────
+
+export type AutomodPunishment = 'none' | 'warn' | 'mute' | 'kick' | 'ban'
+export type EscalationAction = 'mute' | 'kick' | 'ban'
+
+export interface AutomodFilter {
+  label: string
+  description: string
+  enabled: boolean
+  delete_message: boolean
+  punishment: AutomodPunishment
+  duration_minutes: number
+  notify_member: boolean
+  notify_channel_id: string
+  notify_template: string
+  whitelist_domains?: string[]
+  allow_own_server?: boolean
+  blocklist_keywords?: string[]
+  words?: string[]
+  max_repeats?: number
+  consecutive_only?: boolean
+  reset_on_trigger?: boolean
+  max_percent?: number
+  min_length?: number
+  max_count?: number
+}
+
+export interface EscalationRule {
+  id: string
+  count: number
+  action: EscalationAction
+  duration_minutes: number
+}
+
+export interface AutomodSettings {
+  enabled: boolean
+  filters: Record<string, AutomodFilter>
+  escalation: EscalationRule[]
+  manual_warn_duration_minutes: number
+}
+
+export function fetchAutomod(): Promise<AutomodSettings> {
+  return apiFetch('/api/automod')
+}
+
+export function updateAutomodEnabled(enabled: boolean): Promise<AutomodSettings> {
+  return apiFetch('/api/automod', jsonInit('PUT', { enabled }))
+}
+
+export function updateAutomodFilter(key: string, fields: Partial<AutomodFilter>): Promise<AutomodFilter> {
+  return apiFetch(`/api/automod/filters/${key}`, jsonInit('PUT', fields))
+}
+
+export function updateManualWarnDuration(duration_minutes: number): Promise<AutomodSettings> {
+  return apiFetch('/api/automod/manual-warn-duration', jsonInit('PUT', { duration_minutes }))
+}
+
+export function createEscalationRule(input: {
+  count: number
+  action: EscalationAction
+  duration_minutes: number
+}): Promise<EscalationRule> {
+  return apiFetch('/api/automod/escalation', jsonInit('POST', input))
+}
+
+export function updateEscalationRule(
+  id: string,
+  fields: Partial<Pick<EscalationRule, 'count' | 'action' | 'duration_minutes'>>,
+): Promise<EscalationRule> {
+  return apiFetch(`/api/automod/escalation/${id}`, jsonInit('PATCH', fields))
+}
+
+export async function deleteEscalationRule(id: string): Promise<void> {
+  await apiFetch(`/api/automod/escalation/${id}`, { method: 'DELETE' })
+}
+
+// ────────────────────────── Предупреждения (варны) ──────────────────────────
+
+export interface Warn {
+  id: number
+  guild_id: string
+  user_id: string
+  reason: string
+  moderator_id: string | null
+  source: string
+  created_at: string
+  expires_at: string | null
+  removed: boolean
+  removed_by: string | null
+  removed_at: string | null
+}
+
+export function fetchMemberWarns(memberId: string): Promise<{ warns: Warn[]; active_count: number }> {
+  return apiFetch(`/api/members/${memberId}/warns`)
+}
+
+export function createMemberWarn(memberId: string, reason: string): Promise<{ warn: Warn; active_count: number }> {
+  return apiFetch(`/api/members/${memberId}/warns`, jsonInit('POST', { reason }))
+}
+
+export async function deleteWarn(warnId: number): Promise<void> {
+  await apiFetch(`/api/warns/${warnId}`, { method: 'DELETE' })
+}
+
+// ────────────────────────── Бункер ──────────────────────────
+
+export interface BunkerSettings {
+  enabled: boolean
+  default_min_players: number
+  default_max_players: number
+  default_discussion_timer_sec: number
+  default_vote_timer_sec: number
+  default_unique_cards: boolean
+  log_channel_id: string
+}
+
+export function fetchBunkerSettings(): Promise<BunkerSettings> {
+  return apiFetch('/api/bunker')
+}
+
+export function updateBunkerSettings(settings: BunkerSettings): Promise<BunkerSettings> {
+  return apiFetch('/api/bunker', jsonInit('PUT', settings))
+}
+
+export type BunkerGameStatus = 'lobby' | 'active' | 'finished' | 'cancelled'
+export type BunkerGamePhase = 'lobby' | 'discussion' | 'vote' | 'ended'
+
+export interface BunkerGameSummary {
+  id: number
+  channel_id: string
+  channel_name: string
+  status: BunkerGameStatus
+  phase: BunkerGamePhase
+  round_number: number
+  bunker_capacity: number | null
+  unique_cards: boolean
+  player_count: number
+  alive_count: number
+  created_at: string
+}
+
+export async function fetchBunkerGames(): Promise<BunkerGameSummary[]> {
+  const body = await apiFetch<{ games: BunkerGameSummary[] }>('/api/bunker/games')
+  return body.games
+}
+
+export interface BunkerProfession {
+  name: string
+  category: string
+  experience_level: string
+  has_ability: boolean
+}
+
+export interface BunkerAgeInfo {
+  key: string
+  label: string
+}
+
+export interface BunkerBodyType {
+  key: string
+  name: string
+  agility: string
+  stamina: string
+  strength: string
+  disease_note: string
+  food_requirement: string
+  heat_tolerance: string
+  cold_tolerance: string
+  reproduction: string
+}
+
+export interface BunkerHealth {
+  severity: string
+  disease_name: string | null
+  category: string | null
+}
+
+export interface BunkerHobby {
+  name: string
+  category: string
+  experience_level: string
+}
+
+export interface BunkerPhobia {
+  name: string
+  type: string
+}
+
+export interface BunkerItem {
+  name: string
+  category: string
+}
+
+export interface BunkerTrait {
+  trait: string
+  category: string
+  behavior_example: string
+  possible_bunker_behavior: string
+}
+
+export interface BunkerAdditionalInfo {
+  name: string
+  category: string
+  linked_user_id: string | null
+}
+
+export interface BunkerSpecialAbility {
+  name: string
+  category: string
+  effect: string
+  used: boolean
+}
+
+export interface BunkerCharacter {
+  profession?: BunkerProfession
+  age?: BunkerAgeInfo
+  gender?: string
+  body_type?: BunkerBodyType
+  health?: BunkerHealth
+  hobby?: BunkerHobby
+  phobia?: BunkerPhobia
+  backpack_item?: BunkerItem
+  large_item?: BunkerItem
+  trait?: BunkerTrait
+  additional_info?: BunkerAdditionalInfo
+  special_abilities?: BunkerSpecialAbility[]
+}
+
+export const BUNKER_FIELD_KEYS = [
+  'profession', 'age', 'gender', 'body_type', 'health',
+  'hobby', 'phobia', 'backpack_item', 'large_item', 'trait', 'additional_info',
+] as const
+
+export type BunkerFieldKey = (typeof BUNKER_FIELD_KEYS)[number]
+
+export interface BunkerPlayerAdminEntry {
+  user_id: string
+  display_name: string
+  alive: boolean
+  character: BunkerCharacter | null
+  revealed_fields: string[]
+}
+
+export interface BunkerAbilityAnnouncement {
+  id: number
+  round_number: number
+  player_user_id: string
+  player_display_name: string
+  card_index: number
+  card_name: string
+  target_user_id: string | null
+  target_display_name: string | null
+  note: string
+  applied: boolean
+  created_at: string
+}
+
+export interface BunkerCardPools {
+  genders: string[]
+  ages: BunkerAgeInfo[]
+  body_types: BunkerBodyType[]
+  professions: { id: number; name: string; category: string }[]
+  profession_experience_levels: { level: string; duration: string; has_ability: boolean }[]
+  hobbies: { id: number; name: string; category: string }[]
+  hobby_experience_levels: { level: string; duration: string }[]
+  health_severities: string[]
+  health_diseases: { id: number; name: string; category: string }[]
+  phobias: { id: number; name: string; type: string }[]
+  backpack_items: { id: number; name: string; category: string }[]
+  large_items: { id: number; name: string; category: string }[]
+  traits: BunkerTrait[]
+  additional_info: { id: number; name: string; category: string }[]
+  special_abilities: { id: number; name: string; category: string; effect: string }[]
+}
+
+export function fetchBunkerCardPools(): Promise<BunkerCardPools> {
+  return apiFetch('/api/bunker/card-pools')
+}
+
+export interface BunkerGameDetail {
+  game: BunkerGameSummary
+  players: BunkerPlayerAdminEntry[]
+  ability_announcements: BunkerAbilityAnnouncement[]
+}
+
+export function fetchBunkerGameDetail(id: number): Promise<BunkerGameDetail> {
+  return apiFetch(`/api/bunker/games/${id}`)
+}
+
+export function patchBunkerPlayerCharacter(
+  gameId: number,
+  userId: string,
+  patch: Partial<BunkerCharacter>,
+): Promise<{ character: BunkerCharacter }> {
+  return apiFetch(`/api/bunker/games/${gameId}/players/${userId}`, jsonInit('PATCH', { character: patch }))
+}
+
+export async function applyBunkerAbility(gameId: number, announcementId: number): Promise<void> {
+  await apiFetch(`/api/bunker/games/${gameId}/ability/${announcementId}/apply`, jsonInit('POST'))
+}
+
+export interface BunkerPlayerRef {
+  user_id: string
+  display_name: string
+}
+
+export interface BunkerRosterEntry {
+  user_id: string
+  display_name: string
+  alive: boolean
+  character: BunkerCharacter
+  revealed_fields: string[]
+}
+
+export interface BunkerVoteTallyEntry {
+  target: string | null
+  target_display: string | null
+  count: number
+}
+
+export interface BunkerPublicState {
+  game_status: BunkerGameStatus
+  phase: BunkerGamePhase
+  round_number: number
+  phase_deadline_ts: number | null
+  bunker_capacity: number | null
+  catastrophe_name: string | null
+  catastrophe_description: string | null
+  bunker_conditions_name: string | null
+  bunker_conditions_description: string | null
+  your_alive: boolean
+  your_character: BunkerCharacter | null
+  your_revealed_fields: string[]
+  action_required: boolean
+  your_vote_submitted: boolean
+  your_submitted_target: string | null
+  alive_players: BunkerPlayerRef[]
+  roster: BunkerRosterEntry[]
+  vote_tally?: BunkerVoteTallyEntry[]
+}
+
+export function fetchPublicBunker(token: string): Promise<BunkerPublicState> {
+  return apiFetch(`/api/public/bunker/${token}`)
+}
+
+export async function revealBunkerFields(token: string, fieldKeys: string[]): Promise<void> {
+  await apiFetch(`/api/public/bunker/${token}/reveal`, jsonInit('POST', { field_keys: fieldKeys }))
+}
+
+export async function submitBunkerVote(token: string, targetUserId: string | null): Promise<void> {
+  await apiFetch(`/api/public/bunker/${token}/vote`, jsonInit('POST', { target_user_id: targetUserId }))
+}
+
+export async function announceBunkerAbility(
+  token: string,
+  cardIndex: 1 | 2,
+  targetUserId: string | null,
+  note: string,
+): Promise<void> {
+  await apiFetch(`/api/public/bunker/${token}/ability`, jsonInit('POST', {
+    card_index: cardIndex, target_user_id: targetUserId, note,
+  }))
 }

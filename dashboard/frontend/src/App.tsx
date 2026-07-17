@@ -32,6 +32,12 @@ import { NotFoundPage } from './pages/NotFound'
 import { FamilyPage } from './pages/Family'
 import { MafiaPage } from './pages/Mafia'
 import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
+import { BunkerPage } from './pages/Bunker'
+import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
+import { SuperAdminPage } from './pages/SuperAdmin'
+import { GiveawaysPage } from './pages/Giveaways'
+import { DailyTopicPage } from './pages/DailyTopic'
+import { AutoModPage } from './pages/AutoMod'
 
 function App() {
   return (
@@ -42,6 +48,7 @@ function App() {
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route path="/bracket/:token" element={<PublicBracketPage />} />
           <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
+          <Route path="/bunker/:token" element={<PublicBunkerActionPage />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/docs/:sectionId" element={<DocsPage />} />
           <Route path="/terms" element={<TermsPage />} />
@@ -66,6 +73,10 @@ function App() {
             <Route path="supply" element={<SupplyPage />} />
             <Route path="family" element={<FamilyPage />} />
             <Route path="mafia" element={<MafiaPage />} />
+            <Route path="bunker" element={<BunkerPage />} />
+            <Route path="giveaways" element={<GiveawaysPage />} />
+            <Route path="daily-topic" element={<DailyTopicPage />} />
+            <Route path="automod" element={<AutoModPage />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="levels" element={<LevelsPage />} />
@@ -76,6 +87,7 @@ function App() {
             <Route path="welcome" element={<WelcomePage />} />
             <Route path="auto-roles" element={<AutoRolesPage />} />
             <Route path="config" element={<ConfigPage />} />
+            <Route path="superadmin" element={<SuperAdminPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

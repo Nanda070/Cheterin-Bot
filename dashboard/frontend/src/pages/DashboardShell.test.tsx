@@ -12,6 +12,7 @@ describe('DashboardShell', () => {
       username: 'tester',
       avatar: null,
       is_admin: true,
+      is_super_admin: false,
     })
 
     render(
@@ -38,6 +39,7 @@ describe('DashboardShell', () => {
       username: 'tester',
       avatar: null,
       is_admin: true,
+      is_super_admin: false,
     })
 
     render(
@@ -61,6 +63,7 @@ describe('DashboardShell', () => {
       username: 'tester',
       avatar: null,
       is_admin: true,
+      is_super_admin: false,
     })
 
     render(
@@ -76,5 +79,53 @@ describe('DashboardShell', () => {
 
     expect(await screen.findByText('Приветствие и прощание')).toBeInTheDocument()
     expect(screen.getByText('Авто-роли')).toBeInTheDocument()
+  })
+
+  it('hides the super-admin nav group for a regular moderator', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: false,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/members']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/members" element={<DashboardShell />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('Приветствие и прощание')
+    expect(screen.queryByText('Супер-админ')).not.toBeInTheDocument()
+  })
+
+  it('shows the super-admin nav group for a super admin', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: true,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/members']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/members" element={<DashboardShell />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Супер-админ')).toBeInTheDocument()
+    expect(screen.getByText('Серверы бота')).toBeInTheDocument()
   })
 })

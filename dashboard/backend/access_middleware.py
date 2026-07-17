@@ -3,7 +3,7 @@ import functools
 from aiohttp import web
 from aiohttp_session import get_session
 
-from .access import has_dashboard_access
+from .access import has_dashboard_access, has_super_admin_access
 from .member_lookup import resolve_guild_member
 
 
@@ -30,6 +30,33 @@ def require_dashboard_access(handler):
         if lookup.not_found or lookup.member is None:
             return web.json_response({"error": "forbidden"}, status=403)
         if not has_dashboard_access(lookup.member, config.access_role_ids):
+            return web.json_response({"error": "forbidden"}, status=403)
+
+        request["moderator"] = lookup.member
+        return await handler(request)
+
+    return wrapper
+
+
+def require_super_admin(handler):
+    """Гейт для списка серверов бота — намеренно хардкод-роль, см. access.py."""
+
+    @functools.wraps(handler)
+    async def wrapper(request: web.Request) -> web.StreamResponse:
+        session = await get_session(request)
+        user_id = session.get("discord_user_id")
+        if not user_id:
+            return web.json_response({"error": "unauthorized"}, status=401)
+
+        bot = request.app["bot"]
+        guild_id = request.app["guild_id"]
+
+        lookup = await resolve_guild_member(bot, guild_id, int(user_id))
+        if lookup.service_error:
+            return web.json_response({"error": "service_unavailable"}, status=503)
+        if lookup.not_found or lookup.member is None:
+            return web.json_response({"error": "forbidden"}, status=403)
+        if not has_super_admin_access(lookup.member):
             return web.json_response({"error": "forbidden"}, status=403)
 
         request["moderator"] = lookup.member

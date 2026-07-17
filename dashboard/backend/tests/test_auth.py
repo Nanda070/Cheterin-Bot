@@ -157,6 +157,35 @@ async def test_callback_succeeds_and_me_returns_user(aiohttp_client, monkeypatch
     assert me_resp.status == 200
     body = await me_resp.json()
     assert body["id"] == "111"
+    assert body["is_super_admin"] is False
+
+
+@pytest.mark.asyncio
+async def test_me_returns_is_super_admin_true_for_super_admin_role(aiohttp_client, monkeypatch):
+    import dashboard.backend.auth as auth_module
+    from dashboard.backend.access import SUPER_ADMIN_ROLE_IDS
+
+    async def fake_exchange(*args, **kwargs):
+        return {"access_token": "tok"}
+
+    async def fake_identity(*args, **kwargs):
+        return {"id": "111"}
+
+    monkeypatch.setattr(auth_module, "exchange_code_for_token", fake_exchange)
+    monkeypatch.setattr(auth_module, "fetch_discord_identity", fake_identity)
+
+    super_admin_role_id = int(next(iter(SUPER_ADMIN_ROLE_IDS)))
+    member = FakeMember(111, role_ids=[111, super_admin_role_id])
+    app = make_app(FakeBot(FakeGuild(member)), _NullHttpSession())
+    client = await aiohttp_client(app)
+
+    login_resp = await client.get("/api/auth/login", allow_redirects=False)
+    state_cookie = login_resp.cookies["oauth_state"].value
+    await client.get(f"/api/auth/discord/callback?code=abc&state={state_cookie}", allow_redirects=False)
+
+    me_resp = await client.get("/api/auth/me")
+    body = await me_resp.json()
+    assert body["is_super_admin"] is True
 
 
 @pytest.mark.asyncio

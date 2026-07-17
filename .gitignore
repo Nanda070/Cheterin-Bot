@@ -29,5 +29,12 @@ family_config.json
 family.db
 mafia_config.json
 mafia.db
+bunker_config.json
+bunker.db
+automod_config.json
+warns.db
+daily_topic_config.json
+giveaways_data.json
+embed_templates.json
 venv/
-NEW/
+.env 

@@ -34,7 +34,7 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders children when a user is authenticated', async () => {
-    const payload = { id: '1', username: 'tester', avatar: null, is_admin: false }
+    const payload = { id: '1', username: 'tester', avatar: null, is_admin: false, is_super_admin: false }
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload }),

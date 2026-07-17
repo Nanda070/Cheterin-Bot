@@ -1,4 +1,4 @@
-from dashboard.backend.access import has_dashboard_access
+from dashboard.backend.access import SUPER_ADMIN_ROLE_IDS, has_dashboard_access, has_super_admin_access
 
 
 class FakeRole:
@@ -38,3 +38,19 @@ def test_administrator_always_has_access():
 def test_member_with_no_roles_denied():
     member = FakeMember([])
     assert has_dashboard_access(member, ALLOWED) is False
+
+
+def test_super_admin_role_grants_access():
+    role_id = int(next(iter(SUPER_ADMIN_ROLE_IDS)))
+    member = FakeMember([role_id])
+    assert has_super_admin_access(member) is True
+
+
+def test_super_admin_denied_without_role_or_admin():
+    member = FakeMember([999])
+    assert has_super_admin_access(member) is False
+
+
+def test_super_admin_administrator_always_has_access():
+    member = FakeMember([999], administrator=True)
+    assert has_super_admin_access(member) is True

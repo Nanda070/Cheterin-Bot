@@ -25,8 +25,6 @@ import mafia_db
 
 logger = logging.getLogger("mafia")
 
-PAGE_SIZE = 24  # + пункт «Пропустить» = 25 опций максимум
-
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -73,8 +71,8 @@ def build_game_started_embed(game: dict, players: list[dict], voice_channel_id: 
     embed = discord.Embed(
         title="🎭 Игра «Мафия» началась!",
         description=(
-            "Роли розданы в личные сообщения. У ролей с ночными действиями (мафия/доктор/шериф) — "
-            "персональная ссылка на весь матч."
+            "Роли розданы в личные сообщения. Каждый игрок получил персональную ссылку на дашборд — "
+            "там весь матч: роль, список игроков, таймер и дневное голосование за казнь."
         ),
         color=0x5865F2,
     )
@@ -95,7 +93,10 @@ def build_morning_embed(died_id: int | None, died_player: dict | None) -> discor
 def build_vote_embed(game: dict, members: list[dict], votes: list[dict]) -> discord.Embed:
     embed = discord.Embed(
         title="🗳️ Дневное голосование",
-        description=f"Выберите, кого казнить, в списке ниже. Голосование открытое. Время: {game['day_vote_timer_sec']} сек.",
+        description=(
+            f"Голосование за казнь проходит на персональной ссылке каждого игрока. "
+            f"Голосование открытое. Время: {game['day_vote_timer_sec']} сек."
+        ),
         color=0xFEE75C,
     )
     if not votes:
@@ -132,70 +133,6 @@ def build_result_embed(winner: str | None, players: list[dict]) -> discord.Embed
     lines = [f"<@{p['user_id']}> — {mafia_core.role_label(p['role'] or 'citizen')}" for p in players]
     embed.add_field(name="Роли", value="\n".join(lines) or "—", inline=False)
     return embed
-
-
-# ────────────────────────── Голосование: Select с пагинацией ──────────────────────────
-
-def _vote_options(members: list[dict], page: int) -> list[discord.SelectOption]:
-    window = members[page * PAGE_SIZE: page * PAGE_SIZE + PAGE_SIZE]
-    options = [discord.SelectOption(label=m["display_name"][:100], value=str(m["user_id"])) for m in window]
-    options.append(discord.SelectOption(label="Пропустить", value="skip", emoji="⏭️"))
-    return options
-
-
-class MafiaVoteView(discord.ui.View):
-    def __init__(self, members: list[dict] | None = None, page: int = 0):
-        super().__init__(timeout=None)
-        members = members or []
-        if members:
-            self.vote_select.options = _vote_options(members, page)
-        last_page = max(0, (len(members) - 1) // PAGE_SIZE) if members else 0
-        self.prev_btn.disabled = page <= 0
-        self.next_btn.disabled = page >= last_page
-
-    @discord.ui.select(
-        custom_id="mafia_vote_select", placeholder="Кого казнить?", min_values=1, max_values=1,
-        options=[discord.SelectOption(label="—", value="skip")],
-    )
-    async def vote_select(self, interaction: discord.Interaction, select: discord.ui.Select):
-        if interaction.message is None:
-            return await interaction.response.send_message("Голосование недоступно.", ephemeral=True)
-        game = mafia_db.get_game_by_vote_message(interaction.message.id)
-        if game is None or game["status"] != "active" or game["phase"] != "day_vote":
-            return await interaction.response.send_message("Голосование сейчас недоступно.", ephemeral=True)
-        player = mafia_db.get_player(game["id"], interaction.user.id)
-        if player is None or not player["alive"]:
-            return await interaction.response.send_message("Ты не в игре или уже выбыл.", ephemeral=True)
-
-        value = select.values[0]
-        target = None if value == "skip" else int(value)
-        mafia_db.upsert_day_vote(game["id"], game["round_number"], interaction.user.id, target)
-        await interaction.response.send_message("Голос учтён.", ephemeral=True)
-
-        cog = interaction.client.get_cog("MafiaCog")
-        if cog:
-            await cog.refresh_vote_tally(game["id"])
-
-    async def _change_page(self, interaction: discord.Interaction, delta: int):
-        if interaction.message is None:
-            return await interaction.response.send_message("Голосование недоступно.", ephemeral=True)
-        game = mafia_db.get_game_by_vote_message(interaction.message.id)
-        if game is None or game["status"] != "active" or game["phase"] != "day_vote":
-            return await interaction.response.send_message("Голосование сейчас недоступно.", ephemeral=True)
-
-        members = _resolve_alive_members(interaction.guild, game["id"])
-        last_page = max(0, (len(members) - 1) // PAGE_SIZE)
-        new_page = max(0, min(last_page, game["vote_page"] + delta))
-        mafia_db.update_game(game["id"], vote_page=new_page)
-        await interaction.response.edit_message(view=MafiaVoteView(members, new_page))
-
-    @discord.ui.button(label="‹", style=discord.ButtonStyle.secondary, custom_id="mafia_vote_prev")
-    async def prev_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
-        await self._change_page(interaction, -1)
-
-    @discord.ui.button(label="›", style=discord.ButtonStyle.secondary, custom_id="mafia_vote_next")
-    async def next_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
-        await self._change_page(interaction, 1)
 
 
 # ────────────────────────── Лобби ──────────────────────────
@@ -273,11 +210,9 @@ class MafiaCog(commands.Cog):
         self._timers: dict[int, asyncio.Task] = {}
         self._recovered = False
         self.lobby_view = MafiaLobbyView()
-        self.vote_view = MafiaVoteView()
 
     async def cog_load(self):
         self.bot.add_view(self.lobby_view)
-        self.bot.add_view(self.vote_view)
 
     def cog_unload(self):
         for task in self._timers.values():
@@ -382,7 +317,7 @@ class MafiaCog(commands.Cog):
         players = mafia_db.list_players(game_id)
         assignment = mafia_core.assign_roles([p["user_id"] for p in players])
         for user_id, role in assignment.items():
-            token = secrets.token_urlsafe(32) if role in mafia_core.NIGHT_ACTION_ROLES else None
+            token = secrets.token_urlsafe(32)
             mafia_db.assign_player_role(game_id, user_id, role, token)
 
         voice_channel_id = None
@@ -405,18 +340,20 @@ class MafiaCog(commands.Cog):
 
         frontend = _frontend_url()
         for user_id, role in assignment.items():
-            if role not in mafia_core.NIGHT_ACTION_ROLES:
-                continue
             member = guild.get_member(user_id)
             if member is None:
                 continue
             player = mafia_db.get_player(game_id, user_id)
             link = f"{frontend}/mafia/{player['token']}"
+            if role in mafia_core.NIGHT_ACTION_ROLES:
+                note = "Там же ночные действия, список игроков, таймер и дневное голосование за казнь."
+            else:
+                note = "Там список игроков, таймер и дневное голосование за казнь."
             try:
                 await member.send(
                     content=(
                         f"Игра «Мафия» началась. Твоя роль: **{mafia_core.role_label(role)}**.\n"
-                        f"Персональная ссылка для ночных действий (действует всю игру): {link}"
+                        f"Персональная ссылка на дашборд (действует всю игру): {link}\n{note}"
                     )
                 )
             except discord.Forbidden:
@@ -486,6 +423,19 @@ class MafiaCog(commands.Cog):
         submitted = {a["actor_user_id"] for a in mafia_db.get_night_actions(game_id, round_number)}
         if all(p["user_id"] in submitted for p in actors):
             await self._finish_night(game_id)
+
+    async def maybe_finish_day_vote_early(self, game_id: int):
+        """Вызывается дашбордом после каждой отправки дневного голоса."""
+        game = mafia_db.get_game(game_id)
+        if game is None or game["status"] != "active" or game["phase"] != "day_vote":
+            return
+        round_number = game["round_number"]
+        alive = mafia_db.list_alive_players(game_id)
+        if not alive:
+            return await self._finish_day_vote(game_id)
+        submitted = {v["voter_user_id"] for v in mafia_db.get_day_votes(game_id, round_number)}
+        if all(p["user_id"] in submitted for p in alive):
+            await self._finish_day_vote(game_id)
 
     async def refresh_vote_tally(self, game_id: int):
         game = mafia_db.get_game(game_id)
@@ -572,13 +522,14 @@ class MafiaCog(commands.Cog):
 
         now_ts = int(time.time())
         game = mafia_db.update_game(
-            game_id, phase="day_vote", phase_deadline_ts=now_ts + game["day_vote_timer_sec"], vote_page=0,
+            game_id, phase="day_vote", phase_deadline_ts=now_ts + game["day_vote_timer_sec"],
         )
 
         message = None
         if channel is not None:
             try:
-                message = await channel.send(embed=build_vote_embed(game, members, []), view=MafiaVoteView(members, 0))
+                await channel.send(content="🗳️ Голосование за казнь открыто — голосуйте на своей персональной ссылке.")
+                message = await channel.send(embed=build_vote_embed(game, members, []))
             except discord.HTTPException:
                 pass
         if message is not None:

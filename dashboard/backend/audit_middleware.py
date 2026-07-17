@@ -14,7 +14,7 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("PUT", "/api/config", "Изменение конфигурации"),
     ("POST", "/api/lockdown/activate", "Включение антиспам-режима"),
     ("POST", "/api/lockdown/deactivate", "Выключение антиспам-режима"),
-    ("POST", "/api/members/", "Действие над участником (бан/кик/роль)"),
+    ("POST", "/api/members/", "Действие над участником (бан/кик/роль/варн)"),
     ("DELETE", "/api/members/", "Снятие роли с участника"),
     ("POST", "/api/mass-assign", "Массовая выдача ролей"),
     ("PUT", "/api/welcome-settings", "Настройки приветствий"),
@@ -49,6 +49,19 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("POST", "/api/family/birthdays", "Установка дня рождения"),
     ("DELETE", "/api/family/birthdays", "Удаление дня рождения"),
     ("PUT", "/api/mafia", "Настройки модуля «Мафия»"),
+    ("POST", "/api/giveaways", "Действие с розыгрышем"),
+    ("PUT", "/api/daily-topic/settings", "Настройки ежедневной рубрики"),
+    ("POST", "/api/daily-topic/topics", "Добавление темы дня"),
+    ("PATCH", "/api/daily-topic/topics", "Изменение темы дня"),
+    ("DELETE", "/api/daily-topic/topics", "Удаление темы дня"),
+    ("POST", "/api/daily-topic/post-now", "Публикация темы дня вручную"),
+    ("PUT", "/api/automod/filters/", "Настройка фильтра автомодерации"),
+    ("PUT", "/api/automod/manual-warn-duration", "Настройка срока ручных предупреждений"),
+    ("POST", "/api/automod/escalation", "Добавление порога эскалации варнов"),
+    ("PATCH", "/api/automod/escalation/", "Изменение порога эскалации варнов"),
+    ("DELETE", "/api/automod/escalation/", "Удаление порога эскалации варнов"),
+    ("PUT", "/api/automod", "Включение/выключение автомодерации"),
+    ("DELETE", "/api/warns/", "Снятие предупреждения"),
 ]
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}

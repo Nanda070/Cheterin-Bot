@@ -132,6 +132,14 @@ def test_upsert_day_vote_overwrites():
     assert votes[0]["target_user_id"] == 31
 
 
+def test_get_day_vote_single_row():
+    game = _make_game()
+    mafia_db.upsert_day_vote(game["id"], 1, 20, 30)
+    vote = mafia_db.get_day_vote(game["id"], 1, 20)
+    assert vote["target_user_id"] == 30
+    assert mafia_db.get_day_vote(game["id"], 1, 999) is None
+
+
 def test_round_events_roundtrip():
     game = _make_game()
     mafia_db.add_round_event(game["id"], 1, "game_started", "Игроков: 5.")

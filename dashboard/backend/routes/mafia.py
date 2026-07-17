@@ -119,11 +119,31 @@ async def mafia_public_state(request: web.Request) -> web.Response:
 
     guild = request.app["bot"].get_guild(game["guild_id"])
     round_number = game["round_number"]
+
     action = None
     if game["phase"] == "night":
         action = mafia_db.get_night_action(game["id"], round_number, player["user_id"])
+    elif game["phase"] == "day_vote":
+        action = mafia_db.get_day_vote(game["id"], round_number, player["user_id"])
 
     alive_players = mafia_db.list_alive_players(game["id"])
+    action_required = bool(player["alive"]) and game["status"] == "active" and (
+        (game["phase"] == "night" and player["role"] in mafia_core.NIGHT_ACTION_ROLES)
+        or game["phase"] == "day_vote"
+    )
+
+    all_players = mafia_db.list_players(game["id"])
+    roster = []
+    for p in all_players:
+        entry = {
+            "user_id": str(p["user_id"]),
+            "display_name": _display_name(guild, p["user_id"]),
+            "alive": bool(p["alive"]),
+        }
+        if not p["alive"] or p["user_id"] == player["user_id"]:
+            entry["role"] = p["role"]
+        roster.append(entry)
+
     body = {
         "game_status": game["status"],
         "phase": game["phase"],
@@ -131,16 +151,14 @@ async def mafia_public_state(request: web.Request) -> web.Response:
         "phase_deadline_ts": game["phase_deadline_ts"],
         "your_role": player["role"],
         "your_alive": bool(player["alive"]),
-        "action_required": (
-            game["status"] == "active" and game["phase"] == "night"
-            and bool(player["alive"]) and player["role"] in mafia_core.NIGHT_ACTION_ROLES
-        ),
+        "action_required": action_required,
         "your_action_submitted": action is not None,
         "your_submitted_target": str(action["target_user_id"]) if action and action["target_user_id"] is not None else None,
         "alive_players": [
             {"user_id": str(p["user_id"]), "display_name": _display_name(guild, p["user_id"])}
             for p in alive_players
         ],
+        "roster": roster,
     }
 
     if player["role"] == "mafia" and game["phase"] == "night":
@@ -156,6 +174,21 @@ async def mafia_public_state(request: web.Request) -> web.Response:
         body["teammates"] = [
             {"user_id": str(p["user_id"]), "display_name": _display_name(guild, p["user_id"])}
             for p in teammates
+        ]
+
+    if game["phase"] == "day_vote":
+        votes = mafia_db.get_day_votes(game["id"], round_number)
+        tally: dict[str | None, int] = {}
+        for v in votes:
+            key = str(v["target_user_id"]) if v["target_user_id"] is not None else None
+            tally[key] = tally.get(key, 0) + 1
+        body["vote_tally"] = [
+            {
+                "target": key,
+                "target_display": _display_name(guild, int(key)) if key else None,
+                "count": count,
+            }
+            for key, count in sorted(tally.items(), key=lambda kv: -kv[1])
         ]
 
     return web.json_response(body)
@@ -201,5 +234,48 @@ async def mafia_public_action(request: web.Request) -> web.Response:
     cog = request.app["bot"].get_cog("MafiaCog")
     if cog is not None:
         await cog.maybe_finish_night_early(game["id"])
+
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/public/mafia/{token}/vote")
+async def mafia_public_vote(request: web.Request) -> web.Response:
+    token = request.match_info["token"]
+    player = mafia_db.get_player_by_token(token)
+    if player is None:
+        return web.json_response({"error": "unknown_token"}, status=404)
+    game = mafia_db.get_game(player["game_id"])
+    if game is None or game["status"] != "active":
+        return web.json_response({"error": "game_ended"}, status=410)
+    if not player["alive"]:
+        return web.json_response({"error": "player_dead"}, status=403)
+    if game["phase"] != "day_vote":
+        return web.json_response({"error": "wrong_phase"}, status=400)
+    if game["phase_deadline_ts"] and int(time.time()) > game["phase_deadline_ts"]:
+        return web.json_response({"error": "deadline_passed"}, status=409)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    raw_target = body.get("target_user_id")
+    target_user_id = None
+    if raw_target is not None:
+        if not isinstance(raw_target, str) or not raw_target.isdigit():
+            return web.json_response({"error": "invalid_target"}, status=400)
+        target_user_id = int(raw_target)
+        alive_ids = {p["user_id"] for p in mafia_db.list_alive_players(game["id"])}
+        if target_user_id not in alive_ids:
+            return web.json_response({"error": "invalid_target"}, status=400)
+
+    mafia_db.upsert_day_vote(game["id"], game["round_number"], player["user_id"], target_user_id)
+
+    cog = request.app["bot"].get_cog("MafiaCog")
+    if cog is not None:
+        await cog.refresh_vote_tally(game["id"])
+        await cog.maybe_finish_day_vote_early(game["id"])
 
     return web.json_response({"ok": True})
