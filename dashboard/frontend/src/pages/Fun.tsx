@@ -108,6 +108,66 @@ export function FunPage() {
         </p>
       </Card>
 
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">✨ Авто-Эмодзи</h2>
+          <Toggle
+            checked={settings.auto_emoji_enabled}
+            onChange={(v) => setSettings({ ...settings, auto_emoji_enabled: v })}
+            label={settings.auto_emoji_enabled ? 'Включено' : 'Выключено'}
+          />
+        </div>
+        <p className="text-sm text-muted">
+          Бот изредка ставит случайное серверное эмодзи реакцией на сообщения участников (в любом канале, только на
+          сообщения людей) — как в Juniper. Частота управляется шансом и минимальным интервалом на канал, а чтобы
+          реакции «не висели долго», бот сам снимает свою реакцию через заданное время.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="fun-ae-chance">
+              Шанс на сообщение, % (1–100)
+            </label>
+            <input
+              id="fun-ae-chance"
+              type="number"
+              min={1}
+              max={100}
+              value={settings.auto_emoji_chance_percent}
+              onChange={(e) => setSettings({ ...settings, auto_emoji_chance_percent: Number(e.target.value) })}
+              className={inputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="fun-ae-interval">
+              Мин. интервал на канал, сек (0–86400)
+            </label>
+            <input
+              id="fun-ae-interval"
+              type="number"
+              min={0}
+              max={86400}
+              value={settings.auto_emoji_min_interval_sec}
+              onChange={(e) => setSettings({ ...settings, auto_emoji_min_interval_sec: Number(e.target.value) })}
+              className={inputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="fun-ae-remove">
+              Снять реакцию через, сек (0 — не снимать, до 3600)
+            </label>
+            <input
+              id="fun-ae-remove"
+              type="number"
+              min={0}
+              max={3600}
+              value={settings.auto_emoji_remove_after_sec}
+              onChange={(e) => setSettings({ ...settings, auto_emoji_remove_after_sec: Number(e.target.value) })}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </Card>
+
       {saved && <p className="text-sm text-primary">{saved}</p>}
       <div>
         <Button variant="primary" onClick={save} disabled={busy}>

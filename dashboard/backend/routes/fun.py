@@ -42,9 +42,26 @@ async def fun_put(request: web.Request) -> web.Response:
     ):
         return web.json_response({"error": "invalid_roulette_cooldown_sec"}, status=400)
 
+    if not isinstance(body.get("auto_emoji_enabled", False), bool):
+        return web.json_response({"error": "invalid_auto_emoji_enabled"}, status=400)
+
+    auto_emoji_checks = (
+        ("auto_emoji_chance_percent", fun_core.DEFAULT_AUTO_EMOJI_CHANCE_PERCENT, 1, 100),
+        ("auto_emoji_min_interval_sec", fun_core.DEFAULT_AUTO_EMOJI_MIN_INTERVAL_SEC, 0, fun_core.AUTO_EMOJI_MIN_INTERVAL_MAX),
+        ("auto_emoji_remove_after_sec", fun_core.DEFAULT_AUTO_EMOJI_REMOVE_AFTER_SEC, 0, fun_core.AUTO_EMOJI_REMOVE_AFTER_MAX),
+    )
+    auto_emoji_values = {}
+    for key, default, lo, hi in auto_emoji_checks:
+        value = body.get(key, default)
+        if not isinstance(value, int) or isinstance(value, bool) or not lo <= value <= hi:
+            return web.json_response({"error": f"invalid_{key}"}, status=400)
+        auto_emoji_values[key] = value
+
     fun_core.save_config({
         "enabled": body["enabled"],
         "roulette_timeout_minutes": timeout_minutes,
         "roulette_cooldown_sec": cooldown_sec,
+        "auto_emoji_enabled": body.get("auto_emoji_enabled", False),
+        **auto_emoji_values,
     })
     return web.json_response(fun_core.get_settings())

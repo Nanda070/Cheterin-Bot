@@ -15,6 +15,12 @@ DEFAULT_ROULETTE_COOLDOWN_SEC = 30
 TIMEOUT_MINUTES_MAX = 1440  # 24 часа — развлекательный кап, далеко до лимита Discord (28 дней)
 COOLDOWN_SEC_MAX = 3600
 
+DEFAULT_AUTO_EMOJI_CHANCE_PERCENT = 4
+DEFAULT_AUTO_EMOJI_MIN_INTERVAL_SEC = 300
+DEFAULT_AUTO_EMOJI_REMOVE_AFTER_SEC = 120
+AUTO_EMOJI_MIN_INTERVAL_MAX = 86400
+AUTO_EMOJI_REMOVE_AFTER_MAX = 3600
+
 # Запасной пул, если на сервере нет кастомных эмодзи.
 FALLBACK_EMOJIS = (
     "🎲", "🎰", "🎯", "🃏", "🎁", "🍀", "🔥", "⭐", "💎", "🍒",
@@ -59,7 +65,18 @@ def get_settings() -> dict:
         "enabled": bool(data.get("enabled", False)),
         "roulette_timeout_minutes": int(data.get("roulette_timeout_minutes", DEFAULT_ROULETTE_TIMEOUT_MINUTES)),
         "roulette_cooldown_sec": int(data.get("roulette_cooldown_sec", DEFAULT_ROULETTE_COOLDOWN_SEC)),
+        "auto_emoji_enabled": bool(data.get("auto_emoji_enabled", False)),
+        "auto_emoji_chance_percent": int(data.get("auto_emoji_chance_percent", DEFAULT_AUTO_EMOJI_CHANCE_PERCENT)),
+        "auto_emoji_min_interval_sec": int(data.get("auto_emoji_min_interval_sec", DEFAULT_AUTO_EMOJI_MIN_INTERVAL_SEC)),
+        "auto_emoji_remove_after_sec": int(data.get("auto_emoji_remove_after_sec", DEFAULT_AUTO_EMOJI_REMOVE_AFTER_SEC)),
     }
+
+
+def auto_emoji_roll(chance_percent: int) -> bool:
+    """Ставить ли авто-эмодзи на это сообщение (шанс в процентах)."""
+    if chance_percent <= 0:
+        return False
+    return random.random() * 100 < chance_percent
 
 
 def spin_trigger() -> bool:

@@ -7,6 +7,10 @@ const emptySettings: client.FunSettings = {
   enabled: false,
   roulette_timeout_minutes: 1,
   roulette_cooldown_sec: 30,
+  auto_emoji_enabled: false,
+  auto_emoji_chance_percent: 4,
+  auto_emoji_min_interval_sec: 300,
+  auto_emoji_remove_after_sec: 120,
 }
 
 describe('FunPage', () => {
@@ -45,6 +49,23 @@ describe('FunPage', () => {
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({ roulette_timeout_minutes: 10, roulette_cooldown_sec: 120 }),
+      ),
+    )
+  })
+
+  it('renders the auto-emoji card and saves its settings', async () => {
+    vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
+    render(<FunPage />)
+
+    expect(await screen.findByText('✨ Авто-Эмодзи')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Выключено'))
+    fireEvent.change(screen.getByLabelText(/Шанс на сообщение/), { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    await waitFor(() =>
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ auto_emoji_enabled: true, auto_emoji_chance_percent: 10 }),
       ),
     )
   })

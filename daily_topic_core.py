@@ -31,18 +31,25 @@ def is_valid_time(value: str) -> bool:
 
 
 def load_config() -> dict:
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            try:
+    """Чтение конфига, устойчивое к гонкам с параллельной записью (дашборд пишет,
+    планировщик читает каждую минуту): любая ошибка чтения/парсинга — пустой конфиг,
+    а не исключение, которое убило бы tasks.loop планировщика."""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-            except json.JSONDecodeError:
-                return {}
+    except (json.JSONDecodeError, OSError):
+        return {}
     return {}
 
 
 def save_config(data: dict) -> None:
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+    """Атомарная запись (tmp + os.replace): читатель никогда не увидит недописанный
+    JSON, даже если планировщик читает файл в момент сохранения из дашборда."""
+    tmp_path = CONFIG_FILE + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    os.replace(tmp_path, CONFIG_FILE)
 
 
 def _normalized(data: dict) -> dict:

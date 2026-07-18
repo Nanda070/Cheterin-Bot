@@ -57,7 +57,7 @@ describe('DashboardShell', () => {
     expect(usernameNodes.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('lists nav entries for Welcome and Auto Roles', async () => {
+  it('lists core nav entries and omits pages merged into tabs', async () => {
     vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
       id: '1',
       username: 'tester',
@@ -77,8 +77,12 @@ describe('DashboardShell', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Приветствие и прощание')).toBeInTheDocument()
-    expect(screen.getByText('Авто-роли')).toBeInTheDocument()
+    expect(await screen.findByText('Lockdown и модерация')).toBeInTheDocument()
+    expect(screen.getByText('События и голосования')).toBeInTheDocument()
+    // Слиты в табы внутри разделов — отдельных пунктов меню больше нет.
+    expect(screen.queryByText('Приветствие и прощание')).not.toBeInTheDocument()
+    expect(screen.queryByText('Авто-роли')).not.toBeInTheDocument()
+    expect(screen.queryByText('Гивевеи')).not.toBeInTheDocument()
   })
 
   it('hides the super-admin nav group for a regular moderator', async () => {
@@ -101,7 +105,7 @@ describe('DashboardShell', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByText('Приветствие и прощание')
+    await screen.findByText('Lockdown и модерация')
     expect(screen.queryByText('Супер-админ')).not.toBeInTheDocument()
   })
 

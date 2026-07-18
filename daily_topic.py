@@ -54,14 +54,28 @@ class DailyTopicCog(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def daily_topic_loop(self):
-        if not daily_topic_core.get_settings()["enabled"]:
-            return
-        if not daily_topic_core.should_post_now():
-            return
+        # ВСЁ тело цикла под try/except: необработанное исключение (например, гонка
+        # чтения конфига с записью из дашборда) навсегда останавливает tasks.loop —
+        # именно так расписание «молча умирало», при этом ручная публикация работала.
         try:
-            await self.post_topic_now()
+            if not daily_topic_core.get_settings()["enabled"]:
+                return
+            if not daily_topic_core.should_post_now():
+                return
+            topic = await self.post_topic_now()
+            if topic is not None:
+                logger.info("Тема дня опубликована по расписанию: %s", topic["id"])
+            else:
+                logger.warning("Расписание сработало, но публикация не удалась (канал/темы не настроены?)")
         except Exception:
-            logger.exception("daily_topic_loop: не удалось опубликовать тему дня")
+            logger.exception("daily_topic_loop: ошибка итерации — цикл продолжает работать")
+
+    @daily_topic_loop.error
+    async def daily_topic_loop_error(self, _error: BaseException):
+        # Страховка на случай исключения вне тела (например, в before_loop при
+        # реконнекте): логируем и перезапускаем цикл вместо тихой остановки.
+        logger.exception("daily_topic_loop: критическая ошибка — перезапуск цикла")
+        self.daily_topic_loop.restart()
 
     @daily_topic_loop.before_loop
     async def before_daily_topic_loop(self):

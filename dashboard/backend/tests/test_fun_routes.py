@@ -98,3 +98,34 @@ async def test_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/fun")
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_put_auto_emoji_roundtrip_and_validation(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put("/api/fun", json={
+        "enabled": True,
+        "auto_emoji_enabled": True,
+        "auto_emoji_chance_percent": 10,
+        "auto_emoji_min_interval_sec": 60,
+        "auto_emoji_remove_after_sec": 0,
+    })
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["auto_emoji_enabled"] is True
+    assert body["auto_emoji_chance_percent"] == 10
+    assert body["auto_emoji_min_interval_sec"] == 60
+    assert body["auto_emoji_remove_after_sec"] == 0
+
+    for bad in (
+        {"auto_emoji_enabled": "yes"},
+        {"auto_emoji_chance_percent": 0},
+        {"auto_emoji_chance_percent": 101},
+        {"auto_emoji_min_interval_sec": -1},
+        {"auto_emoji_remove_after_sec": 999999},
+    ):
+        resp = await client.put("/api/fun", json={"enabled": True, **bad})
+        assert resp.status == 400, bad

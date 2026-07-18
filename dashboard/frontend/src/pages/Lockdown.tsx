@@ -1,4 +1,4 @@
-import { Clock, Prohibit, ShieldCheck, ShieldWarning, SignOut, Warning } from '@phosphor-icons/react'
+import { Clock, HandWaving, Prohibit, ShieldCheck, ShieldWarning, SignOut, UserCirclePlus, Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
   activateLockdown,
@@ -11,6 +11,16 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { AutoRolesPage } from './AutoRoles'
+import { WelcomePage } from './Welcome'
+
+type Tab = 'moderation' | 'welcome' | 'auto-roles'
+
+const TABS: { key: Tab; label: string; icon: typeof ShieldWarning }[] = [
+  { key: 'moderation', label: 'Lockdown и лог', icon: ShieldWarning },
+  { key: 'welcome', label: 'Приветствие и прощание', icon: HandWaving },
+  { key: 'auto-roles', label: 'Авто-роли', icon: UserCirclePlus },
+]
 
 const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   spam_punish: Warning,
@@ -27,6 +37,7 @@ const TYPE_LABEL: Record<ModerationLogEntry['type'], string> = {
 }
 
 export function LockdownPage() {
+  const [tab, setTab] = useState<Tab>('moderation')
   const [status, setStatus] = useState<LockdownStatus | null>(null)
   const [confirming, setConfirming] = useState<'activate' | 'deactivate' | null>(null)
   const [busy, setBusy] = useState(false)
@@ -64,11 +75,29 @@ export function LockdownPage() {
     }
   }
 
-  if (!status) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
-  }
-
   return (
+    <div className="flex max-w-3xl flex-col gap-4">
+      <div className="flex gap-1 border-b border-border">
+        {TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
+              tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+            }`}
+          >
+            <Icon size={15} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'welcome' && <WelcomePage />}
+      {tab === 'auto-roles' && <AutoRolesPage />}
+
+      {tab === 'moderation' && !status && <p className="text-sm text-muted">{error || 'Загрузка…'}</p>}
+      {tab === 'moderation' && status && (
     <div className="flex max-w-xl flex-col gap-4">
       <Card className="animate-fade-in-up">
         <div className="flex items-center gap-3">
@@ -153,6 +182,8 @@ export function LockdownPage() {
           </ul>
         )}
       </Card>
+    </div>
+      )}
     </div>
   )
 }

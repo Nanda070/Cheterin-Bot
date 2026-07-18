@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-07-17T23:58:45.218516+00:00",
+  "nodes": {
+    "dashboard_backend_tests_fakes_force_login": {
+      "code_fingerprint": "15076b7bfbd95890f1a53b7332e87051d7a272c879b5631f31b2a528db9af76e",
+      "label": "force_login()",
+      "last": "2026-07-16T16:17:13.336142+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:13.336142+00:00",
+          "outcome": "useful",
+          "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
+        }
+      ],
+      "score": 0.969950528,
+      "source_file": "dashboard/backend/tests/fakes.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "dashboard_frontend_src_components_ui_select_selectoption": {
+      "code_fingerprint": "a637ced9e19cfcf6ab17ee9fcf6e32b7658f042c0bf680bd784ffbaf7a484a58",
+      "label": "SelectOption",
+      "last": "2026-07-16T16:17:07.417785+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:07.417785+00:00",
+          "outcome": "useful",
+          "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
+        }
+      ],
+      "score": 0.969948993,
+      "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "ref_oxc": {
+      "code_fingerprint": "3f46d4038fd69c0011da897b887d747e3d66f0bbda8b523a54891fbd473d67ef",
+      "label": "oxc",
+      "last": "2026-07-16T16:17:19.475422+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:19.475422+00:00",
+          "outcome": "useful",
+          "q": "What connects schema, typescript, oxc to the rest of the system?"
+        }
+      ],
+      "score": 0.96995212,
+      "source_file": "dashboard/frontend/.oxlintrc.json",
+      "status": "tentative",
+      "uses": 1
+    },
+    "typescript": {
+      "code_fingerprint": "912e04dd98474d6f8479090aede54d8d5c1d1e9c38594ea965f08ee4ebceda85",
+      "label": "typescript",
+      "last": "2026-07-16T16:17:19.475422+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:19.475422+00:00",
+          "outcome": "useful",
+          "q": "What connects schema, typescript, oxc to the rest of the system?"
+        }
+      ],
+      "score": 0.96995212,
+      "source_file": "dashboard/frontend/package.json",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

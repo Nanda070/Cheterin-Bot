@@ -157,3 +157,141 @@ async def test_emoji_roulette_disabled_module():
     await FunCog.emoji_roulette.callback(cog, interaction)
 
     assert interaction.response.messages[0]["ephemeral"] is True
+
+
+# ────────────────────────── Авто-Эмодзи ──────────────────────────
+
+class FakeMsg:
+    def __init__(self, author, guild, channel_id=500):
+        self.id = 1
+        self.author = author
+        self.guild = guild
+        self.channel = type("C", (), {"id": channel_id})()
+        self.reactions_added = []
+        self.reactions_removed = []
+
+    async def add_reaction(self, emoji):
+        self.reactions_added.append(str(emoji))
+
+    async def remove_reaction(self, emoji, member):
+        self.reactions_removed.append(str(emoji))
+
+
+def _auto_emoji_config(**overrides):
+    data = {
+        "enabled": True,
+        "auto_emoji_enabled": True,
+        "auto_emoji_chance_percent": 100,
+        "auto_emoji_min_interval_sec": 0,
+        "auto_emoji_remove_after_sec": 0,
+    }
+    data.update(overrides)
+    fun_core.save_config(data)
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_reacts_to_human_message():
+    _auto_emoji_config()
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    guild.emojis = ["<:pepe:1>"]
+    cog = FunCog(FakeBot(guild))
+    message = FakeMsg(player, guild)
+
+    await cog.on_message(message)
+
+    assert message.reactions_added == ["<:pepe:1>"]
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_ignores_bots_and_dms():
+    _auto_emoji_config()
+    bot_author = FakeMember(21, name="botty", bot=True)
+    human = FakeMember(20, name="human")
+    guild = FakeGuild(members=[human])
+    cog = FunCog(FakeBot(guild))
+
+    bot_message = FakeMsg(bot_author, guild)
+    await cog.on_message(bot_message)
+    assert bot_message.reactions_added == []
+
+    dm_message = FakeMsg(human, None)
+    await cog.on_message(dm_message)
+    assert dm_message.reactions_added == []
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_respects_module_and_feature_toggles():
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    cog = FunCog(FakeBot(guild))
+
+    _auto_emoji_config(enabled=False)
+    message = FakeMsg(player, guild)
+    await cog.on_message(message)
+    assert message.reactions_added == []
+
+    _auto_emoji_config(auto_emoji_enabled=False)
+    message = FakeMsg(player, guild)
+    await cog.on_message(message)
+    assert message.reactions_added == []
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_zero_chance_never_reacts():
+    _auto_emoji_config(auto_emoji_chance_percent=0)
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    cog = FunCog(FakeBot(guild))
+
+    for _ in range(20):
+        message = FakeMsg(player, guild)
+        await cog.on_message(message)
+        assert message.reactions_added == []
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_channel_interval_limits_frequency():
+    _auto_emoji_config(auto_emoji_min_interval_sec=3600)
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    cog = FunCog(FakeBot(guild))
+
+    first = FakeMsg(player, guild, channel_id=500)
+    second = FakeMsg(player, guild, channel_id=500)
+    other_channel = FakeMsg(player, guild, channel_id=501)
+
+    await cog.on_message(first)
+    await cog.on_message(second)
+    await cog.on_message(other_channel)
+
+    assert len(first.reactions_added) == 1
+    assert second.reactions_added == []  # интервал канала ещё не прошёл
+    assert len(other_channel.reactions_added) == 1  # другой канал — свой интервал
+
+
+@pytest.mark.asyncio
+async def test_auto_emoji_removes_reaction_after_delay(monkeypatch):
+    _auto_emoji_config(auto_emoji_remove_after_sec=1)
+
+    slept_for = []
+
+    async def instant_sleep(delay):
+        slept_for.append(delay)
+
+    import fun as fun_module
+    monkeypatch.setattr(fun_module.asyncio, "sleep", instant_sleep)
+
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    cog = FunCog(FakeBot(guild))
+    message = FakeMsg(player, guild)
+
+    await cog.on_message(message)
+    assert len(message.reactions_added) == 1
+
+    # Логика отложенного снятия — прямым вызовом (create_task в on_message её лишь планирует).
+    await cog._remove_auto_emoji(message, message.reactions_added[0], 1)
+
+    assert slept_for and slept_for[-1] == 1
+    assert message.reactions_removed == message.reactions_added

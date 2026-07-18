@@ -10,8 +10,6 @@ import {
   Crown,
   FilmSlate,
   GearSix,
-  Gift,
-  HandWaving,
   Headset,
   House,
   Lightbulb,
@@ -26,7 +24,6 @@ import {
   Stack,
   TrendUp,
   Trophy,
-  UserCirclePlus,
   Users,
   UsersThree,
   Vault,
@@ -79,7 +76,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Мафия', icon: Skull, to: '/mafia' },
       { label: 'Бункер', icon: Vault, to: '/bunker' },
       { label: 'Развлечения', icon: Confetti, to: '/fun' },
-      { label: 'Гивевеи', icon: Gift, to: '/giveaways' },
       { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
       { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
     ],
@@ -91,8 +87,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
       { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
       { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
-      { label: 'Приветствие и прощание', icon: HandWaving, to: '/welcome' },
-      { label: 'Авто-роли', icon: UserCirclePlus, to: '/auto-roles' },
     ],
   },
   {
@@ -135,8 +129,8 @@ export function DashboardShell() {
     'flex items-center gap-2.5 rounded-control border-l-2 px-2.5 py-2 text-sm transition-colors duration-200 ease-out'
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
+    <div className="flex h-dvh flex-col">
+      <header className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2 text-foreground">
             <Sparkle size={20} weight="fill" className="text-primary" />
@@ -176,8 +170,8 @@ export function DashboardShell() {
         </Dropdown>
       </header>
 
-      <div className="flex flex-1">
-        <aside className="w-72 shrink-0 border-r border-border p-4">
+      <div className="flex min-h-0 flex-1">
+        <aside className="w-72 shrink-0 overflow-y-auto border-r border-border p-4">
           <div className="mb-4 flex items-center gap-3 rounded-control border border-border bg-surface p-3">
             {user?.avatar ? (
               <img src={user.avatar} alt="" className="h-9 w-9 rounded-full" />
@@ -222,7 +216,7 @@ export function DashboardShell() {
           </nav>
         </aside>
 
-        <main className="flex-1 p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>

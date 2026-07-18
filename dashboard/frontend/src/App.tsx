@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/Login'
@@ -11,8 +11,6 @@ import { MessageBuilderPage } from './pages/MessageBuilder'
 import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
 import { ConfigPage } from './pages/Config'
-import { WelcomePage } from './pages/Welcome'
-import { AutoRolesPage } from './pages/AutoRoles'
 import { BracketsPage } from './pages/Brackets'
 import { BracketDetailPage } from './pages/BracketDetail'
 import { PublicBracketPage } from './pages/PublicBracket'
@@ -36,7 +34,6 @@ import { BunkerPage } from './pages/Bunker'
 import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
 import { FunPage } from './pages/Fun'
 import { SuperAdminPage } from './pages/SuperAdmin'
-import { GiveawaysPage } from './pages/Giveaways'
 import { DailyTopicPage } from './pages/DailyTopic'
 import { AutoModPage } from './pages/AutoMod'
 
@@ -76,7 +73,7 @@ function App() {
             <Route path="mafia" element={<MafiaPage />} />
             <Route path="bunker" element={<BunkerPage />} />
             <Route path="fun" element={<FunPage />} />
-            <Route path="giveaways" element={<GiveawaysPage />} />
+            <Route path="giveaways" element={<Navigate to="/events" replace />} />
             <Route path="daily-topic" element={<DailyTopicPage />} />
             <Route path="automod" element={<AutoModPage />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
@@ -86,8 +83,8 @@ function App() {
             <Route path="serverlog" element={<ServerLogPage />} />
             <Route path="voice-stats" element={<VoiceStatsPage />} />
             <Route path="audit" element={<AuditPage />} />
-            <Route path="welcome" element={<WelcomePage />} />
-            <Route path="auto-roles" element={<AutoRolesPage />} />
+            <Route path="welcome" element={<Navigate to="/lockdown" replace />} />
+            <Route path="auto-roles" element={<Navigate to="/lockdown" replace />} />
             <Route path="config" element={<ConfigPage />} />
             <Route path="superadmin" element={<SuperAdminPage />} />
           </Route>

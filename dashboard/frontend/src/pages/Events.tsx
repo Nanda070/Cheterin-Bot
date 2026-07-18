@@ -18,8 +18,36 @@ import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { EventDetailPanel } from './EventDetailPanel'
+import { GiveawaysPage } from './Giveaways'
+import { CalendarCheck, Gift } from '@phosphor-icons/react'
 
 type StatusFilter = 'open' | 'closed'
+type EventsTab = 'events' | 'giveaways'
+
+const EVENTS_TABS: { key: EventsTab; label: string; icon: typeof CalendarCheck }[] = [
+  { key: 'events', label: 'События и голосования', icon: CalendarCheck },
+  { key: 'giveaways', label: 'Гивевеи', icon: Gift },
+]
+
+function TabBar({ tab, setTab }: { tab: EventsTab; setTab: (t: EventsTab) => void }) {
+  return (
+    <div className="flex gap-1 border-b border-border">
+      {EVENTS_TABS.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setTab(key)}
+          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
+            tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          <Icon size={15} />
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function emptyCreateSpec(): CreateEventSpec {
   return {
@@ -75,6 +103,7 @@ function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string): Emb
 }
 
 export function EventsPage() {
+  const [tab, setTab] = useState<EventsTab>('events')
   const [status, setStatus] = useState<StatusFilter>('open')
   const [events, setEvents] = useState<EventSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -125,7 +154,18 @@ export function EventsPage() {
     }
   }
 
+  if (tab === 'giveaways') {
+    return (
+      <div className="flex flex-col gap-4">
+        <TabBar tab={tab} setTab={setTab} />
+        <GiveawaysPage />
+      </div>
+    )
+  }
+
   return (
+    <div className="flex flex-col gap-4">
+      <TabBar tab={tab} setTab={setTab} />
     <div className="flex gap-6">
       <div className="flex-1">
         <div className="mb-4 flex items-center gap-3">
@@ -355,6 +395,7 @@ export function EventsPage() {
           </div>
         </div>
       </Modal>
+    </div>
     </div>
   )
 }

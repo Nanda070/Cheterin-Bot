@@ -1644,6 +1644,10 @@ export interface FunSettings {
   enabled: boolean
   roulette_timeout_minutes: number
   roulette_cooldown_sec: number
+  auto_emoji_enabled: boolean
+  auto_emoji_chance_percent: number
+  auto_emoji_min_interval_sec: number
+  auto_emoji_remove_after_sec: number
 }
 
 export function fetchFunSettings(): Promise<FunSettings> {
