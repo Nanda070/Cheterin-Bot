@@ -151,5 +151,12 @@
   "149": "test_xp_routes.py",
   "150": "test_wordle_routes.py",
   "151": "format_voice_time",
-  "152": "FakeVoiceChannel"
+  "152": "FakeVoiceChannel",
+  "153": "AntiRaidCog",
+  "154": "SupplyView",
+  "155": "lockdown.py",
+  "156": "ChetBot",
+  "157": "auth.py",
+  "158": "test_antiraid_routes.py",
+  "159": "test_member_detail.py"
 }

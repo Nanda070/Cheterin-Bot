@@ -1,11 +1,17 @@
 import {
+  Broom,
   CalendarCheck,
   ChatCircleText,
   Clock,
+  LockKeyOpen,
   Prohibit,
   ShieldCheck,
   ShieldWarning,
   SignOut,
+  Siren,
+  SpeakerSimpleSlash,
+  SpeakerSimpleX,
+  UserCheck,
   UsersThree,
   Warning,
 } from '@phosphor-icons/react'
@@ -28,6 +34,15 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   tempban: Clock,
   manual_ban: Prohibit,
   manual_kick: SignOut,
+  warn_manual: Warning,
+  command_ban: Prohibit,
+  command_kick: SignOut,
+  command_mute: SpeakerSimpleX,
+  command_unmute: SpeakerSimpleSlash,
+  command_unban: LockKeyOpen,
+  command_clear: Broom,
+  antiraid_trigger: Siren,
+  verification_pass: UserCheck,
 }
 
 const TYPE_LABEL: Record<ModerationLogEntry['type'], string> = {
@@ -35,6 +50,15 @@ const TYPE_LABEL: Record<ModerationLogEntry['type'], string> = {
   tempban: 'Tempban',
   manual_ban: 'Бан (дашборд)',
   manual_kick: 'Кик (дашборд)',
+  warn_manual: 'Предупреждение',
+  command_ban: 'Бан (команда)',
+  command_kick: 'Кик (команда)',
+  command_mute: 'Таймаут (команда)',
+  command_unmute: 'Снятие таймаута (команда)',
+  command_unban: 'Разбан (команда)',
+  command_clear: 'Очистка чата (команда)',
+  antiraid_trigger: 'Антирейд сработал',
+  verification_pass: 'Верификация пройдена',
 }
 
 export function HomePage() {
