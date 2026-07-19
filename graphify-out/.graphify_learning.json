@@ -1,6 +1,22 @@
 {
-  "generated_at": "2026-07-17T23:58:45.218516+00:00",
+  "generated_at": "2026-07-18T04:33:38.887073+00:00",
   "nodes": {
+    "dashboard_backend_config_dashboardconfig": {
+      "code_fingerprint": "4479f52225f7e2eda5a3cfb33265f2b3c96ba935687682e31e3f8c67b71b2e92",
+      "label": "DashboardConfig",
+      "last": "2026-07-16T16:17:16.478648+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:16.478648+00:00",
+          "outcome": "useful",
+          "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
+        }
+      ],
+      "score": 0.965682598,
+      "source_file": "dashboard/backend/config.py",
+      "status": "tentative",
+      "uses": 1
+    },
     "dashboard_backend_tests_fakes_force_login": {
       "code_fingerprint": "15076b7bfbd95890f1a53b7332e87051d7a272c879b5631f31b2a528db9af76e",
       "label": "force_login()",
@@ -12,7 +28,7 @@
           "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
         }
       ],
-      "score": 0.969950528,
+      "score": 0.965681786,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -28,7 +44,7 @@
           "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
         }
       ],
-      "score": 0.969948993,
+      "score": 0.965680258,
       "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
       "status": "tentative",
       "uses": 1
@@ -44,7 +60,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.96995212,
+      "score": 0.965683372,
       "source_file": "dashboard/frontend/.oxlintrc.json",
       "status": "tentative",
       "uses": 1
@@ -60,7 +76,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.96995212,
+      "score": 0.965683372,
       "source_file": "dashboard/frontend/package.json",
       "status": "tentative",
       "uses": 1

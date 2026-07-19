@@ -53,11 +53,18 @@ class FakePermissions:
 
 
 class FakeAsset:
-    def __init__(self, url="https://cdn.example/avatar.png"):
+    def __init__(self, url="https://cdn.example/avatar.png", data=b"fake-avatar-bytes"):
         self.url = url
+        self._data = data
 
     def __str__(self):
         return self.url
+
+    def replace(self, **kwargs):
+        return self
+
+    async def read(self):
+        return self._data
 
 
 class FakeCustomEmoji:
@@ -124,10 +131,22 @@ class FakeChannel:
         self._next_message_id = next_message_id
         self.send_calls = []
         self.send_raises = None
+        self.purge_calls = []
+        self.purge_raises = None
+        self.edit_calls = []
+        self.edit_raises = None
+        self.slowmode_delay = 0
 
     @property
     def mention(self):
         return f"<#{self.id}>"
+
+    async def edit(self, **kwargs):
+        if self.edit_raises:
+            raise self.edit_raises
+        self.edit_calls.append(kwargs)
+        if "slowmode_delay" in kwargs:
+            self.slowmode_delay = kwargs["slowmode_delay"]
 
     async def fetch_message(self, message_id):
         import discord
@@ -136,6 +155,16 @@ class FakeChannel:
         if message is None:
             raise discord.NotFound.__new__(discord.NotFound)
         return message
+
+    async def purge(self, limit=100, **kwargs):
+        if self.purge_raises:
+            raise self.purge_raises
+        self.purge_calls.append(limit)
+        ordered = sorted(self._messages.values(), key=lambda m: m.id, reverse=True)
+        deleted = ordered[:limit]
+        for message in deleted:
+            self._messages.pop(message.id, None)
+        return deleted
 
     async def send(self, **kwargs):
         if self.send_raises:
@@ -226,6 +255,7 @@ class FakeMember:
         self.action_raises = None
         self.send_calls = []
         self.send_raises = None
+        self._timed_out_until = None
 
     async def _record(self, action, **kwargs):
         if self.action_raises:
@@ -243,6 +273,10 @@ class FakeMember:
 
     async def timeout(self, duration, **kwargs):
         await self._record("timeout", duration=duration, **kwargs)
+        self._timed_out_until = duration
+
+    def is_timed_out(self) -> bool:
+        return self._timed_out_until is not None
 
     async def remove_roles(self, role, **kwargs):
         await self._record("remove_roles", role=role, **kwargs)
@@ -287,6 +321,11 @@ class FakeGuild:
         self.created_voice_channels = []
         self._next_voice_channel_id = 9000
         self.create_voice_channel_raises = None
+        self._ban_entries: dict[int, object] = {}
+        self.ban_calls = []
+        self.unban_calls = []
+        self.ban_raises = None
+        self.unban_raises = None
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)
@@ -296,6 +335,37 @@ class FakeGuild:
 
     def get_channel(self, channel_id):
         return next((c for c in self.channels if c.id == channel_id), None)
+
+    @property
+    def text_channels(self):
+        return list(self.channels)
+
+    async def ban(self, user, reason=None, **kwargs):
+        if self.ban_raises:
+            raise self.ban_raises
+        self.ban_calls.append({"user": user, "reason": reason})
+        self._ban_entries[user.id] = user
+        self.members = [m for m in self.members if m.id != user.id]
+
+    async def unban(self, user, reason=None, **kwargs):
+        import discord
+
+        if self.unban_raises:
+            raise self.unban_raises
+        user_id = user.id if hasattr(user, "id") else int(user)
+        if user_id not in self._ban_entries:
+            raise discord.NotFound.__new__(discord.NotFound)
+        del self._ban_entries[user_id]
+        self.unban_calls.append({"user_id": user_id, "reason": reason})
+
+    async def fetch_ban(self, user):
+        import discord
+
+        user_id = user.id if hasattr(user, "id") else int(user)
+        banned_user = self._ban_entries.get(user_id)
+        if banned_user is None:
+            raise discord.NotFound.__new__(discord.NotFound)
+        return type("FakeBanEntry", (), {"reason": None, "user": banned_user})()
 
     async def create_voice_channel(self, name, **kwargs):
         if self.create_voice_channel_raises:
@@ -344,6 +414,9 @@ class FakeBot:
         if found is not None:
             return found
         return next((t for t in self._guild.threads if t.id == channel_id), None)
+
+    def get_user(self, user_id):
+        return self._guild.get_member(user_id)
 
     async def fetch_user(self, user_id):
         import discord

@@ -35,6 +35,14 @@ automod_config.json
 warns.db
 daily_topic_config.json
 fun_config.json
+moderation_bans.db
+wordle_config.json
+wordle.db
+economy_config.json
+economy.db
+casino_config.json
+antiraid_config.json
+verification_config.json
 giveaways_data.json
 embed_templates.json
 venv/

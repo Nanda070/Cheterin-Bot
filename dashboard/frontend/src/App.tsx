@@ -33,6 +33,9 @@ import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
 import { BunkerPage } from './pages/Bunker'
 import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
 import { FunPage } from './pages/Fun'
+import { EconomyPage } from './pages/Economy'
+import { AntiRaidPage } from './pages/AntiRaid'
+import { VerificationPage } from './pages/Verification'
 import { SuperAdminPage } from './pages/SuperAdmin'
 import { DailyTopicPage } from './pages/DailyTopic'
 import { AutoModPage } from './pages/AutoMod'
@@ -76,9 +79,12 @@ function App() {
             <Route path="giveaways" element={<Navigate to="/events" replace />} />
             <Route path="daily-topic" element={<DailyTopicPage />} />
             <Route path="automod" element={<AutoModPage />} />
+            <Route path="antiraid" element={<AntiRaidPage />} />
+            <Route path="verification" element={<VerificationPage />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
             <Route path="news" element={<NewsPage />} />
             <Route path="levels" element={<LevelsPage />} />
+            <Route path="economy" element={<EconomyPage />} />
             <Route path="streams" element={<StreamsPage />} />
             <Route path="serverlog" element={<ServerLogPage />} />
             <Route path="voice-stats" element={<VoiceStatsPage />} />

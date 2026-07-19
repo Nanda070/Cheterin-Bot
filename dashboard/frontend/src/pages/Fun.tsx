@@ -1,6 +1,13 @@
 import { Confetti } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
-import { fetchFunSettings, updateFunSettings, type FunSettings } from '../api/client'
+import {
+  fetchFunSettings,
+  fetchWordleSettings,
+  updateFunSettings,
+  updateWordleSettings,
+  type FunSettings,
+  type WordleSettings,
+} from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -10,6 +17,7 @@ const inputClass =
 
 export function FunPage() {
   const [settings, setSettings] = useState<FunSettings | null>(null)
+  const [wordle, setWordle] = useState<WordleSettings | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
@@ -18,9 +26,12 @@ export function FunPage() {
     fetchFunSettings()
       .then(setSettings)
       .catch(() => setError('Не удалось загрузить настройки модуля «Развлечения»'))
+    fetchWordleSettings()
+      .then(setWordle)
+      .catch(() => setError('Не удалось загрузить настройки Вордла'))
   }, [])
 
-  if (!settings) {
+  if (!settings || !wordle) {
     return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
   }
 
@@ -31,6 +42,8 @@ export function FunPage() {
     try {
       const updated = await updateFunSettings(settings)
       setSettings(updated)
+      const updatedWordle = await updateWordleSettings(wordle)
+      setWordle(updatedWordle)
       setSaved('Сохранено.')
     } catch {
       setError('Не удалось сохранить настройки — проверьте поля')
@@ -166,6 +179,55 @@ export function FunPage() {
             />
           </div>
         </div>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">🟩 Вордл — /вордл</h2>
+          <Toggle
+            checked={wordle.enabled}
+            onChange={(v) => setWordle({ ...wordle, enabled: v })}
+            label={wordle.enabled ? 'Вордл включён' : 'Вордл выключен'}
+          />
+        </div>
+        <p className="text-sm text-muted">
+          Русский Wordle: каждый день одно общее слово из 5 букв на 6 попыток. Своя доска с буквами видна только
+          игроку (ввод через кнопку и модальное окно), а в канал бот публикует живую карточку «X играет» с цветами
+          без букв. Тренировка без статистики — /вордл-тренировка, личная статистика — /вордл-стата, топ сервера —
+          /вордл-топ. Раз в день бот подводит итоги: серия сервера, 👑 у лучшего результата и кнопка «Играть».
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="wordle-channel">
+              ID канала для анонсов и live-карточек (0 — карточки в канале команды, без ежедневных анонсов)
+            </label>
+            <input
+              id="wordle-channel"
+              type="number"
+              min={0}
+              value={wordle.channel_id}
+              onChange={(e) => setWordle({ ...wordle, channel_id: Number(e.target.value) })}
+              className={inputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="wordle-time">
+              Время ежедневного анонса, МСК (ЧЧ:ММ)
+            </label>
+            <input
+              id="wordle-time"
+              type="text"
+              placeholder="09:00"
+              value={wordle.announce_time}
+              onChange={(e) => setWordle({ ...wordle, announce_time: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted">
+          Слово дня общее для всего сервера и меняется в полночь по МСК. Словарь — существительные из 5 букв,
+          буква «ё» считается как «е».
+        </p>
       </Card>
 
       {saved && <p className="text-sm text-primary">{saved}</p>}

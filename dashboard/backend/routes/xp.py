@@ -231,7 +231,7 @@ async def xp_member_set(request: web.Request) -> web.Response:
         xp_value = body["xp"]
     except (ValueError, KeyError, TypeError):
         return web.json_response({"error": "invalid_request"}, status=400)
-    if not isinstance(xp_value, int) or xp_value < 0 or xp_value > 2_000_000_000:
+    if not isinstance(xp_value, int) or not xp_core.XP_ADMIN_MIN <= xp_value <= xp_core.XP_ADMIN_MAX:
         return web.json_response({"error": "invalid_xp"}, status=400)
 
     member = guild.get_member(user_id)

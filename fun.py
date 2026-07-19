@@ -15,6 +15,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import economy_core
+import economy_db
 import fun_core
 
 logger = logging.getLogger("fun")
@@ -57,6 +59,8 @@ class FunCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._roulette_cooldowns: dict[int, float] = {}
+        # user_id -> сколько «щёлк» подряд без выстрела (барабан не прокручивается заново)
+        self._roulette_clicks: dict[int, int] = {}
         self._auto_emoji_last: dict[int, float] = {}  # channel_id -> monotonic ts последней авто-реакции
 
     # ────────────────────────── Авто-Эмодзи ──────────────────────────
@@ -103,8 +107,12 @@ class FunCog(commands.Cog):
 
     # ────────────────────────── Русская рулетка ──────────────────────────
 
-    @app_commands.command(name="русская-рулетка", description="Спустить курок: 1 шанс из 6. Проигравший получает таймаут")
-    async def russian_roulette(self, interaction: discord.Interaction):
+    @app_commands.command(
+        name="русская-рулетка",
+        description="Спустить курок: барабан не прокручивается, с каждым щелчком шанс растёт. Можно ставить монеты",
+    )
+    @app_commands.describe(ставка="Ставка монет: выжил — удвоил, погиб — потерял (необязательно)")
+    async def russian_roulette(self, interaction: discord.Interaction, ставка: int | None = None):
         settings = fun_core.get_settings()
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Развлечения» отключён.", ephemeral=True)
@@ -117,12 +125,42 @@ class FunCog(commands.Cog):
             return await interaction.response.send_message(
                 f"Барабан ещё крутится — попробуй через {remaining} сек.", ephemeral=True
             )
+
+        # Ставка проверяется и списывается ДО установки кулдауна и спуска курка
+        econ = economy_core.get_settings()
+        bet = ставка or 0
+        if bet > 0:
+            if not econ["enabled"]:
+                return await interaction.response.send_message(
+                    "Модуль «Экономика» отключён — сыграй без ставки.", ephemeral=True
+                )
+            error = economy_core.bet_error(bet, economy_db.get_balance(interaction.user.id), econ)
+            if error:
+                return await interaction.response.send_message(error, ephemeral=True)
+            if not economy_db.try_spend(interaction.user.id, bet, "roulette_bet"):
+                return await interaction.response.send_message("Недостаточно средств для ставки.", ephemeral=True)
+
         self._roulette_cooldowns[interaction.user.id] = now + cooldown
 
-        if not fun_core.spin_trigger():
+        # Барабан не прокручивается заново: каждый «щёлк» приближает патрон
+        clicks = self._roulette_clicks.get(interaction.user.id, 0)
+        chamber_text = f"Камора **{clicks + 1}/{fun_core.ROULETTE_CHAMBERS}**."
+
+        if not fun_core.spin_trigger(clicks):
+            self._roulette_clicks[interaction.user.id] = clicks + 1
+            win_text = ""
+            if bet > 0:
+                balance = economy_db.add(interaction.user.id, bet * 2, "roulette_win")
+                win_text = (
+                    f"\n💰 Ставка сыграла: **+{economy_core.format_amount(bet, econ)}** "
+                    f"(баланс: {economy_core.format_amount(balance, econ)})."
+                )
             return await interaction.response.send_message(
-                f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n{random.choice(SURVIVE_LINES)}"
+                f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n"
+                f"{random.choice(SURVIVE_LINES)} {chamber_text}{win_text}"
             )
+
+        self._roulette_clicks[interaction.user.id] = 0
 
         timeout_minutes = settings["roulette_timeout_minutes"]
         death_line = random.choice(DEATH_LINES)
@@ -143,8 +181,17 @@ class FunCog(commands.Cog):
         else:
             suffix = f"{interaction.user.mention} выбывает. Почтим память минутой молчания. 🪦"
 
+        bet_text = ""
+        if bet > 0:
+            balance = economy_db.get_balance(interaction.user.id)
+            bet_text = (
+                f"\n💸 Ставка **{economy_core.format_amount(bet, econ)}** сгорела "
+                f"(баланс: {economy_core.format_amount(balance, econ)})."
+            )
+
         await interaction.response.send_message(
-            f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n{death_line}\n{suffix}"
+            f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n"
+            f"{death_line} {chamber_text}\n{suffix}{bet_text}"
         )
 
     # ────────────────────────── Эмодзи-рулетка ──────────────────────────

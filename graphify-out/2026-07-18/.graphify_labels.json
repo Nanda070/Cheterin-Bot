@@ -118,15 +118,5 @@
   "116": "setupTests.ts",
   "117": "vite.config.js",
   "118": "vite.config.ts",
-  "119": "__init__.py",
-  "120": "test_news_routes.py",
-  "121": "test_member_detail.py",
-  "122": "DocsToc.tsx",
-  "123": "main.py",
-  "124": "Application",
-  "125": "Path",
-  "126": "Interaction",
-  "127": "Embed",
-  "128": "Member",
-  "129": "VoiceState"
+  "119": "__init__.py"
 }

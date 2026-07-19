@@ -12,6 +12,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import economy_core
+import economy_db
 import stats_db
 import xp_card
 import xp_core
@@ -33,6 +35,12 @@ def channel_allowed(channel_id: int, scope: dict) -> bool:
 
 
 class XPCog(commands.Cog):
+    xp_group = app_commands.Group(
+        name="xp",
+        description="Изменить количество опыта участника",
+        default_permissions=discord.Permissions(manage_guild=True),
+    )
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -60,6 +68,7 @@ class XPCog(commands.Cog):
         if amount <= 0:
             return
         stats_db.xp_add_text(message.author.id, amount, now_ts)
+        economy_core.award_for_xp(message.author.id, amount, "text")
         await self.process_member(message.author, settings, fallback_channel=message.channel)
 
     @commands.Cog.listener()
@@ -74,6 +83,7 @@ class XPCog(commands.Cog):
         if xp_amount <= 0 and active_seconds <= 0:
             return
         stats_db.xp_add_voice(member.id, xp_amount, active_seconds)
+        economy_core.award_for_xp(member.id, xp_amount, "voice")
         settings = xp_core.get_settings()
         if settings["enabled"]:
             await self.process_member(member, settings, fallback_channel=None)
@@ -191,6 +201,9 @@ class XPCog(commands.Cog):
         except discord.HTTPException:
             pass
 
+        frame = economy_db.get_equipped(target.id, "frame_color")
+        title = economy_db.get_equipped(target.id, "title")
+
         png = await asyncio.to_thread(
             xp_card.render_rank_card,
             avatar_bytes,
@@ -201,9 +214,86 @@ class XPCog(commands.Cog):
             rank,
             total,
             xp_core.format_voice_time(voice_seconds),
+            frame_color=frame["value"] if frame else None,
+            title_text=title["value"] if title else None,
         )
         file = discord.File(fp=io.BytesIO(png), filename="rank.png")
         await interaction.followup.send(file=file)
+
+    # ────────────────── Команда /xp (add / set / clear) ──────────────────
+
+    @xp_group.command(name="add", description="Добавить (или отнять) опыт участнику")
+    @app_commands.describe(участник="Кому изменить опыт", количество="Сколько XP добавить (можно отрицательное число)")
+    async def xp_add(self, interaction: discord.Interaction, участник: discord.Member, количество: int):
+        settings = xp_core.get_settings()
+        if not settings["enabled"]:
+            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+        if участник.bot:
+            return await interaction.response.send_message("У ботов нет опыта.", ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
+
+        row = stats_db.xp_get_member(участник.id)
+        current = row["xp"] if row else 0
+        new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, current + количество))
+        await self.set_member_xp(участник, new_xp)
+
+        await interaction.followup.send(f"✅ Опыт {участник.mention}: {current} → **{new_xp}**.", ephemeral=True)
+
+    @xp_group.command(name="set", description="Установить точное количество опыта участнику")
+    @app_commands.describe(участник="Кому установить опыт", количество="Новое значение XP")
+    async def xp_set(
+        self, interaction: discord.Interaction, участник: discord.Member,
+        количество: app_commands.Range[int, xp_core.XP_ADMIN_MIN, xp_core.XP_ADMIN_MAX],
+    ):
+        settings = xp_core.get_settings()
+        if not settings["enabled"]:
+            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+        if участник.bot:
+            return await interaction.response.send_message("У ботов нет опыта.", ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
+
+        await self.set_member_xp(участник, количество)
+        await interaction.followup.send(f"✅ Опыт {участник.mention} установлен: **{количество}**.", ephemeral=True)
+
+    @xp_group.command(name="clear", description="Обнулить опыт участника")
+    @app_commands.describe(участник="Кому обнулить опыт")
+    async def xp_clear(self, interaction: discord.Interaction, участник: discord.Member):
+        settings = xp_core.get_settings()
+        if not settings["enabled"]:
+            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
+
+        await self.reset_member(участник)
+        await interaction.followup.send(f"✅ Опыт {участник.mention} обнулён.", ephemeral=True)
+
+    # ────────────────── Команда /leaders ──────────────────
+
+    @app_commands.command(name="leaders", description="Показать таблицу лидеров по опыту")
+    @app_commands.describe(число="Сколько мест показать (1-25, по умолчанию 10)")
+    async def leaders_command(
+        self, interaction: discord.Interaction, число: app_commands.Range[int, 1, 25] = 10,
+    ):
+        settings = xp_core.get_settings()
+        if not settings["enabled"]:
+            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+        await interaction.response.defer()
+
+        rows = stats_db.xp_leaderboard(limit=число)
+        if not rows:
+            return await interaction.followup.send("Пока никто не заработал опыт.")
+
+        guild = interaction.guild
+        medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+        lines = []
+        for i, row in enumerate(rows, start=1):
+            member = guild.get_member(row["user_id"]) if guild else None
+            name = member.display_name if member else str(row["user_id"])
+            level, _, _ = xp_core.level_progress(row["xp"])
+            prefix = medals.get(i, f"{i}.")
+            lines.append(f"{prefix} **{name}** — ур. {level}, {row['xp']} XP")
+
+        embed = discord.Embed(title="🏆 Таблица лидеров", description="\n".join(lines), color=discord.Color.gold())
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot: commands.Bot):

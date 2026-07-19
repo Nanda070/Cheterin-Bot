@@ -18,6 +18,9 @@ CARD_BG_FILE = "xp_card_bg.png"
 
 MAX_LEVEL = 999
 
+XP_ADMIN_MIN = 0
+XP_ADMIN_MAX = 2_000_000_000  # кап ручного изменения XP (команда /xp и дашборд)
+
 TEXT_XP_MIN = 15
 TEXT_XP_MAX = 25
 TEXT_XP_COOLDOWN = 60  # секунд

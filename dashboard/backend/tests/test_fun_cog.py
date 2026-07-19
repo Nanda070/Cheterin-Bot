@@ -4,6 +4,8 @@ from datetime import timedelta
 
 import pytest
 
+import economy_core
+import economy_db
 import fun_core
 from fun import FunCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
@@ -14,6 +16,11 @@ def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setattr(fun_core, "CONFIG_FILE", str(tmp_path / "fun_config.json"))
     monkeypatch.setattr(fun_core, "_cache", None, raising=False)
     monkeypatch.setattr(fun_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
+    economy_db.init()
+    monkeypatch.setattr(economy_core, "CONFIG_FILE", str(tmp_path / "economy_config.json"))
+    monkeypatch.setattr(economy_core, "_cache", None, raising=False)
+    monkeypatch.setattr(economy_core, "_cache_mtime", None, raising=False)
 
 
 class FakeResponse:
@@ -58,7 +65,7 @@ async def test_roulette_disabled_module():
 
 @pytest.mark.asyncio
 async def test_roulette_survive(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
     cog, player, guild = build()
     interaction = FakeInteraction(player, guild)
 
@@ -71,7 +78,7 @@ async def test_roulette_survive(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_death_applies_configured_timeout(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
     cog, player, guild = build(timeout_minutes=7)
     interaction = FakeInteraction(player, guild)
 
@@ -88,7 +95,7 @@ async def test_roulette_death_applies_configured_timeout(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_death_without_punishment(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
     cog, player, guild = build(timeout_minutes=0)
     interaction = FakeInteraction(player, guild)
 
@@ -102,7 +109,7 @@ async def test_roulette_death_without_punishment(monkeypatch):
 async def test_roulette_death_survives_timeout_failure(monkeypatch):
     import discord
 
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
     cog, player, guild = build(timeout_minutes=5)
     player.action_raises = discord.HTTPException.__new__(discord.HTTPException)
     interaction = FakeInteraction(player, guild)
@@ -114,7 +121,7 @@ async def test_roulette_death_survives_timeout_failure(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_cooldown(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
     cog, player, guild = build(cooldown_sec=60)
     first = FakeInteraction(player, guild)
     second = FakeInteraction(player, guild)
@@ -295,3 +302,113 @@ async def test_auto_emoji_removes_reaction_after_delay(monkeypatch):
 
     assert slept_for and slept_for[-1] == 1
     assert message.reactions_removed == message.reactions_added
+
+
+# ────────────────────────── Барабан без проворота ──────────────────────────
+
+def test_spin_trigger_guaranteed_on_last_chamber():
+    # После 5 осечек остаётся одна камора — выстрел гарантирован
+    assert all(fun_core.spin_trigger(5) for _ in range(50))
+
+
+def test_spin_trigger_chance_grows(monkeypatch):
+    seen = []
+    monkeypatch.setattr(fun_core.random, "randrange", lambda n: seen.append(n) or 1)
+    fun_core.spin_trigger(0)
+    fun_core.spin_trigger(3)
+    assert seen == [6, 3]
+
+
+@pytest.mark.asyncio
+async def test_roulette_click_counter_grows_and_resets(monkeypatch):
+    cog, player, guild = build()
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
+    await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
+    assert cog._roulette_clicks[player.id] == 2
+
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
+    assert cog._roulette_clicks[player.id] == 0
+
+
+@pytest.mark.asyncio
+async def test_roulette_shows_chamber_number(monkeypatch):
+    cog, player, guild = build()
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction)
+    assert "1/6" in interaction.response.messages[0]["content"]
+
+
+# ────────────────────────── Ставки монет ──────────────────────────
+
+def enable_economy(max_bet=1000):
+    economy_core.save_config({"enabled": True, "roulette_max_bet": max_bet})
+
+
+@pytest.mark.asyncio
+async def test_roulette_bet_requires_economy(monkeypatch):
+    cog, player, guild = build()
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction, ставка=10)
+    assert "Экономика" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_roulette_bet_survive_doubles(monkeypatch):
+    cog, player, guild = build()
+    enable_economy()
+    economy_db.add(player.id, 100, "seed")
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
+
+    assert economy_db.get_balance(player.id) == 140  # -40 ставка, +80 выигрыш
+    assert "Ставка сыграла" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_roulette_bet_death_burns(monkeypatch):
+    cog, player, guild = build(timeout_minutes=0)
+    enable_economy()
+    economy_db.add(player.id, 100, "seed")
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
+
+    assert economy_db.get_balance(player.id) == 60
+    assert "сгорела" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_roulette_bet_insufficient_funds(monkeypatch):
+    cog, player, guild = build(cooldown_sec=30)
+    enable_economy()
+    economy_db.add(player.id, 5, "seed")
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction, ставка=50)
+
+    assert "Недостаточно" in interaction.response.messages[0]["content"]
+    assert economy_db.get_balance(player.id) == 5
+    # ставка отклонена ДО кулдауна — можно сразу сыграть снова
+    retry = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, retry, ставка=5)
+    assert "Ставка сыграла" in retry.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_roulette_bet_over_max(monkeypatch):
+    cog, player, guild = build()
+    enable_economy(max_bet=100)
+    economy_db.add(player.id, 5000, "seed")
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+
+    interaction = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, interaction, ставка=500)
+    assert "Максимальная ставка" in interaction.response.messages[0]["content"]

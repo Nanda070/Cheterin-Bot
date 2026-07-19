@@ -79,9 +79,15 @@ def auto_emoji_roll(chance_percent: int) -> bool:
     return random.random() * 100 < chance_percent
 
 
-def spin_trigger() -> bool:
-    """Один спуск курка: True — выстрел (1 шанс из ROULETTE_CHAMBERS)."""
-    return random.randrange(ROULETTE_CHAMBERS) == 0
+def spin_trigger(consecutive_clicks: int = 0) -> bool:
+    """Один спуск курка: True — выстрел.
+
+    Барабан НЕ прокручивается заново после осечки: с каждым «щёлк» камор
+    остаётся меньше, шанс растёт 1/6 → 1/5 → … → 1/1. На шестом нажатии
+    выстрел гарантирован — длинных «сухих» серий не бывает.
+    """
+    chambers_left = max(1, ROULETTE_CHAMBERS - consecutive_clicks)
+    return random.randrange(chambers_left) == 0
 
 
 def pick_emoji(guild_emojis: list) -> str:

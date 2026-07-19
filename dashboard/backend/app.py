@@ -40,6 +40,11 @@ from .routes.automod import routes as automod_routes
 from .routes.warns import routes as warns_routes
 from .routes.bunker import routes as bunker_routes
 from .routes.fun import routes as fun_routes
+from .routes.wordle import routes as wordle_routes
+from .routes.economy import routes as economy_routes
+from .routes.casino import routes as casino_routes
+from .routes.antiraid import routes as antiraid_routes
+from .routes.verification import routes as verification_routes
 from .audit_middleware import audit_middleware
 from .session import setup_session
 from .static import setup_static_routes
@@ -104,6 +109,11 @@ def create_app(
     app.add_routes(warns_routes)
     app.add_routes(bunker_routes)
     app.add_routes(fun_routes)
+    app.add_routes(wordle_routes)
+    app.add_routes(economy_routes)
+    app.add_routes(casino_routes)
+    app.add_routes(antiraid_routes)
+    app.add_routes(verification_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

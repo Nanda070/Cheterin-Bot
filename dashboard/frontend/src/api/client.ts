@@ -138,7 +138,20 @@ export async function deactivateLockdown(): Promise<void> {
 }
 
 export interface ModerationLogEntry {
-  type: 'spam_punish' | 'tempban' | 'manual_ban' | 'manual_kick'
+  type:
+    | 'spam_punish'
+    | 'tempban'
+    | 'manual_ban'
+    | 'manual_kick'
+    | 'warn_manual'
+    | 'command_ban'
+    | 'command_kick'
+    | 'command_mute'
+    | 'command_unmute'
+    | 'command_unban'
+    | 'command_clear'
+    | 'antiraid_trigger'
+    | 'verification_pass'
   timestamp: string
   user_id: string
   user_display: string
@@ -1656,4 +1669,126 @@ export function fetchFunSettings(): Promise<FunSettings> {
 
 export function updateFunSettings(settings: FunSettings): Promise<FunSettings> {
   return apiFetch('/api/fun', jsonInit('PUT', settings))
+}
+
+export interface WordleSettings {
+  enabled: boolean
+  channel_id: number
+  announce_time: string
+}
+
+export function fetchWordleSettings(): Promise<WordleSettings> {
+  return apiFetch('/api/wordle')
+}
+
+export function updateWordleSettings(settings: WordleSettings): Promise<WordleSettings> {
+  return apiFetch('/api/wordle', jsonInit('PUT', settings))
+}
+
+// ────────────────────────── Экономика ──────────────────────────
+
+export type ShopItemType = 'role' | 'frame_color' | 'title'
+
+export interface ShopItem {
+  id: string
+  type: ShopItemType
+  role_id: number
+  color_hex: string
+  title_text: string
+  price: number
+  name: string
+}
+
+export interface EconomySettings {
+  enabled: boolean
+  currency_name: string
+  currency_emoji: string
+  text_rate_percent: number
+  voice_rate_percent: number
+  transfer_enabled: boolean
+  transfer_fee_percent: number
+  roulette_bets_enabled: boolean
+  roulette_max_bet: number
+  daily_bonus_enabled: boolean
+  daily_base_amount: number
+  daily_growth_per_day: number
+  daily_max_streak_days: number
+  shop_items: ShopItem[]
+}
+
+export interface EconomyTopEntry {
+  user_id: string
+  display_name: string
+  balance: number
+}
+
+export function fetchEconomySettings(): Promise<EconomySettings> {
+  return apiFetch('/api/economy')
+}
+
+export function updateEconomySettings(settings: EconomySettings): Promise<EconomySettings> {
+  return apiFetch('/api/economy', jsonInit('PUT', settings))
+}
+
+export function fetchEconomyTop(): Promise<EconomyTopEntry[]> {
+  return apiFetch('/api/economy/top')
+}
+
+export function setEconomyBalance(userId: string, balance: number): Promise<{ user_id: string; balance: number }> {
+  return apiFetch('/api/economy/balance', jsonInit('PUT', { user_id: userId, balance }))
+}
+
+// ────────────────────────── Казино ──────────────────────────
+
+export interface CasinoSettings {
+  enabled: boolean
+  house_edge_percent: number
+  cooldown_sec: number
+  min_bet: number
+  max_bet: number
+}
+
+export function fetchCasinoSettings(): Promise<CasinoSettings> {
+  return apiFetch('/api/casino')
+}
+
+export function updateCasinoSettings(settings: CasinoSettings): Promise<CasinoSettings> {
+  return apiFetch('/api/casino', jsonInit('PUT', settings))
+}
+
+// ────────────────────────── Антирейд ──────────────────────────
+
+export interface AntiRaidSettings {
+  enabled: boolean
+  join_window_sec: number
+  join_threshold: number
+  min_account_age_hours: number
+  action_lockdown: boolean
+  action_slowmode_sec: number
+  cooldown_minutes: number
+}
+
+export function fetchAntiRaidSettings(): Promise<AntiRaidSettings> {
+  return apiFetch('/api/antiraid')
+}
+
+export function updateAntiRaidSettings(settings: AntiRaidSettings): Promise<AntiRaidSettings> {
+  return apiFetch('/api/antiraid', jsonInit('PUT', settings))
+}
+
+// ────────────────────────── Верификация ──────────────────────────
+
+export interface VerificationSettings {
+  enabled: boolean
+  unverified_role_id: number
+  verified_role_id: number
+  welcome_text: string
+}
+
+export function fetchVerificationSettings(): Promise<VerificationSettings> {
+  return apiFetch('/api/verification')
+}
+
+export function updateVerificationSettings(settings: VerificationSettings): Promise<VerificationSettings> {
+  return apiFetch('/api/verification', jsonInit('PUT', settings))
 }

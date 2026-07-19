@@ -90,6 +90,12 @@ class ChetBot(commands.Bot):
         await self.load_extension("automod")
         await self.load_extension("bunker")
         await self.load_extension("fun")
+        await self.load_extension("moderation_commands")
+        await self.load_extension("wordle")
+        await self.load_extension("economy")
+        await self.load_extension("casino")
+        await self.load_extension("antiraid")
+        await self.load_extension("verification")
         guild_id = os.getenv("GUILD_ID")
         if not guild_id:
             raise RuntimeError("Переменная окружения GUILD_ID не задана.")

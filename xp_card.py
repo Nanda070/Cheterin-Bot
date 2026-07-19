@@ -12,6 +12,12 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import xp_core
 
 CARD_W, CARD_H = 900, 260
+DEFAULT_RING_COLOR = (88, 101, 242)
+
+
+def _hex_to_rgb(value: str) -> tuple[int, int, int]:
+    value = value.lstrip("#")
+    return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16)
 
 FONT_CANDIDATES_BOLD = [
     "C:/Windows/Fonts/arialbd.ttf",
@@ -73,6 +79,8 @@ def render_rank_card(
     rank: int | None,
     total_members: int,
     voice_time_text: str,
+    frame_color: str | None = None,
+    title_text: str | None = None,
 ) -> bytes:
     card = _background().convert("RGBA")
     draw = ImageDraw.Draw(card)
@@ -83,15 +91,17 @@ def render_rank_card(
     card = Image.alpha_composite(card, panel)
     draw = ImageDraw.Draw(card)
 
+    ring_color = _hex_to_rgb(frame_color) if frame_color else DEFAULT_RING_COLOR
+
     # Аватар
     avatar_size = 160
     ax, ay = 46, (CARD_H - avatar_size) // 2
     if avatar_bytes:
         try:
             avatar = _circle_avatar(avatar_bytes, avatar_size)
-            # Кольцо вокруг аватара
+            # Кольцо вокруг аватара (цвет — купленная в магазине рамка либо дефолтный)
             ring = Image.new("RGBA", (avatar_size + 12, avatar_size + 12), (0, 0, 0, 0))
-            ImageDraw.Draw(ring).ellipse((0, 0, avatar_size + 12, avatar_size + 12), outline=(88, 101, 242, 255), width=4)
+            ImageDraw.Draw(ring).ellipse((0, 0, avatar_size + 12, avatar_size + 12), outline=(*ring_color, 255), width=4)
             card.alpha_composite(ring, (ax - 6, ay - 6))
             card.alpha_composite(avatar, (ax, ay))
         except OSError:
@@ -100,12 +110,16 @@ def render_rank_card(
     font_name = _font(FONT_CANDIDATES_BOLD, 38)
     font_level = _font(FONT_CANDIDATES_BOLD, 30)
     font_small = _font(FONT_CANDIDATES_REGULAR, 22)
+    font_title_tag = _font(FONT_CANDIDATES_REGULAR, 20)
 
     text_x = ax + avatar_size + 36
 
-    # Имя
+    # Имя (+ купленный титул рядом, если экипирован)
     name = display_name if len(display_name) <= 22 else display_name[:21] + "…"
     draw.text((text_x, 52), name, font=font_name, fill=(232, 234, 240))
+    if title_text:
+        name_w = draw.textlength(name, font=font_name)
+        draw.text((text_x + name_w + 14, 62), title_text, font=font_title_tag, fill=ring_color)
 
     # Уровень и место
     rank_text = f"#{rank}" if rank else "—"

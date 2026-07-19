@@ -13,11 +13,22 @@ const emptySettings: client.FunSettings = {
   auto_emoji_remove_after_sec: 120,
 }
 
+const emptyWordle: client.WordleSettings = {
+  enabled: false,
+  channel_id: 0,
+  announce_time: '09:00',
+}
+
+function mockWordle() {
+  vi.spyOn(client, 'fetchWordleSettings').mockResolvedValue(emptyWordle)
+}
+
 describe('FunPage', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('renders the module toggle and both roulette cards', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
     render(<FunPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
@@ -27,6 +38,8 @@ describe('FunPage', () => {
 
   it('toggles enabled and saves settings', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
+    vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
     render(<FunPage />)
@@ -39,6 +52,8 @@ describe('FunPage', () => {
 
   it('updates timeout and cooldown fields before saving', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
+    vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
     render(<FunPage />)
 
@@ -55,6 +70,8 @@ describe('FunPage', () => {
 
   it('renders the auto-emoji card and saves its settings', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
+    vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
     render(<FunPage />)
 
@@ -70,8 +87,31 @@ describe('FunPage', () => {
     )
   })
 
+  it('renders the wordle card and saves its settings', async () => {
+    vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
+    vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
+    const wordleSpy = vi
+      .spyOn(client, 'updateWordleSettings')
+      .mockResolvedValue({ enabled: true, channel_id: 555, announce_time: '18:30' })
+    render(<FunPage />)
+
+    expect(await screen.findByText(/Вордл — \/вордл/)).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Вордл выключен'))
+    fireEvent.change(screen.getByLabelText(/ID канала для анонсов/), { target: { value: '555' } })
+    fireEvent.change(screen.getByLabelText(/Время ежедневного анонса/), { target: { value: '18:30' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    await waitFor(() =>
+      expect(wordleSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ enabled: true, channel_id: 555, announce_time: '18:30' }),
+      ),
+    )
+  })
+
   it('shows an error when loading fails', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockRejectedValue(new Error('fail'))
+    mockWordle()
     render(<FunPage />)
     expect(await screen.findByText('Не удалось загрузить настройки модуля «Развлечения»')).toBeInTheDocument()
   })
