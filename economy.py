@@ -121,6 +121,34 @@ class EconomyCog(commands.Cog):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    # ────────────────────────── /выдать-баланс ──────────────────────────
+
+    @app_commands.command(name="выдать-баланс", description="Начислить (или списать) монеты участнику")
+    @app_commands.describe(
+        участник="Кому изменить баланс",
+        количество="Сколько монет начислить (можно отрицательное число, чтобы списать)",
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def grant_balance_command(
+        self, interaction: discord.Interaction, участник: discord.Member,
+        количество: app_commands.Range[int, -economy_core.BALANCE_ADMIN_MAX, economy_core.BALANCE_ADMIN_MAX],
+    ):
+        settings = economy_core.get_settings()
+        if not settings["enabled"]:
+            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+        if участник.bot:
+            return await interaction.response.send_message("У ботов нет кошелька.", ephemeral=True)
+
+        current = economy_db.get_balance(участник.id)
+        new_balance = min(economy_core.BALANCE_ADMIN_MAX, max(0, current + количество))
+        economy_db.set_balance(участник.id, new_balance, "admin_grant")
+
+        await interaction.response.send_message(
+            f"✅ Баланс {участник.mention}: {economy_core.format_amount(current, settings)} → "
+            f"**{economy_core.format_amount(new_balance, settings)}**.",
+            ephemeral=True,
+        )
+
     # ────────────────────────── /перевести ──────────────────────────
 
     @app_commands.command(name="перевести", description="Перевести монеты другому участнику")

@@ -155,9 +155,5 @@
   "153": "AntiRaidCog",
   "154": "SupplyView",
   "155": "lockdown.py",
-  "156": "ChetBot",
-  "157": "auth.py",
-  "158": "test_antiraid_routes.py",
-  "159": "test_member_detail.py",
-  "160": "test_wordle_routes.py"
+  "159": "test_member_detail.py"
 }

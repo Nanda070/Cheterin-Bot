@@ -775,8 +775,8 @@
     "semantic_hash": "1a9dd5a8a75516c0bdeb533971691f86"
   },
   "dashboard/frontend/src/pages/Docs.tsx": {
-    "mtime": 1784454119.5961008,
-    "ast_hash": "7d3db0bdc433c6ee157fbc8b50ff01d1",
+    "mtime": 1784454622.3922007,
+    "ast_hash": "402a23f9a54510edb22e2d0102ee3934",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/EmbedBuilder.test.tsx": {
@@ -1645,8 +1645,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_economy_cog.py": {
-    "mtime": 1784434367.7692788,
-    "ast_hash": "b10cecae007980a0f12306fef0beaa0c",
+    "mtime": 1784454571.3047953,
+    "ast_hash": "ac69c392fa11c58685ce1d4fa5ff0d84",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_economy_core.py": {
@@ -1675,8 +1675,8 @@
     "semantic_hash": ""
   },
   "economy.py": {
-    "mtime": 1784434168.7035785,
-    "ast_hash": "f26d98c02ef22039d6c291aeace18608",
+    "mtime": 1784454547.384686,
+    "ast_hash": "3582a4f9b4621e7cfaa3dc0c58051b91",
     "semantic_hash": ""
   },
   "economy_core.py": {

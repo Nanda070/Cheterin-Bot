@@ -124,6 +124,58 @@ async def test_balance_shows_amount_and_rank():
     assert "#1" in embed.description
 
 
+# ────────────────────────── /выдать-баланс ──────────────────────────
+
+@pytest.mark.asyncio
+async def test_grant_balance_disabled_module():
+    cog, guild, player, friend = build(enabled=False)
+    interaction = FakeInteraction(player, guild)
+    await EconomyCog.grant_balance_command.callback(cog, interaction, friend, 100)
+    assert "отключён" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_grant_balance_rejects_bots():
+    cog, guild, player, friend = build()
+    bot_member = FakeMember(30, name="botty", bot=True)
+    interaction = FakeInteraction(player, guild)
+    await EconomyCog.grant_balance_command.callback(cog, interaction, bot_member, 100)
+    assert "У ботов нет кошелька" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_grant_balance_adds_from_zero():
+    cog, guild, player, friend = build()
+    interaction = FakeInteraction(player, guild)
+
+    await EconomyCog.grant_balance_command.callback(cog, interaction, friend, 500)
+
+    assert economy_db.get_balance(friend.id) == 500
+    assert "500" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_grant_balance_negative_deducts():
+    cog, guild, player, friend = build()
+    economy_db.add(friend.id, 300, "seed")
+    interaction = FakeInteraction(player, guild)
+
+    await EconomyCog.grant_balance_command.callback(cog, interaction, friend, -100)
+
+    assert economy_db.get_balance(friend.id) == 200
+
+
+@pytest.mark.asyncio
+async def test_grant_balance_negative_does_not_go_below_zero():
+    cog, guild, player, friend = build()
+    economy_db.add(friend.id, 50, "seed")
+    interaction = FakeInteraction(player, guild)
+
+    await EconomyCog.grant_balance_command.callback(cog, interaction, friend, -500)
+
+    assert economy_db.get_balance(friend.id) == 0
+
+
 # ────────────────────────── /перевести ──────────────────────────
 
 @pytest.mark.asyncio
