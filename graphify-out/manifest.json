@@ -520,8 +520,8 @@
     "semantic_hash": "6b697d4051febe981499a774b73f72c8"
   },
   "dashboard/frontend/src/App.tsx": {
-    "mtime": 1784434663.159479,
-    "ast_hash": "2d43cffbdedf1f128ef2fe810ff7cd5b",
+    "mtime": 1784453936.4643333,
+    "ast_hash": "7a434689e62680729ca4e5ae9d1248da",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/brackets.test.ts": {
@@ -760,13 +760,13 @@
     "semantic_hash": "8d30e626916ae2a796e52e53bc1f4066"
   },
   "dashboard/frontend/src/pages/DashboardShell.test.tsx": {
-    "mtime": 1784348869.035748,
-    "ast_hash": "2582990f7a2a44bb3a328fba3a0e108b",
+    "mtime": 1784453979.014537,
+    "ast_hash": "dc67ca54fbeffb5eceafa5bd4c467882",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.tsx": {
-    "mtime": 1784434609.0153468,
-    "ast_hash": "77ab5d7c25349d7af94ca52e9c3567bd",
+    "mtime": 1784453889.8871791,
+    "ast_hash": "1769ca7c4397206cafdbe13891bda75f",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.test.tsx": {
@@ -775,8 +775,8 @@
     "semantic_hash": "1a9dd5a8a75516c0bdeb533971691f86"
   },
   "dashboard/frontend/src/pages/Docs.tsx": {
-    "mtime": 1784451385.2813323,
-    "ast_hash": "694a590568f3e0414800fec802790d34",
+    "mtime": 1784454119.5961008,
+    "ast_hash": "7d3db0bdc433c6ee157fbc8b50ff01d1",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/EmbedBuilder.test.tsx": {
@@ -875,9 +875,9 @@
     "semantic_hash": "075d16225485a04581e341820adbfa9c"
   },
   "dashboard/frontend/src/pages/Home.tsx": {
-    "mtime": 1783356778.0,
-    "ast_hash": "bb6dc142279ffa2cea86596e26363c76",
-    "semantic_hash": "bb6dc142279ffa2cea86596e26363c76"
+    "mtime": 1784452473.6352458,
+    "ast_hash": "c82a50251a5728e4785a1118f887109c",
+    "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Leaderboard.tsx": {
     "mtime": 1783971448.0,
@@ -890,13 +890,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.test.tsx": {
-    "mtime": 1783356778.0,
-    "ast_hash": "2f91045668124f281fa91db87910f78e",
-    "semantic_hash": "2f91045668124f281fa91db87910f78e"
+    "mtime": 1784453993.8322103,
+    "ast_hash": "8a6db4a3377a1ebf2e9ad8a63273a24b",
+    "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.tsx": {
-    "mtime": 1784434708.9102254,
-    "ast_hash": "87e7b71ef990ca4d7def9498e0ae3315",
+    "mtime": 1784453912.7350252,
+    "ast_hash": "596f957113b001f4bdd11a9b8323db32",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Login.tsx": {

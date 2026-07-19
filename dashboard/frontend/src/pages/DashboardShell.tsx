@@ -18,7 +18,6 @@ import {
   Megaphone,
   Package,
   Shield,
-  ShieldStar,
   ShieldWarning,
   SignOut,
   Skull,
@@ -26,7 +25,6 @@ import {
   Stack,
   TrendUp,
   Trophy,
-  UserCheck,
   Users,
   UsersThree,
   Vault,
@@ -81,7 +79,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Бункер', icon: Vault, to: '/bunker' },
       { label: 'Развлечения', icon: Confetti, to: '/fun' },
       { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
-      { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
     ],
   },
   {
@@ -91,6 +88,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
       { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
       { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
+      { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
     ],
   },
   {
@@ -98,10 +96,8 @@ const NAV_GROUPS: NavGroup[] = [
     icon: Wrench,
     items: [
       { label: 'Логирование', icon: ListMagnifyingGlass, to: '/serverlog' },
-      { label: 'Lockdown и модерация', icon: ShieldWarning, to: '/lockdown' },
+      { label: 'Модерация', icon: ShieldWarning, to: '/lockdown' },
       { label: 'Автомодерация', icon: Shield, to: '/automod' },
-      { label: 'Антирейд', icon: ShieldStar, to: '/antiraid' },
-      { label: 'Верификация', icon: UserCheck, to: '/verification' },
       { label: 'Участники и роли', icon: UsersThree, to: '/members' },
       { label: 'Аудит дашборда', icon: ClipboardText, to: '/audit' },
       { label: 'Конфигурация', icon: GearSix, to: '/config' },

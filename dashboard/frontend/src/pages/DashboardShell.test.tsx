@@ -77,12 +77,15 @@ describe('DashboardShell', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Lockdown и модерация')).toBeInTheDocument()
+    expect(await screen.findByText('Модерация')).toBeInTheDocument()
     expect(screen.getByText('События и голосования')).toBeInTheDocument()
+    expect(screen.getByText('Ежедневная рубрика')).toBeInTheDocument()
     // Слиты в табы внутри разделов — отдельных пунктов меню больше нет.
     expect(screen.queryByText('Приветствие и прощание')).not.toBeInTheDocument()
     expect(screen.queryByText('Авто-роли')).not.toBeInTheDocument()
     expect(screen.queryByText('Гивевеи')).not.toBeInTheDocument()
+    expect(screen.queryByText('Антирейд')).not.toBeInTheDocument()
+    expect(screen.queryByText('Верификация')).not.toBeInTheDocument()
   })
 
   it('hides the super-admin nav group for a regular moderator', async () => {
@@ -105,7 +108,7 @@ describe('DashboardShell', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByText('Lockdown и модерация')
+    await screen.findByText('Модерация')
     expect(screen.queryByText('Супер-админ')).not.toBeInTheDocument()
   })
 

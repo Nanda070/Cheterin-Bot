@@ -71,4 +71,39 @@ describe('LockdownPage', () => {
 
     expect(await screen.findByText('Активности пока нет.')).toBeInTheDocument()
   })
+
+  it('switches to the Антирейд tab', async () => {
+    vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
+    vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
+    vi.spyOn(client, 'fetchAntiRaidSettings').mockResolvedValue({
+      enabled: false,
+      join_window_sec: 10,
+      join_threshold: 5,
+      min_account_age_hours: 24,
+      action_lockdown: true,
+      action_slowmode_sec: 0,
+      cooldown_minutes: 30,
+    })
+
+    render(<LockdownPage />)
+    fireEvent.click(await screen.findByText('Антирейд'))
+
+    expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()
+  })
+
+  it('switches to the Верификация tab', async () => {
+    vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
+    vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
+    vi.spyOn(client, 'fetchVerificationSettings').mockResolvedValue({
+      enabled: false,
+      unverified_role_id: 0,
+      verified_role_id: 0,
+      welcome_text: 'Нажмите кнопку ниже.',
+    })
+
+    render(<LockdownPage />)
+    fireEvent.click(await screen.findByText('Верификация'))
+
+    expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()
+  })
 })

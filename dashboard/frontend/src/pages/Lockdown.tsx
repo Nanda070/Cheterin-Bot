@@ -1,4 +1,4 @@
-import { Broom, Clock, HandWaving, LockKeyOpen, Prohibit, ShieldCheck, ShieldWarning, SignOut, Siren, SpeakerSimpleSlash, SpeakerSimpleX, UserCheck, UserCirclePlus, Warning } from '@phosphor-icons/react'
+import { Broom, Clock, HandWaving, LockKeyOpen, Prohibit, ShieldCheck, ShieldStar, ShieldWarning, SignOut, Siren, SpeakerSimpleSlash, SpeakerSimpleX, UserCheck, UserCirclePlus, Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
   activateLockdown,
@@ -11,15 +11,19 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { AntiRaidPage } from './AntiRaid'
 import { AutoRolesPage } from './AutoRoles'
+import { VerificationPage } from './Verification'
 import { WelcomePage } from './Welcome'
 
-type Tab = 'moderation' | 'welcome' | 'auto-roles'
+type Tab = 'moderation' | 'welcome' | 'auto-roles' | 'antiraid' | 'verification'
 
 const TABS: { key: Tab; label: string; icon: typeof ShieldWarning }[] = [
   { key: 'moderation', label: 'Lockdown и лог', icon: ShieldWarning },
   { key: 'welcome', label: 'Приветствие и прощание', icon: HandWaving },
   { key: 'auto-roles', label: 'Авто-роли', icon: UserCirclePlus },
+  { key: 'antiraid', label: 'Антирейд', icon: ShieldStar },
+  { key: 'verification', label: 'Верификация', icon: UserCheck },
 ]
 
 const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
@@ -113,6 +117,8 @@ export function LockdownPage() {
 
       {tab === 'welcome' && <WelcomePage />}
       {tab === 'auto-roles' && <AutoRolesPage />}
+      {tab === 'antiraid' && <AntiRaidPage />}
+      {tab === 'verification' && <VerificationPage />}
 
       {tab === 'moderation' && !status && <p className="text-sm text-muted">{error || 'Загрузка…'}</p>}
       {tab === 'moderation' && status && (
