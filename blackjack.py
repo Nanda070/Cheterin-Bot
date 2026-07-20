@@ -24,7 +24,7 @@ import casino_core
 import casino_db
 import economy_core
 import economy_db
-from casino import check_loss_roles
+from casino import CasinoCog, check_loss_roles
 
 logger = logging.getLogger("blackjack")
 
