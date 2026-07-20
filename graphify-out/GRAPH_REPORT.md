@@ -1,16 +1,16 @@
-# Graph Report - Cheterin_Bot_Dashboard  (2026-07-19)
+# Graph Report - Cheterin_Bot_Dashboard  (2026-07-20)
 
 ## Corpus Check
-- 354 files · ~205,630 words
+- 355 files · ~207,004 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4278 nodes · 11406 edges · 157 communities (148 shown, 9 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 206 edges (avg confidence: 0.55)
+- 4310 nodes · 11503 edges · 164 communities (156 shown, 8 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 208 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0bcd6250`
+- Built from commit: `0b277ab7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -165,16 +165,23 @@
 - AntiRaidCog
 - SupplyView
 - lockdown.py
+- require_dashboard_access
+- SupplyView
+- config.py
 - test_member_detail.py
+- DocsSearch.tsx
+- auto_roles.py
+- test_antiraid_routes.py
+- test_feedback_panel_routes.py
 
 ## God Nodes (most connected - your core abstractions)
 1. `force_login()` - 323 edges
-2. `FakeMember` - 288 edges
-3. `FakeGuild` - 220 edges
-4. `FakeBot` - 203 edges
+2. `FakeMember` - 300 edges
+3. `FakeGuild` - 223 edges
+4. `FakeBot` - 205 edges
 5. `apiFetch()` - 122 edges
-6. `FakeChannel` - 114 edges
-7. `FakeRole` - 107 edges
+6. `FakeChannel` - 121 edges
+7. `FakeRole` - 112 edges
 8. `make_moderation_app()` - 86 edges
 9. `jsonInit()` - 75 edges
 10. `react` - 61 edges
@@ -188,8 +195,8 @@
   dashboard/backend/tests/test_casino_cog.py → casino.py
 - `FakeInteraction` --uses--> `CasinoCog`  [INFERRED]
   dashboard/backend/tests/test_casino_cog.py → casino.py
-- `FakeInteraction` --uses--> `EconomyCog`  [INFERRED]
-  dashboard/backend/tests/test_economy_cog.py → economy.py
+- `FakeResponse` --uses--> `CasinoCog`  [INFERRED]
+  dashboard/backend/tests/test_casino_cog.py → casino.py
 
 ## Import Cycles
 - None detected.
@@ -205,19 +212,19 @@
 - **Docs Page User Interface** — dashboard_frontend_src_pages_docs, dashboard_frontend_src_components_docs_docsbanner, dashboard_frontend_src_assets_docs_banner [INFERRED 0.90]
 - **Hero Page Visual Branding Elements** — dashboard_frontend_src_assets_hero, dashboard_frontend_src_assets_hero_branding, dashboard_frontend_src_assets_hero_layered_stack [INFERRED 0.85]
 
-## Communities (157 total, 9 thin omitted)
+## Communities (164 total, 8 thin omitted)
 
 ### Community 0 - "Game Settings & Bunker DB"
-Cohesion: 0.18
-Nodes (25): add_player(), assign_character(), get_player(), reveal_fields(), update_game(), _make_game(), База, созданная до появления voice_channel_id/vote_message_id/unique_cards,, _sample_character() (+17 more)
+Cohesion: 0.20
+Nodes (22): add_player(), get_player(), _make_game(), База, созданная до появления voice_channel_id/vote_message_id/unique_cards,, _sample_character(), test_add_player_rejects_duplicate(), test_assign_character_and_get_by_token(), test_create_and_get_game() (+14 more)
 
 ### Community 1 - "Supply Module"
-Cohesion: 0.09
-Nodes (47): _display_name(), _finalize(), Request, Response, _serialize_supply(), supply_cancel(), supply_close(), supply_create() (+39 more)
+Cohesion: 0.13
+Nodes (39): _display_name(), _finalize(), Request, Response, _serialize_supply(), supply_cancel(), supply_close(), supply_create() (+31 more)
 
 ### Community 2 - "Dashboard App Bootstrap"
-Cohesion: 0.22
-Nodes (18): DashboardConfig, FakeBot, FakeGuild, FakeMember, FakePermissions, FakeRole, make_app(), _NullHttpSession (+10 more)
+Cohesion: 0.18
+Nodes (19): DashboardConfig, FakeAuditLogExtra, FakeBot, FakeGuild, FakeMember, FakePermissions, FakeRole, make_app() (+11 more)
 
 ### Community 3 - "Test Fake Channels"
 Cohesion: 0.07
@@ -229,11 +236,11 @@ Nodes (76): AuditEntry, AutoRolesSettings, BracketStandingsRow, BunkerAbilityAnn
 
 ### Community 5 - "Test Fake Bot"
 Cohesion: 0.06
-Nodes (60): FakeBot, FakeGuild, FakeThread, make_client_app(), test_guild_unavailable_gets_503(), test_member_not_in_guild_gets_403(), test_member_with_access_reaches_handler(), test_member_without_access_role_gets_403() (+52 more)
+Nodes (46): FakeBot, FakeGuild, make_client_app(), test_guild_unavailable_gets_503(), test_member_not_in_guild_gets_403(), test_member_with_access_reaches_handler(), test_member_without_access_role_gets_403(), test_no_session_returns_401() (+38 more)
 
 ### Community 6 - "Automod Route Tests"
-Cohesion: 0.08
-Nodes (57): force_login(), build(), test_auto_roles_route_is_registered_in_the_real_app(), test_get_auto_roles_defaults_to_empty_when_file_missing(), test_get_auto_roles_requires_auth(), test_get_auto_roles_returns_stored_values(), test_update_auto_roles_persists_valid_roles(), test_update_auto_roles_rejects_managed_role() (+49 more)
+Cohesion: 0.07
+Nodes (58): force_login(), build(), test_escalation_crud(), test_escalation_validation(), test_get_defaults(), test_requires_auth(), test_update_filter(), test_update_filter_not_found() (+50 more)
 
 ### Community 7 - "Tournament Brackets"
 Cohesion: 0.07
@@ -241,19 +248,19 @@ Nodes (61): create_bracket(), create_bracket_v2(), _de_get_match(), _de_match(),
 
 ### Community 8 - "Feedback Cases"
 Cohesion: 0.07
-Nodes (52): create_feedback_category(), decide_feedback_case(), delete_feedback_category(), get_feedback_case(), _get_guild_or_none(), list_feedback_cases(), list_feedback_categories(), publish_feedback_panel_route() (+44 more)
+Nodes (51): create_feedback_category(), decide_feedback_case(), delete_feedback_category(), get_feedback_case(), _get_guild_or_none(), list_feedback_cases(), list_feedback_categories(), publish_feedback_panel_route() (+43 more)
 
 ### Community 9 - "Giveaways Routes"
 Cohesion: 0.08
 Nodes (54): _display_name(), giveaways_create(), giveaways_end(), giveaways_overview(), giveaways_reroll(), Request, Response, _serialize_giveaway() (+46 more)
 
 ### Community 10 - "Automod Cog"
-Cohesion: 0.05
-Nodes (51): AutoMod, _consecutive_run_length(), Bot, Guild, Interaction, Member, Message, Ког «Автомодерация»: 9 настраиваемых фильтров сообщений, эскалация по количеству (+43 more)
+Cohesion: 0.07
+Nodes (42): AutoMod, _consecutive_run_length(), Bot, Guild, Interaction, Member, Message, Ког «Автомодерация»: 9 настраиваемых фильтров сообщений, эскалация по количеству (+34 more)
 
 ### Community 11 - "Server Event Logging"
-Cohesion: 0.08
-Nodes (32): AuditLogAction, Command, Request, Response, serverlog_get(), serverlog_put(), _clip(), event_channel_id() (+24 more)
+Cohesion: 0.07
+Nodes (39): AuditLogAction, AuditLogEntry, Command, Request, Response, serverlog_get(), serverlog_put(), test_format_stay_duration() (+31 more)
 
 ### Community 12 - "Automod Filter Core"
 Cohesion: 0.08
@@ -261,7 +268,7 @@ Nodes (56): add_escalation_rule(), _default_filter(), delete_escalation_rule(), 
 
 ### Community 13 - "Test Fake Members"
 Cohesion: 0.20
-Nodes (35): eliminate_player(), build(), _character(), _setup_game(), test_ability_already_used(), test_ability_dead_player(), test_ability_game_not_active(), test_ability_happy_path_marks_card_used_and_announces() (+27 more)
+Nodes (36): eliminate_player(), update_game(), build(), _character(), _setup_game(), test_ability_already_used(), test_ability_dead_player(), test_ability_game_not_active() (+28 more)
 
 ### Community 14 - "Daily Topic Module"
 Cohesion: 0.07
@@ -320,8 +327,8 @@ Cohesion: 0.10
 Nodes (33): bet_error(), flip_coin(), get_settings(), load_config(), payout_amount(), Ядро модуля «Казино»: слоты и монетка на серверную валюту.  Без импорта discord, Три независимых барабана (с повторами), взвешенные по редкости символа., 0 — без выигрыша, SLOT_PAIR_MULTIPLIER — пара, множитель из таблицы — тройка. (+25 more)
 
 ### Community 28 - "Reaction Roles Tests"
-Cohesion: 0.10
-Nodes (36): create_reaction_role(), delete_reaction_role(), _get_guild_or_none(), _is_role_assignable(), list_channels(), list_emojis(), list_reaction_roles(), Request (+28 more)
+Cohesion: 0.11
+Nodes (34): create_reaction_role(), delete_reaction_role(), _get_guild_or_none(), _is_role_assignable(), list_channels(), list_emojis(), list_reaction_roles(), Request (+26 more)
 
 ### Community 29 - "Streams API Client"
 Cohesion: 0.10
@@ -332,16 +339,16 @@ Cohesion: 0.11
 Nodes (32): Request, Response, voice_panel_publish(), voice_room_delete(), voice_rooms_list(), build(), FakeVoiceChannel, isolated_db() (+24 more)
 
 ### Community 31 - "XP API Client"
-Cohesion: 0.12
-Nodes (26): audit_list(), Request, Response, audit_add(), audit_count(), audit_list(), connect(), get_db_path() (+18 more)
+Cohesion: 0.10
+Nodes (31): audit_list(), Request, Response, isolated_db(), isolated_state(), isolated_state(), isolated_state(), audit_add() (+23 more)
 
 ### Community 32 - "Mafia Discord Cog"
 Cohesion: 0.12
 Nodes (18): build_game_started_embed(), build_lobby_cancelled_embed(), build_lynch_result_embed(), build_morning_embed(), build_result_embed(), build_vote_embed(), role_label(), _frontend_url() (+10 more)
 
 ### Community 33 - "Feedback API Client"
-Cohesion: 0.11
-Nodes (24): build(), FakeInteraction, FakeResponse, Тесты кога «Верификация»: выключена по умолчанию, join-роль, кнопка., test_disabled_by_default_no_join_role(), test_explicitly_disabled_no_join_role(), test_join_assigns_unverified_role(), test_join_without_unverified_role_configured_does_nothing() (+16 more)
+Cohesion: 0.07
+Nodes (40): Request, Response, verification_get(), verification_put(), build(), FakeInteraction, FakeResponse, Тесты кога «Верификация»: выключена по умолчанию, join-роль, кнопка. (+32 more)
 
 ### Community 34 - "Family DB Tests"
 Cohesion: 0.14
@@ -404,8 +411,8 @@ Cohesion: 0.13
 Nodes (19): _FakeGuild, _FakeMember, test_build_birthday_text_groups_by_month_and_resolves_mentions(), test_can_manage_tickets_requires_configured_role(), test_has_staff_access_admin_bypasses_role_check(), test_has_staff_access_via_role(), test_parse_birthday_date_feb29_always_allowed(), test_parse_birthday_date_invalid() (+11 more)
 
 ### Community 49 - "XP Core Tests"
-Cohesion: 0.09
-Nodes (33): test_deserved_roles(), test_get_settings_voice_new_fields_defaults(), test_level_formula_monotonic(), test_level_from_xp_roundtrip(), test_level_progress(), test_render_announce(), test_roll_text_xp_respects_multiplier(), test_settings_defaults() (+25 more)
+Cohesion: 0.11
+Nodes (28): test_deserved_roles(), test_level_formula_monotonic(), test_level_from_xp_roundtrip(), test_level_progress(), test_render_announce(), test_roll_text_xp_respects_multiplier(), test_voice_member_multiplier_lookup(), test_voice_xp_configurable_base() (+20 more)
 
 ### Community 50 - "Event Publish Tests"
 Cohesion: 0.20
@@ -416,24 +423,24 @@ Cohesion: 0.08
 Nodes (23): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+15 more)
 
 ### Community 52 - "Bot Config Store"
-Cohesion: 0.12
-Nodes (31): get(), load_config(), migrate_from_env_if_needed(), save_config(), get_auto_roles(), _get_guild_or_none(), _is_role_assignable(), Request (+23 more)
+Cohesion: 0.19
+Nodes (19): get(), load_config(), migrate_from_env_if_needed(), save_config(), get_welcome_settings(), Request, Response, update_welcome_settings() (+11 more)
 
 ### Community 53 - "Family Birthdays"
 Cohesion: 0.17
 Nodes (11): BirthdayCog, build_birthday_embed(), Bot, Embed, Guild, Interaction, Member, User (+3 more)
 
 ### Community 54 - "Anti-Spam Cog"
-Cohesion: 0.22
-Nodes (19): bunker_apply_ability(), bunker_card_pools(), bunker_game_detail(), bunker_games_list(), bunker_get(), bunker_patch_player(), bunker_public_reveal(), bunker_public_vote() (+11 more)
+Cohesion: 0.11
+Nodes (27): FakeThread, test_fake_bot_fetch_user_falls_back_when_not_in_guild(), test_fake_bot_fetch_user_raises_when_nowhere_found(), test_fake_bot_get_channel_finds_channel_and_thread(), test_fake_bot_update_file_records_calls(), test_fake_member_send_raises_when_configured(), test_fake_member_send_records_dm(), test_fake_thread_edit_records_archived_and_locked() (+19 more)
 
 ### Community 55 - "news.py"
-Cohesion: 0.16
-Nodes (17): _is_id_like(), news_get(), news_put(), Request, Response, get_channel_map(), get_settings(), load_config() (+9 more)
+Cohesion: 0.22
+Nodes (11): get_channel_map(), get_settings(), load_config(), make_embed(), NewsRelay, Bot, Embed, Message (+3 more)
 
 ### Community 56 - "events.py"
-Cohesion: 0.12
-Nodes (18): Messageable, _config_int(), generate_embed(), get_reminder_minutes(), Bot, Button, Color, Embed (+10 more)
+Cohesion: 0.16
+Nodes (14): Messageable, _config_int(), generate_embed(), get_reminder_minutes(), Bot, Color, Embed, Ког «Сборы на поставку» (портировано из ChetSupply, функционал расширен).  Слэш- (+6 more)
 
 ### Community 57 - "test_feedback_routes.py"
 Cohesion: 0.21
@@ -456,28 +463,28 @@ Cohesion: 0.14
 Nodes (14): XP_ADMIN_MAX, XP_ADMIN_MIN, channel_allowed(), member_has_ignored_role(), Bot, Interaction, Member, Message (+6 more)
 
 ### Community 62 - "auth.py"
-Cohesion: 0.30
-Nodes (12): DiscordOAuthError, exchange_code_for_token(), fetch_discord_identity(), ClientSession, Exception, fake_identity_endpoint(), fake_token_endpoint(), stub_discord_server() (+4 more)
+Cohesion: 0.22
+Nodes (17): callback(), login(), logout(), Request, Response, DiscordOAuthError, exchange_code_for_token(), fetch_discord_identity() (+9 more)
 
 ### Community 63 - "resolve_guild_member()"
 Cohesion: 0.18
 Nodes (11): MemberLookupResult, resolve_guild_member(), FakeBot, FakeGuild, _StubHTTPException, _StubNotFound, test_falls_back_to_fetch_when_not_cached(), test_not_found_when_fetch_raises_notfound() (+3 more)
 
 ### Community 64 - "xp.py"
-Cohesion: 0.17
-Nodes (22): Request, Response, voice_stats(), _int_in(), _is_id_list(), Request, Response, Вкладка «Участники» дашборда: весь ростер гильдии, а не только те,     кто уже (+14 more)
+Cohesion: 0.19
+Nodes (21): _int_in(), _is_id_list(), Request, Response, Вкладка «Участники» дашборда: весь ростер гильдии, а не только те,     кто уже, _serialize_row(), xp_card_bg_delete(), xp_card_bg_upload() (+13 more)
 
 ### Community 65 - "test_feedback_category_routes.py"
-Cohesion: 0.20
-Nodes (15): isolated_db(), isolated_state(), isolated_state(), build(), isolated_state(), test_leaderboard_guild_unavailable(), test_leaderboard_keeps_members_who_left(), test_leaderboard_pagination_over_merged_roster() (+7 more)
+Cohesion: 0.19
+Nodes (21): add_round_event(), connect(), count_players(), create_ability_announcement(), get_ability_announcement(), get_active_game_in_channel(), get_db_path(), get_game_by_lobby_message() (+13 more)
 
 ### Community 66 - "Supply.tsx"
-Cohesion: 0.19
-Nodes (22): get_settings(), load_config(), Настройки модуля с дефолтами (выключен по умолчанию)., create_game(), test_get_settings_defaults(), build(), _sample_character(), test_apply_ability_announcement() (+14 more)
+Cohesion: 0.18
+Nodes (23): get_settings(), load_config(), Настройки модуля с дефолтами (выключен по умолчанию)., assign_character(), create_game(), test_get_settings_defaults(), build(), _sample_character() (+15 more)
 
 ### Community 67 - "MassAssignModal.tsx"
-Cohesion: 0.25
-Nodes (23): build(), FakeChoice, FakeInteraction, Тесты кога «Казино»: /слоты и /монетка — через .callback(), паттерн test_fun_cog, test_coinflip_disabled_module(), test_coinflip_house_edge_reduces_payout(), test_coinflip_loss(), test_coinflip_win() (+15 more)
+Cohesion: 0.22
+Nodes (19): build(), FakeChoice, FakeInteraction, FakeResponse, Тесты кога «Казино»: /слоты и /монетка — через .callback(), паттерн test_fun_cog, test_coinflip_disabled_module(), test_coinflip_house_edge_reduces_payout(), test_coinflip_loss() (+11 more)
 
 ### Community 68 - "compilerOptions"
 Cohesion: 0.10
@@ -504,24 +511,24 @@ Cohesion: 0.29
 Nodes (17): _decide_ticket(), _display_name(), family_birthday_delete(), family_birthday_set(), family_birthdays_list(), family_get(), family_put(), family_roster() (+9 more)
 
 ### Community 74 - "test_family_routes.py"
-Cohesion: 0.10
-Nodes (38): Тесты economy_db: атомарные списания, переводы, топ, журнал., test_add_ignores_non_positive(), test_daily_bonus_default_when_missing(), test_daily_bonus_roundtrip_and_update(), test_equip_roundtrip_and_clear(), test_grant_and_own_cosmetic(), test_grant_cosmetic_is_idempotent(), test_history_recorded() (+30 more)
+Cohesion: 0.09
+Nodes (43): Тесты economy_db: атомарные списания, переводы, топ, журнал., test_add_and_get_balance(), test_add_ignores_non_positive(), test_daily_bonus_default_when_missing(), test_daily_bonus_roundtrip_and_update(), test_equip_roundtrip_and_clear(), test_grant_and_own_cosmetic(), test_grant_cosmetic_is_idempotent() (+35 more)
 
 ### Community 75 - "test_access.py"
-Cohesion: 0.19
-Nodes (18): has_dashboard_access(), has_super_admin_access(), callback(), login(), logout(), me(), Request, Response (+10 more)
+Cohesion: 0.24
+Nodes (13): has_dashboard_access(), has_super_admin_access(), me(), FakeMember, FakePermissions, FakeRole, test_administrator_always_has_access(), test_member_with_allowed_role_has_access() (+5 more)
 
 ### Community 76 - "test_config_routes.py"
-Cohesion: 0.22
-Nodes (12): build(), FakeDailyTopicCog, test_create_topic_validation(), test_get_defaults(), test_post_now(), test_post_now_no_cog(), test_post_now_requires_channel(), test_post_now_requires_topics() (+4 more)
+Cohesion: 0.26
+Nodes (16): FakeAuditLogEntry, Одна запись аудита для guild.audit_logs() — только то, что нужно     serverlog., build(), enable(), last_embed(), Embed, Тесты кога «Логирование»: стиль эмбедов (description+footer+thumbnail), формати, test_member_join_embed_style() (+8 more)
 
 ### Community 77 - "RosterCog"
 Cohesion: 0.20
 Nodes (9): generate_roster_text(), Bot, Guild, Interaction, Member, Live-ростер семьи: список участников по настроенным ролям.  Портировано из FamQ, Debounce: аккумулирует изменения и обновляет сообщение через 10 секунд., RosterCog (+1 more)
 
 ### Community 78 - "reaction_roles.py"
-Cohesion: 0.14
-Nodes (19): FakeMember, build(), _StubForbidden, _StubNotFound, test_ban_calls_discord_and_logs(), test_ban_discord_not_found_maps_to_404(), test_ban_forbidden_maps_to_403(), test_ban_invalid_json_body_returns_400() (+11 more)
+Cohesion: 0.15
+Nodes (13): FakeMember, build(), _StubForbidden, _StubNotFound, test_ban_calls_discord_and_logs(), test_ban_discord_not_found_maps_to_404(), test_ban_forbidden_maps_to_403(), test_ban_invalid_json_body_returns_400() (+5 more)
 
 ### Community 79 - "PublicBunkerAction.tsx"
 Cohesion: 0.09
@@ -552,16 +559,16 @@ Cohesion: 0.23
 Nodes (17): build(), isolated_state(), test_birthday_set_invalid_date(), test_birthday_set_unknown_member(), test_birthdays_crud(), test_get_defaults(), test_put_then_get(), test_put_validation() (+9 more)
 
 ### Community 86 - "MafiaLobbyView"
-Cohesion: 0.18
-Nodes (8): CasinoCog, Bot, Choice, Interaction, Ког «Казино»: /слоты и /монетка на серверную валюту.  Требует включённой «Эконом, Проверка тумблеров и кулдауна. Возвращает (casino, economy, error_text)., setup(), FakeResponse
+Cohesion: 0.26
+Nodes (7): CasinoCog, Bot, Choice, Interaction, Ког «Казино»: /слоты и /монетка на серверную валюту.  Требует включённой «Эконом, Проверка тумблеров и кулдауна. Возвращает (casino, economy, error_text)., setup()
 
 ### Community 87 - "voice_logs.py"
-Cohesion: 0.11
-Nodes (33): isolated_state(), isolated_db(), Тесты wordle_db: игры дня, статистика со стриками, мета сервера., test_add_guess_accumulates_and_finishes(), test_group_streak_gap_resets(), test_group_streak_grows_and_resets(), test_last_announced_day_roundtrip(), test_list_day_games_filters_by_day() (+25 more)
+Cohesion: 0.10
+Nodes (34): isolated_state(), isolated_db(), Тесты wordle_db: игры дня, статистика со стриками, мета сервера., test_add_guess_accumulates_and_finishes(), test_group_streak_gap_resets(), test_group_streak_grows_and_resets(), test_last_announced_day_roundtrip(), test_list_day_games_filters_by_day() (+26 more)
 
 ### Community 88 - "test_auto_roles_routes.py"
-Cohesion: 0.23
-Nodes (17): build(), build_with_guild(), _full_config(), PUT /api/config не должен затирать ключи других разделов (авто-роли, приветствия, test_get_config_requires_auth(), test_get_config_returns_defaults_when_file_missing(), test_get_config_returns_stored_values(), test_put_config_preserves_foreign_keys() (+9 more)
+Cohesion: 0.27
+Nodes (15): build(), build_with_guild(), _full_config(), test_get_config_requires_auth(), test_get_config_returns_defaults_when_file_missing(), test_get_config_returns_stored_values(), test_update_config_404_when_channel_not_found(), test_update_config_404_when_list_channel_not_found() (+7 more)
 
 ### Community 89 - "Giveaways.tsx"
 Cohesion: 0.08
@@ -576,8 +583,8 @@ Cohesion: 0.09
 Nodes (9): command_reason(), format_duration(), parse_duration(), parse_mute_duration(), Ядро команд модерации (/ban /kick /unban /clear): парсинг и форматирование срока, Секунды из строки вида 10m/2h/7d/30s. ValueError с понятным текстом при неверном, Как parse_duration, но с проверкой лимита Discord в 28 дней., Человекочитаемое представление уже провалидированной строки длительности (10m -> (+1 more)
 
 ### Community 92 - "access_middleware.py"
-Cohesion: 0.21
-Nodes (7): Guard an aiohttp handler with the Phase 1 session -> member -> role check., Гейт для списка серверов бота — намеренно хардкод-роль, см. access.py., require_dashboard_access(), require_super_admin(), Request, Response, superadmin_guilds()
+Cohesion: 0.15
+Nodes (13): Guard an aiohttp handler with the Phase 1 session -> member -> role check., Гейт для списка серверов бота — намеренно хардкод-роль, см. access.py., require_dashboard_access(), require_super_admin(), _is_id_like(), news_get(), news_put(), Request (+5 more)
 
 ### Community 93 - "test_mafia_routes.py"
 Cohesion: 0.27
@@ -592,16 +599,16 @@ Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?, Source Nodes
 
 ### Community 96 - "config.py"
-Cohesion: 0.25
-Nodes (17): get_game(), init(), build(), _cleanup_timer(), isolated_state(), _make_lobby(), Тесты игрового цикла кога «Бункер»: старт игры (раздача карточек, голосовой кана, Полный цикл: старт (4 игрока, вместимость 2) -> два раунда голосований -> игра з (+9 more)
+Cohesion: 0.44
+Nodes (12): get_game(), build(), _cleanup_timer(), _make_lobby(), Тесты игрового цикла кога «Бункер»: старт игры (раздача карточек, голосовой кана, Полный цикл: старт (4 игрока, вместимость 2) -> два раунда голосований -> игра з, test_end_game_deletes_voice_channel(), test_full_round_vote_ends_game_at_capacity() (+4 more)
 
 ### Community 97 - "setup_static_routes()"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?, Source Nodes
 
 ### Community 98 - "FakeAsset"
-Cohesion: 0.11
-Nodes (27): make_moderation_app(), build(), test_get_defaults_disabled(), test_put_then_get(), test_put_validation(), test_requires_login(), build(), test_publish_feedback_panel_404_when_channel_missing() (+19 more)
+Cohesion: 0.09
+Nodes (31): make_moderation_app(), build(), test_get_defaults_disabled(), test_put_then_get(), test_put_validation(), test_requires_login(), build(), test_detail_400_on_non_numeric_id() (+23 more)
 
 ### Community 99 - "plugins"
 Cohesion: 0.22
@@ -616,8 +623,8 @@ Cohesion: 0.18
 Nodes (16): audit_middleware(), describe_action(), Request, Аудит действий дашборда: каждое мутирующее действие модератора пишется в stats.d, derive_fernet_key(), Application, setup_session(), build_app() (+8 more)
 
 ### Community 102 - "auto_roles.py"
-Cohesion: 0.18
-Nodes (16): Request, Response, verification_get(), verification_put(), Тесты ядра верификации: настройки (выключена по умолчанию), проверка конфигураци, test_is_configured_does_not_require_unverified_role(), test_is_configured_requires_verified_role(), test_settings_disabled_by_default() (+8 more)
+Cohesion: 0.27
+Nodes (11): build(), test_auto_roles_route_is_registered_in_the_real_app(), test_get_auto_roles_defaults_to_empty_when_file_missing(), test_get_auto_roles_requires_auth(), test_get_auto_roles_returns_stored_values(), test_update_auto_roles_persists_valid_roles(), test_update_auto_roles_rejects_managed_role(), test_update_auto_roles_rejects_non_list_body() (+3 more)
 
 ### Community 103 - "icons.svg"
 Cohesion: 0.38
@@ -645,23 +652,27 @@ Nodes (6): Application, Path, setup_static_routes(), test_asset_path_serves_asse
 
 ### Community 120 - "DocsSearch.tsx"
 Cohesion: 0.24
-Nodes (9): fetchFunSettings(), fetchWordleSettings(), FunSettings, updateFunSettings(), updateWordleSettings(), WordleSettings, FunPage(), emptySettings (+1 more)
+Nodes (8): build(), FakeSupplyCog, test_close_and_cancel(), test_create_supply(), test_create_supply_validation(), test_overview_empty(), test_overview_with_data(), test_requires_auth()
 
 ### Community 121 - "test_members_list.py"
-Cohesion: 0.15
-Nodes (29): add_round_event(), connect(), count_players(), create_ability_announcement(), get_ability_announcement(), get_active_game_in_channel(), get_db_path(), get_game_by_lobby_message() (+21 more)
+Cohesion: 0.16
+Nodes (28): get_player_by_token(), list_alive_players(), list_players(), Row, Полная перезапись карточки — используется админ-панелью при ручном применении сп, _row_to_player(), set_player_character(), bunker_apply_ability() (+20 more)
+
+### Community 122 - "test_member_detail.py"
+Cohesion: 0.27
+Nodes (9): build(), FakeAutoModCog, isolated_db(), test_create_warn(), test_create_warn_validation(), test_create_warn_without_cog_still_succeeds(), test_delete_warn(), test_list_warns_empty() (+1 more)
 
 ### Community 123 - "DocsToc.tsx"
-Cohesion: 0.24
-Nodes (23): build(), FakeInteraction, Тесты кога Вордла — вызов через .callback()/методы кога, паттерн test_xp_command, test_announce_nobody_played(), test_announce_nobody_won_reveals_word(), test_announce_with_winner_crowns_best_and_streak(), test_commands_disabled_module(), test_daily_guess_edits_existing_live_card() (+15 more)
+Cohesion: 0.25
+Nodes (22): build(), FakeInteraction, Тесты кога Вордла — вызов через .callback()/методы кога, паттерн test_xp_command, test_announce_nobody_played(), test_announce_nobody_won_reveals_word(), test_announce_with_winner_crowns_best_and_streak(), test_commands_disabled_module(), test_daily_guess_edits_existing_live_card() (+14 more)
 
 ### Community 124 - "init"
 Cohesion: 0.39
 Nodes (7): build(), _StubForbidden, test_grant_forbidden_maps_to_403(), test_grant_role_calls_add_roles(), test_grant_unknown_or_unassignable_role_404(), test_revoke_role_calls_remove_roles(), test_roles_lists_only_assignable_sorted()
 
 ### Community 125 - "Request"
-Cohesion: 0.10
-Nodes (24): get_settings(), is_suspicious_account(), JoinTracker, load_config(), datetime, Ядро модуля «Антирейд»: детект всплеска входов новых участников.  Без импорта di, Добавить вход и вернуть текущее число подозрительных входов в окне., Настройки модуля с дефолтами. enabled=False по умолчанию — модуль не     активен (+16 more)
+Cohesion: 0.14
+Nodes (14): is_suspicious_account(), JoinTracker, datetime, Ядро модуля «Антирейд»: детект всплеска входов новых участников.  Без импорта di, Добавить вход и вернуть текущее число подозрительных входов в окне., Считается ли аккаунт «свежим» (подозрительным) на момент входа., Скользящее окно недавних «подозрительных» входов на один сервер.      Чистая стр, Тесты ядра антирейда: настройки (выключен по умолчанию), детект свежих аккаунтов (+6 more)
 
 ### Community 126 - "Response"
 Cohesion: 0.31
@@ -688,7 +699,7 @@ Cohesion: 0.16
 Nodes (13): test_load_events_reads_fresh_after_external_write(), test_load_events_returns_empty_events_dict_when_file_missing(), test_save_then_load_roundtrips(), create_participation_view(), EventManageSelect, EventNotifyModal, Events, load_events() (+5 more)
 
 ### Community 132 - "test_supply_routes.py"
-Cohesion: 0.16
+Cohesion: 0.18
 Nodes (39): build(), cosmetics_shop_config(), FakeInteraction, Тесты кога «Экономика»: /баланс /перевести /монеты-топ /магазин — через .callbac, shop_config(), test_balance_disabled_module(), test_balance_shows_amount_and_rank(), test_cosmetics_command_empty() (+31 more)
 
 ### Community 133 - "PublicMafiaAction.tsx"
@@ -698,6 +709,10 @@ Nodes (10): fetchPublicMafia(), MafiaPublicState, submitMafiaAction(), submitMaf
 ### Community 134 - "wordle.py"
 Cohesion: 0.43
 Nodes (6): build(), test_get_defaults(), test_put_allows_unlimited_max_bet(), test_put_then_get(), test_put_validation(), test_requires_login()
+
+### Community 135 - "test_warns_routes.py"
+Cohesion: 0.24
+Nodes (9): fetchFunSettings(), fetchWordleSettings(), FunSettings, updateFunSettings(), updateWordleSettings(), WordleSettings, FunPage(), emptySettings (+1 more)
 
 ### Community 136 - "Supply.tsx"
 Cohesion: 0.20
@@ -716,27 +731,27 @@ Cohesion: 0.48
 Nodes (5): build(), test_get_defaults_disabled(), test_put_then_get(), test_put_validation(), test_requires_login()
 
 ### Community 140 - "format_voice_time"
-Cohesion: 0.21
-Nodes (12): build(), Test that partial failures during deactivate are logged with Ошибки field in emb, Test that activate returns 503 when guild is unavailable., Test that partial failures are logged with Ошибки field in embed., _StubForbidden, test_activate_guild_unavailable_503(), test_activate_then_status_then_deactivate(), test_activate_with_partial_errors_logs_error_field() (+4 more)
+Cohesion: 0.26
+Nodes (10): build(), Test that partial failures during deactivate are logged with Ошибки field in emb, Test that partial failures are logged with Ошибки field in embed., _StubForbidden, test_activate_then_status_then_deactivate(), test_activate_with_partial_errors_logs_error_field(), test_deactivate_with_partial_errors_logs_error_field(), test_deactivate_without_backup_409() (+2 more)
 
 ### Community 141 - "test_feedback_panel_routes.py"
-Cohesion: 0.23
-Nodes (8): build(), FakeFollowup, FakeInteraction, FakeResponse, Тесты /ранг: подтягивание экипированной косметики (рамка/титул) из магазина., test_rank_command_ignores_unequipped_owned_cosmetics(), test_rank_command_passes_equipped_frame_and_title(), test_rank_command_without_cosmetics_passes_none()
+Cohesion: 0.35
+Nodes (10): build(), test_leaderboard_guild_unavailable(), test_leaderboard_keeps_members_who_left(), test_leaderboard_pagination_over_merged_roster(), test_leaderboard_search_filters_by_display_name(), test_leaderboard_shows_every_guild_member_even_without_xp(), test_leaderboard_sorted_by_xp_desc(), test_put_settings_rejects_bad_voice_base_and_multipliers() (+2 more)
 
 ### Community 142 - "DocsSearch.tsx"
 Cohesion: 0.20
 Nodes (14): Тесты рендера карточки ранга: базовый рендер, кастомная рамка и титул., test_hex_to_rgb(), test_render_rank_card_long_title_does_not_crash(), test_render_rank_card_with_custom_frame_and_title(), test_render_rank_card_without_cosmetics_produces_png(), _background(), _circle_avatar(), _font() (+6 more)
 
-### Community 144 - "FakeResponse"
-Cohesion: 0.48
-Nodes (5): build(), test_get_defaults(), test_put_then_get(), test_put_validation(), test_requires_login()
+### Community 143 - "FakeResponse"
+Cohesion: 0.27
+Nodes (10): get_settings(), load_config(), Настройки модуля с дефолтами. enabled=False по умолчанию — модуль не     активен, save_config(), antiraid_get(), antiraid_put(), Request, Response (+2 more)
 
 ### Community 145 - "test_news_routes.py"
 Cohesion: 0.21
 Nodes (10): fetchMafiaGames(), fetchMafiaSettings(), MafiaGameSummary, MafiaSettings, updateMafiaSettings(), MafiaPage(), PHASE_LABEL, Tab (+2 more)
 
 ### Community 146 - "test_auto_roles_routes.py"
-Cohesion: 0.27
+Cohesion: 0.25
 Nodes (10): Request, Response, wordle_get(), wordle_put(), test_settings_defaults(), test_settings_roundtrip(), get_settings(), load_config() (+2 more)
 
 ### Community 147 - "test_supply_routes.py"
@@ -756,8 +771,8 @@ Cohesion: 0.33
 Nodes (5): Lockdown, Choice, Guild, Interaction, setup()
 
 ### Community 152 - "FakeVoiceChannel"
-Cohesion: 0.32
-Nodes (16): build(), FakeInteraction, Тесты команд /xp (add/set/clear) и /leaders в XPCog — вызов через .callback(), т, test_leaders_disabled_module(), test_leaders_empty_leaderboard(), test_leaders_respects_limit(), test_leaders_shows_ranked_members(), test_xp_add_disabled_module() (+8 more)
+Cohesion: 0.18
+Nodes (18): build(), FakeFollowup, FakeInteraction, FakeResponse, Тесты команд /xp (add/set/clear) и /leaders в XPCog — вызов через .callback(), т, test_leaders_disabled_module(), test_leaders_empty_leaderboard(), test_leaders_respects_limit() (+10 more)
 
 ### Community 153 - "AntiRaidCog"
 Cohesion: 0.31
@@ -768,27 +783,51 @@ Cohesion: 0.39
 Nodes (7): build(), test_get_defaults(), test_put_auto_emoji_roundtrip_and_validation(), test_put_then_get(), test_put_validation(), test_put_zero_disables_punishment_and_cooldown(), test_requires_auth()
 
 ### Community 155 - "lockdown.py"
-Cohesion: 0.39
+Cohesion: 0.36
 Nodes (8): lockdown_activate(), lockdown_deactivate(), lockdown_status(), _log(), Request, Response, get_mention_exempt_ids(), get_mentionable_exempt_ids()
 
+### Community 156 - "require_dashboard_access"
+Cohesion: 0.33
+Nodes (6): Request, Response, voice_stats(), test_format_voice_time(), format_voice_time(), Человекочитаемое время войса: «2 нед. 1 д. 3 ч.»
+
+### Community 157 - "SupplyView"
+Cohesion: 0.40
+Nodes (4): Button, Interaction, Persistent view: кнопки работают и после перезапуска бота., SupplyView
+
+### Community 158 - "config.py"
+Cohesion: 0.47
+Nodes (8): _check_channel(), _check_role(), get_config(), Request, Response, update_config(), _validate_relations(), _validate_structure()
+
 ### Community 159 - "test_member_detail.py"
+Cohesion: 0.52
+Nodes (6): build_client_app(), test_invalid_pagination_returns_400(), test_lists_members_with_pagination_fields(), test_pagination_slices_and_caps_page_size(), test_requires_auth(), test_search_matches_name_and_display_name_case_insensitive()
+
+### Community 160 - "DocsSearch.tsx"
+Cohesion: 0.40
+Nodes (5): init(), isolated_state(), isolated_db(), isolated_state(), isolated_state()
+
+### Community 161 - "auto_roles.py"
 Cohesion: 0.48
-Nodes (5): build(), test_get_defaults(), test_put_then_get(), test_put_validation(), test_requires_auth()
+Nodes (6): get_auto_roles(), _get_guild_or_none(), _is_role_assignable(), Request, Response, update_auto_roles()
+
+### Community 163 - "test_feedback_panel_routes.py"
+Cohesion: 0.52
+Nodes (6): build(), test_publish_feedback_panel_404_when_channel_missing(), test_publish_feedback_panel_attributes_to_session_moderator_not_body(), test_publish_feedback_panel_rejects_missing_channel_id(), test_publish_feedback_panel_requires_auth(), test_publish_feedback_panel_success()
 
 ## Knowledge Gaps
 - **247 isolated node(s):** `$schema`, `typescript`, `oxc`, `react/rules-of-hooks`, `warn` (+242 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `SelectOption` connect `.__init__` to `load_events`, `Bunker API Client`?**
-  _High betweenness centrality (0.227) - this node is a cross-community bridge._
+  _High betweenness centrality (0.238) - this node is a cross-community bridge._
 - **Why does `load_events()` connect `load_events` to `events.py`, `events.py`, `Test Fake Bot`, `Tournament Brackets`, `Event Publish Tests`?**
-  _High betweenness centrality (0.206) - this node is a cross-community bridge._
-- **Why does `FakeGuild` connect `Test Fake Bot` to `Supply Module`, `Dashboard App Bootstrap`, `Test Fake Channels`, `test_supply_routes.py`, `Automod Route Tests`, `wordle.py`, `test_warns_routes.py`, `Giveaways Routes`, `Automod Cog`, `test_wordle_routes.py`, `format_voice_time`, `Test Fake Members`, `Daily Topic Module`, `FakeResponse`, `FakeResponse`, `Moderation Routes`, `test_feedback_panel_routes.py`, `Mass Role Assignment`, `test_mass_role_jobs.py`, `Embed Builder Routes`, `test_wordle_routes.py`, `FakeVoiceChannel`, `SupplyView`, `Voice Rooms Routes`, `test_member_detail.py`, `Feedback API Client`, `Lockdown Routes`, `Events Route Tests`, `Mafia Public Route Tests`, `Event Publish Tests`, `test_feedback_routes.py`, `test_feedback_category_routes.py`, `Supply.tsx`, `MassAssignModal.tsx`, `test_config_routes.py`, `reaction_roles.py`, `Leaderboard.tsx`, `events.py`, `ChannelInfo`, `MafiaLobbyView`, `test_auto_roles_routes.py`, `Giveaways.tsx`, `test_mafia_routes.py`, `config.py`, `FakeAsset`, `xp_card.py`, `test_member_detail.py`, `DocsToc.tsx`, `init`, `Response`, `Button.tsx`?**
-  _High betweenness centrality (0.155) - this node is a cross-community bridge._
+  _High betweenness centrality (0.217) - this node is a cross-community bridge._
+- **Why does `FakeGuild` connect `Test Fake Bot` to `Dashboard App Bootstrap`, `Test Fake Channels`, `test_supply_routes.py`, `Automod Route Tests`, `wordle.py`, `Giveaways Routes`, `test_wordle_routes.py`, `format_voice_time`, `Test Fake Members`, `Daily Topic Module`, `test_feedback_panel_routes.py`, `FakeResponse`, `Moderation Routes`, `Mass Role Assignment`, `test_mass_role_jobs.py`, `Embed Builder Routes`, `test_wordle_routes.py`, `FakeVoiceChannel`, `SupplyView`, `Voice Rooms Routes`, `test_member_detail.py`, `Feedback API Client`, `test_antiraid_routes.py`, `test_feedback_panel_routes.py`, `Lockdown Routes`, `Events Route Tests`, `Mafia Public Route Tests`, `Event Publish Tests`, `Anti-Spam Cog`, `test_feedback_routes.py`, `Supply.tsx`, `MassAssignModal.tsx`, `test_config_routes.py`, `reaction_roles.py`, `Leaderboard.tsx`, `events.py`, `ChannelInfo`, `test_auto_roles_routes.py`, `Giveaways.tsx`, `test_mafia_routes.py`, `config.py`, `FakeAsset`, `xp_card.py`, `auto_roles.py`, `DocsSearch.tsx`, `test_member_detail.py`, `DocsToc.tsx`, `init`, `Response`, `Button.tsx`?**
+  _High betweenness centrality (0.165) - this node is a cross-community bridge._
 - **Are the 33 inferred relationships involving `FakeMember` (e.g. with `DashboardConfig` and `_StubForbidden`) actually correct?**
   _`FakeMember` has 33 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 33 inferred relationships involving `FakeGuild` (e.g. with `DashboardConfig` and `_StubForbidden`) actually correct?**

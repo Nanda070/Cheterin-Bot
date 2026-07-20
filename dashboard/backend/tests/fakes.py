@@ -242,6 +242,7 @@ class FakeMember:
         self.id = member_id
         self.name = name
         self.display_name = display_name if display_name is not None else name
+        self.nick = display_name
         self.mention = f"<@{member_id}>"
         self.bot = bot
         self.joined_at = datetime(2025, 1, 15, tzinfo=timezone.utc)
@@ -256,6 +257,9 @@ class FakeMember:
         self.send_calls = []
         self.send_raises = None
         self._timed_out_until = None
+
+    def __str__(self) -> str:
+        return self.name
 
     async def _record(self, action, **kwargs):
         if self.action_raises:
@@ -278,6 +282,10 @@ class FakeMember:
     def is_timed_out(self) -> bool:
         return self._timed_out_until is not None
 
+    @property
+    def timed_out_until(self):
+        return self._timed_out_until
+
     async def remove_roles(self, role, **kwargs):
         await self._record("remove_roles", role=role, **kwargs)
 
@@ -298,6 +306,25 @@ class FakeVoiceChannel:
     async def delete(self, reason=None):
         self.deleted = True
         self.delete_reason = reason
+
+
+class FakeAuditLogExtra:
+    def __init__(self, channel=None):
+        self.channel = channel
+
+
+class FakeAuditLogEntry:
+    """Одна запись аудита для guild.audit_logs() — только то, что нужно
+    serverlog.py._recent_audit_entry(): action/target/user/reason/created_at,
+    плюс extra.channel для voice move/disconnect."""
+
+    def __init__(self, user, action=None, reason=None, target=None, created_at=None, channel=None):
+        self.user = user
+        self.action = action
+        self.reason = reason
+        self.target = target
+        self.created_at = created_at if created_at is not None else datetime.now(timezone.utc)
+        self.extra = FakeAuditLogExtra(channel=channel)
 
 
 class FakeGuild:
@@ -326,6 +353,21 @@ class FakeGuild:
         self.unban_calls = []
         self.ban_raises = None
         self.unban_raises = None
+        self.audit_log_entries: list = []
+        self.audit_logs_raises = None
+
+    def audit_logs(self, action=None, limit=100):
+        raises = self.audit_logs_raises
+        entries = [e for e in self.audit_log_entries if action is None or e.action is None or e.action == action]
+        entries = entries[:limit]
+
+        async def _iterator():
+            if raises:
+                raise raises
+            for entry in entries:
+                yield entry
+
+        return _iterator()
 
     def get_member(self, user_id):
         return next((m for m in self.members if m.id == user_id), None)

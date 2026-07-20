@@ -200,8 +200,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "dashboard/backend/tests/fakes.py": {
-    "mtime": 1784434287.376183,
-    "ast_hash": "a1ad57ed77568b159f6457bec5edd9cc",
+    "mtime": 1784517549.1748235,
+    "ast_hash": "ed6fda6cb407da02d087cd40f52724dc",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_access.py": {
@@ -775,8 +775,8 @@
     "semantic_hash": "1a9dd5a8a75516c0bdeb533971691f86"
   },
   "dashboard/frontend/src/pages/Docs.tsx": {
-    "mtime": 1784454622.3922007,
-    "ast_hash": "402a23f9a54510edb22e2d0102ee3934",
+    "mtime": 1784517648.7843225,
+    "ast_hash": "be6b970ad71397aa16cb55d2847e1c2a",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/EmbedBuilder.test.tsx": {
@@ -1185,9 +1185,9 @@
     "semantic_hash": "7fabe3a4bc51ff48ff4cdf19809aa542"
   },
   "serverlog.py": {
-    "mtime": 1784232485.8172786,
-    "ast_hash": "c6683a3b63249f8ce9923d69be52bf1d",
-    "semantic_hash": "c6683a3b63249f8ce9923d69be52bf1d"
+    "mtime": 1784517320.6182358,
+    "ast_hash": "66692424502728e71c374a646f45891e",
+    "semantic_hash": ""
   },
   "spam.py": {
     "mtime": 1784063934.0,
@@ -1807,6 +1807,11 @@
   "verification_core.py": {
     "mtime": 1784433954.5423784,
     "ast_hash": "22d6aa1797d23fc0c157f6803a946d0c",
+    "semantic_hash": ""
+  },
+  "dashboard/backend/tests/test_serverlog_cog.py": {
+    "mtime": 1784517568.8302832,
+    "ast_hash": "0ce3e5d8c11901d00ae8c26784318612",
     "semantic_hash": ""
   }
 }
