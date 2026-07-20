@@ -21,8 +21,10 @@ from discord.ext import commands
 
 import blackjack_core as bj
 import casino_core
+import casino_db
 import economy_core
 import economy_db
+from casino import check_loss_roles
 
 logger = logging.getLogger("blackjack")
 
@@ -158,7 +160,16 @@ class BlackjackView(discord.ui.View):
     ) -> None:
         """Финализировать партию: начислить, обновить кулдаун, обновить embed."""
         if prize > 0:
-            economy_db.add(self.player.id, prize, f"blackjack_{result.value}")
+            economy_db.add(self.player.id, prize, f"blackjack_{result.name.lower()}")
+
+        db_result = "win"
+        if result == bj.GameResult.LOSE:
+            db_result = "lose"
+        elif result == bj.GameResult.PUSH:
+            db_result = "push"
+        
+        casino_db.record_bj(self.player.id, db_result)
+        await check_loss_roles(interaction, settings)
 
         # Кулдаун стартует с момента окончания партии
         self.cog._cooldowns[self.player.id] = time.monotonic() + settings["cooldown_sec"]

@@ -6,6 +6,7 @@ import aiohttp
 from aiohttp import web
 
 import bunker_db
+import casino_db
 import family_db
 import mafia_db
 import stats_db
@@ -70,6 +71,7 @@ def create_app(
     frontend_dist: Path | None = None,
 ) -> web.Application:
     stats_db.init()
+    casino_db.init()
     family_db.init()
     mafia_db.init()
     warns_db.db_init()

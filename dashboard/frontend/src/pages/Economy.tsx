@@ -1,13 +1,10 @@
 import { Coins, Plus, Trash } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
-  fetchCasinoSettings,
   fetchEconomySettings,
   fetchEconomyTop,
   setEconomyBalance,
-  updateCasinoSettings,
   updateEconomySettings,
-  type CasinoSettings,
   type EconomySettings,
   type EconomyTopEntry,
 } from '../api/client'
@@ -20,7 +17,6 @@ const inputClass =
 
 export function EconomyPage() {
   const [settings, setSettings] = useState<EconomySettings | null>(null)
-  const [casino, setCasino] = useState<CasinoSettings | null>(null)
   const [top, setTop] = useState<EconomyTopEntry[] | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
@@ -37,13 +33,10 @@ export function EconomyPage() {
     fetchEconomySettings()
       .then(setSettings)
       .catch(() => setError('Не удалось загрузить настройки модуля «Экономика»'))
-    fetchCasinoSettings()
-      .then(setCasino)
-      .catch(() => setError('Не удалось загрузить настройки казино'))
     reloadTop()
   }, [])
 
-  if (!settings || !casino) {
+  if (!settings) {
     return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
   }
 
@@ -54,8 +47,6 @@ export function EconomyPage() {
     try {
       const updated = await updateEconomySettings(settings)
       setSettings(updated)
-      const updatedCasino = await updateCasinoSettings(casino)
-      setCasino(updatedCasino)
       setSaved('Сохранено.')
     } catch {
       setError('Не удалось сохранить настройки — проверьте поля')
@@ -212,76 +203,6 @@ export function EconomyPage() {
         </div>
       </Card>
 
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">🎰 Казино — /слоты, /монетка</h2>
-          <Toggle
-            checked={casino.enabled}
-            onChange={(v) => setCasino({ ...casino, enabled: v })}
-            label={casino.enabled ? 'Включено' : 'Выключено'}
-          />
-        </div>
-        <p className="text-sm text-muted">
-          Слоты (3 барабана, совпадения дают выигрыш) и монетка (орёл/решка). Обе команды делят один кулдаун на
-          игрока. Требует включённой «Экономики» выше.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="casino-edge">
-              Преимущество казино, % (0–50; срезает выигрыш на этот процент)
-            </label>
-            <input
-              id="casino-edge"
-              type="number"
-              min={0}
-              max={50}
-              value={casino.house_edge_percent}
-              onChange={(e) => setCasino({ ...casino, house_edge_percent: Number(e.target.value) })}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="casino-cooldown">
-              Кулдаун на игрока, сек (0–300, общий для /слоты и /монетка)
-            </label>
-            <input
-              id="casino-cooldown"
-              type="number"
-              min={0}
-              max={300}
-              value={casino.cooldown_sec}
-              onChange={(e) => setCasino({ ...casino, cooldown_sec: Number(e.target.value) })}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="casino-min-bet">
-              Минимальная ставка
-            </label>
-            <input
-              id="casino-min-bet"
-              type="number"
-              min={1}
-              value={casino.min_bet}
-              onChange={(e) => setCasino({ ...casino, min_bet: Number(e.target.value) })}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="casino-max-bet">
-              Максимальная ставка (0 — без лимита)
-            </label>
-            <input
-              id="casino-max-bet"
-              type="number"
-              min={0}
-              value={casino.max_bet}
-              onChange={(e) => setCasino({ ...casino, max_bet: Number(e.target.value) })}
-              className={inputClass}
-            />
-          </div>
-        </div>
-      </Card>
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">

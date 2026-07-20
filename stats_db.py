@@ -118,6 +118,14 @@ def xp_leaderboard(limit: int = 100, offset: int = 0):
         ).fetchall()
 
 
+def voice_leaderboard(limit: int = 1000, offset: int = 0):
+    """Лидеры по суммарному времени в голосовых каналах."""
+    with closing(connect()) as conn:
+        return conn.execute(
+            "SELECT * FROM xp_members ORDER BY voice_seconds DESC LIMIT ? OFFSET ?", (limit, offset)
+        ).fetchall()
+
+
 def xp_all_members():
     """Все строки xp_members без пагинации — для мёржа с полным ростером гильдии."""
     with closing(connect()) as conn:

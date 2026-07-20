@@ -33,6 +33,7 @@ import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
 import { BunkerPage } from './pages/Bunker'
 import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
 import { FunPage } from './pages/Fun'
+import { CasinoPage } from './pages/Casino'
 import { EconomyPage } from './pages/Economy'
 import { SuperAdminPage } from './pages/SuperAdmin'
 import { DailyTopicPage } from './pages/DailyTopic'
@@ -83,6 +84,7 @@ function App() {
             <Route path="news" element={<NewsPage />} />
             <Route path="levels" element={<LevelsPage />} />
             <Route path="economy" element={<EconomyPage />} />
+            <Route path="casino" element={<CasinoPage />} />
             <Route path="streams" element={<StreamsPage />} />
             <Route path="serverlog" element={<ServerLogPage />} />
             <Route path="voice-stats" element={<VoiceStatsPage />} />

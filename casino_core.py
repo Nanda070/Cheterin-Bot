@@ -77,6 +77,7 @@ def get_settings() -> dict:
         "cooldown_sec": int(data.get("cooldown_sec", DEFAULT_COOLDOWN_SEC)),
         "min_bet": int(data.get("min_bet", DEFAULT_MIN_BET)),
         "max_bet": int(data.get("max_bet", DEFAULT_MAX_BET)),
+        "loss_roles": data.get("loss_roles", []),
     }
 
 

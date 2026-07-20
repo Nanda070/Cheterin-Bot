@@ -10,9 +10,11 @@
 события через точку.
 """
 
+import asyncio
 import json
 import logging
 import os
+import random
 
 import discord
 from discord import app_commands
@@ -203,6 +205,8 @@ class ServerLog(commands.Cog):
         channel = self.bot.get_channel(channel_id)
         if channel is None:
             return
+        # Небольшая случайная задержка (0.5–2.5 с), чтобы логи не появлялись мгновенно
+        await asyncio.sleep(random.uniform(0.5, 2.5))
         try:
             await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         except discord.HTTPException as exc:

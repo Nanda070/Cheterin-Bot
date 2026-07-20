@@ -9,6 +9,7 @@ import {
   ClipboardText,
   Coins,
   Crown,
+  DiceThree,
   FilmSlate,
   GearSix,
   Headset,
@@ -57,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Рейтинг участников', icon: ChartBar, to: '/levels' },
       { label: 'Экономика', icon: Coins, to: '/economy' },
+      { label: 'Казино', icon: DiceThree, to: '/casino' },
       { label: 'Статистика войса', icon: ChartLine, to: '/voice-stats' },
     ],
   },

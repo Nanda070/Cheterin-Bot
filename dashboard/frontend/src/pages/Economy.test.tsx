@@ -20,24 +20,12 @@ const emptySettings: client.EconomySettings = {
   shop_items: [],
 }
 
-const emptyCasino: client.CasinoSettings = {
-  enabled: false,
-  house_edge_percent: 5,
-  cooldown_sec: 5,
-  min_bet: 10,
-  max_bet: 5000,
-}
-
-function mockCasino() {
-  vi.spyOn(client, 'fetchCasinoSettings').mockResolvedValue(emptyCasino)
-}
 
 describe('EconomyPage', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('renders settings cards and top', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([
       { user_id: '20', display_name: 'Rich', balance: 300 },
     ])
@@ -46,14 +34,11 @@ describe('EconomyPage', () => {
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByText('Валюта и начисление')).toBeInTheDocument()
     expect(screen.getByText(/Магазин — \/магазин/)).toBeInTheDocument()
-    expect(screen.getByText(/Казино/)).toBeInTheDocument()
     expect(await screen.findByText('Rich')).toBeInTheDocument()
   })
 
   it('saves updated settings', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateCasinoSettings').mockResolvedValue(emptyCasino)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi
       .spyOn(client, 'updateEconomySettings')
@@ -72,8 +57,6 @@ describe('EconomyPage', () => {
 
   it('adds and removes shop items', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateCasinoSettings').mockResolvedValue(emptyCasino)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
     render(<EconomyPage />)
@@ -95,8 +78,6 @@ describe('EconomyPage', () => {
 
   it('adds a title cosmetic item by switching the type selector', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateCasinoSettings').mockResolvedValue(emptyCasino)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
     render(<EconomyPage />)
@@ -118,8 +99,6 @@ describe('EconomyPage', () => {
 
   it('adds a frame_color cosmetic item', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateCasinoSettings').mockResolvedValue(emptyCasino)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
     render(<EconomyPage />)
@@ -140,7 +119,6 @@ describe('EconomyPage', () => {
 
   it('applies balance adjustment from top list', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([
       { user_id: '20', display_name: 'Rich', balance: 300 },
     ])
@@ -153,29 +131,8 @@ describe('EconomyPage', () => {
     await waitFor(() => expect(setSpy).toHaveBeenCalledWith('20', 50))
   })
 
-  it('renders and saves casino settings', async () => {
-    vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
-    vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
-    const casinoSpy = vi
-      .spyOn(client, 'updateCasinoSettings')
-      .mockResolvedValue({ ...emptyCasino, enabled: true, house_edge_percent: 10 })
-    render(<EconomyPage />)
-
-    fireEvent.click(await screen.findByLabelText('Выключено'))
-    fireEvent.change(screen.getByLabelText(/Преимущество казино/), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
-
-    await waitFor(() =>
-      expect(casinoSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, house_edge_percent: 10 })),
-    )
-  })
-
   it('renders and saves the daily bonus card', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
-    mockCasino()
-    vi.spyOn(client, 'updateCasinoSettings').mockResolvedValue(emptyCasino)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi
       .spyOn(client, 'updateEconomySettings')
@@ -196,7 +153,6 @@ describe('EconomyPage', () => {
 
   it('shows an error when loading fails', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockRejectedValue(new Error('fail'))
-    mockCasino()
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     render(<EconomyPage />)
     expect(await screen.findByText('Не удалось загрузить настройки модуля «Экономика»')).toBeInTheDocument()

@@ -1740,12 +1740,19 @@ export function setEconomyBalance(userId: string, balance: number): Promise<{ us
 
 // ────────────────────────── Казино ──────────────────────────
 
+export interface CasinoLossRole {
+  game: 'slots' | 'bj' | 'total'
+  threshold: number
+  role_id: string
+}
+
 export interface CasinoSettings {
   enabled: boolean
   house_edge_percent: number
   cooldown_sec: number
   min_bet: number
   max_bet: number
+  loss_roles: CasinoLossRole[]
 }
 
 export function fetchCasinoSettings(): Promise<CasinoSettings> {
@@ -1754,6 +1761,27 @@ export function fetchCasinoSettings(): Promise<CasinoSettings> {
 
 export function updateCasinoSettings(settings: CasinoSettings): Promise<CasinoSettings> {
   return apiFetch('/api/casino', jsonInit('PUT', settings))
+}
+
+export interface CasinoLeaderboardEntry {
+  user_id: string
+  username: string
+  avatar: string | null
+  slots_losses: number
+  slots_wins: number
+  bj_losses: number
+  bj_wins: number
+}
+
+export interface CasinoLeaderboardResponse {
+  entries: CasinoLeaderboardEntry[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export function fetchCasinoLeaderboard(mode: 'slots' | 'bj' | 'total', type: 'wins' | 'losses', page: number): Promise<CasinoLeaderboardResponse> {
+  return apiFetch(`/api/casino/leaderboard?mode=${mode}&type=${type}&page=${page}`)
 }
 
 // ────────────────────────── Антирейд ──────────────────────────
