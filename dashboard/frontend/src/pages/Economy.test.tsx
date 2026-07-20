@@ -87,7 +87,7 @@ describe('EconomyPage', () => {
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          shop_items: [expect.objectContaining({ name: 'VIP', role_id: 777, price: 500 })],
+          shop_items: [expect.objectContaining({ name: 'VIP', role_id: '777', price: 500 })],
         }),
       ),
     )

@@ -54,16 +54,20 @@ def save_config(data: dict) -> None:
 
 def get_settings() -> dict:
     """Настройки модуля с дефолтами. enabled=False по умолчанию — модуль не
-    активен, пока администратор явно не включит его в дашборде."""
+    активен, пока администратор явно не включит его в дашборде.
+
+    unverified_role_id/verified_role_id — строки, не числа: Discord ID
+    (snowflake) — 18-19-значное число, превышает Number.MAX_SAFE_INTEGER во
+    фронтенде, JS-числом его хранить нельзя (тихо портится при вводе)."""
     data = load_config()
     return {
         "enabled": bool(data.get("enabled", False)),
-        "unverified_role_id": int(data.get("unverified_role_id", 0)),
-        "verified_role_id": int(data.get("verified_role_id", 0)),
+        "unverified_role_id": str(data.get("unverified_role_id", "") or ""),
+        "verified_role_id": str(data.get("verified_role_id", "") or ""),
         "welcome_text": str(data.get("welcome_text", DEFAULT_WELCOME_TEXT)),
     }
 
 
 def is_configured(settings: dict) -> bool:
     """Достаточно ли настроек, чтобы кнопка верификации могла отработать."""
-    return settings["verified_role_id"] > 0
+    return bool(settings["verified_role_id"])

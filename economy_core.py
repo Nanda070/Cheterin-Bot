@@ -78,10 +78,13 @@ def _normalize_shop_item(item: dict) -> dict:
     item_type = item.get("type", "role")
     if item_type not in SHOP_ITEM_TYPES:
         item_type = "role"
+    # role_id — строка: Discord ID (snowflake) — 18-19-значное число, превышает
+    # Number.MAX_SAFE_INTEGER во фронтенде; JSON/JS-числом его хранить нельзя,
+    # иначе значение тихо портится при вводе (см. wordle_core.channel_id).
     return {
         "id": str(item.get("id", "")),
         "type": item_type,
-        "role_id": int(item.get("role_id", 0)),
+        "role_id": str(item.get("role_id", "") or ""),
         "color_hex": str(item.get("color_hex", "")),
         "title_text": str(item.get("title_text", "")),
         "price": int(item.get("price", 0)),

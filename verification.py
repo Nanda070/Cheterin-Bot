@@ -51,7 +51,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
         if not settings["enabled"] or not settings["unverified_role_id"]:
             return  # модуль выключен (или роль не настроена) — никакого эффекта
 
-        role = member.guild.get_role(settings["unverified_role_id"])
+        role = member.guild.get_role(int(settings["unverified_role_id"]))
         if role is None:
             return
         try:
@@ -70,7 +70,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
 
         guild = interaction.guild
         member = interaction.user
-        verified_role = guild.get_role(settings["verified_role_id"])
+        verified_role = guild.get_role(int(settings["verified_role_id"]))
         if verified_role is None:
             return await interaction.response.send_message(
                 "Роль верификации не найдена на сервере — сообщите админам.", ephemeral=True
@@ -81,7 +81,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
         try:
             await member.add_roles(verified_role, reason="Верификация: подтверждение по кнопке")
             if settings["unverified_role_id"]:
-                unverified_role = guild.get_role(settings["unverified_role_id"])
+                unverified_role = guild.get_role(int(settings["unverified_role_id"]))
                 if unverified_role is not None and any(r.id == unverified_role.id for r in member.roles):
                     await member.remove_roles(unverified_role, reason="Верификация пройдена")
         except discord.Forbidden:

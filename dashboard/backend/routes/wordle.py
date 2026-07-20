@@ -26,8 +26,10 @@ async def wordle_put(request: web.Request) -> web.Response:
     if not isinstance(body.get("enabled", False), bool):
         return web.json_response({"error": "invalid_enabled"}, status=400)
 
-    channel_id = body.get("channel_id", 0)
-    if not isinstance(channel_id, int) or isinstance(channel_id, bool) or channel_id < 0:
+    # Строка, не число: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+    # во фронтенде — числом его передавать нельзя, значение тихо портится при вводе.
+    channel_id = body.get("channel_id", "")
+    if not isinstance(channel_id, str) or (channel_id and not channel_id.isdigit()):
         return web.json_response({"error": "invalid_channel_id"}, status=400)
 
     announce_time = body.get("announce_time", wordle_core.DEFAULT_ANNOUNCE_TIME)

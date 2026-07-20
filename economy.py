@@ -223,19 +223,31 @@ class EconomyCog(commands.Cog):
             return await interaction.response.send_message("Магазин пока пуст — товары добавляются в дашборде.", ephemeral=True)
 
         balance = economy_db.get_balance(interaction.user.id)
-        lines = []
-        for item in items:
-            role = interaction.guild.get_role(item["role_id"]) if interaction.guild else None
-            role_text = role.mention if role else f"роль `{item['role_id']}` (не найдена)"
-            name = item["name"] or (role.name if role else "Товар")
-            lines.append(f"• **{name}** — {role_text}: {economy_core.format_amount(item['price'], settings)}")
+        lines = [self._shop_item_line(item, interaction.guild, settings) for item in items]
 
         embed = discord.Embed(
-            title="🛒 Магазин ролей",
+            title="🛒 Магазин",
             description="\n".join(lines) + f"\n\nВаш баланс: **{economy_core.format_amount(balance, settings)}**",
             color=discord.Color.gold(),
         )
         await interaction.response.send_message(embed=embed, view=ShopView(self, items), ephemeral=True)
+
+    def _shop_item_line(self, item: dict, guild: discord.Guild | None, settings: dict) -> str:
+        """Строка товара в /магазин — раньше пыталась резолвить role_id для
+        ЛЮБОГО товара (включая косметику без роли вообще), из-за чего рамки и
+        титулы всегда показывали «не найдена». Теперь ветвится по типу."""
+        price_text = economy_core.format_amount(item["price"], settings)
+        if item["type"] == "role":
+            role = guild.get_role(int(item["role_id"])) if guild and item["role_id"] else None
+            target = role.mention if role else f"роль `{item['role_id']}` (не найдена)"
+            name = item["name"] or (role.name if role else "Товар")
+        elif item["type"] == "frame_color":
+            target = f"рамка карточки `{item['color_hex']}`"
+            name = item["name"] or f"Рамка {item['color_hex']}"
+        else:  # title
+            target = f"титул «{item['title_text']}»"
+            name = item["name"] or f"Титул «{item['title_text']}»"
+        return f"• **{name}** — {target}: {price_text}"
 
     async def handle_purchase(self, interaction: discord.Interaction, item_id: str):
         settings = economy_core.get_settings()
@@ -253,7 +265,7 @@ class EconomyCog(commands.Cog):
 
     async def _purchase_role(self, interaction: discord.Interaction, item: dict, settings: dict):
         guild = interaction.guild
-        role = guild.get_role(item["role_id"]) if guild else None
+        role = guild.get_role(int(item["role_id"])) if guild and item["role_id"] else None
         if role is None:
             return await interaction.response.send_message("Роль товара не найдена на сервере — сообщите админам.", ephemeral=True)
         if any(r.id == role.id for r in interaction.user.roles):

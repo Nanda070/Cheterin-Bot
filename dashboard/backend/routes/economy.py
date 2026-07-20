@@ -75,7 +75,7 @@ async def economy_put(request: web.Request) -> web.Response:
         item = {
             "id": str(raw.get("id") or uuid.uuid4().hex[:8]),
             "type": item_type,
-            "role_id": 0,
+            "role_id": "",
             "color_hex": "",
             "title_text": "",
             "price": price,
@@ -83,8 +83,10 @@ async def economy_put(request: web.Request) -> web.Response:
         }
 
         if item_type == "role":
+            # Строка, не число: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+            # во фронтенде — числом его передавать нельзя, значение тихо портится.
             role_id = raw.get("role_id")
-            if not isinstance(role_id, int) or isinstance(role_id, bool) or role_id <= 0:
+            if not isinstance(role_id, str) or not role_id.isdigit() or int(role_id) <= 0:
                 return web.json_response({"error": "invalid_shop_item_role"}, status=400)
             item["role_id"] = role_id
         elif item_type == "frame_color":

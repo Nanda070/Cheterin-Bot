@@ -67,11 +67,14 @@ def save_config(data: dict) -> None:
 
 
 def get_settings() -> dict:
-    """Настройки модуля с дефолтами (выключен по умолчанию)."""
+    """Настройки модуля с дефолтами (выключен по умолчанию).
+
+    channel_id — строка, не число: Discord ID (snowflake) превышает
+    Number.MAX_SAFE_INTEGER во фронтенде, JS-числом его хранить нельзя."""
     data = load_config()
     return {
         "enabled": bool(data.get("enabled", False)),
-        "channel_id": int(data.get("channel_id", 0)),
+        "channel_id": str(data.get("channel_id", "") or ""),
         "announce_time": str(data.get("announce_time", DEFAULT_ANNOUNCE_TIME)),
     }
 

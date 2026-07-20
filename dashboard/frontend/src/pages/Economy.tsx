@@ -390,12 +390,12 @@ export function EconomyPage() {
             </div>
             {item.type === 'role' && (
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="ID роли"
                 aria-label={`ID роли товара ${index + 1}`}
-                min={1}
-                value={item.role_id || ''}
-                onChange={(e) => updateItem(index, { role_id: Number(e.target.value) })}
+                value={item.role_id}
+                onChange={(e) => updateItem(index, { role_id: e.target.value.replace(/\D/g, '') })}
                 className={`${inputClass} sm:max-w-xs`}
               />
             )}
@@ -440,7 +440,7 @@ export function EconomyPage() {
                 ...settings,
                 shop_items: [
                   ...settings.shop_items,
-                  { id: '', type: 'role', role_id: 0, color_hex: '', title_text: '', price: 100, name: '' },
+                  { id: '', type: 'role', role_id: '', color_hex: '', title_text: '', price: 100, name: '' },
                 ],
               })
             }

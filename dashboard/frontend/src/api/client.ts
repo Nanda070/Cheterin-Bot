@@ -1,4 +1,4 @@
-﻿export interface DashboardUser {
+export interface DashboardUser {
   id: string
   username: string
   avatar: string | null
@@ -1692,7 +1692,7 @@ export type ShopItemType = 'role' | 'frame_color' | 'title'
 export interface ShopItem {
   id: string
   type: ShopItemType
-  role_id: number
+  role_id: string
   color_hex: string
   title_text: string
   price: number

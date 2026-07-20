@@ -162,5 +162,15 @@
   "160": "DocsSearch.tsx",
   "161": "auto_roles.py",
   "162": "test_antiraid_routes.py",
-  "163": "test_feedback_panel_routes.py"
+  "163": "test_feedback_panel_routes.py",
+  "164": "Guild",
+  "165": "GuildChannel",
+  "166": "Interaction",
+  "167": "Invite",
+  "168": "Member",
+  "169": "Message",
+  "170": "Role",
+  "171": "Thread",
+  "172": "User",
+  "173": "VoiceState"
 }

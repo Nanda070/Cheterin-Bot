@@ -198,7 +198,7 @@ class WordleCog(commands.Cog):
                 pass  # сообщение удалили — публикуем заново ниже
 
         settings = wordle_core.get_settings()
-        channel = self.bot.get_channel(settings["channel_id"]) if settings["channel_id"] else None
+        channel = self.bot.get_channel(int(settings["channel_id"])) if settings["channel_id"] else None
         if channel is None:
             channel = interaction.channel
         if channel is None or not hasattr(channel, "send"):
@@ -322,7 +322,7 @@ class WordleCog(commands.Cog):
             if wordle_db.get_last_announced_day() >= day_no:
                 return
 
-            channel = self.bot.get_channel(settings["channel_id"])
+            channel = self.bot.get_channel(int(settings["channel_id"]))
             if channel is None:
                 return
 

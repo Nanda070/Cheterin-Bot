@@ -162,12 +162,5 @@
   "160": "DocsSearch.tsx",
   "161": "auto_roles.py",
   "162": "test_antiraid_routes.py",
-  "163": "test_feedback_panel_routes.py",
-  "164": "test_member_detail.py",
-  "165": "FakePermissions",
-  "166": "DocsToc.tsx",
-  "167": ".on_message",
-  "168": "Interaction",
-  "169": "Member",
-  "170": "Range"
+  "163": "test_feedback_panel_routes.py"
 }

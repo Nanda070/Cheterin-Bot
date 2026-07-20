@@ -26,10 +26,12 @@ async def verification_put(request: web.Request) -> web.Response:
     if not isinstance(body.get("enabled", False), bool):
         return web.json_response({"error": "invalid_enabled"}, status=400)
 
+    # Строки, не числа: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+    # во фронтенде — числом его передавать нельзя, значение тихо портится при вводе.
     values = {}
     for key in ("unverified_role_id", "verified_role_id"):
-        value = body.get(key, 0)
-        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        value = body.get(key, "")
+        if not isinstance(value, str) or (value and not value.isdigit()):
             return web.json_response({"error": f"invalid_{key}"}, status=400)
         values[key] = value
 
