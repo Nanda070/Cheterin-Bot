@@ -94,6 +94,7 @@ class ChetBot(commands.Bot):
         await self.load_extension("wordle")
         await self.load_extension("economy")
         await self.load_extension("casino")
+        await self.load_extension("blackjack")
         await self.load_extension("antiraid")
         await self.load_extension("verification")
         guild_id = os.getenv("GUILD_ID")

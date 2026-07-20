@@ -33,7 +33,11 @@ class CasinoCog(commands.Cog):
         self._cooldowns: dict[int, float] = {}  # общий кулдаун между /слоты и /монетка
 
     def _gate(self, interaction: discord.Interaction) -> tuple[dict, dict, str | None]:
-        """Проверка тумблеров и кулдауна. Возвращает (casino, economy, error_text)."""
+        """Проверка тумблеров, активного блэкджека и кулдауна.
+
+        Возвращает (casino, economy, error_text).
+        Блокирует слоты/монетку если у игрока есть незавершённая BJ-партия.
+        """
         settings = casino_core.get_settings()
         if not settings["enabled"]:
             return settings, {}, DISABLED_TEXT
@@ -41,8 +45,17 @@ class CasinoCog(commands.Cog):
         if not econ["enabled"]:
             return settings, econ, ECONOMY_DISABLED_TEXT
 
+        # Нельзя играть в слоты/монетку пока активна партия в блэкджек
+        bj_cog = self.bot.cogs.get("BlackjackCog")
+        if bj_cog is not None and bj_cog.has_active_game(interaction.user.id):
+            return settings, econ, "Сначала доиграй текущую партию в блэкджек."
+
         now = time.monotonic()
-        ready_at = self._cooldowns.get(interaction.user.id, 0.0)
+        # Проверяем и наш кулдаун, и кулдаун блэкджека (общий пул)
+        ready_at = max(
+            self._cooldowns.get(interaction.user.id, 0.0),
+            bj_cog.cooldown_ready_at(interaction.user.id) if bj_cog else 0.0,
+        )
         if settings["cooldown_sec"] > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
             return settings, econ, f"Казино отдыхает — попробуй через {remaining} сек."

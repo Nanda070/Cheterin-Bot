@@ -535,8 +535,8 @@
     "semantic_hash": "bc6595f41fce6aba115a36214fccd559"
   },
   "dashboard/frontend/src/api/client.ts": {
-    "mtime": 1784434673.8219345,
-    "ast_hash": "d96d4f26a7856a3c60957a958f608a2a",
+    "mtime": 1784533592.0518656,
+    "ast_hash": "8b1315b765daedd5325039de936a462a",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/config.test.ts": {
@@ -1480,9 +1480,9 @@
     "semantic_hash": "547cf23d040f3060ef1ed3d17a365f07"
   },
   "MULTIGUILD_PLAN.md": {
-    "mtime": 1784276241.4675937,
-    "ast_hash": "8601694d6277cf6c856b9e4037518e81",
-    "semantic_hash": "8601694d6277cf6c856b9e4037518e81"
+    "mtime": 1784526951.3586762,
+    "ast_hash": "d19ceffade6d7a4f1ce7897cc6a849c2",
+    "semantic_hash": ""
   },
   "graphify-out/memory/query_20260716_161707_why_does_selectoption_connect_mafia_game_engine_to.md": {
     "mtime": 1784218628.0,
@@ -1590,8 +1590,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/wordle.py": {
-    "mtime": 1784413505.3810933,
-    "ast_hash": "8f64b3c882cc24596b0ab2a72f2426a1",
+    "mtime": 1784533352.1412015,
+    "ast_hash": "0402a004edbddd4e03080a7de50a4b99",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_wordle_cog.py": {
@@ -1615,8 +1615,8 @@
     "semantic_hash": ""
   },
   "wordle.py": {
-    "mtime": 1784413489.363536,
-    "ast_hash": "20d7eb5c64a3bd55859e735806e409f3",
+    "mtime": 1784533336.8197687,
+    "ast_hash": "64f36b34b7fb4b877539ad1693d720e9",
     "semantic_hash": ""
   },
   "wordle_card.py": {
@@ -1625,8 +1625,8 @@
     "semantic_hash": ""
   },
   "wordle_core.py": {
-    "mtime": 1784413281.4299655,
-    "ast_hash": "ae57f1df2d392dbf9bf194bedccbeae9",
+    "mtime": 1784533287.9447975,
+    "ast_hash": "17c890501de8869b0b98cc81a98c6edc",
     "semantic_hash": ""
   },
   "wordle_data.py": {
@@ -1640,8 +1640,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/economy.py": {
-    "mtime": 1784434185.45264,
-    "ast_hash": "cead35e3d589b45c0fb3759495c7d5e0",
+    "mtime": 1784533184.5905864,
+    "ast_hash": "6a7f6221530fcedcb2ae2fcbac5692aa",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_economy_cog.py": {
@@ -1665,23 +1665,23 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Economy.test.tsx": {
-    "mtime": 1784434831.5958116,
-    "ast_hash": "1c30f5442d936bf2b6e58dec9509f38e",
+    "mtime": 1784533616.061968,
+    "ast_hash": "f5f8b4365d42e2ce7ee6bdde3a1ba380",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Economy.tsx": {
-    "mtime": 1784434743.2792702,
-    "ast_hash": "ad10f690bb109a1b5ee197f3fadba1e4",
+    "mtime": 1784533605.7738864,
+    "ast_hash": "7cb32cdb73b8eddc6a456684025a1d44",
     "semantic_hash": ""
   },
   "economy.py": {
-    "mtime": 1784454547.384686,
-    "ast_hash": "3582a4f9b4621e7cfaa3dc0c58051b91",
+    "mtime": 1784533168.8139575,
+    "ast_hash": "10a557d770ad8a395bd0c638762e2b13",
     "semantic_hash": ""
   },
   "economy_core.py": {
-    "mtime": 1784434109.1669338,
-    "ast_hash": "ad5b0baf813aefe2a1374a063afbdc34",
+    "mtime": 1784533110.8949344,
+    "ast_hash": "df58ece9c0f61c1500ce1c26644697c9",
     "semantic_hash": ""
   },
   "economy_db.py": {
@@ -1735,8 +1735,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/verification.py": {
-    "mtime": 1784434464.0089495,
-    "ast_hash": "b879a38948023c8855f6d1ef20433464",
+    "mtime": 1784533263.51123,
+    "ast_hash": "785a1c2accbe149cd72d76e351584347",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_antiraid_cog.py": {
@@ -1800,13 +1800,13 @@
     "semantic_hash": ""
   },
   "verification.py": {
-    "mtime": 1784433974.007843,
-    "ast_hash": "81f36e32a9e266b0be49d8e137ab3b79",
+    "mtime": 1784533246.3090613,
+    "ast_hash": "5fd00de11af9c181196268a260da888a",
     "semantic_hash": ""
   },
   "verification_core.py": {
-    "mtime": 1784433954.5423784,
-    "ast_hash": "22d6aa1797d23fc0c157f6803a946d0c",
+    "mtime": 1784533210.5231726,
+    "ast_hash": "4e622b5be824f78eabff8f1b914d24ec",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_serverlog_cog.py": {
