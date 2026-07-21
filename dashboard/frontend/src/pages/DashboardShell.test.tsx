@@ -13,6 +13,7 @@ describe('DashboardShell', () => {
       avatar: null,
       is_admin: true,
       is_super_admin: false,
+      active_guild_id: '1',
     })
 
     render(
@@ -40,6 +41,7 @@ describe('DashboardShell', () => {
       avatar: null,
       is_admin: true,
       is_super_admin: false,
+      active_guild_id: '1',
     })
 
     render(
@@ -64,6 +66,7 @@ describe('DashboardShell', () => {
       avatar: null,
       is_admin: true,
       is_super_admin: false,
+      active_guild_id: '1',
     })
 
     render(
@@ -95,6 +98,7 @@ describe('DashboardShell', () => {
       avatar: null,
       is_admin: true,
       is_super_admin: false,
+      active_guild_id: '1',
     })
 
     render(
@@ -170,6 +174,7 @@ describe('DashboardShell', () => {
       avatar: null,
       is_admin: true,
       is_super_admin: true,
+      active_guild_id: '1',
     })
 
     render(
