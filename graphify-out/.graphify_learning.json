@@ -1,8 +1,56 @@
 {
-  "generated_at": "2026-07-20T16:53:26.344714+00:00",
+  "generated_at": "2026-07-21T14:08:21.263220+00:00",
   "nodes": {
+    "dashboard_backend_config_dashboardconfig": {
+      "code_fingerprint": "8904a853bc2a6d92ed7ad2c1e6a5dc472bc9425244824db07cb8d1b819a1b76e",
+      "label": "DashboardConfig",
+      "last": "2026-07-16T16:17:16.478648+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:16.478648+00:00",
+          "outcome": "useful",
+          "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
+        }
+      ],
+      "score": 0.892743481,
+      "source_file": "dashboard/backend/config.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "dashboard_backend_tests_fakes_fakemember": {
+      "code_fingerprint": "23e9f02213c000a22dff4c940d72adadbe2a4dedec8eba0765e4ced2ece2d14e",
+      "label": "FakeMember",
+      "last": "2026-07-16T16:17:16.478648+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:16.478648+00:00",
+          "outcome": "useful",
+          "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
+        }
+      ],
+      "score": 0.892743481,
+      "source_file": "dashboard/backend/tests/fakes.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "dashboard_backend_tests_fakes_fakerole": {
+      "code_fingerprint": "23e9f02213c000a22dff4c940d72adadbe2a4dedec8eba0765e4ced2ece2d14e",
+      "label": "FakeRole",
+      "last": "2026-07-16T16:17:16.478648+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:16.478648+00:00",
+          "outcome": "useful",
+          "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
+        }
+      ],
+      "score": 0.892743481,
+      "source_file": "dashboard/backend/tests/fakes.py",
+      "status": "tentative",
+      "uses": 1
+    },
     "dashboard_backend_tests_fakes_force_login": {
-      "code_fingerprint": "5f205b18bc41fd60f4186f1c7b9a418ce7938280539cc172840255e2cce8d545",
+      "code_fingerprint": "23e9f02213c000a22dff4c940d72adadbe2a4dedec8eba0765e4ced2ece2d14e",
       "label": "force_login()",
       "last": "2026-07-16T16:17:13.336142+00:00",
       "provenance": [
@@ -12,24 +60,8 @@
           "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
         }
       ],
-      "score": 0.911192839,
+      "score": 0.89274273,
       "source_file": "dashboard/backend/tests/fakes.py",
-      "status": "tentative",
-      "uses": 1
-    },
-    "dashboard_frontend_src_components_ui_select_selectoption": {
-      "code_fingerprint": "a637ced9e19cfcf6ab17ee9fcf6e32b7658f042c0bf680bd784ffbaf7a484a58",
-      "label": "SelectOption",
-      "last": "2026-07-16T16:17:07.417785+00:00",
-      "provenance": [
-        {
-          "date": "2026-07-16T16:17:07.417785+00:00",
-          "outcome": "useful",
-          "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
-        }
-      ],
-      "score": 0.911191397,
-      "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
       "status": "tentative",
       "uses": 1
     },
@@ -44,7 +76,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.911194335,
+      "score": 0.892744196,
       "source_file": "dashboard/frontend/.oxlintrc.json",
       "status": "tentative",
       "uses": 1
@@ -60,7 +92,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.911194335,
+      "score": 0.892744196,
       "source_file": "dashboard/frontend/package.json",
       "status": "tentative",
       "uses": 1

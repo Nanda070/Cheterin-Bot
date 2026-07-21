@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/audit_middleware.py": {
-    "mtime": 1784639234.0177479,
-    "ast_hash": "bd507cd69bd2749a6a5de30e65e2bc48",
+    "mtime": 1784642561.0044205,
+    "ast_hash": "07267e52234396cbb2b8de17395b1e92",
     "semantic_hash": ""
   },
   "dashboard/backend/auth.py": {

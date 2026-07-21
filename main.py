@@ -26,6 +26,20 @@ def get_main_guild_id() -> int:
     return int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
 
 
+def command_sync_mode() -> str:
+    """Стратегия синхронизации слэш-команд (env `COMMAND_SYNC_MODE`).
+
+    - `per_guild` (Вариант A, ПО УМОЛЧАНИЮ): команды пушатся в каждую гильдию бота
+      как guild-команды → появляются МГНОВЕННО, без задержки до 1 часа и без дублей.
+      Компромисс: не масштабируется на тысячи серверов (rate limits + синк на каждый
+      on_guild_join). Идеально для бота на небольшом числе серверов.
+    - `global` (Вариант B, ЗАГОТОВКА): один глобальный `tree.sync()` (распространение
+      до ~1 часа) + отдельный guild-sync команд-привилегий мейна (CTD). Масштабируется
+      без ограничений. Включается `COMMAND_SYNC_MODE=global`.
+    """
+    return os.getenv("COMMAND_SYNC_MODE", "per_guild").strip().lower()
+
+
 class ChetBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
@@ -91,17 +105,42 @@ class ChetBot(commands.Bot):
         await self.load_extension("antiraid")
         await self.load_extension("verification")
 
-        # Фаза 2.4: обычные команды регистрируются ГЛОБАЛЬНО (бот на многих серверах).
-        # Фаза 2b: команды-привилегии мейна (CTD `/ctd_setup`) привязаны к мейну через
-        # @app_commands.guilds — их пушим отдельным guild-sync. Этот же guild-sync
-        # заменяет прежний набор guild-команд мейна (наследие copy_global_to) на
-        # актуальный (только CTD), убирая старые дубли без отдельного clear_commands.
-        await self.tree.sync()
+        # Синхронизация команд вынесена в on_ready: для режима per_guild нужен уже
+        # заполненный список self.guilds (в setup_hook он ещё пуст).
+
+    async def _sync_commands(self):
+        """Синхронизация слэш-команд по стратегии command_sync_mode() (A/B)."""
         main_guild = discord.Object(id=get_main_guild_id())
-        try:
-            await self.tree.sync(guild=main_guild)
-        except discord.HTTPException:
-            logger.exception("Не удалось синхронизировать guild-команды мейн-сервера")
+
+        if command_sync_mode() == "global":
+            # Вариант B: глобально для всех серверов + guild-команды-привилегии мейна (CTD).
+            await self.tree.sync()
+            try:
+                await self.tree.sync(guild=main_guild)
+            except discord.HTTPException:
+                logger.exception("Не удалось синхронизировать guild-команды мейн-сервера")
+            return
+
+        # Вариант A (по умолчанию): МГНОВЕННО — пушим команды в каждую гильдию бота как
+        # guild-команды. CTD (@app_commands.guilds на мейн) синкается вместе с остальными
+        # на мейне; на других серверах CTD не появляется (она не глобальная).
+        for guild in self.guilds:
+            self.tree.copy_global_to(guild=guild)
+            try:
+                await self.tree.sync(guild=guild)
+            except discord.HTTPException:
+                logger.exception("Не удалось синхронизировать команды для guild=%s", guild.id)
+
+        # Разовая зачистка СТАРЫХ глобальных регистраций при миграции с режима 'global'
+        # (иначе дубли: глобальная + гильдейная копии). Делается через низкоуровневый
+        # bulk-upsert, чтобы НЕ трогать локальное дерево — copy_global_to в on_guild_join
+        # должен продолжать видеть глобальные команды. Включается COMMAND_SYNC_CLEAR_GLOBAL=1.
+        if os.getenv("COMMAND_SYNC_CLEAR_GLOBAL", "").strip().lower() in ("1", "true", "yes"):
+            try:
+                await self.http.bulk_upsert_global_commands(self.application_id, [])
+                logger.info("Старые глобальные команды очищены (COMMAND_SYNC_CLEAR_GLOBAL)")
+            except Exception:
+                logger.exception("Не удалось очистить старые глобальные команды")
 
 
 bot = ChetBot()
@@ -112,6 +151,14 @@ DASHBOARD_URL = os.getenv("DASHBOARD_FRONTEND_URL", "https://cheterin.online")
 @bot.event
 async def on_ready():
     logger.info(f"{bot.user} запущен и готов к работе! Серверов: {len(bot.guilds)}")
+    # Синхронизируем команды один раз за процесс (on_ready может срабатывать повторно
+    # при реконнектах). В режиме per_guild нужен заполненный кэш гильдий — он готов здесь.
+    if not getattr(bot, "_commands_synced", False):
+        bot._commands_synced = True
+        try:
+            await bot._sync_commands()
+        except Exception:
+            logger.exception("Не удалось синхронизировать команды при запуске")
 
 
 @bot.event
@@ -119,6 +166,15 @@ async def on_guild_join(guild: discord.Guild):
     """Бота добавили на новый сервер: реактивируем настройки и здороваемся."""
     logger.info("Бот добавлен на сервер %s (%s)", guild.name, guild.id)
     settings_db.set_guild_active(guild.id, True)
+
+    # Вариант A: новый сервер получает команды МГНОВЕННО (guild-sync). В режиме global
+    # это не нужно — глобальные команды и так доступны всем.
+    if command_sync_mode() != "global":
+        try:
+            bot.tree.copy_global_to(guild=guild)
+            await bot.tree.sync(guild=guild)
+        except discord.HTTPException:
+            logger.exception("on_guild_join: не удалось синхронизировать команды для guild=%s", guild.id)
 
     embed = discord.Embed(
         title="Спасибо, что добавили Cheterin!",
