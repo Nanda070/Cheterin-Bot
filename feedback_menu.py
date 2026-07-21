@@ -283,7 +283,8 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
     decision_view = FeedbackDecisionView(bot, case_id, interaction.user.id, category_key)
     decision_message = await thread.send(embed=full_embed, view=decision_view)
 
-    bot.feedback_cases[case_id] = {
+    cases = settings_db.get(interaction.guild.id, "feedback_cases", {})
+    cases[case_id] = {
         "case_id": case_id,
         "category_key": category_key,
         "submitter_id": interaction.user.id,
@@ -295,7 +296,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
         "created_at": bot.utcnow().isoformat(),
         "answers": answers,
     }
-    await bot.update_file()
+    settings_db.put(interaction.guild.id, "feedback_cases", cases)
 
     log_embed = discord.Embed(
         title="📥 Создано новое обращение",

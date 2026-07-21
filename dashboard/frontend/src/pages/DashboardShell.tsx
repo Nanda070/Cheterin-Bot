@@ -163,14 +163,16 @@ export function DashboardShell() {
         <Dropdown
           trigger={
             <span className="flex items-center gap-2 rounded-control px-2 py-1.5 hover:bg-surface-hover">
-              {user?.avatar ? (
-                <img src={user.avatar} alt="" className="h-7 w-7 rounded-full" />
+              {user?.active_guild_icon ? (
+                <img src={user.active_guild_icon} alt="" className="h-7 w-7 rounded-md" />
               ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
-                  {user?.username?.slice(0, 1).toUpperCase()}
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-muted text-xs font-semibold text-primary">
+                  {(user?.active_guild_name ?? '?').slice(0, 1).toUpperCase()}
                 </span>
               )}
-              <span className="text-sm text-foreground">{user?.username}</span>
+              <span className="max-w-[10rem] truncate text-sm text-foreground">
+                {user?.active_guild_name ?? 'Выбрать сервер'}
+              </span>
             </span>
           }
         >

@@ -5,6 +5,7 @@ import discord
 from aiohttp import web
 
 import moderation_log
+import settings_db
 from ..access_middleware import require_dashboard_access
 from .. import mass_role_jobs
 
@@ -63,10 +64,14 @@ async def list_members(request: web.Request) -> web.Response:
     )
 
 
-def serialize_member_detail(member, bot) -> dict:
-    stats = bot.stats.get(str(member.id), {"joins": 0, "leaves": 0, "invites": 0})
+def serialize_member_detail(member, bot, guild_id: int) -> dict:
+    invites_data = settings_db.get(guild_id, "invites_stats", {})
+    stats = invites_data.get("stats", {}).get(
+        str(member.id), {"joins": 0, "leaves": 0, "invites": 0}
+    )
+    cases = settings_db.get(guild_id, "feedback_cases", {})
     case_count = sum(
-        1 for c in bot.feedback_cases.values() if c.get("submitter_id") == member.id
+        1 for c in cases.values() if c.get("submitter_id") == member.id
     )
     roles = [
         {"id": str(r.id), "name": r.name, "color": f"#{r.color.value:06x}"}
@@ -113,7 +118,7 @@ async def member_detail(request: web.Request) -> web.Response:
     if member is None:
         return web.json_response({"error": "member_not_found"}, status=404)
 
-    return web.json_response(serialize_member_detail(member, request.app["bot"]))
+    return web.json_response(serialize_member_detail(member, request.app["bot"], request["guild_id"]))
 
 
 ALLOWED_DELETE_DAYS = {0, 1, 7}

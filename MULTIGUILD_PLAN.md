@@ -141,7 +141,9 @@
 - ✅ `on_guild_join`: реактивирует настройки (`settings_db.set_guild_active(True)`) + приветствие в system channel/владельцу со ссылкой на дашборд. `on_guild_remove`: `set_guild_active(False)` — настройки помечаются неактивными, не удаляются.
 - Восстановление игр (mafia/bunker recover_games) уже guild-aware через games.guild_id.
 
-> Примечание (долг, вне 2.4): `feedback_menu.create_feedback_case` пишет кейсы в `bot.feedback_cases` (плоский стор + `update_file`), тогда как чтение/решение/восстановление идут через `settings_db` per-guild — предсуществующая рассинхронизация хранилищ, устранять отдельной задачей.
+> ~~Примечание (долг, вне 2.4): `feedback_menu.create_feedback_case` пишет кейсы в `bot.feedback_cases` (плоский стор + `update_file`), тогда как чтение/решение/восстановление идут через `settings_db` per-guild — предсуществующая рассинхронизация хранилищ, устранять отдельной задачей.~~ → **УСТРАНЕНО (21.07.2026)**: `create_feedback_case` пишет кейс в `settings_db.put(guild.id, "feedback_cases", …)`; счётчик обращений участника в `routes/moderation.py` (`serialize_member_detail`) читает из `settings_db` per-guild (`request["guild_id"]`), а не из плоского `bot.feedback_cases`. Тест `test_member_detail.py` сидит через `settings_db`.
+>
+> **Дополнительно (21.07.2026):** там же в `serialize_member_detail` инвайт-статистика читалась из несуществующего в проде `bot.stats` → карточка участника в дашборде падала с 500. Исправлено на per-guild `settings_db.get(guild_id, "invites_stats").stats` (совпадает с записью в `welcome.py`). Атрибуты `bot.stats`/`bot.feedback_cases`/`bot.update_file` в проде больше не используются (остались только в фейках тестов).
 
 ### Приёмка Фазы 2
 - Бот работает одновременно на ≥2 серверах с разными настройками каждого модуля; действия на сервере A ничего не меняют на B.

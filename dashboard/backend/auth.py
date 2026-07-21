@@ -247,12 +247,19 @@ async def me(request: web.Request) -> web.Response:
     payload = {
         "id": str(user_id),
         "active_guild_id": str(active_guild_id) if active_guild_id else None,
+        "active_guild_name": None,
+        "active_guild_icon": None,
         "is_super_admin": is_super_admin,
         "is_main_guild": is_main_guild,
     }
 
-    # Данные участника на активном сервере (имя/аватар/is_admin) — если сервер выбран.
+    # Данные активного сервера (имя/иконка) + участника на нём (имя/аватар/is_admin).
     if active_guild_id is not None:
+        guild = bot.get_guild(int(active_guild_id))
+        if guild is not None:
+            payload["active_guild_name"] = guild.name
+            payload["active_guild_icon"] = str(guild.icon.url) if guild.icon else None
+
         lookup = await resolve_guild_member(bot, int(active_guild_id), int(user_id))
         member = lookup.member
         if member is not None:

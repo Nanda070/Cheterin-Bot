@@ -55,8 +55,35 @@ describe('DashboardShell', () => {
       </MemoryRouter>,
     )
 
+    // Имя пользователя показывается в шапке сайдбара (шапка справа сверху теперь — сервер).
     const usernameNodes = await screen.findAllByText('tester')
-    expect(usernameNodes.length).toBeGreaterThanOrEqual(2)
+    expect(usernameNodes.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows the active server name in the top-right header', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: false,
+      active_guild_id: '1',
+      active_guild_name: 'Мой Сервер',
+      active_guild_icon: null,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/members']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/members" element={<DashboardShell />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Мой Сервер')).toBeInTheDocument()
   })
 
   it('lists core nav entries and omits pages merged into tabs', async () => {

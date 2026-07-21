@@ -6,6 +6,8 @@ export interface DashboardUser {
   is_super_admin: boolean
   is_main_guild?: boolean
   active_guild_id: string | null
+  active_guild_name?: string | null
+  active_guild_icon?: string | null
 }
 
 export async function fetchCurrentUser(): Promise<DashboardUser | null> {

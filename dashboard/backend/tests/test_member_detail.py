@@ -1,5 +1,6 @@
 import pytest
 
+import settings_db
 from dashboard.backend.routes.moderation import routes as moderation_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -14,8 +15,8 @@ from dashboard.backend.tests.fakes import (
 def build(members, stats=None, cases=None):
     moderator = FakeMember(10, name="mod", role_ids=[111])
     bot = FakeBot(FakeGuild(members=[moderator] + members))
-    bot.stats = stats or {}
-    bot.feedback_cases = cases or {}
+    settings_db.put(1, "invites_stats", {"stats": stats or {}})
+    settings_db.put(1, "feedback_cases", cases or {})
     return make_moderation_app(bot, [moderation_routes])
 
 
