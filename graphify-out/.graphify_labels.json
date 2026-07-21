@@ -168,8 +168,10 @@
   "166": "xp.py",
   "167": "Supply.tsx",
   "168": "VoiceStats.tsx",
+  "169": "test_casino_routes.py",
+  "170": "test_feedback_panel_routes.py",
   "171": "daily_topic.py",
-  "173": "test_ctd_routes.py",
+  "175": "test_wordle_routes.py",
   "176": "daily_topic.py",
   "178": "auto_roles.py",
   "180": "init"

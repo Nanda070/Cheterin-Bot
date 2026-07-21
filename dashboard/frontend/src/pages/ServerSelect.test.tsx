@@ -55,12 +55,43 @@ describe('ServerSelectPage', () => {
     expect(screen.getByText('No Bot')).toBeInTheDocument()
     // Сервер без бота предлагает добавить бота, с ботом — выбрать.
     expect(screen.getByRole('button', { name: 'Выбрать' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Добавить бота/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Добавить бота' })).toBeInTheDocument()
+    // Плюс общая кнопка «добавить на любой другой сервер».
+    expect(screen.getByRole('button', { name: 'Добавить бота на другой сервер' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Выбрать' }))
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith('/api/auth/select-guild', expect.objectContaining({ method: 'POST' })),
     )
+  })
+
+  it('opens a generic invite (no guild_id) when adding the bot to another server', async () => {
+    const openMock = vi.fn()
+    vi.stubGlobal('open', openMock)
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me')) {
+        return Promise.resolve(jsonResponse({ id: '1', is_super_admin: false, active_guild_id: null }))
+      }
+      if (url.endsWith('/api/auth/guilds')) {
+        return Promise.resolve(jsonResponse({ guilds: [] }))
+      }
+      if (url.endsWith('/api/auth/invite-url')) {
+        return Promise.resolve(jsonResponse({ url: 'https://discord.com/invite' }))
+      }
+      return Promise.resolve(jsonResponse({}, 404))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    const addButton = await screen.findByRole('button', { name: 'Добавить бота на другой сервер' })
+    fireEvent.click(addButton)
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/auth/invite-url', expect.anything()),
+    )
+    await waitFor(() => expect(openMock).toHaveBeenCalledWith('https://discord.com/invite', '_blank', 'noopener,noreferrer'))
   })
 
   it('shows empty state when there are no manageable guilds', async () => {

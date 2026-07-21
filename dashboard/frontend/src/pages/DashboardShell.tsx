@@ -163,15 +163,15 @@ export function DashboardShell() {
         <Dropdown
           trigger={
             <span className="flex items-center gap-2 rounded-control px-2 py-1.5 hover:bg-surface-hover">
-              {user?.active_guild_icon ? (
-                <img src={user.active_guild_icon} alt="" className="h-7 w-7 rounded-md" />
+              {user?.avatar ? (
+                <img src={user.avatar} alt="" className="h-7 w-7 rounded-full" />
               ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary-muted text-xs font-semibold text-primary">
-                  {(user?.active_guild_name ?? '?').slice(0, 1).toUpperCase()}
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
+                  {user?.username?.slice(0, 1).toUpperCase()}
                 </span>
               )}
               <span className="max-w-[10rem] truncate text-sm text-foreground">
-                {user?.active_guild_name ?? 'Выбрать сервер'}
+                {user?.username}
               </span>
             </span>
           }
@@ -189,16 +189,27 @@ export function DashboardShell() {
 
       <div className="flex min-h-0 flex-1">
         <aside className="w-72 shrink-0 overflow-y-auto border-r border-border p-4">
-          <div className="mb-4 flex items-center gap-3 rounded-control border border-border bg-surface p-3">
-            {user?.avatar ? (
-              <img src={user.avatar} alt="" className="h-9 w-9 rounded-full" />
+          <Link
+            to="/servers"
+            className="mb-4 flex items-center gap-3 rounded-control border border-border bg-surface p-3 transition-colors hover:bg-surface-hover"
+          >
+            {user?.active_guild_icon ? (
+              <img src={user.active_guild_icon} alt="" className="h-9 w-9 rounded-md" />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-muted text-sm font-semibold text-primary">
-                {user?.username?.slice(0, 1).toUpperCase()}
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-muted text-sm font-semibold text-primary">
+                {(user?.active_guild_name ?? '?').slice(0, 1).toUpperCase()}
               </span>
             )}
-            <span className="truncate text-sm font-medium text-foreground">{user?.username}</span>
-          </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium text-foreground">
+                {user?.active_guild_name ?? 'Выбрать сервер'}
+              </span>
+              <span className="flex items-center gap-1 text-[11px] text-muted">
+                <ArrowsLeftRight size={11} />
+                Сменить сервер
+              </span>
+            </div>
+          </Link>
           <nav className="flex flex-col gap-5">
             {NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).map((group, groupIndex) => (
               <div key={group.title} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>

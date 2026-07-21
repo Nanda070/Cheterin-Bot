@@ -62,6 +62,19 @@ export function ServerSelectPage() {
     }
   }
 
+  const handleInviteNew = async () => {
+    setPendingId('new')
+    setError(null)
+    try {
+      const url = await fetchInviteUrl()
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setError('Не удалось получить ссылку приглашения.')
+    } finally {
+      setPendingId(null)
+    }
+  }
+
   const handleLogout = async () => {
     await logout()
     await refresh()
@@ -139,6 +152,18 @@ export function ServerSelectPage() {
             )}
           </Card>
         ))}
+
+        {guilds !== null && (
+          <button
+            type="button"
+            disabled={pendingId === 'new'}
+            onClick={handleInviteNew}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-border px-4 py-3 text-sm font-medium text-muted transition-colors hover:border-primary hover:bg-surface-hover hover:text-foreground disabled:opacity-60"
+          >
+            <Plus size={18} weight="bold" />
+            {pendingId === 'new' ? 'Открываем Discord…' : 'Добавить бота на другой сервер'}
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5 text-xs text-muted">
