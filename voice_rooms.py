@@ -1,5 +1,5 @@
+import settings_db
 import asyncio
-import json
 import os
 
 import discord
@@ -11,11 +11,18 @@ import voice_db as db
 import voice_logs as logs
 from voice_logs import VCTheme, logger
 
-PANEL_STATE_FILE = "voice_panel.json"
+MODULE_NAME = "voice_panel"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 
 
-def _config_channel_id(key: str) -> int:
-    raw = bot_config.get(key)
+def _main_guild_id() -> int:
+    """Панель управления комнатами публикуется один раз на весь процесс бота
+    (не per-guild), поэтому её настройки читаем с мейн-сервера через GUILD_ID —
+    полноценный per-guild выбор см. Фазу 2.4 MULTIGUILD_PLAN.md."""
+    return int(os.getenv("GUILD_ID", "0") or 0)
+
+
+def _config_channel_id(guild_id: int, key: str) -> int:
+    raw = bot_config.get(guild_id, key)
     try:
         return int(raw)
     except (TypeError, ValueError):
@@ -23,18 +30,13 @@ def _config_channel_id(key: str) -> int:
 
 
 def load_panel_state() -> dict:
-    if os.path.exists(PANEL_STATE_FILE):
-        with open(PANEL_STATE_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+    """Состояние панели (id сообщения/канала) — синглтон мейн-сервера в settings_db
+    (Фаза 2.2б MULTIGUILD_PLAN.md)."""
+    return settings_db.get(_main_guild_id(), MODULE_NAME)
 
 
 def save_panel_state(data: dict) -> None:
-    with open(PANEL_STATE_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    settings_db.put(_main_guild_id(), MODULE_NAME, data)
 
 
 async def set_open_state(channel: discord.VoiceChannel):
@@ -108,24 +110,24 @@ async def safe_followup(interaction: discord.Interaction, text: str):
 async def ensure_owner(interaction: discord.Interaction, bot: commands.Bot) -> discord.VoiceChannel | None:
     if not interaction.user.voice or not interaction.user.voice.channel:
         await safe_followup(interaction, "Вы не находитесь в голосовом канале.")
-        await logs.log_security(bot, interaction.user, "Попытка использовать управление вне голосового канала.")
+        await logs.log_security(bot, interaction.guild.id, interaction.user, "Попытка использовать управление вне голосового канала.")
         return None
 
     channel = interaction.user.voice.channel
     if not isinstance(channel, discord.VoiceChannel):
         await safe_followup(interaction, "Это не голосовой канал.")
-        await logs.log_security(bot, interaction.user, "Попытка использовать управление вне voice-канала.")
+        await logs.log_security(bot, interaction.guild.id, interaction.user, "Попытка использовать управление вне voice-канала.")
         return None
 
     room = db.db_get_room(channel.id)
     if not room:
         await safe_followup(interaction, "Эта комната не зарегистрирована как приватная.")
-        await logs.log_security(bot, interaction.user, "Попытка управлять незарегистрированной комнатой.", channel)
+        await logs.log_security(bot, interaction.guild.id, interaction.user, "Попытка управлять незарегистрированной комнатой.", channel)
         return None
 
     if not is_room_owner(interaction.user.id, channel.id):
         await safe_followup(interaction, "Вы не владелец этой комнаты.")
-        await logs.log_security(bot, interaction.user, "Попытка управлять чужой комнатой.", channel)
+        await logs.log_security(bot, interaction.guild.id, interaction.user, "Попытка управлять чужой комнатой.", channel)
         return None
 
     return channel
@@ -179,7 +181,7 @@ def build_embed() -> discord.Embed:
         value=(f"{VCTheme.EMO['miceoff']} • Запретить говорить всем\n{VCTheme.EMO['mice']} • Разрешить говорить всем\n"),
         inline=False
     )
-    thumb = bot_config.get("VOICE_PANEL_THUMB_URL")
+    thumb = bot_config.get(_main_guild_id(), "VOICE_PANEL_THUMB_URL")
     if thumb: embed.set_thumbnail(url=thumb)
     return embed
 
@@ -201,7 +203,7 @@ class RenameModal(Modal, title="Переименование канала"):
         await channel.edit(name=value)
         db.db_update_room_name(channel.id, value)
         await interaction.response.send_message(f"Название изменено: **{old_name} → {value}**", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, f"Переименовал комнату: {old_name} → {value}", channel, color=VCTheme.SUCCESS)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, f"Переименовал комнату: {old_name} → {value}", channel, color=VCTheme.SUCCESS)
 
 
 class SlotsModal(Modal, title="Лимит участников"):
@@ -222,7 +224,7 @@ class SlotsModal(Modal, title="Лимит участников"):
         await channel.edit(user_limit=value)
         db.db_update_room_limit(channel.id, value)
         await interaction.response.send_message("Лимит снят." if value == 0 else f"Лимит установлен: **{value}**", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, f"Изменил лимит комнаты на {value}", channel, color=VCTheme.SUCCESS)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, f"Изменил лимит комнаты на {value}", channel, color=VCTheme.SUCCESS)
 
 
 class ChannelControlView(View):
@@ -237,7 +239,7 @@ class ChannelControlView(View):
         await interaction.response.defer(ephemeral=True)
         await set_open_state(channel)
         await interaction.followup.send("Комната открыта для всех.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Открыл комнату", channel, color=VCTheme.SUCCESS)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Открыл комнату", channel, color=VCTheme.SUCCESS)
 
     @discord.ui.button(emoji=VCTheme.EMO["lock"], label="Закрыть", style=discord.ButtonStyle.secondary, custom_id="vc:close", row=0)
     async def close_room(self, interaction: discord.Interaction, _button: Button):
@@ -246,7 +248,7 @@ class ChannelControlView(View):
         await interaction.response.defer(ephemeral=True)
         await set_closed_state(channel)
         await interaction.followup.send("Комната закрыта. Канал виден всем, но вход запрещён.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Закрыл комнату", channel, color=VCTheme.WARN)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Закрыл комнату", channel, color=VCTheme.WARN)
 
     @discord.ui.button(emoji=VCTheme.EMO["lockuser"], label="Разрешить вход", style=discord.ButtonStyle.secondary, custom_id="vc:allow_user", row=0)
     async def allow_user(self, interaction: discord.Interaction, _button: Button):
@@ -257,10 +259,10 @@ class ChannelControlView(View):
         if not target: return
         if target.bot:
             await interaction.followup.send("Нельзя выдавать доступ боту.", ephemeral=True)
-            return await logs.log_security(self.bot, interaction.user, "Попытка выдать доступ боту.", channel)
+            return await logs.log_security(self.bot, interaction.guild.id, interaction.user, "Попытка выдать доступ боту.", channel)
         await set_member_allow(channel, target)
         await interaction.followup.send(f"{target.mention} теперь может заходить в эту комнату.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Выдал доступ к комнате", channel, target, VCTheme.SUCCESS)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Выдал доступ к комнате", channel, target, VCTheme.SUCCESS)
 
     @discord.ui.button(emoji=VCTheme.EMO["404"], label="Запретить вход", style=discord.ButtonStyle.secondary, custom_id="vc:deny_user", row=0)
     async def deny_user(self, interaction: discord.Interaction, _button: Button):
@@ -271,12 +273,12 @@ class ChannelControlView(View):
         if not target: return
         if target.id == interaction.user.id or target.bot:
             await interaction.followup.send("Неприменимое действие.", ephemeral=True)
-            return await logs.log_security(self.bot, interaction.user, "Попытка блокировки себя/бота.", channel)
+            return await logs.log_security(self.bot, interaction.guild.id, interaction.user, "Попытка блокировки себя/бота.", channel)
         await set_member_deny(channel, target)
         if target.voice and target.voice.channel and target.voice.channel.id == channel.id:
             await target.move_to(None)
         await interaction.followup.send(f"{target.mention} больше не сможет заходить в эту комнату.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Запретил вход в комнату", channel, target, VCTheme.ERROR)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Запретил вход в комнату", channel, target, VCTheme.ERROR)
 
     @discord.ui.button(emoji=VCTheme.EMO["name"], label="Переименовать", style=discord.ButtonStyle.secondary, custom_id="vc:rename", row=1)
     async def rename_room(self, interaction: discord.Interaction, _button: Button):
@@ -304,7 +306,7 @@ class ChannelControlView(View):
         await apply_owner_permissions(channel, target)
         db.db_update_room_owner(channel.id, target.id)
         await interaction.followup.send(f"Комната передана {target.mention}.", ephemeral=True)
-        await logs.log_action(self.bot, old_owner, "Передал комнату", channel, target, VCTheme.WARN)
+        await logs.log_action(self.bot, interaction.guild.id, old_owner, "Передал комнату", channel, target, VCTheme.WARN)
 
     @discord.ui.button(emoji=VCTheme.EMO["kick"], label="Выгнать", style=discord.ButtonStyle.secondary, custom_id="vc:kick", row=1)
     async def kick_user(self, interaction: discord.Interaction, _button: Button):
@@ -318,7 +320,7 @@ class ChannelControlView(View):
             return
         await target.move_to(None)
         await interaction.followup.send(f"{target.mention} выгнан из комнаты.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Выгнал участника из комнаты", channel, target, VCTheme.ERROR)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Выгнал участника из комнаты", channel, target, VCTheme.ERROR)
 
     @discord.ui.button(emoji=VCTheme.EMO["miceoff"], label="Запретить говорить всем", style=discord.ButtonStyle.secondary, custom_id="vc:mute_all", row=2)
     async def mute_all(self, interaction: discord.Interaction, _button: Button):
@@ -341,7 +343,7 @@ class ChannelControlView(View):
         await channel.set_permissions(interaction.user, overwrite=owner_ow)
 
         await interaction.followup.send("Всем запрещено говорить, кроме владельца.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Отключил голос всем участникам", channel, color=VCTheme.WARN)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Отключил голос всем участникам", channel, color=VCTheme.WARN)
 
     @discord.ui.button(emoji=VCTheme.EMO["mice"], label="Разрешить говорить всем", style=discord.ButtonStyle.secondary, custom_id="vc:unmute_all", row=2)
     async def unmute_all(self, interaction: discord.Interaction, _button: Button):
@@ -360,7 +362,7 @@ class ChannelControlView(View):
                 await channel.set_permissions(member, overwrite=ow)
 
         await interaction.followup.send("Голос снова разрешён всем.", ephemeral=True)
-        await logs.log_action(self.bot, interaction.user, "Вернул голос всем участникам", channel, color=VCTheme.SUCCESS)
+        await logs.log_action(self.bot, interaction.guild.id, interaction.user, "Вернул голос всем участникам", channel, color=VCTheme.SUCCESS)
 
 
 class VoiceManager(commands.Cog):
@@ -416,12 +418,12 @@ class VoiceManager(commands.Cog):
                 except discord.Forbidden:
                     pass
 
-                await logs.log_unhide_action(self.bot, owner, current_channel)
+                await logs.log_unhide_action(self.bot, after.guild.id, owner, current_channel)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         try:
-            lobby_id = _config_channel_id("VOICE_LOBBY_CHANNEL_ID")
+            lobby_id = _config_channel_id(member.guild.id, "VOICE_LOBBY_CHANNEL_ID")
             if after.channel and after.channel.id == lobby_id:
                 old_channel_id = db.user_owned_channels.get(member.id)
                 if old_channel_id:
@@ -430,7 +432,7 @@ class VoiceManager(commands.Cog):
                         try:
                             await old_channel.delete(reason="Recreated private room")
                         except Exception as exc:
-                            await logs.log_error(self.bot, "delete_old_room_before_create", exc)
+                            await logs.log_error(self.bot, member.guild.id, "delete_old_room_before_create", exc)
                     db.user_owned_channels.pop(member.id, None)
                     db.db_delete_room(old_channel_id)
 
@@ -453,7 +455,7 @@ class VoiceManager(commands.Cog):
                 await member.move_to(channel)
                 db.user_owned_channels[member.id] = channel.id
                 db.db_upsert_room(guild.id, channel.id, member.id, channel.name, is_closed=False, user_limit=0)
-                await logs.log_action(self.bot, member, "Создал приватную комнату", channel, color=VCTheme.SUCCESS)
+                await logs.log_action(self.bot, member.guild.id, member, "Создал приватную комнату", channel, color=VCTheme.SUCCESS)
 
             if before.channel and isinstance(before.channel, discord.VoiceChannel):
                 room = db.db_get_room(before.channel.id)
@@ -468,12 +470,13 @@ class VoiceManager(commands.Cog):
                     try:
                         await before.channel.delete(reason="Empty private room")
                     except Exception as exc:
-                        await logs.log_error(self.bot, "delete_empty_private_room", exc)
+                        await logs.log_error(self.bot, member.guild.id, "delete_empty_private_room", exc)
                         return
 
                     db.db_delete_room(channel_id)
                     await logs.send_log_embed(
                         self.bot,
+                        member.guild.id,
                         title="Комната удалена",
                         description=f"**Комната:** {room_name} (`{channel_id}`)\n**Причина:** Пустая приватная комната",
                         color=VCTheme.WARN
@@ -481,7 +484,7 @@ class VoiceManager(commands.Cog):
 
         except Exception as exc:
             logger.exception("on_voice_state_update failed")
-            await logs.log_error(self.bot, "on_voice_state_update", exc)
+            await logs.log_error(self.bot, member.guild.id, "on_voice_state_update", exc)
 
     async def recover_private_rooms(self):
         rows = db.db_get_all_rooms()
@@ -507,7 +510,7 @@ class VoiceManager(commands.Cog):
                     if len(channel.members) == 0:
                         await channel.delete(reason="Recovery cleanup: owner not found")
                 except Exception as exc:
-                    await logs.log_error(self.bot, "recover_private_rooms.delete_orphan", exc)
+                    await logs.log_error(self.bot, guild.id, "recover_private_rooms.delete_orphan", exc)
                 removed += 1
                 continue
 
@@ -533,11 +536,12 @@ class VoiceManager(commands.Cog):
                 restored += 1
             except Exception as exc:
                 logger.exception("Failed to restore channel %s", channel.id)
-                await logs.log_error(self.bot, f"recover_private_rooms.restore:{channel.id}", exc)
+                await logs.log_error(self.bot, guild.id, f"recover_private_rooms.restore:{channel.id}", exc)
 
         logger.info("Recovery finished. Restored=%s Removed=%s", restored, removed)
         await logs.send_log_embed(
             self.bot,
+            row["guild_id"] if rows else _main_guild_id(),
             title="Recovery завершён",
             description=f"**Восстановлено:** {restored}\n**Удалено битых записей:** {removed}",
             color=VCTheme.SUCCESS if restored or removed == 0 else VCTheme.WARN
@@ -559,7 +563,7 @@ class PanelManager(commands.Cog):
 
     async def publish_panel(self) -> int | None:
         """Публикует (или обновляет) панель управления. Возвращает id сообщения панели."""
-        channel = self.bot.get_channel(_config_channel_id("VOICE_PANEL_CHANNEL_ID"))
+        channel = self.bot.get_channel(_config_channel_id(_main_guild_id(), "VOICE_PANEL_CHANNEL_ID"))
         if not channel:
             logger.warning("Voice panel text channel not found")
             return None

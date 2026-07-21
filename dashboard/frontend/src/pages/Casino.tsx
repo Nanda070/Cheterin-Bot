@@ -27,18 +27,6 @@ export function CasinoPage() {
   const [lbEntries, setLbEntries] = useState<CasinoLeaderboardEntry[]>([])
   const [lbTotal, setLbTotal] = useState(0)
 
-  const reloadLeaderboard = () => {
-    fetchCasinoLeaderboard(lbMode, lbType, lbPage)
-      .then((res) => {
-        setLbEntries(res.entries)
-        setLbTotal(res.total)
-      })
-      .catch(() => {
-        setLbEntries([])
-        setLbTotal(0)
-      })
-  }
-
   useEffect(() => {
     fetchCasinoSettings()
       .then((res) => {
@@ -49,7 +37,15 @@ export function CasinoPage() {
   }, [])
 
   useEffect(() => {
-    reloadLeaderboard()
+    fetchCasinoLeaderboard(lbMode, lbType, lbPage)
+      .then((res) => {
+        setLbEntries(res.entries)
+        setLbTotal(res.total)
+      })
+      .catch(() => {
+        setLbEntries([])
+        setLbTotal(0)
+      })
   }, [lbMode, lbType, lbPage])
 
   if (!settings) {

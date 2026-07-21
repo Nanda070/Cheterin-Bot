@@ -137,7 +137,7 @@ async def test_ban_records_moderation_log_entry(aiohttp_client):
 
     await client.post("/api/members/70/ban", json={"reason": "спам", "delete_message_days": 0})
 
-    events = moderation_log.load_events()
+    events = moderation_log.load_events(1)
     assert len(events) == 1
     assert events[0]["type"] == "manual_ban"
     assert events[0]["user_id"] == "70"
@@ -153,7 +153,7 @@ async def test_kick_records_moderation_log_entry(aiohttp_client):
 
     await client.post("/api/members/71/kick", json={"reason": "флуд"})
 
-    events = moderation_log.load_events()
+    events = moderation_log.load_events(1)
     assert len(events) == 1
     assert events[0]["type"] == "manual_kick"
     assert events[0]["moderator_id"] == "10"

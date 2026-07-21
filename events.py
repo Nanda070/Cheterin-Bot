@@ -12,31 +12,21 @@ import random
 import string
 
 import events_core
+import settings_db
 
 logger = logging.getLogger("chetbot.events")
 EVENTS_FILE = "events_data.json"
 
 
-async def load_events() -> dict:
-    def _read():
-        if os.path.exists(EVENTS_FILE):
-            with open(EVENTS_FILE, "r", encoding="utf-8") as f:
-                try:
-                    return json.load(f)
-                except json.JSONDecodeError:
-                    return {}
-        return {}
-    data = await asyncio.to_thread(_read)
+def load_events(guild_id: int) -> dict:
+    data = settings_db.get(guild_id, "events", {})
     if "events" not in data:
         data["events"] = {}
     return data
 
 
-async def save_events(data: dict):
-    def _write():
-        with open(EVENTS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-    await asyncio.to_thread(_write)
+def save_events(guild_id: int, data: dict):
+    settings_db.put(guild_id, "events", data)
 
 
 def upsert_embed_field(embed: discord.Embed, name: str, value: str, inline: bool = False):
@@ -432,7 +422,7 @@ class JoinTeamCodeModal(discord.ui.Modal, title="Вступление в ком�
 
 async def handle_registration(interaction: discord.Interaction, message_id: str, action: str, **kwargs):
     await interaction.response.defer(ephemeral=True)
-    data = await load_events()
+    data = load_events(interaction.guild_id)
     ev = data.get("events", {}).get(message_id)
     if not ev:
         await interaction.followup.send("❌ Событие не найдено.", ephemeral=True)
@@ -504,7 +494,7 @@ async def handle_registration(interaction: discord.Interaction, message_id: str,
             try: await interaction.user.add_roles(role)
             except discord.Forbidden: pass
 
-    await save_events(data)
+    save_events(interaction.guild_id, data)
     
     # Update Embed
     try:
@@ -524,28 +514,28 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
     view = discord.ui.View(timeout=None)
     
     async def cb_reg_solo(interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if ev: await interaction.response.send_modal(RegisterSoloModal(message_id, ev.get("require_info", False)))
 
     async def cb_reg_captain(interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if ev: await interaction.response.send_modal(RegisterTeamCaptainModal(message_id, ev.get("team_size", 5), ev.get("require_info", False)))
 
     async def cb_create_code(interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if ev: await interaction.response.send_modal(CreateTeamCodeModal(message_id, ev.get("require_info", False)))
 
     async def cb_join_code(interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if ev: await interaction.response.send_modal(JoinTeamCodeModal(message_id, ev.get("require_info", False)))
 
     async def cb_leave(interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if not ev: return
         uid = interaction.user.id
@@ -584,14 +574,14 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
                 try: await interaction.user.remove_roles(role)
                 except discord.Forbidden: pass
 
-        await save_events(data)
+        save_events(interaction.guild_id, data)
         try:
             emb = rebuild_event_embed(interaction.message.embeds[0], ev)
             await interaction.message.edit(embed=emb)
         except Exception: pass
 
     async def cb_list(interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
         if not ev: return
         parts = ev.get("participants", [])
@@ -660,7 +650,7 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
             
             async def cb_vote(interaction: discord.Interaction, opt_idx=idx):
                 await interaction.response.defer(ephemeral=True)
-                data = await load_events()
+                data = load_events(interaction.guild_id)
                 ev = data.get("events", {}).get(message_id)
                 if not ev or ev["status"] != "open":
                     await interaction.followup.send("❌ Опрос закрыт.", ephemeral=True)
@@ -677,7 +667,7 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
                     user_votes.clear()
                     user_votes.append(opt_idx)
                     
-                await save_events(data)
+                save_events(interaction.guild_id, data)
                 try:
                     emb = rebuild_event_embed(interaction.message.embeds[0], ev)
                     await interaction.message.edit(embed=emb)
@@ -713,7 +703,7 @@ class EventNotifyModal(discord.ui.Modal, title="Рассылка участни�
         await interaction.response.defer(ephemeral=True)
         text = self.inp_text.value.strip()
 
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(self.message_id)
         if not ev:
             await interaction.followup.send("❌ Событие не найдено.", ephemeral=True)
@@ -742,7 +732,7 @@ class EventManageSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         msg_id = self.values[0]
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(msg_id)
         if not ev:
             await interaction.response.send_message("Событие не найдено.", ephemeral=True)
@@ -798,10 +788,11 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if getattr(self.bot, "_event_views_loaded", False): return
-        data = await load_events()
-        for msg_id, ev_data in data.get("events", {}).items():
-            if ev_data.get("status") == "open":
-                self.bot.add_view(create_participation_view(msg_id, ev_data), message_id=int(msg_id))
+        for guild in self.bot.guilds:
+            data = load_events(guild.id)
+            for msg_id, ev_data in data.get("events", {}).items():
+                if ev_data.get("status") == "open":
+                    self.bot.add_view(create_participation_view(msg_id, ev_data), message_id=int(msg_id))
         self.bot._event_views_loaded = True
 
     @event_group.command(name="setup", description="Запустить конструктор событий/опросов")
@@ -811,7 +802,7 @@ class Events(commands.Cog):
 
     @event_group.command(name="manage", description="Управление активными событиями")
     async def event_manage(self, interaction: discord.Interaction):
-        data = await load_events()
+        data = load_events(interaction.guild_id)
         evs = data.get("events", {})
         opts = []
         for mid, ev in evs.items():

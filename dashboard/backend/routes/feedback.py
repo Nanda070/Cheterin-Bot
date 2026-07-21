@@ -1,3 +1,4 @@
+import settings_db
 from aiohttp import web
 
 import feedback_categories
@@ -11,12 +12,12 @@ VALID_STATUSES = {"pending", "approved", "denied"}
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
-def serialize_case_summary(case_id: str, case_data: dict, guild) -> dict:
+def serialize_case_summary(case_id: str, case_data: dict, guild, guild_id: int) -> dict:
     category_key = case_data["category_key"]
-    config = feedback_menu.get_feedback_categories().get(category_key, {})
+    config = feedback_menu.get_feedback_categories(guild_id).get(category_key, {})
     submitter_id = case_data["submitter_id"]
     member = guild.get_member(submitter_id) if guild else None
     return {
@@ -30,9 +31,9 @@ def serialize_case_summary(case_id: str, case_data: dict, guild) -> dict:
     }
 
 
-def serialize_case_detail(case_id: str, case_data: dict, guild) -> dict:
+def serialize_case_detail(case_id: str, case_data: dict, guild, guild_id: int) -> dict:
     category_key = case_data["category_key"]
-    config = feedback_menu.get_feedback_categories().get(category_key, {})
+    config = feedback_menu.get_feedback_categories(guild_id).get(category_key, {})
     submitter_id = case_data["submitter_id"]
     member = guild.get_member(submitter_id) if guild else None
     answers = case_data.get("answers", {})
@@ -64,9 +65,11 @@ async def list_feedback_cases(request: web.Request) -> web.Response:
 
     guild = _get_guild_or_none(request)
     bot = request.app["bot"]
+    guild_id = request["guild_id"]
+    cases_dict = settings_db.get(guild_id, "feedback_cases", {})
     cases = [
-        serialize_case_summary(case_id, case_data, guild)
-        for case_id, case_data in bot.feedback_cases.items()
+        serialize_case_summary(case_id, case_data, guild, guild_id)
+        for case_id, case_data in cases_dict.items()
         if status is None or case_data.get("status") == status
     ]
     cases.sort(key=lambda c: c["created_at"] or "", reverse=True)
@@ -79,12 +82,13 @@ async def list_feedback_cases(request: web.Request) -> web.Response:
 async def get_feedback_case(request: web.Request) -> web.Response:
     bot = request.app["bot"]
     case_id = request.match_info["case_id"]
-    case_data = bot.feedback_cases.get(case_id)
+    guild_id = request["guild_id"]
+    case_data = settings_db.get(guild_id, "feedback_cases", {}).get(case_id)
     if case_data is None:
         return web.json_response({"error": "not_found"}, status=404)
 
     guild = _get_guild_or_none(request)
-    return web.json_response(serialize_case_detail(case_id, case_data, guild))
+    return web.json_response(serialize_case_detail(case_id, case_data, guild, guild_id))
 
 
 @routes.post("/api/feedback-cases/{case_id}/decide")
@@ -151,7 +155,7 @@ def serialize_category(key: str, entry: dict) -> dict:
 @routes.get("/api/feedback-categories")
 @require_dashboard_access
 async def list_feedback_categories(request: web.Request) -> web.Response:
-    categories = feedback_categories.load_categories()
+    categories = feedback_categories.load_categories(request["guild_id"])
     return web.json_response(
         {"categories": [serialize_category(key, entry) for key, entry in categories.items()]}
     )
@@ -171,7 +175,7 @@ async def create_feedback_category(request: web.Request) -> web.Response:
     if not isinstance(body, dict):
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    categories = feedback_categories.load_categories()
+    categories = feedback_categories.load_categories(request["guild_id"])
     error = feedback_categories.validate_category_spec(body, categories, existing_key=None)
     if error:
         status_code = 409 if error in ("key_taken", "case_prefix_taken") else 400
@@ -184,7 +188,7 @@ async def create_feedback_category(request: web.Request) -> web.Response:
     key = body["key"]
     entry = {k: v for k, v in body.items() if k != "key"}
     categories[key] = entry
-    feedback_categories.save_categories(categories)
+    feedback_categories.save_categories(request["guild_id"], categories)
 
     return web.json_response(serialize_category(key, entry), status=201)
 
@@ -197,7 +201,7 @@ async def update_feedback_category(request: web.Request) -> web.Response:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
     category_key = request.match_info["category_key"]
-    categories = feedback_categories.load_categories()
+    categories = feedback_categories.load_categories(request["guild_id"])
     if category_key not in categories:
         return web.json_response({"error": "not_found"}, status=404)
 
@@ -220,7 +224,7 @@ async def update_feedback_category(request: web.Request) -> web.Response:
 
     entry = {k: v for k, v in body.items() if k != "key"}
     categories[category_key] = entry
-    feedback_categories.save_categories(categories)
+    feedback_categories.save_categories(request["guild_id"], categories)
 
     return web.json_response(serialize_category(category_key, entry))
 
@@ -229,23 +233,25 @@ async def update_feedback_category(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def delete_feedback_category(request: web.Request) -> web.Response:
     category_key = request.match_info["category_key"]
-    categories = feedback_categories.load_categories()
+    categories = feedback_categories.load_categories(request["guild_id"])
     if category_key not in categories:
         return web.json_response({"error": "not_found"}, status=404)
 
     del categories[category_key]
-    feedback_categories.save_categories(categories)
+    feedback_categories.save_categories(request["guild_id"], categories)
 
     bot = request.app["bot"]
+    guild_id = request["guild_id"]
+    cases_dict = settings_db.get(guild_id, "feedback_cases", {})
     removed_case_ids = [
         case_id
-        for case_id, case_data in bot.feedback_cases.items()
+        for case_id, case_data in cases_dict.items()
         if case_data.get("category_key") == category_key and case_data.get("status") == "pending"
     ]
     if removed_case_ids:
         for case_id in removed_case_ids:
-            del bot.feedback_cases[case_id]
-        await bot.update_file()
+            del cases_dict[case_id]
+        settings_db.put(guild_id, "feedback_cases", cases_dict)
 
     return web.json_response({"ok": True})
 

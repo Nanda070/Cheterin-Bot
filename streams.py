@@ -9,7 +9,6 @@
 """
 
 import asyncio
-import json
 import logging
 import os
 import re
@@ -20,44 +19,16 @@ import aiohttp
 import discord
 from discord.ext import commands, tasks
 
+import settings_db
+
 logger = logging.getLogger("streams")
 
-CONFIG_FILE = "streams_config.json"
+MODULE_NAME = "streams"
 
 POLL_SECONDS = 120
 
 DEFAULT_TEMPLATE_TWITCH = "🔴 **{{channel}}** запустил трансляцию: **{{stream}}**\nИграем в {{game}} — заходите! {{channel.url}}"
 DEFAULT_TEMPLATE_YOUTUBE = "▶️ Новое видео от **{{channel}}**: **{{stream}}**\n{{channel.url}}"
-
-_cache: dict | None = None
-_cache_mtime: float | None = None
-
-
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
 
 
 def _normalized(data: dict) -> dict:
@@ -66,9 +37,9 @@ def _normalized(data: dict) -> dict:
     return data
 
 
-def get_subscriptions() -> list[dict]:
+def get_subscriptions(guild_id: int) -> list[dict]:
     result = []
-    for sub in _normalized(load_config())["subscriptions"]:
+    for sub in _normalized(settings_db.get(guild_id, MODULE_NAME))["subscriptions"]:
         result.append({
             "id": str(sub.get("id") or ""),
             "platform": sub.get("platform") or "twitch",
@@ -88,31 +59,31 @@ def get_subscriptions() -> list[dict]:
     return result
 
 
-def add_subscription(sub: dict) -> dict:
-    data = _normalized(load_config())
+def add_subscription(guild_id: int, sub: dict) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["seq"] += 1
     sub = {**sub, "id": str(data["seq"])}
     data["subscriptions"].append(sub)
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return sub
 
 
-def update_subscription(sub_id: str, **fields) -> dict | None:
-    data = _normalized(load_config())
+def update_subscription(guild_id: int, sub_id: str, **fields) -> dict | None:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     for sub in data["subscriptions"]:
         if str(sub.get("id")) == str(sub_id):
             sub.update(fields)
-            save_config(data)
+            settings_db.put(guild_id, MODULE_NAME, data)
             return sub
     return None
 
 
-def delete_subscription(sub_id: str) -> bool:
-    data = _normalized(load_config())
+def delete_subscription(guild_id: int, sub_id: str) -> bool:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     before = len(data["subscriptions"])
     data["subscriptions"] = [s for s in data["subscriptions"] if str(s.get("id")) != str(sub_id)]
     if len(data["subscriptions"]) != before:
-        save_config(data)
+        settings_db.put(guild_id, MODULE_NAME, data)
         return True
     return False
 
@@ -285,23 +256,33 @@ class Streams(commands.Cog):
 
     @tasks.loop(seconds=POLL_SECONDS)
     async def _poll(self):
-        subs = [s for s in get_subscriptions() if s["enabled"] and s["channel_id"]]
-        if not subs:
-            return
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            for guild in self.bot.guilds:
+                subs = [s for s in get_subscriptions(guild.id) if s["enabled"] and s["channel_id"]]
+                if not subs:
+                    continue
 
-        twitch_subs = [s for s in subs if s["platform"] == "twitch"]
-        youtube_subs = [s for s in subs if s["platform"] == "youtube"]
+                twitch_subs = [s for s in subs if s["platform"] == "twitch"]
+                youtube_subs = [s for s in subs if s["platform"] == "youtube"]
 
-        if twitch_subs:
-            await self._poll_twitch(twitch_subs)
-        for sub in youtube_subs:
-            await self._poll_youtube_one(sub)
+                if twitch_subs:
+                    await self._poll_twitch(guild.id, twitch_subs)
+                for sub in youtube_subs:
+                    await self._poll_youtube_one(guild.id, sub)
+        except Exception:
+            logger.exception("_poll: ошибка итерации — цикл продолжает работать")
+
+    @_poll.error
+    async def _poll_error(self, _error: BaseException):
+        logger.exception("_poll: критическая ошибка — перезапуск цикла")
+        self._poll.restart()
 
     @_poll.before_loop
     async def _before_poll(self):
         await self.bot.wait_until_ready()
 
-    async def _poll_twitch(self, subs: list[dict]):
+    async def _poll_twitch(self, guild_id: int, subs: list[dict]):
         logins = list({s["identifier"] for s in subs})
         body = await self._twitch_api("streams", [("user_login", l) for l in logins[:100]])
         if body is None:
@@ -316,11 +297,11 @@ class Streams(commands.Cog):
             if stream_id == sub["last_stream_id"]:
                 continue
             if not keywords_match(stream.get("title", ""), sub["keywords"], sub["keyword_mode"]):
-                update_subscription(sub["id"], last_stream_id=stream_id)
+                update_subscription(guild_id, sub["id"], last_stream_id=stream_id)
                 continue
             now = int(time.time())
             if sub["min_interval_minutes"] and now - sub["last_notified_ts"] < sub["min_interval_minutes"] * 60:
-                update_subscription(sub["id"], last_stream_id=stream_id)
+                update_subscription(guild_id, sub["id"], last_stream_id=stream_id)
                 continue
 
             url = f"https://www.twitch.tv/{sub['identifier']}"
@@ -343,9 +324,9 @@ class Streams(commands.Cog):
                 embed.set_image(url=f"{thumb}?t={int(time.time())}")
 
             await self._announce(sub, content, embed)
-            update_subscription(sub["id"], last_stream_id=stream_id, last_notified_ts=now)
+            update_subscription(guild_id, sub["id"], last_stream_id=stream_id, last_notified_ts=now)
 
-    async def _poll_youtube_one(self, sub: dict):
+    async def _poll_youtube_one(self, guild_id: int, sub: dict):
         feed = await self._youtube_feed(sub["identifier"])
         if feed is None or not feed["entries"]:
             return
@@ -354,14 +335,14 @@ class Streams(commands.Cog):
             return
         if not sub["last_stream_id"]:
             # Первая проверка после добавления: запоминаем последнее видео без анонса
-            update_subscription(sub["id"], last_stream_id=latest["video_id"])
+            update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"])
             return
         if not keywords_match(latest["title"], sub["keywords"], sub["keyword_mode"]):
-            update_subscription(sub["id"], last_stream_id=latest["video_id"])
+            update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"])
             return
         now = int(time.time())
         if sub["min_interval_minutes"] and now - sub["last_notified_ts"] < sub["min_interval_minutes"] * 60:
-            update_subscription(sub["id"], last_stream_id=latest["video_id"])
+            update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"])
             return
 
         url = f"https://www.youtube.com/watch?v={latest['video_id']}"
@@ -374,7 +355,7 @@ class Streams(commands.Cog):
         embed.set_image(url=f"https://i.ytimg.com/vi/{latest['video_id']}/hqdefault.jpg")
 
         await self._announce(sub, content, embed)
-        update_subscription(sub["id"], last_stream_id=latest["video_id"], last_notified_ts=now)
+        update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"], last_notified_ts=now)
 
     async def _announce(self, sub: dict, content: str, embed: discord.Embed):
         channel = self.bot.get_channel(int(sub["channel_id"]))

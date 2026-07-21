@@ -9,12 +9,13 @@ def test_hex_to_rgb():
 
 
 def test_render_rank_card_without_cosmetics_produces_png():
-    png = xp_card.render_rank_card(None, "Player", 5, 30, 100, 1, 10, "1ч 30м")
+    png = xp_card.render_rank_card(1, None, "Player", 5, 30, 100, 1, 10, "1ч 30м")
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 def test_render_rank_card_with_custom_frame_and_title():
     png = xp_card.render_rank_card(
+        1,
         None, "Player", 5, 30, 100, 1, 10, "1ч 30м",
         frame_color="#FF00AA", title_text="Легенда сервера",
     )
@@ -23,5 +24,5 @@ def test_render_rank_card_with_custom_frame_and_title():
 
 def test_render_rank_card_long_title_does_not_crash():
     long_title = "О" * 60
-    png = xp_card.render_rank_card(None, "Player", 5, 30, 100, 1, 10, "0м", title_text=long_title)
+    png = xp_card.render_rank_card(1, None, "Player", 5, 30, 100, 1, 10, "0м", title_text=long_title)
     assert png[:8] == b"\x89PNG\r\n\x1a\n"

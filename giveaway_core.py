@@ -1,16 +1,17 @@
 """Ядро модуля «Гивевеи».
 
-Хранит розыгрыши в giveaways_data.json, чтобы они переживали перезапуск бота —
-тот же паттерн персистентности и восстановления таймеров, что и у supply_core.py.
+Розыгрыши хранятся per-guild в settings_db (Фаза 2.2б MULTIGUILD_PLAN.md), чтобы
+переживать перезапуск бота и быть изолированными между серверами — тот же паттерн,
+что и у supply_core.py.
 """
 
-import json
-import os
 import random
 import re
 from datetime import datetime, timezone
 
-DATA_FILE = "giveaways_data.json"
+import settings_db
+
+MODULE_NAME = "giveaways"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 
 DURATION_RE = re.compile(r"^(\d+)([smhd])$")
 DURATION_UNITS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
@@ -26,19 +27,12 @@ def parse_duration(value: str) -> int:
     return int(amount) * DURATION_UNITS[unit]
 
 
-def load_data() -> dict:
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def load_data(guild_id: int) -> dict:
+    return _normalized(settings_db.get(guild_id, MODULE_NAME))
 
 
-def save_data(data: dict) -> None:
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_data(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
 def _normalized(data: dict) -> dict:
@@ -47,13 +41,14 @@ def _normalized(data: dict) -> dict:
     return data
 
 
-def create_giveaway(initiator_id: int, prize: str, duration_str: str, winners_count: int) -> dict:
-    data = _normalized(load_data())
+def create_giveaway(guild_id: int, initiator_id: int, prize: str, duration_str: str, winners_count: int) -> dict:
+    data = load_data(guild_id)
     data["seq"] += 1
     giveaway_id = str(data["seq"])
     now_ts = int(datetime.now(timezone.utc).timestamp())
     giveaway = {
         "id": giveaway_id,
+        "guild_id": str(guild_id),
         "initiator_id": str(initiator_id),
         "prize": prize,
         "winners_count": int(winners_count),
@@ -69,45 +64,45 @@ def create_giveaway(initiator_id: int, prize: str, duration_str: str, winners_co
         "closed_at": None,
     }
     data["giveaways"][giveaway_id] = giveaway
-    save_data(data)
+    save_data(guild_id, data)
     return giveaway
 
 
-def get_giveaway(giveaway_id: str) -> dict | None:
-    return _normalized(load_data())["giveaways"].get(str(giveaway_id))
+def get_giveaway(guild_id: int, giveaway_id: str) -> dict | None:
+    return load_data(guild_id)["giveaways"].get(str(giveaway_id))
 
 
-def get_giveaway_by_message(message_id: int) -> dict | None:
-    for giveaway in _normalized(load_data())["giveaways"].values():
+def get_giveaway_by_message(guild_id: int, message_id: int) -> dict | None:
+    for giveaway in load_data(guild_id)["giveaways"].values():
         if giveaway.get("message_id") == str(message_id):
             return giveaway
     return None
 
 
-def update_giveaway(giveaway_id: str, **fields) -> dict | None:
-    data = _normalized(load_data())
+def update_giveaway(guild_id: int, giveaway_id: str, **fields) -> dict | None:
+    data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None:
         return None
     giveaway.update(fields)
-    save_data(data)
+    save_data(guild_id, data)
     return giveaway
 
 
-def list_active() -> list[dict]:
-    giveaways = [g for g in _normalized(load_data())["giveaways"].values() if g["status"] == "active"]
+def list_active(guild_id: int) -> list[dict]:
+    giveaways = [g for g in load_data(guild_id)["giveaways"].values() if g["status"] == "active"]
     return sorted(giveaways, key=lambda g: g["target_ts"])
 
 
-def list_history(limit: int = 20) -> list[dict]:
-    giveaways = [g for g in _normalized(load_data())["giveaways"].values() if g["status"] != "active"]
+def list_history(guild_id: int, limit: int = 20) -> list[dict]:
+    giveaways = [g for g in load_data(guild_id)["giveaways"].values() if g["status"] != "active"]
     giveaways.sort(key=lambda g: g.get("closed_at") or "", reverse=True)
     return giveaways[:limit]
 
 
-def join_giveaway(giveaway_id: str, user_id: int) -> str:
+def join_giveaway(guild_id: int, giveaway_id: str, user_id: int) -> str:
     """Возвращает: joined | already | closed | not_found."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None:
         return "not_found"
@@ -119,13 +114,13 @@ def join_giveaway(giveaway_id: str, user_id: int) -> str:
         return "already"
 
     giveaway["entrants"].append(uid)
-    save_data(data)
+    save_data(guild_id, data)
     return "joined"
 
 
-def leave_giveaway(giveaway_id: str, user_id: int) -> str:
+def leave_giveaway(guild_id: int, giveaway_id: str, user_id: int) -> str:
     """Возвращает: left | not_in_list | closed | not_found."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None:
         return "not_found"
@@ -137,7 +132,7 @@ def leave_giveaway(giveaway_id: str, user_id: int) -> str:
         return "not_in_list"
 
     giveaway["entrants"].remove(uid)
-    save_data(data)
+    save_data(guild_id, data)
     return "left"
 
 
@@ -152,16 +147,16 @@ def _draw_winners(giveaway: dict, exclude_past: bool = True) -> list[str]:
     return random.sample(pool, count)
 
 
-def draw_winners(giveaway_id: str, exclude_past: bool = True) -> list[str]:
-    giveaway = get_giveaway(giveaway_id)
+def draw_winners(guild_id: int, giveaway_id: str, exclude_past: bool = True) -> list[str]:
+    giveaway = get_giveaway(guild_id, giveaway_id)
     if giveaway is None:
         return []
     return _draw_winners(giveaway, exclude_past=exclude_past)
 
 
-def close_giveaway(giveaway_id: str, status: str = "finished") -> dict | None:
+def close_giveaway(guild_id: int, giveaway_id: str, status: str = "finished") -> dict | None:
     """Закрывает гивевей (finished/cancelled); при finished сразу выбирает победителей."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None or giveaway["status"] != "active":
         return None
@@ -173,13 +168,13 @@ def close_giveaway(giveaway_id: str, status: str = "finished") -> dict | None:
     giveaway["closed_at"] = datetime.now(timezone.utc).isoformat()
 
     _trim_history(data)
-    save_data(data)
+    save_data(guild_id, data)
     return giveaway
 
 
-def reroll_giveaway(giveaway_id: str) -> list[str] | None:
+def reroll_giveaway(guild_id: int, giveaway_id: str) -> list[str] | None:
     """Перевыбирает победителей, исключая тех, кто уже выигрывал в этом гивевее ранее."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None or giveaway["status"] != "finished":
         return None
@@ -187,7 +182,7 @@ def reroll_giveaway(giveaway_id: str) -> list[str] | None:
     winners = _draw_winners(giveaway, exclude_past=True)
     giveaway["winners"] = winners
     giveaway["past_winners"] = sorted(set(giveaway.get("past_winners", [])) | set(winners))
-    save_data(data)
+    save_data(guild_id, data)
     return winners
 
 

@@ -6,8 +6,11 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRo
 
 
 @pytest.fixture(autouse=True)
-def isolated_config_file(tmp_path, monkeypatch):
-    monkeypatch.setattr(bot_config, "CONFIG_FILE", str(tmp_path / "config.json"))
+def isolated_settings_db(tmp_path, monkeypatch):
+    import settings_db
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "test_settings.db"))
+    settings_db._cache.clear()
+    settings_db.init()
 
 
 def build(roles=None):
@@ -31,7 +34,7 @@ async def test_get_auto_roles_defaults_to_empty_when_file_missing(aiohttp_client
 
 @pytest.mark.asyncio
 async def test_get_auto_roles_returns_stored_values(aiohttp_client):
-    bot_config.save_config({"AUTO_ROLE_IDS": ["7", "8"]})
+    bot_config.save_config(1, {"AUTO_ROLE_IDS": ["7", "8"]})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -58,7 +61,7 @@ async def test_update_auto_roles_persists_valid_roles(aiohttp_client):
     resp = await client.put("/api/auto-roles", json={"role_ids": ["7"]})
     assert resp.status == 200
     assert (await resp.json()) == {"role_ids": ["7"]}
-    assert bot_config.load_config()["AUTO_ROLE_IDS"] == ["7"]
+    assert bot_config.load_config(1)["AUTO_ROLE_IDS"] == ["7"]
 
 
 @pytest.mark.asyncio

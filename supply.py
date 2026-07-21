@@ -1,12 +1,13 @@
 """Ког «Сборы на поставку» (портировано из ChetSupply, функционал расширен).
 
-Слэш-команда /реаки-поставка создаёт сбор с кнопками участия. Сборы хранятся в
-supply_data.json и восстанавливаются после перезапуска бота: таймеры
+Слэш-команда /реаки-поставка создаёт сбор с кнопками участия. Сборы хранятся
+per-guild в settings_db и восстанавливаются после перезапуска бота: таймеры
 пересоздаются, кнопки продолжают работать (persistent view).
 """
 
 import asyncio
 import logging
+import os
 from datetime import datetime
 
 import discord
@@ -19,8 +20,15 @@ import supply_core
 logger = logging.getLogger("supply")
 
 
+def _main_guild_id() -> int:
+    """Данные сборов уже per-guild (settings_db, Фаза 2.2б). Конфиг когa (каналы/роли/
+    напоминания) пока читается с мейн-сервера через GUILD_ID — перевод конфига на
+    guild_id события относится к Фазе 2.4 MULTIGUILD_PLAN.md."""
+    return int(os.getenv("GUILD_ID", "0") or 0)
+
+
 def _config_int(key: str) -> int:
-    raw = bot_config.get(key)
+    raw = bot_config.get(_main_guild_id(), key)
     try:
         return int(raw)
     except (TypeError, ValueError):
@@ -28,7 +36,7 @@ def _config_int(key: str) -> int:
 
 
 def get_reminder_minutes() -> int:
-    raw = bot_config.get("SUPPLY_REMINDER_MINUTES")
+    raw = bot_config.get(_main_guild_id(), "SUPPLY_REMINDER_MINUTES")
     try:
         value = int(raw)
         return value if value > 0 else 0
@@ -108,9 +116,9 @@ class SupplyView(discord.ui.View):
         self.cog = cog
 
     def _get_supply(self, interaction: discord.Interaction) -> dict | None:
-        if interaction.message is None:
+        if interaction.message is None or interaction.guild_id is None:
             return None
-        return supply_core.get_supply_by_message(interaction.message.id)
+        return supply_core.get_supply_by_message(interaction.guild_id, interaction.message.id)
 
     @discord.ui.button(label="Участвовать", style=discord.ButtonStyle.green, custom_id="supply:join")
     async def join_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
@@ -118,7 +126,7 @@ class SupplyView(discord.ui.View):
         if supply is None:
             return await interaction.response.send_message("Сбор не найден.", ephemeral=True)
 
-        result = supply_core.join_supply(supply["id"], interaction.user.id)
+        result = supply_core.join_supply(interaction.guild_id, supply["id"], interaction.user.id)
         if result == "already":
             return await interaction.response.send_message("Ты уже в списке.", ephemeral=True)
         if result == "closed":
@@ -126,7 +134,7 @@ class SupplyView(discord.ui.View):
         if result == "not_found":
             return await interaction.response.send_message("Сбор не найден.", ephemeral=True)
 
-        supply = supply_core.get_supply(supply["id"])
+        supply = supply_core.get_supply(interaction.guild_id, supply["id"])
         await interaction.response.edit_message(embed=generate_embed(supply), view=self)
 
         if result == "reserve":
@@ -155,13 +163,13 @@ class SupplyView(discord.ui.View):
         if supply is None:
             return await interaction.response.send_message("Сбор не найден.", ephemeral=True)
 
-        result, promoted = supply_core.leave_supply(supply["id"], interaction.user.id)
+        result, promoted = supply_core.leave_supply(interaction.guild_id, supply["id"], interaction.user.id)
         if result == "not_in_list":
             return await interaction.response.send_message("Тебя нет в списке.", ephemeral=True)
         if result in ("closed", "not_found"):
             return await interaction.response.send_message("Сбор уже закрыт.", ephemeral=True)
 
-        supply = supply_core.get_supply(supply["id"])
+        supply = supply_core.get_supply(interaction.guild_id, supply["id"])
         await interaction.response.edit_message(embed=generate_embed(supply), view=self)
         await send_dev_log(
             self.cog.bot,
@@ -200,7 +208,7 @@ class SupplyView(discord.ui.View):
             return await interaction.response.send_message("Закрыть сбор может только инициатор или модератор.", ephemeral=True)
 
         await interaction.response.defer()
-        await self.cog.finalize_supply(supply["id"], reason="закрыт досрочно")
+        await self.cog.finalize_supply(interaction.guild_id, supply["id"], reason="закрыт досрочно")
 
 
 class SupplyCog(commands.Cog):
@@ -225,11 +233,12 @@ class SupplyCog(commands.Cog):
         await self.recover_supplies()
 
     async def recover_supplies(self):
-        """Пересоздаёт таймеры активных сборов после перезапуска."""
+        """Пересоздаёт таймеры активных сборов после перезапуска (по всем серверам)."""
         recovered = 0
-        for supply in supply_core.list_active():
-            self.schedule_supply(supply)
-            recovered += 1
+        for guild in self.bot.guilds:
+            for supply in supply_core.list_active(guild.id):
+                self.schedule_supply(supply)
+                recovered += 1
         if recovered:
             await send_dev_log(
                 self.bot,
@@ -239,14 +248,16 @@ class SupplyCog(commands.Cog):
             )
 
     def schedule_supply(self, supply: dict):
-        old = self._timers.pop(supply["id"], None)
+        guild_id = int(supply["guild_id"])
+        key = (guild_id, supply["id"])
+        old = self._timers.pop(key, None)
         if old:
             old.cancel()
-        self._timers[supply["id"]] = self.bot.loop.create_task(self._run_supply_timer(supply["id"]))
+        self._timers[key] = self.bot.loop.create_task(self._run_supply_timer(guild_id, supply["id"]))
 
-    async def _run_supply_timer(self, supply_id: str):
+    async def _run_supply_timer(self, guild_id: int, supply_id: str):
         try:
-            supply = supply_core.get_supply(supply_id)
+            supply = supply_core.get_supply(guild_id, supply_id)
             if supply is None or supply["status"] != "active":
                 return
 
@@ -256,26 +267,26 @@ class SupplyCog(commands.Cog):
 
             if reminder_minutes and not supply.get("reminder_sent") and reminder_ts > now_ts:
                 await asyncio.sleep(reminder_ts - now_ts)
-                await self._send_reminder(supply_id)
+                await self._send_reminder(guild_id, supply_id)
 
-            supply = supply_core.get_supply(supply_id)
+            supply = supply_core.get_supply(guild_id, supply_id)
             if supply is None or supply["status"] != "active":
                 return
             now_ts = int(supply_core.now_msk().timestamp())
             if supply["target_ts"] > now_ts:
                 await asyncio.sleep(supply["target_ts"] - now_ts)
 
-            await self.finalize_supply(supply_id, reason="таймер истёк")
+            await self.finalize_supply(guild_id, supply_id, reason="таймер истёк")
         except asyncio.CancelledError:
             raise
         except Exception:
             logger.exception("Supply timer failed: %s", supply_id)
 
-    async def _send_reminder(self, supply_id: str):
-        supply = supply_core.get_supply(supply_id)
+    async def _send_reminder(self, guild_id: int, supply_id: str):
+        supply = supply_core.get_supply(guild_id, supply_id)
         if supply is None or supply["status"] != "active" or supply.get("reminder_sent"):
             return
-        supply_core.update_supply(supply_id, reminder_sent=True)
+        supply_core.update_supply(guild_id, supply_id, reminder_sent=True)
 
         if not supply["participants"]:
             return
@@ -301,12 +312,12 @@ class SupplyCog(commands.Cog):
             discord.Color.blue(),
         )
 
-    async def finalize_supply(self, supply_id: str, reason: str, status: str = "finished") -> bool:
-        supply = supply_core.close_supply(supply_id, status=status)
+    async def finalize_supply(self, guild_id: int, supply_id: str, reason: str, status: str = "finished") -> bool:
+        supply = supply_core.close_supply(guild_id, supply_id, status=status)
         if supply is None:
             return False
 
-        task = self._timers.pop(supply_id, None)
+        task = self._timers.pop((guild_id, supply_id), None)
         if task and task is not asyncio.current_task():
             task.cancel()
 
@@ -347,9 +358,9 @@ class SupplyCog(commands.Cog):
             )
         return True
 
-    async def publish_supply(self, channel: discord.abc.Messageable, initiator_id: int, opponent: str, limit: int, time_str: str) -> dict:
+    async def publish_supply(self, guild_id: int, channel: discord.abc.Messageable, initiator_id: int, opponent: str, limit: int, time_str: str) -> dict:
         """Создаёт сбор и публикует сообщение с кнопками. Используется командой и дашбордом."""
-        supply = supply_core.create_supply(initiator_id, opponent, limit, time_str)
+        supply = supply_core.create_supply(guild_id, initiator_id, opponent, limit, time_str)
 
         role_id = _config_int("SUPPLY_ROLE_ID")
         content = f"<@&{role_id}>" if role_id else None
@@ -361,7 +372,7 @@ class SupplyCog(commands.Cog):
             view=self.view,
             allowed_mentions=allowed,
         )
-        supply = supply_core.update_supply(supply["id"], channel_id=str(message.channel.id), message_id=str(message.id))
+        supply = supply_core.update_supply(guild_id, supply["id"], channel_id=str(message.channel.id), message_id=str(message.id))
         self.schedule_supply(supply)
 
         await send_dev_log(
@@ -403,7 +414,7 @@ class SupplyCog(commands.Cog):
             return await interaction.followup.send("❌ Ошибка: лимит должен быть от 1 до 99.", ephemeral=True)
 
         try:
-            supply = await self.publish_supply(interaction.channel, interaction.user.id, против, лимит, время)
+            supply = await self.publish_supply(interaction.guild_id, interaction.channel, interaction.user.id, против, лимит, время)
             await interaction.followup.send(f"Сбор №{supply['id']} создан.", ephemeral=True)
         except Exception as e:
             await send_dev_log(

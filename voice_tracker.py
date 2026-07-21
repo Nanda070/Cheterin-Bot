@@ -86,7 +86,7 @@ class VoiceTracker(commands.Cog):
 
         duration = max(0, now - session.joined_ts)
         stats_db.voice_session_add(
-            member.id, session.channel_id, session.channel_name,
+            member.guild.id, member.id, session.channel_id, session.channel_name,
             session.joined_ts, now, session.active_seconds,
         )
 
@@ -105,34 +105,43 @@ class VoiceTracker(commands.Cog):
 
     @tasks.loop(seconds=TICK_SECONDS)
     async def _tick(self):
-        settings = xp_core.get_settings()
-        xp_enabled = settings["enabled"] and settings["voice"]["enabled"]
-        voice_scope = settings["voice"]
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            for guild in self.bot.guilds:
+                settings = xp_core.get_settings(guild.id)
+                xp_enabled = settings["enabled"] and settings["voice"]["enabled"]
+                voice_scope = settings["voice"]
 
-        for guild in self.bot.guilds:
-            for channel in guild.voice_channels:
-                humans = [m for m in channel.members if not m.bot]
-                if not humans:
-                    continue
+                for channel in guild.voice_channels:
+                    humans = [m for m in channel.members if not m.bot]
+                    if not humans:
+                        continue
 
-                active = [m for m in humans if m.voice and is_active(m.voice)]
-                active_count = len(active)
+                    active = [m for m in humans if m.voice and is_active(m.voice)]
+                    active_count = len(active)
 
-                for member in active:
-                    session = self.sessions.get(member.id)
-                    if session is None or session.channel_id != channel.id:
-                        # Подстраховка: сессия потерялась (например, рестарт шардов)
-                        self.sessions[member.id] = session = VoiceSession(channel.id, channel.name, int(time.time()))
+                    for member in active:
+                        session = self.sessions.get(member.id)
+                        if session is None or session.channel_id != channel.id:
+                            # Подстраховка: сессия потерялась (например, рестарт шардов)
+                            self.sessions[member.id] = session = VoiceSession(channel.id, channel.name, int(time.time()))
 
-                    if active_count >= 2:
-                        session.active_seconds += TICK_SECONDS
+                        if active_count >= 2:
+                            session.active_seconds += TICK_SECONDS
 
-                        if xp_enabled and self._xp_channel_allowed(channel.id, voice_scope) and not self._xp_member_ignored(member, voice_scope):
-                            session.xp_accum += xp_core.voice_xp_per_minute(
-                                active_count, voice_scope["max_count"], voice_scope["multiplier"],
-                                base_per_minute=voice_scope["base_per_minute"],
-                                member_multiplier=xp_core.voice_member_multiplier(voice_scope, member.id),
-                            ) * (TICK_SECONDS / 60)
+                            if xp_enabled and self._xp_channel_allowed(channel.id, voice_scope) and not self._xp_member_ignored(member, voice_scope):
+                                session.xp_accum += xp_core.voice_xp_per_minute(
+                                    active_count, voice_scope["max_count"], voice_scope["multiplier"],
+                                    base_per_minute=voice_scope["base_per_minute"],
+                                    member_multiplier=xp_core.voice_member_multiplier(voice_scope, member.id),
+                                ) * (TICK_SECONDS / 60)
+        except Exception:
+            logger.exception("_tick: ошибка итерации — цикл продолжает работать")
+
+    @_tick.error
+    async def _tick_error(self, _error: BaseException):
+        logger.exception("_tick: критическая ошибка — перезапуск цикла")
+        self._tick.restart()
 
     @_tick.before_loop
     async def _before_tick(self):
@@ -155,8 +164,17 @@ class VoiceTracker(commands.Cog):
 
     @tasks.loop(hours=24)
     async def _prune(self):
-        cutoff = int(time.time()) - SESSIONS_RETENTION_DAYS * 24 * 3600
-        stats_db.voice_sessions_prune(cutoff)
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            cutoff = int(time.time()) - SESSIONS_RETENTION_DAYS * 24 * 3600
+            stats_db.voice_sessions_prune(cutoff)
+        except Exception:
+            logger.exception("_prune: ошибка итерации — цикл продолжает работать")
+
+    @_prune.error
+    async def _prune_error(self, _error: BaseException):
+        logger.exception("_prune: критическая ошибка — перезапуск цикла")
+        self._prune.restart()
 
     @_prune.before_loop
     async def _before_prune(self):

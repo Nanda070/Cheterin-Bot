@@ -12,11 +12,14 @@ from dashboard.backend.tests.fakes import (
 )
 
 import feedback_categories
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(feedback_categories, "CONFIG_FILE", str(tmp_path / "feedback_categories.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def _spec(key="players", case_prefix="PR", channel_id="500", role_id="111"):
@@ -69,7 +72,7 @@ async def test_create_feedback_category_success(aiohttp_client):
     body = await resp.json()
     assert body["key"] == "players"
     assert body["case_prefix"] == "PR"
-    assert feedback_categories.load_categories()["players"]["channel_id"] == "500"
+    assert feedback_categories.load_categories(1)["players"]["channel_id"] == "500"
 
 
 @pytest.mark.asyncio
@@ -158,7 +161,7 @@ async def test_update_feedback_category_success(aiohttp_client):
     assert resp.status == 200
     body = await resp.json()
     assert body["title"] == "Обновлённая жалоба"
-    assert feedback_categories.load_categories()["players"]["title"] == "Обновлённая жалоба"
+    assert feedback_categories.load_categories(1)["players"]["title"] == "Обновлённая жалоба"
 
 
 @pytest.mark.asyncio
@@ -200,7 +203,7 @@ async def test_delete_feedback_category_removes_it(aiohttp_client):
     await client.post("/api/feedback-categories", json=_spec())
     resp = await client.delete("/api/feedback-categories/players")
     assert resp.status == 200
-    assert feedback_categories.load_categories() == {}
+    assert feedback_categories.load_categories(1) == {}
 
 
 @pytest.mark.asyncio
@@ -227,18 +230,21 @@ async def test_delete_feedback_category_removes_pending_cases(aiohttp_client):
     channel = FakeChannel(500, name="reports")
     _, app = build(roles=[role], channels=[channel])
     bot = app["bot"]
-    bot.feedback_cases["PR-0001"] = {"case_id": "PR-0001", "category_key": "players", "status": "pending"}
-    bot.feedback_cases["PR-0002"] = {"case_id": "PR-0002", "category_key": "players", "status": "approved"}
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = {"case_id": "PR-0001", "category_key": "players", "status": "pending"}
+    cases["PR-0002"] = {"case_id": "PR-0002", "category_key": "players", "status": "approved"}
+    settings_db.put(1, "feedback_cases", cases)
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     await client.post("/api/feedback-categories", json=_spec())
     resp = await client.delete("/api/feedback-categories/players")
-
     assert resp.status == 200
-    assert "PR-0001" not in bot.feedback_cases
-    assert "PR-0002" in bot.feedback_cases
-    assert bot.update_file_calls == 1
+    
+    cases_after = settings_db.get(1, "feedback_cases", {})
+    assert "PR-0001" not in cases_after
+    assert "PR-0002" in cases_after
 
 
 @pytest.mark.asyncio

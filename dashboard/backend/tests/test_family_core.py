@@ -1,17 +1,20 @@
 import pytest
 
 import family_core
+import settings_db
+
+GUILD_ID = 404
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(family_core, "CONFIG_FILE", str(tmp_path / "family_config.json"))
-    monkeypatch.setattr(family_core, "_cache", None, raising=False)
-    monkeypatch.setattr(family_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_settings_defaults_disabled():
-    settings = family_core.get_settings()
+    settings = family_core.get_settings(GUILD_ID)
     assert settings["enabled"] is False
     assert settings["roster"]["target_roles"] == []
     assert settings["applications"]["thread_archive_minutes"] == family_core.DEFAULT_THREAD_ARCHIVE_MINUTES
@@ -19,7 +22,7 @@ def test_settings_defaults_disabled():
 
 
 def test_save_and_reload_settings():
-    family_core.save_config({
+    family_core.save_config(GUILD_ID, {
         "enabled": True,
         "roster": {"list_channel_id": "500", "target_roles": [{"label": "High", "role_id": "7"}]},
         "applications": {
@@ -29,7 +32,7 @@ def test_save_and_reload_settings():
         },
         "birthdays": {"channel_id": "700"},
     })
-    settings = family_core.get_settings()
+    settings = family_core.get_settings(GUILD_ID)
     assert settings["enabled"] is True
     assert settings["roster"]["target_roles"] == [{"label": "High", "role_id": "7"}]
     assert settings["applications"]["application_channel_id"] == "600"
@@ -104,6 +107,10 @@ def test_build_birthday_text_groups_by_month_and_resolves_mentions():
     assert "1 Январь" in text
 
 
+class _FakeGuildRef:
+    id = GUILD_ID
+
+
 def test_has_staff_access_admin_bypasses_role_check():
     class Perms:
         administrator = True
@@ -111,12 +118,13 @@ def test_has_staff_access_admin_bypasses_role_check():
     class Member:
         guild_permissions = Perms()
         roles = []
+        guild = _FakeGuildRef()
 
     assert family_core.has_staff_access(Member()) is True
 
 
 def test_has_staff_access_via_role():
-    family_core.save_config({"applications": {"staff_role_ids": ["42"]}})
+    family_core.save_config(GUILD_ID, {"applications": {"staff_role_ids": ["42"]}})
 
     class Perms:
         administrator = False
@@ -128,12 +136,14 @@ def test_has_staff_access_via_role():
     class Member:
         guild_permissions = Perms()
         roles = [Role(42)]
+        guild = _FakeGuildRef()
 
     assert family_core.has_staff_access(Member()) is True
 
     class MemberNoRole:
         guild_permissions = Perms()
         roles = [Role(1)]
+        guild = _FakeGuildRef()
 
     assert family_core.has_staff_access(MemberNoRole()) is False
 
@@ -149,9 +159,10 @@ def test_can_manage_tickets_requires_configured_role():
     class Member:
         guild_permissions = Perms()
         roles = [Role(99)]
+        guild = _FakeGuildRef()
 
     # Роль тикет-менеджера не настроена — доступа нет даже с произвольной ролью.
     assert family_core.can_manage_tickets(Member()) is False
 
-    family_core.save_config({"applications": {"ticket_manager_role_id": "99"}})
+    family_core.save_config(GUILD_ID, {"applications": {"ticket_manager_role_id": "99"}})
     assert family_core.can_manage_tickets(Member()) is True

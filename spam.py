@@ -28,14 +28,23 @@ class Spam(commands.Cog):
     @tasks.loop(minutes=5)
     async def _cleanup_cache(self):
         """Удаляет устаревшие записи из кэша спам-детектора."""
-        now = discord.utils.utcnow()
-        expired_users = []
-        for user_id, entries in self.cache.items():
-            entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= 120]
-            if not entries:
-                expired_users.append(user_id)
-        for uid in expired_users:
-            del self.cache[uid]
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            now = discord.utils.utcnow()
+            expired_users = []
+            for user_id, entries in self.cache.items():
+                entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= 120]
+                if not entries:
+                    expired_users.append(user_id)
+            for uid in expired_users:
+                del self.cache[uid]
+        except Exception:
+            logger.exception("_cleanup_cache: ошибка итерации — цикл продолжает работать")
+
+    @_cleanup_cache.error
+    async def _cleanup_cache_error(self, _error: BaseException):
+        logger.exception("_cleanup_cache: критическая ошибка — перезапуск цикла")
+        self._cleanup_cache.restart()
 
     @_cleanup_cache.before_loop
     async def _before_cleanup(self):
@@ -140,7 +149,7 @@ class Spam(commands.Cog):
             return
 
         # Не реагируем на канал Tempban
-        tempban_channel_id = bot_config.get("TEMPBAN_CHANNEL_ID")
+        tempban_channel_id = bot_config.get(message.guild.id, "TEMPBAN_CHANNEL_ID")
         if tempban_channel_id and message.channel.id == int(tempban_channel_id):
             return
 
@@ -156,7 +165,7 @@ class Spam(commands.Cog):
             return
 
         # Игнорируем каналы-исключения
-        exception_channels = [int(c) for c in bot_config.get("SPAM_EXCEPTION_CHANNELS", [])]
+        exception_channels = [int(c) for c in bot_config.get(message.guild.id, "SPAM_EXCEPTION_CHANNELS", [])]
         if message.channel.id in exception_channels:
             return
 
@@ -215,8 +224,8 @@ class Spam(commands.Cog):
     async def _punish(self, message: discord.Message, matches: list, limit: int):
         member = message.author
         guild = message.guild
-        log_channel_id = bot_config.get("SPAM_LOG_CHANNEL_ID")
-        role_ping_id = bot_config.get("SPAM_LOG_ROLE_ID")
+        log_channel_id = bot_config.get(guild.id, "SPAM_LOG_CHANNEL_ID")
+        role_ping_id = bot_config.get(guild.id, "SPAM_LOG_ROLE_ID")
         signature = matches[0]["signature"]
 
         # Таймаут на 24 часа

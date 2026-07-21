@@ -1,15 +1,16 @@
 import pytest
 
 import serverlog
+import settings_db
 from dashboard.backend.routes.serverlog import routes as serverlog_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(serverlog, "CONFIG_FILE", str(tmp_path / "serverlog_config.json"))
-    monkeypatch.setattr(serverlog, "_cache", None)
-    monkeypatch.setattr(serverlog, "_cache_mtime", None)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():
@@ -46,8 +47,8 @@ async def test_put_then_get(aiohttp_client):
     body = await resp.json()
     assert body["events"]["message_delete"] == {"enabled": True, "channel_id": "500"}
 
-    assert serverlog.event_channel_id("message_delete") == 500
-    assert serverlog.event_channel_id("message_edit") == 0
+    assert serverlog.event_channel_id(1, "message_delete") == 500
+    assert serverlog.event_channel_id(1, "message_edit") == 0
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,5 @@
 import {
+  ArrowsLeftRight,
   Broadcast,
   CalendarCheck,
   Car,
@@ -24,6 +25,7 @@ import {
   Skull,
   Sparkle,
   Stack,
+  Ticket,
   TrendUp,
   Trophy,
   Users,
@@ -33,7 +35,7 @@ import {
   type Icon,
 } from '@phosphor-icons/react'
 import { useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
@@ -42,6 +44,7 @@ interface Section {
   label: string
   icon: Icon
   to: string
+  mainGuildOnly?: boolean
 }
 
 interface NavGroup {
@@ -89,7 +92,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
       { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
-      { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
       { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
     ],
   },
@@ -103,18 +105,23 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Участники и роли', icon: UsersThree, to: '/members' },
       { label: 'Аудит дашборда', icon: ClipboardText, to: '/audit' },
       { label: 'Конфигурация', icon: GearSix, to: '/config' },
+      { label: 'Тикеты CTD', icon: Ticket, to: '/ctd', mainGuildOnly: true },
     ],
   },
   {
     title: 'Супер-админ',
     icon: Crown,
     superAdminOnly: true,
-    items: [{ label: 'Серверы бота', icon: Crown, to: '/superadmin' }],
+    items: [
+      { label: 'Серверы бота', icon: Crown, to: '/superadmin' },
+      { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
+    ],
   },
 ]
 
 export function DashboardShell() {
   const { user, refresh } = useAuth()
+  const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
@@ -167,6 +174,10 @@ export function DashboardShell() {
             </span>
           }
         >
+          <DropdownItem onClick={() => navigate('/servers')}>
+            <ArrowsLeftRight size={16} />
+            Сменить сервер
+          </DropdownItem>
           <DropdownItem onClick={handleLogout} danger>
             <SignOut size={16} />
             {isLoggingOut ? 'Выходим…' : 'Выйти'}
@@ -194,7 +205,9 @@ export function DashboardShell() {
                   {group.title}
                 </p>
                 <div className="flex flex-col gap-0.5">
-                  {group.items.map(({ label, icon: SectionIcon, to }) => (
+                  {group.items
+                    .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
+                    .map(({ label, icon: SectionIcon, to }) => (
                     <NavLink
                       key={label}
                       to={to}

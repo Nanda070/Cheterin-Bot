@@ -49,7 +49,7 @@ class Lockdown(commands.Cog):
         if errors:
             embed.add_field(name="Ошибки", value="\n".join(errors[:10]), inline=False)
         embed.set_footer(text="Lockdown · Antispam")
-        await self.bot.send_log(embed)
+        await self.bot.send_log(interaction.guild.id, embed)
 
         status = f"✅ Антиспам включён. Изменено ролей: **{modified_count}**."
         if errors:
@@ -73,7 +73,7 @@ class Lockdown(commands.Cog):
         if errors:
             embed.add_field(name="Ошибки", value="\n".join(errors[:10]), inline=False)
         embed.set_footer(text="Lockdown · Antispam")
-        await self.bot.send_log(embed)
+        await self.bot.send_log(interaction.guild.id, embed)
 
         status = f"✅ Антиспам выключен. Восстановлено ролей: **{restored_count}**."
         if errors:

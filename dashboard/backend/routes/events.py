@@ -112,7 +112,7 @@ async def list_events(request: web.Request) -> web.Response:
     if status not in VALID_STATUSES:
         return web.json_response({"error": "invalid_status"}, status=400)
 
-    data = await events.load_events()
+    data = events.load_events(request["guild_id"])
     events_list = [
         serialize_event_summary(message_id, ev)
         for message_id, ev in data.get("events", {}).items()
@@ -125,7 +125,7 @@ async def list_events(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def get_event(request: web.Request) -> web.Response:
     message_id = request.match_info["message_id"]
-    data = await events.load_events()
+    data = events.load_events(request["guild_id"])
     ev = data.get("events", {}).get(message_id)
     if ev is None:
         return web.json_response({"error": "not_found"}, status=404)
@@ -137,7 +137,7 @@ async def get_event(request: web.Request) -> web.Response:
 async def close_event_route(request: web.Request) -> web.Response:
     message_id = request.match_info["message_id"]
     bot = request.app["bot"]
-    result = await events_core.close_event(bot, message_id)
+    result = await events_core.close_event(bot, request["guild_id"], message_id)
     if not result["ok"]:
         return web.json_response({"error": result["error"]}, status=404)
     return web.json_response({"ok": True})
@@ -148,8 +148,8 @@ async def close_event_route(request: web.Request) -> web.Response:
 async def delete_event_route(request: web.Request) -> web.Response:
     message_id = request.match_info["message_id"]
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
-    result = await events_core.delete_event(bot, guild, message_id)
+    guild = bot.get_guild(request["guild_id"])
+    result = await events_core.delete_event(bot, request["guild_id"], message_id)
     if not result["ok"]:
         return web.json_response({"error": result["error"]}, status=404)
     return web.json_response({"ok": True})
@@ -172,8 +172,8 @@ async def notify_event_route(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
 
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
-    result = await events_core.notify_participants(bot, guild, message_id, message.strip())
+    guild = bot.get_guild(request["guild_id"])
+    result = await events_core.notify_participants(bot, request["guild_id"], message_id, message.strip())
     if not result["ok"]:
         status_code = {"not_found": 404, "no_participants": 400}.get(result["error"], 400)
         return web.json_response({"error": result["error"]}, status=status_code)
@@ -184,7 +184,7 @@ async def notify_event_route(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def create_event(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -220,6 +220,6 @@ async def create_event(request: web.Request) -> web.Response:
     moderator = request["moderator"]
     message = await events_core.publish_event(bot, channel, body, author_id=moderator.id)
 
-    data = await events.load_events()
+    data = events.load_events(request["guild_id"])
     ev = data["events"][str(message.id)]
     return web.json_response(serialize_event_detail(str(message.id), ev), status=201)

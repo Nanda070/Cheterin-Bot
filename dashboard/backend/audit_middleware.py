@@ -12,6 +12,7 @@ logger = logging.getLogger("dashboard.audit")
 # Порядок важен: первое совпадение по (метод, префикс) даёт подпись
 ACTION_LABELS: list[tuple[str, str, str]] = [
     ("PUT", "/api/config", "Изменение конфигурации"),
+    ("PUT", "/api/ctd", "Настройки тикетов CTD"),
     ("POST", "/api/lockdown/activate", "Включение антиспам-режима"),
     ("POST", "/api/lockdown/deactivate", "Выключение антиспам-режима"),
     ("POST", "/api/members/", "Действие над участником (бан/кик/роль/варн)"),
@@ -87,6 +88,7 @@ async def audit_middleware(request: web.Request, handler):
             status = getattr(response, "status", 0)
             if moderator is not None and 200 <= status < 300:
                 stats_db.audit_add(
+                    request.get("guild_id", request.app.get("guild_id")),
                     ts=int(time.time()),
                     moderator_id=moderator.id,
                     moderator_name=getattr(moderator, "display_name", str(moderator.id)),

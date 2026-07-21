@@ -51,7 +51,7 @@ class TempBan(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        tempban_channel_id = bot_config.get("TEMPBAN_CHANNEL_ID")
+        tempban_channel_id = bot_config.get(message.guild.id, "TEMPBAN_CHANNEL_ID")
         if not tempban_channel_id or message.channel.id != int(tempban_channel_id):
             return
 
@@ -76,7 +76,7 @@ class TempBan(commands.Cog):
         guild = message.guild
         member = message.author
 
-        log_channel_id = bot_config.get("SPAM_LOG_CHANNEL_ID")
+        log_channel_id = bot_config.get(guild.id, "SPAM_LOG_CHANNEL_ID")
         log_channel = None
         if log_channel_id:
             log_channel = guild.get_channel(int(log_channel_id))
@@ -84,11 +84,11 @@ class TempBan(commands.Cog):
         content_preview = message.content[:1024] if message.content else "Пусто/Медиа"
         now = discord.utils.utcnow()
 
-        invite_link = bot_config.get("SERVER_INVITE_LINK") or "https://discord.gg/cheterin"
+        invite_link = bot_config.get(guild.id, "SERVER_INVITE_LINK") or "https://discord.gg/cheterin"
         dm_status = "✅ Успешно"
         try:
             await member.send(
-                'Вы были исключенны из сервера "404 : Server Not Found" за отпись в канале в котором вы не должны были писать.\n'
+                f'Вы были исключенны из сервера "{guild.name}" за отпись в канале в котором вы не должны были писать.\n'
                 f'Ссылка на сервер: {invite_link}'
             )
         except Exception:
@@ -105,15 +105,15 @@ class TempBan(commands.Cog):
             )
         except discord.Forbidden:
             embed = discord.Embed(title="⚠️ Ошибка Tempban", description=f"Не удалось забанить {member.name} (`{member.id}`) — недостаточно прав бота.", color=discord.Color.orange())
-            await self.bot.send_log(embed)
+            await self.bot.send_log(guild.id, embed)
             return
         except discord.HTTPException as e:
             embed = discord.Embed(title="⚠️ Ошибка Tempban", description=f"HTTP ошибка при Tempban для {member.name} (`{member.id}`): {e.status} {e.text}", color=discord.Color.orange())
-            await self.bot.send_log(embed)
+            await self.bot.send_log(guild.id, embed)
             return
         except Exception as e:
             embed = discord.Embed(title="⚠️ Ошибка Tempban", description=f"Ошибка при Tempban для {member.name} (`{member.id}`): {e}", color=discord.Color.orange())
-            await self.bot.send_log(embed)
+            await self.bot.send_log(guild.id, embed)
             return
 
         # Небольшая задержка чтобы бан успел примениться на стороне Discord
@@ -165,7 +165,7 @@ class TempBan(commands.Cog):
             extra=f"Канал: <#{message.channel.id}>; unban: {'ok' if not unban_error else unban_error}",
         )
 
-        await self.bot.send_log(embed)
+        await self.bot.send_log(guild.id, embed)
 
 
 async def setup(bot):

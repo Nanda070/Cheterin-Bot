@@ -6,15 +6,16 @@ from datetime import date
 
 import pytest
 
+import settings_db
 import wordle_core
 import wordle_data
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(wordle_core, "CONFIG_FILE", str(tmp_path / "wordle_config.json"))
-    monkeypatch.setattr(wordle_core, "_cache", None, raising=False)
-    monkeypatch.setattr(wordle_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 # ────────────────────────── Словарь ──────────────────────────
@@ -133,15 +134,15 @@ def test_result_score_text():
 # ────────────────────────── Настройки ──────────────────────────
 
 def test_settings_defaults():
-    settings = wordle_core.get_settings()
-    assert settings == {"enabled": False, "channel_id": 0, "announce_time": "09:00"}
+    settings = wordle_core.get_settings(404)
+    assert settings == {"enabled": False, "channel_id": "", "announce_time": "09:00"}
 
 
 def test_settings_roundtrip():
-    wordle_core.save_config({"enabled": True, "channel_id": 42, "announce_time": "18:30"})
-    settings = wordle_core.get_settings()
+    wordle_core.save_config(404, {"enabled": True, "channel_id": "42", "announce_time": "18:30"})
+    settings = wordle_core.get_settings(404)
     assert settings["enabled"] is True
-    assert settings["channel_id"] == 42
+    assert settings["channel_id"] == "42"
     assert settings["announce_time"] == "18:30"
 
 

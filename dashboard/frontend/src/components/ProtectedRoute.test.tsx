@@ -34,7 +34,7 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders children when a user is authenticated', async () => {
-    const payload = { id: '1', username: 'tester', avatar: null, is_admin: false, is_super_admin: false }
+    const payload = { id: '1', username: 'tester', avatar: null, is_admin: false, is_super_admin: false, active_guild_id: '1' }
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload }),
@@ -59,6 +59,61 @@ describe('ProtectedRoute', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Secret dashboard')).toBeInTheDocument())
+  })
+
+  it('redirects to /servers when logged in but no server is selected', async () => {
+    const payload = { id: '1', is_super_admin: false, active_guild_id: null }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload }),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/servers" element={<div>Server select</div>} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <div>Secret dashboard</div>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByText('Server select')).toBeInTheDocument())
+  })
+
+  it('renders children in login-only mode even without a selected server', async () => {
+    const payload = { id: '1', is_super_admin: false, active_guild_id: null }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload }),
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute requireGuild={false}>
+                  <div>Server picker</div>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByText('Server picker')).toBeInTheDocument())
   })
 
   it('handles errors from fetchCurrentUser and redirects to /login', async () => {

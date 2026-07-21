@@ -3,14 +3,26 @@ import functools
 from aiohttp import web
 from aiohttp_session import get_session
 
-from .access import has_dashboard_access, has_super_admin_access
+from .access import has_manage_server, has_super_admin_access
 from .member_lookup import resolve_guild_member
 
 
-def require_dashboard_access(handler):
-    """Guard an aiohttp handler with the Phase 1 session -> member -> role check.
+def _has_legacy_role_access(member, allowed_role_ids: frozenset) -> bool:
+    """Переходный грант по роли на активном сервере (если задан DASHBOARD_ACCESS_ROLE_IDS)."""
+    if not allowed_role_ids:
+        return False
+    member_role_ids = {str(role.id) for role in member.roles}
+    return not member_role_ids.isdisjoint(allowed_role_ids)
 
-    On success the resolved discord.Member is available as request["moderator"].
+
+def require_dashboard_access(handler):
+    """Гейт доступа к серверу (Фаза 2.3): сессия → активный сервер → Manage Server.
+
+    Активный сервер берётся из `session["active_guild_id"]` (выбор в дашборде),
+    иначе — из дефолта приложения (`request["guild_id"]`, выставленного
+    guild_context_middleware). Доступ = Manage Server/Administrator на этом сервере
+    (плюс переходный грант по роли). Резолвнутый участник кладётся в
+    `request["moderator"]`, а активная гильдия — в `request["guild_id"]`.
     """
 
     @functools.wraps(handler)
@@ -22,16 +34,21 @@ def require_dashboard_access(handler):
 
         config = request.app["dashboard_config"]
         bot = request.app["bot"]
-        guild_id = request.app["guild_id"]
+
+        active_guild_id = session.get("active_guild_id") or request.get("guild_id") or request.app.get("guild_id")
+        if active_guild_id is None:
+            return web.json_response({"error": "no_guild_selected"}, status=400)
+        guild_id = int(active_guild_id)
 
         lookup = await resolve_guild_member(bot, guild_id, int(user_id))
         if lookup.service_error:
             return web.json_response({"error": "service_unavailable"}, status=503)
         if lookup.not_found or lookup.member is None:
             return web.json_response({"error": "forbidden"}, status=403)
-        if not has_dashboard_access(lookup.member, config.access_role_ids):
+        if not (has_manage_server(lookup.member) or _has_legacy_role_access(lookup.member, config.access_role_ids)):
             return web.json_response({"error": "forbidden"}, status=403)
 
+        request["guild_id"] = guild_id
         request["moderator"] = lookup.member
         return await handler(request)
 

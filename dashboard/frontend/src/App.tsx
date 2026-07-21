@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/Login'
+import { ServerSelectPage } from './pages/ServerSelect'
 import { AccessDeniedPage } from './pages/AccessDenied'
 import { DashboardShell } from './pages/DashboardShell'
 import { HomePage } from './pages/Home'
@@ -11,6 +12,7 @@ import { MessageBuilderPage } from './pages/MessageBuilder'
 import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
 import { ConfigPage } from './pages/Config'
+import { CtdPage } from './pages/Ctd'
 import { BracketsPage } from './pages/Brackets'
 import { BracketDetailPage } from './pages/BracketDetail'
 import { PublicBracketPage } from './pages/PublicBracket'
@@ -45,6 +47,14 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/servers"
+            element={
+              <ProtectedRoute requireGuild={false}>
+                <ServerSelectPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route path="/bracket/:token" element={<PublicBracketPage />} />
           <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
@@ -92,6 +102,7 @@ function App() {
             <Route path="welcome" element={<Navigate to="/lockdown" replace />} />
             <Route path="auto-roles" element={<Navigate to="/lockdown" replace />} />
             <Route path="config" element={<ConfigPage />} />
+            <Route path="ctd" element={<CtdPage />} />
             <Route path="superadmin" element={<SuperAdminPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />

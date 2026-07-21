@@ -51,14 +51,23 @@ class AutoMod(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def _cleanup_repeat_cache(self):
-        now = discord.utils.utcnow()
-        stale_users = []
-        for user_id, entries in self._repeat_cache.items():
-            entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= REPEATED_TEXT_WINDOW_SECONDS]
-            if not entries:
-                stale_users.append(user_id)
-        for user_id in stale_users:
-            del self._repeat_cache[user_id]
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            now = discord.utils.utcnow()
+            stale_users = []
+            for user_id, entries in self._repeat_cache.items():
+                entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= REPEATED_TEXT_WINDOW_SECONDS]
+                if not entries:
+                    stale_users.append(user_id)
+            for user_id in stale_users:
+                del self._repeat_cache[user_id]
+        except Exception:
+            logger.exception("_cleanup_repeat_cache: ошибка итерации — цикл продолжает работать")
+
+    @_cleanup_repeat_cache.error
+    async def _cleanup_repeat_cache_error(self, _error: BaseException):
+        logger.exception("_cleanup_repeat_cache: критическая ошибка — перезапуск цикла")
+        self._cleanup_repeat_cache.restart()
 
     @_cleanup_repeat_cache.before_loop
     async def _before_cleanup(self):
@@ -75,7 +84,7 @@ class AutoMod(commands.Cog):
         if message.author.guild_permissions.administrator:
             return
 
-        settings = automod_core.get_settings()
+        settings = automod_core.get_settings(message.guild.id)
         if not settings["enabled"]:
             return
 
@@ -93,7 +102,7 @@ class AutoMod(commands.Cog):
         if key == "links":
             return automod_core.detect_links(content, cfg["whitelist_domains"])
         if key == "invites":
-            return automod_core.detect_invites(content, cfg["allow_own_server"], bot_config.get("SERVER_INVITE_LINK") or "")
+            return automod_core.detect_invites(content, cfg["allow_own_server"], bot_config.get(message.guild.id, "SERVER_INVITE_LINK") or "")
         if key == "scam_links":
             return automod_core.detect_scam_links(content, cfg["blocklist_keywords"])
         if key == "bad_words":
@@ -196,7 +205,7 @@ class AutoMod(commands.Cog):
 
     async def apply_escalation_if_needed(self, guild: discord.Guild, member: discord.Member):
         count = warns_core.get_active_warn_count(guild.id, member.id)
-        rule = automod_core.find_escalation_rule(count)
+        rule = automod_core.find_escalation_rule(guild.id, count)
         if rule is None:
             return
         reason = f"Автоматическая эскалация: {count} активных предупреждений"
@@ -242,7 +251,7 @@ class AutoMod(commands.Cog):
             return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
-        settings = automod_core.get_settings()
+        settings = automod_core.get_settings(interaction.guild.id)
         warns_core.add_warn(
             interaction.guild.id,
             участник.id,

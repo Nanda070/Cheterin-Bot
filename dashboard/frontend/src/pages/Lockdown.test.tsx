@@ -96,8 +96,8 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
     vi.spyOn(client, 'fetchVerificationSettings').mockResolvedValue({
       enabled: false,
-      unverified_role_id: 0,
-      verified_role_id: 0,
+      unverified_role_id: '',
+      verified_role_id: '',
       welcome_text: 'Нажмите кнопку ниже.',
     })
 

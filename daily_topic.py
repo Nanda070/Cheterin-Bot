@@ -26,11 +26,11 @@ class DailyTopicCog(commands.Cog):
     def cog_unload(self):
         self.daily_topic_loop.cancel()
 
-    async def post_topic_now(self) -> dict | None:
+    async def post_topic_now(self, guild_id: int) -> dict | None:
         """Публикует тему дня немедленно (используется циклом и ручным триггером
         из дашборда). Возвращает опубликованную тему или None, если канал не
         настроен/не найден, тем нет или отправка не удалась."""
-        settings = daily_topic_core.get_settings()
+        settings = daily_topic_core.get_settings(guild_id)
         channel_id = settings["channel_id"]
         if not channel_id:
             return None
@@ -39,7 +39,7 @@ class DailyTopicCog(commands.Cog):
         if channel is None:
             return None
 
-        topic = daily_topic_core.pick_next_topic()
+        topic = daily_topic_core.pick_next_topic(guild_id)
         if topic is None:
             return None
 
@@ -49,7 +49,7 @@ class DailyTopicCog(commands.Cog):
             logger.warning("Не удалось опубликовать тему дня в канал %s", channel_id)
             return None
 
-        daily_topic_core.mark_posted_today()
+        daily_topic_core.mark_posted_today(guild_id)
         return topic
 
     @tasks.loop(minutes=1)
@@ -58,15 +58,19 @@ class DailyTopicCog(commands.Cog):
         # чтения конфига с записью из дашборда) навсегда останавливает tasks.loop —
         # именно так расписание «молча умирало», при этом ручная публикация работала.
         try:
-            if not daily_topic_core.get_settings()["enabled"]:
-                return
-            if not daily_topic_core.should_post_now():
-                return
-            topic = await self.post_topic_now()
-            if topic is not None:
-                logger.info("Тема дня опубликована по расписанию: %s", topic["id"])
-            else:
-                logger.warning("Расписание сработало, но публикация не удалась (канал/темы не настроены?)")
+            for guild in self.bot.guilds:
+                if not daily_topic_core.get_settings(guild.id)["enabled"]:
+                    continue
+                if not daily_topic_core.should_post_now(guild.id):
+                    continue
+                topic = await self.post_topic_now(guild.id)
+                if topic is not None:
+                    logger.info("Тема дня опубликована по расписанию: %s (guild=%s)", topic["id"], guild.id)
+                else:
+                    logger.warning(
+                        "Расписание сработало, но публикация не удалась (канал/темы не настроены?, guild=%s)",
+                        guild.id,
+                    )
         except Exception:
             logger.exception("daily_topic_loop: ошибка итерации — цикл продолжает работать")
 

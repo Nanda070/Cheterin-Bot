@@ -1,7 +1,7 @@
 """Ядро модуля «Сборы на поставку» (портировано из ChetSupply и расширено).
 
-Хранит сборы в supply_data.json, чтобы они переживали перезапуск бота.
-Улучшения относительно оригинала:
+Сборы хранятся per-guild в settings_db (Фаза 2.2б MULTIGUILD_PLAN.md), чтобы переживать
+перезапуск бота и быть изолированными между серверами. Улучшения относительно оригинала:
 - персистентность и восстановление таймеров после рестарта;
 - резервный список, когда основной лимит исчерпан;
 - напоминание участникам за N минут до начала;
@@ -9,12 +9,12 @@
 - история сборов и статистика участия.
 """
 
-import json
-import os
 import re
 from datetime import datetime, timedelta, timezone
 
-DATA_FILE = "supply_data.json"
+import settings_db
+
+MODULE_NAME = "supply"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 
 MSK = timezone(timedelta(hours=3))
 
@@ -41,19 +41,12 @@ def get_target_datetime(time_str: str) -> datetime:
     return target_dt
 
 
-def load_data() -> dict:
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def load_data(guild_id: int) -> dict:
+    return _normalized(settings_db.get(guild_id, MODULE_NAME))
 
 
-def save_data(data: dict) -> None:
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_data(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
 def _normalized(data: dict) -> dict:
@@ -63,13 +56,14 @@ def _normalized(data: dict) -> dict:
     return data
 
 
-def create_supply(initiator_id: int, opponent: str, limit: int, time_str: str) -> dict:
-    data = _normalized(load_data())
+def create_supply(guild_id: int, initiator_id: int, opponent: str, limit: int, time_str: str) -> dict:
+    data = load_data(guild_id)
     data["seq"] += 1
     supply_id = str(data["seq"])
     target_dt = get_target_datetime(time_str)
     supply = {
         "id": supply_id,
+        "guild_id": str(guild_id),
         "initiator_id": str(initiator_id),
         "opponent": opponent,
         "limit": int(limit),
@@ -85,45 +79,45 @@ def create_supply(initiator_id: int, opponent: str, limit: int, time_str: str) -
         "closed_at": None,
     }
     data["supplies"][supply_id] = supply
-    save_data(data)
+    save_data(guild_id, data)
     return supply
 
 
-def get_supply(supply_id: str) -> dict | None:
-    return _normalized(load_data())["supplies"].get(str(supply_id))
+def get_supply(guild_id: int, supply_id: str) -> dict | None:
+    return load_data(guild_id)["supplies"].get(str(supply_id))
 
 
-def get_supply_by_message(message_id: int) -> dict | None:
-    for supply in _normalized(load_data())["supplies"].values():
+def get_supply_by_message(guild_id: int, message_id: int) -> dict | None:
+    for supply in load_data(guild_id)["supplies"].values():
         if supply.get("message_id") == str(message_id):
             return supply
     return None
 
 
-def update_supply(supply_id: str, **fields) -> dict | None:
-    data = _normalized(load_data())
+def update_supply(guild_id: int, supply_id: str, **fields) -> dict | None:
+    data = load_data(guild_id)
     supply = data["supplies"].get(str(supply_id))
     if supply is None:
         return None
     supply.update(fields)
-    save_data(data)
+    save_data(guild_id, data)
     return supply
 
 
-def list_active() -> list[dict]:
-    supplies = [s for s in _normalized(load_data())["supplies"].values() if s["status"] == "active"]
+def list_active(guild_id: int) -> list[dict]:
+    supplies = [s for s in load_data(guild_id)["supplies"].values() if s["status"] == "active"]
     return sorted(supplies, key=lambda s: s["target_ts"])
 
 
-def list_history(limit: int = 20) -> list[dict]:
-    supplies = [s for s in _normalized(load_data())["supplies"].values() if s["status"] != "active"]
+def list_history(guild_id: int, limit: int = 20) -> list[dict]:
+    supplies = [s for s in load_data(guild_id)["supplies"].values() if s["status"] != "active"]
     supplies.sort(key=lambda s: s.get("closed_at") or "", reverse=True)
     return supplies[:limit]
 
 
-def join_supply(supply_id: str, user_id: int) -> str:
+def join_supply(guild_id: int, supply_id: str, user_id: int) -> str:
     """Возвращает: joined | reserve | already | closed | not_found."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     supply = data["supplies"].get(str(supply_id))
     if supply is None:
         return "not_found"
@@ -136,20 +130,20 @@ def join_supply(supply_id: str, user_id: int) -> str:
 
     if len(supply["participants"]) < supply["limit"]:
         supply["participants"].append(uid)
-        save_data(data)
+        save_data(guild_id, data)
         return "joined"
 
     supply["reserve"].append(uid)
-    save_data(data)
+    save_data(guild_id, data)
     return "reserve"
 
 
-def leave_supply(supply_id: str, user_id: int) -> tuple[str, str | None]:
+def leave_supply(guild_id: int, supply_id: str, user_id: int) -> tuple[str, str | None]:
     """Возвращает (результат, id продвинутого из резерва или None).
 
     Результат: left | not_in_list | closed | not_found.
     """
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     supply = data["supplies"].get(str(supply_id))
     if supply is None:
         return "not_found", None
@@ -168,13 +162,13 @@ def leave_supply(supply_id: str, user_id: int) -> tuple[str, str | None]:
     else:
         return "not_in_list", None
 
-    save_data(data)
+    save_data(guild_id, data)
     return "left", promoted
 
 
-def close_supply(supply_id: str, status: str = "finished") -> dict | None:
+def close_supply(guild_id: int, supply_id: str, status: str = "finished") -> dict | None:
     """Закрывает сбор (finished/cancelled) и обновляет статистику участия."""
-    data = _normalized(load_data())
+    data = load_data(guild_id)
     supply = data["supplies"].get(str(supply_id))
     if supply is None or supply["status"] != "active":
         return None
@@ -187,7 +181,7 @@ def close_supply(supply_id: str, status: str = "finished") -> dict | None:
             data["stats"][uid] = data["stats"].get(uid, 0) + 1
 
     _trim_history(data)
-    save_data(data)
+    save_data(guild_id, data)
     return supply
 
 
@@ -200,7 +194,7 @@ def _trim_history(data: dict) -> None:
         data["supplies"].pop(stale["id"], None)
 
 
-def get_stats(top: int = 20) -> list[dict]:
-    data = _normalized(load_data())
+def get_stats(guild_id: int, top: int = 20) -> list[dict]:
+    data = load_data(guild_id)
     ranked = sorted(data["stats"].items(), key=lambda kv: kv[1], reverse=True)
     return [{"user_id": uid, "count": count} for uid, count in ranked[:top]]

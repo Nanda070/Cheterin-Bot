@@ -196,7 +196,7 @@ export function BunkerPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-min-players">
-                  Минимум игроков
+                  Минимум игроков (4–20)
                 </label>
                 <input
                   id="bunker-min-players"
@@ -210,7 +210,7 @@ export function BunkerPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-max-players">
-                  Максимум игроков
+                  Максимум игроков (4–20)
                 </label>
                 <input
                   id="bunker-max-players"
@@ -244,7 +244,7 @@ export function BunkerPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-discussion-timer">
-                  Обсуждение / раскрытие характеристик
+                  Обсуждение / раскрытие характеристик (10–3600)
                 </label>
                 <input
                   id="bunker-discussion-timer"
@@ -258,7 +258,7 @@ export function BunkerPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-vote-timer">
-                  Голосование за исключение
+                  Голосование за исключение (10–3600)
                 </label>
                 <input
                   id="bunker-vote-timer"

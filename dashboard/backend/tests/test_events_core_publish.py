@@ -121,7 +121,7 @@ async def test_publish_event_tournament_creates_matching_event_obj_and_view():
 
     message = await events_core.publish_event(bot, channel, spec, author_id=1)
 
-    data = await events.load_events()
+    data = events.load_events(1)
     ev = data["events"][str(message.id)]
     assert ev["type"] == "tournament"
     assert ev["channel_id"] == 500
@@ -148,7 +148,7 @@ async def test_publish_event_poll_creates_matching_event_obj_and_view():
 
     message = await events_core.publish_event(bot, channel, spec, author_id=1)
 
-    data = await events.load_events()
+    data = events.load_events(1)
     ev = data["events"][str(message.id)]
     assert ev["type"] == "poll"
     assert ev["options"] == ["Да", "Нет"]
@@ -165,5 +165,5 @@ async def test_publish_event_role_reward_none_stays_none():
 
     message = await events_core.publish_event(bot, channel, spec, author_id=1)
 
-    data = await events.load_events()
+    data = events.load_events(1)
     assert data["events"][str(message.id)]["role_reward"] is None

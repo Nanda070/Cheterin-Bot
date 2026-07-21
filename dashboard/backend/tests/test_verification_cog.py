@@ -3,6 +3,7 @@
 import pytest
 
 import moderation_log
+import settings_db
 import verification_core
 from verification import VerificationCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
@@ -10,9 +11,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRo
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
-    monkeypatch.setattr(verification_core, "CONFIG_FILE", str(tmp_path / "verification_config.json"))
-    monkeypatch.setattr(verification_core, "_cache", None, raising=False)
-    monkeypatch.setattr(verification_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setattr(moderation_log, "LOG_FILE", str(tmp_path / "moderation_log.json"))
 
 
@@ -25,6 +26,7 @@ class FakeResponse:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild, channel=None):
         self.user = user
         self.guild = guild
@@ -37,15 +39,14 @@ VERIFIED_ROLE_ID = 222
 
 
 def build(enabled=True, unverified=True, verified=True):
-    verification_core.save_config({
+    roles = [FakeRole(UNVERIFIED_ROLE_ID, name="Unverified"), FakeRole(VERIFIED_ROLE_ID, name="Verified")]
+    member = FakeMember(20, name="newbie")
+    guild = FakeGuild(members=[member], roles=roles)
+    verification_core.save_config(guild.id, {
         "enabled": enabled,
         "unverified_role_id": UNVERIFIED_ROLE_ID if unverified else 0,
         "verified_role_id": VERIFIED_ROLE_ID if verified else 0,
     })
-    roles = [FakeRole(UNVERIFIED_ROLE_ID, name="Unverified"), FakeRole(VERIFIED_ROLE_ID, name="Verified")]
-    member = FakeMember(20, name="newbie")
-    guild = FakeGuild(members=[member], roles=roles)
-    member.guild = guild
     bot = FakeBot(guild)
     cog = VerificationCog(bot)
     return cog, guild, member, bot

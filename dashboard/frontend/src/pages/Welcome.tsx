@@ -43,6 +43,10 @@ export function WelcomePage() {
   return (
     <div className="flex max-w-xl flex-col gap-4">
       <h1 className="text-lg font-semibold text-foreground">Приветствие и прощание</h1>
+      <p className="text-sm text-muted">
+        Бот автоматически приветствует новых участников при входе на сервер (в выбранном канале или в ЛС) и прощается при выходе. 
+        Внешний вид сообщений задаётся через шаблоны в модуле Embed Builder.
+      </p>
 
       <Card className="flex flex-col gap-3">
         <Toggle

@@ -47,7 +47,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        settings = verification_core.get_settings()
+        settings = verification_core.get_settings(member.guild.id)
         if not settings["enabled"] or not settings["unverified_role_id"]:
             return  # модуль выключен (или роль не настроена) — никакого эффекта
 
@@ -60,7 +60,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             logger.warning("Верификация: нет прав выдать роль Unverified участнику %s", member.id)
 
     async def handle_verify(self, interaction: discord.Interaction):
-        settings = verification_core.get_settings()
+        settings = verification_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Верификация» отключён.", ephemeral=True)
         if not verification_core.is_configured(settings):
@@ -90,14 +90,14 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             )
 
         moderation_log.append_event(
-            "verification_pass", member.id, member.name, "Верификация по кнопке пройдена",
+            interaction.guild_id, "verification_pass", member.id, member.name, "Верификация по кнопке пройдена",
         )
         await interaction.response.send_message("✅ Добро пожаловать! Доступ открыт.", ephemeral=True)
 
     @app_commands.command(name="verify_setup", description="Опубликовать панель верификации в текущем канале")
     @app_commands.default_permissions(manage_guild=True)
     async def verify_setup(self, interaction: discord.Interaction):
-        settings = verification_core.get_settings()
+        settings = verification_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Верификация» отключён — включите его в дашборде.", ephemeral=True)
         if not verification_core.is_configured(settings):

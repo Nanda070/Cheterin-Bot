@@ -125,7 +125,7 @@ export function MafiaPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-min-players">
-                  Минимум игроков
+                  Минимум игроков (5–99)
                 </label>
                 <input
                   id="mafia-min-players"
@@ -139,7 +139,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-max-players">
-                  Максимум игроков
+                  Максимум игроков (5–99)
                 </label>
                 <input
                   id="mafia-max-players"
@@ -159,7 +159,7 @@ export function MafiaPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-night-timer">
-                  Ночь
+                  Ночь (10–3600)
                 </label>
                 <input
                   id="mafia-night-timer"
@@ -173,7 +173,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-discussion-timer">
-                  Обсуждение
+                  Обсуждение (10–3600)
                 </label>
                 <input
                   id="mafia-discussion-timer"
@@ -187,7 +187,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-vote-timer">
-                  Голосование
+                  Голосование (10–3600)
                 </label>
                 <input
                   id="mafia-vote-timer"

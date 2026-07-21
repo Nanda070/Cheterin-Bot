@@ -1,5 +1,6 @@
 import pytest
 
+import settings_db
 import stats_db
 import xp_core
 from dashboard.backend.routes.xp import routes as xp_routes
@@ -10,9 +11,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("STATS_DB_PATH", str(tmp_path / "stats.db"))
     stats_db.init()
-    monkeypatch.setattr(xp_core, "CONFIG_FILE", str(tmp_path / "xp_config.json"))
-    monkeypatch.setattr(xp_core, "_cache", None, raising=False)
-    monkeypatch.setattr(xp_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(members):
@@ -29,7 +30,7 @@ async def test_leaderboard_shows_every_guild_member_even_without_xp(aiohttp_clie
     bot_member = FakeMember(40, name="botty", display_name="Botty", bot=True)
     _, app = build([active, lurker, bot_member])
 
-    stats_db.xp_add_text(20, 500, 1000)  # только active когда-либо писал
+    stats_db.xp_add_text(1, 20, 500, 1000)  # только active когда-либо писал
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -49,7 +50,7 @@ async def test_leaderboard_shows_every_guild_member_even_without_xp(aiohttp_clie
 @pytest.mark.asyncio
 async def test_leaderboard_keeps_members_who_left(aiohttp_client):
     _, app = build([])
-    stats_db.xp_add_text(999, 100, 1000)  # участник уже не в guild.members
+    stats_db.xp_add_text(1, 999, 100, 1000)  # участник уже не в guild.members
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -67,8 +68,8 @@ async def test_leaderboard_sorted_by_xp_desc(aiohttp_client):
     low = FakeMember(20, name="low", display_name="Low")
     high = FakeMember(30, name="high", display_name="High")
     _, app = build([low, high])
-    stats_db.xp_add_text(20, 10, 1000)
-    stats_db.xp_add_text(30, 200, 1000)
+    stats_db.xp_add_text(1, 20, 10, 1000)
+    stats_db.xp_add_text(1, 30, 200, 1000)
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -137,7 +138,7 @@ async def test_put_settings_voice_base_and_member_multipliers(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = xp_core.get_settings()
+    payload = xp_core.get_settings(1)
     payload["voice"]["base_per_minute"] = 10
     payload["voice"]["member_multipliers"] = {"42": 150, "77": 0}
 
@@ -154,23 +155,23 @@ async def test_put_settings_rejects_bad_voice_base_and_multipliers(aiohttp_clien
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = xp_core.get_settings()
+    payload = xp_core.get_settings(1)
     payload["voice"]["base_per_minute"] = 0
     resp = await client.put("/api/xp", json=payload)
     assert resp.status == 400
     assert (await resp.json())["error"] == "invalid_voice_base_per_minute"
 
-    payload = xp_core.get_settings()
+    payload = xp_core.get_settings(1)
     payload["voice"]["member_multipliers"] = {"abc": 100}
     resp = await client.put("/api/xp", json=payload)
     assert resp.status == 400
 
-    payload = xp_core.get_settings()
+    payload = xp_core.get_settings(1)
     payload["voice"]["member_multipliers"] = {"42": 5000}
     resp = await client.put("/api/xp", json=payload)
     assert resp.status == 400
 
-    payload = xp_core.get_settings()
+    payload = xp_core.get_settings(1)
     payload["voice"]["member_multipliers"] = ["42"]
     resp = await client.put("/api/xp", json=payload)
     assert resp.status == 400

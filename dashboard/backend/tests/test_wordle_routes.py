@@ -1,15 +1,15 @@
 import pytest
 
-import wordle_core
+import settings_db
 from dashboard.backend.routes.wordle import routes as wordle_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(wordle_core, "CONFIG_FILE", str(tmp_path / "wordle_config.json"))
-    monkeypatch.setattr(wordle_core, "_cache", None, raising=False)
-    monkeypatch.setattr(wordle_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():
@@ -28,7 +28,7 @@ async def test_get_defaults(aiohttp_client):
     resp = await client.get("/api/wordle")
     assert resp.status == 200
     body = await resp.json()
-    assert body == {"enabled": False, "channel_id": 0, "announce_time": "09:00"}
+    assert body == {"enabled": False, "channel_id": "", "announce_time": "09:00"}
 
 
 @pytest.mark.asyncio
@@ -39,14 +39,14 @@ async def test_put_then_get(aiohttp_client):
 
     resp = await client.put(
         "/api/wordle",
-        json={"enabled": True, "channel_id": 123456, "announce_time": "18:30"},
+        json={"enabled": True, "channel_id": "123456", "announce_time": "18:30"},
     )
     assert resp.status == 200
     assert (await resp.json())["enabled"] is True
 
     resp = await client.get("/api/wordle")
     body = await resp.json()
-    assert body["channel_id"] == 123456
+    assert body["channel_id"] == "123456"
     assert body["announce_time"] == "18:30"
 
 

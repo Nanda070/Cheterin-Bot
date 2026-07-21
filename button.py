@@ -1,34 +1,32 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
+import logging
 import time
-import os
-import json
 import aiohttp
 
 import bot_config
+import settings_db
 
-BUTTONS_FILE = "buttons_config.json"
+logger = logging.getLogger("chetbot.button")
+
+MODULE_NAME = "buttons"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 COOLDOWN_SECONDS = 5
 
 
-def _load_buttons_config() -> dict:
-    if os.path.exists(BUTTONS_FILE):
-        with open(BUTTONS_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {"forms": {}, "next_form_id": 1}
-    return {"forms": {}, "next_form_id": 1}
+def _load_buttons_config(guild_id: int) -> dict:
+    data = settings_db.get(guild_id, MODULE_NAME)
+    data.setdefault("forms", {})
+    data.setdefault("next_form_id", 1)
+    return data
 
 
-def _save_buttons_config(data: dict):
-    with open(BUTTONS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def _save_buttons_config(guild_id: int, data: dict):
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def _get_allowed_role_ids() -> set[int]:
-    raw = bot_config.get("BUTTON_CREATE_ALLOWED_ROLES", [])
+def _get_allowed_role_ids(guild_id: int) -> set[int]:
+    raw = bot_config.get(guild_id, "BUTTON_CREATE_ALLOWED_ROLES", [])
     return {int(x) for x in raw}
 
 
@@ -71,7 +69,7 @@ class DynamicQuestionsModal(discord.ui.Modal):
             embed.add_field(name=q[:256] if q else "Вопрос", value=a[:1024] if a else "—", inline=False)
         embed.set_footer(text="404 Helper · Button Form")
 
-        webhook_url = bot_config.get("BUTTON_WEBHOOK_URL")
+        webhook_url = bot_config.get(interaction.guild.id, "BUTTON_WEBHOOK_URL")
         if not webhook_url:
             await interaction.response.send_message("BUTTON_WEBHOOK_URL не задан в переменных окружения.", ephemeral=True)
             return
@@ -97,7 +95,7 @@ class DynamicQuestionsModal(discord.ui.Modal):
             timestamp=self.bot.utcnow(),
         )
         log_embed.set_footer(text="Button · Form Submit")
-        await self.bot.send_log(log_embed)
+        await self.bot.send_log(interaction.guild.id, log_embed)
 
 
 # ─────────────────────────────────────────────
@@ -114,14 +112,10 @@ class ButtonCreate(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._cooldowns: dict[int, float] = {}
-        self._config = _load_buttons_config()
         self._cleanup_cooldowns.start()
 
-    async def _save_and_cache(self, config: dict):
-        self._config = config
-        def _write():
-            _save_buttons_config(config)
-        await asyncio.to_thread(_write)
+    async def _save_and_cache(self, guild_id: int, config: dict):
+        _save_buttons_config(guild_id, config)
 
     def cog_unload(self):
         self._cleanup_cooldowns.cancel()
@@ -131,10 +125,19 @@ class ButtonCreate(commands.Cog):
     @tasks.loop(minutes=10)
     async def _cleanup_cooldowns(self):
         """Удаляет устаревшие записи кулдаунов."""
-        now = time.time()
-        expired = [uid for uid, ts in self._cooldowns.items() if now - ts > COOLDOWN_SECONDS * 2]
-        for uid in expired:
-            del self._cooldowns[uid]
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            now = time.time()
+            expired = [uid for uid, ts in self._cooldowns.items() if now - ts > COOLDOWN_SECONDS * 2]
+            for uid in expired:
+                del self._cooldowns[uid]
+        except Exception:
+            logger.exception("_cleanup_cooldowns: ошибка итерации — цикл продолжает работать")
+
+    @_cleanup_cooldowns.error
+    async def _cleanup_cooldowns_error(self, _error: BaseException):
+        logger.exception("_cleanup_cooldowns: критическая ошибка — перезапуск цикла")
+        self._cleanup_cooldowns.restart()
 
     @_cleanup_cooldowns.before_loop
     async def _before_cleanup(self):
@@ -156,7 +159,7 @@ class ButtonCreate(commands.Cog):
         """Проверяет, есть ли у участника права на создание кнопок."""
         if member.guild_permissions.administrator:
             return True
-        allowed = _get_allowed_role_ids()
+        allowed = _get_allowed_role_ids(member.guild.id)
         return any(role.id in allowed for role in member.roles)
 
     # ---------- persistent handler ----------
@@ -223,7 +226,7 @@ class ButtonCreate(commands.Cog):
             timestamp=self.bot.utcnow(),
         )
         log_embed.set_footer(text="Button · Role Toggle")
-        await self.bot.send_log(log_embed)
+        await self.bot.send_log(interaction.guild.id, log_embed)
 
     async def _handle_form_click(self, interaction: discord.Interaction, custom_id: str):
         # Cooldown
@@ -236,7 +239,7 @@ class ButtonCreate(commands.Cog):
 
         # custom_id = "btn_form_{form_id}"
         form_id = custom_id.removeprefix("btn_form_")
-        form_data = self._config.get("forms", {}).get(form_id)
+        form_data = _load_buttons_config(interaction.guild_id).get("forms", {}).get(form_id)
         if not form_data:
             await interaction.response.send_message("⚠️ Конфигурация формы не найдена.", ephemeral=True)
             return
@@ -310,14 +313,14 @@ class ButtonCreate(commands.Cog):
         questions = [q for q in raw_questions if q] or ["Ответ"]
 
         # Сохраняем конфиг формы
-        config = self._config
+        config = _load_buttons_config(interaction.guild_id)
         form_id = str(config.get("next_form_id", 1))
         config["forms"][form_id] = {
             "button_name": name,
             "questions": questions,
         }
         config["next_form_id"] = int(form_id) + 1
-        await self._save_and_cache(config)
+        await self._save_and_cache(interaction.guild_id, config)
 
         # Собираем View
         view = discord.ui.View(timeout=None)
@@ -346,7 +349,7 @@ class ButtonCreate(commands.Cog):
         if questions and questions != ["Ответ"]:
             log_embed.add_field(name="Вопросы", value="\n".join(f"• {q}" for q in questions), inline=False)
         log_embed.set_footer(text="Button · Create Form")
-        await self.bot.send_log(log_embed)
+        await self.bot.send_log(interaction.guild.id, log_embed)
 
     async def _create_role(self, interaction: discord.Interaction, name: str, raw_roles: list):
         roles = [r for r in raw_roles if r is not None]
@@ -382,7 +385,7 @@ class ButtonCreate(commands.Cog):
         )
         log_embed.add_field(name="Роли", value=role_list, inline=False)
         log_embed.set_footer(text="Button · Create Role")
-        await self.bot.send_log(log_embed)
+        await self.bot.send_log(interaction.guild.id, log_embed)
 
 
 async def setup(bot):

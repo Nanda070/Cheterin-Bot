@@ -7,7 +7,7 @@ from ..access_middleware import require_dashboard_access
 routes = web.RouteTableDef()
 
 
-async def _log(bot, title: str, color, moderator, lines: dict, errors: list[str] = None):
+async def _log(bot, guild_id: int, title: str, color, moderator, lines: dict, errors: list[str] = None):
     embed = discord.Embed(title=title, color=color, timestamp=bot.utcnow())
     embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
     for name, value in lines.items():
@@ -15,20 +15,20 @@ async def _log(bot, title: str, color, moderator, lines: dict, errors: list[str]
     if errors:
         embed.add_field(name="Ошибки", value="\n".join(errors[:10]), inline=False)
     embed.set_footer(text="Dashboard · Lockdown")
-    await bot.send_log(embed)
+    await bot.send_log(guild_id, embed)
 
 
 @routes.get("/api/lockdown/status")
 @require_dashboard_access
 async def lockdown_status(request: web.Request) -> web.Response:
-    active, role_count = lockdown_core.antispam_status()
+    active, role_count = lockdown_core.antispam_status(request["guild_id"])
     return web.json_response({"active": active, "role_count": role_count})
 
 
 @routes.post("/api/lockdown/activate")
 @require_dashboard_access
 async def lockdown_activate(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -38,7 +38,7 @@ async def lockdown_activate(request: web.Request) -> web.Response:
         lockdown_core.get_mentionable_exempt_ids(),
     )
     await _log(
-        request.app["bot"], "🛡️ Антиспам ВКЛЮЧЁН (дашборд)", discord.Color.red(),
+        request.app["bot"], request["guild_id"], "🛡️ Антиспам ВКЛЮЧЁН (дашборд)", discord.Color.red(),
         request["moderator"], {"Изменено ролей": str(modified_count)},
         errors=errors if errors else None,
     )
@@ -48,7 +48,7 @@ async def lockdown_activate(request: web.Request) -> web.Response:
 @routes.post("/api/lockdown/deactivate")
 @require_dashboard_access
 async def lockdown_deactivate(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -58,7 +58,7 @@ async def lockdown_deactivate(request: web.Request) -> web.Response:
 
     restored_count, errors = result
     await _log(
-        request.app["bot"], "🟢 Антиспам ВЫКЛЮЧЕН (дашборд)", discord.Color.green(),
+        request.app["bot"], request["guild_id"], "🟢 Антиспам ВЫКЛЮЧЕН (дашборд)", discord.Color.green(),
         request["moderator"], {"Восстановлено ролей": str(restored_count)},
         errors=errors if errors else None,
     )

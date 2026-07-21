@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/wordle")
 @require_dashboard_access
 async def wordle_get(request: web.Request) -> web.Response:
-    return web.json_response(wordle_core.get_settings())
+    return web.json_response(wordle_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/wordle")
@@ -36,9 +36,10 @@ async def wordle_put(request: web.Request) -> web.Response:
     if not isinstance(announce_time, str) or not wordle_core.is_valid_announce_time(announce_time):
         return web.json_response({"error": "invalid_announce_time"}, status=400)
 
-    wordle_core.save_config({
+    guild_id = request["guild_id"]
+    wordle_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "channel_id": channel_id,
         "announce_time": announce_time,
     })
-    return web.json_response(wordle_core.get_settings())
+    return web.json_response(wordle_core.get_settings(guild_id))

@@ -8,14 +8,14 @@ import events
 logger = logging.getLogger("chetbot.events_core")
 
 
-async def close_event(bot, message_id: str) -> dict:
-    data = await events.load_events()
+async def close_event(bot, guild_id: int, message_id: str) -> dict:
+    data = events.load_events(guild_id)
     ev = data["events"].get(message_id)
     if not ev:
         return {"ok": False, "error": "not_found"}
 
     ev["status"] = "closed"
-    await events.save_events(data)
+    events.save_events(guild_id, data)
 
     try:
         ch = bot.get_channel(ev["channel_id"])
@@ -37,20 +37,21 @@ async def close_event(bot, message_id: str) -> dict:
     return {"ok": True}
 
 
-async def delete_event(bot, guild, message_id: str) -> dict:
-    data = await events.load_events()
+async def delete_event(bot, guild_id: int, message_id: str) -> dict:
+    data = events.load_events(guild_id)
     ev = data["events"].pop(message_id, None)
     if not ev:
         return {"ok": False, "error": "not_found"}
-    await events.save_events(data)
+    events.save_events(guild_id, data)
 
     role_id = ev.get("role_reward")
+    guild = bot.get_guild(guild_id)
     if role_id and guild:
         role = guild.get_role(role_id)
         if role:
             for p in ev.get("participants", []):
                 try:
-                    mem = guild.get_member(p["user_id"])
+                    mem = bot.get_guild(guild_id).get_member(p["user_id"])
                     if mem:
                         await mem.remove_roles(role)
                 except Exception as e:
@@ -72,8 +73,8 @@ async def delete_event(bot, guild, message_id: str) -> dict:
     return {"ok": True}
 
 
-async def notify_participants(bot, guild, message_id: str, text: str) -> dict:
-    data = await events.load_events()
+async def notify_participants(bot, guild_id: int, message_id: str, text: str) -> dict:
+    data = events.load_events(guild_id)
     ev = data.get("events", {}).get(message_id)
     if not ev:
         return {"ok": False, "error": "not_found"}
@@ -88,6 +89,7 @@ async def notify_participants(bot, guild, message_id: str, text: str) -> dict:
     failed = 0
     for uid in user_ids:
         try:
+            guild = bot.get_guild(guild_id)
             user = (guild.get_member(uid) if guild else None) or await bot.fetch_user(uid)
             if user:
                 await user.send(content=f"**📢 Уведомление о событии «{ev.get('title')}»:**\n\n{text}")
@@ -195,9 +197,10 @@ async def publish_event(bot, channel, spec: dict, author_id: int) -> discord.Mes
         "votes": {},
     }
 
-    data = await events.load_events()
+    guild_id = channel.guild.id
+    data = events.load_events(guild_id)
     data["events"][str(msg.id)] = event_obj
-    await events.save_events(data)
+    events.save_events(guild_id, data)
 
     view = events.create_participation_view(str(msg.id), event_obj)
     await msg.edit(view=view)

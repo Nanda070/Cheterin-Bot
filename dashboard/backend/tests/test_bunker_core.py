@@ -2,17 +2,18 @@ import pytest
 
 import bunker_core
 import bunker_data
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(bunker_core, "CONFIG_FILE", str(tmp_path / "bunker_config.json"))
-    monkeypatch.setattr(bunker_core, "_cache", None, raising=False)
-    monkeypatch.setattr(bunker_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_get_settings_defaults():
-    settings = bunker_core.get_settings()
+    settings = bunker_core.get_settings(404)
     assert settings["enabled"] is False
     assert settings["default_min_players"] == bunker_core.DEFAULT_MIN_PLAYERS
     assert settings["default_max_players"] == bunker_core.DEFAULT_MAX_PLAYERS
@@ -23,8 +24,8 @@ def test_get_settings_defaults():
 
 
 def test_save_config_roundtrip():
-    bunker_core.save_config({"enabled": True, "default_min_players": 6, "default_unique_cards": False, "log_channel_id": "123"})
-    settings = bunker_core.get_settings()
+    bunker_core.save_config(404, {"enabled": True, "default_min_players": 6, "default_unique_cards": False, "log_channel_id": "123"})
+    settings = bunker_core.get_settings(404)
     assert settings["enabled"] is True
     assert settings["default_min_players"] == 6
     assert settings["default_unique_cards"] is False

@@ -1,13 +1,14 @@
 import pytest
 
+import settings_db
 import xp_core
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(xp_core, "CONFIG_FILE", str(tmp_path / "xp_config.json"))
-    monkeypatch.setattr(xp_core, "_cache", None, raising=False)
-    monkeypatch.setattr(xp_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_level_formula_monotonic():
@@ -78,7 +79,7 @@ def test_voice_member_multiplier_lookup():
 
 
 def test_get_settings_voice_new_fields_defaults():
-    settings = xp_core.get_settings()
+    settings = xp_core.get_settings(404)
     assert settings["voice"]["base_per_minute"] == xp_core.VOICE_XP_PER_ACTIVE_MINUTE
     assert settings["voice"]["member_multipliers"] == {}
 
@@ -118,7 +119,7 @@ def test_format_voice_time():
 
 
 def test_settings_defaults():
-    settings = xp_core.get_settings()
+    settings = xp_core.get_settings(404)
     assert settings["enabled"] is False  # выключено по умолчанию
     assert settings["text"]["multiplier"] == 100
     assert settings["voice"]["multiplier"] == 100

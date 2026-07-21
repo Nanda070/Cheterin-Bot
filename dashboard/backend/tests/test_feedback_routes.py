@@ -10,10 +10,13 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeCh
 @pytest.fixture(autouse=True)
 def isolated_feedback_categories(tmp_path, monkeypatch):
     import feedback_categories
+    import settings_db
 
-    monkeypatch.setattr(feedback_categories, "CONFIG_FILE", str(tmp_path / "feedback_categories.json"))
-    feedback_categories.save_categories(
-        {
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setenv("GUILD_ID", "1")
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
+    feedback_categories.save_categories(1, {
             "players": {
                 "title": "Жалоба на участника",
                 "button_label": "Жалоба на участника",
@@ -102,8 +105,14 @@ async def test_list_feedback_cases_returns_all_by_default(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
     app_bot = app["bot"]
-    app_bot.feedback_cases["PR-0001"] = _case(status="pending")
-    app_bot.feedback_cases["PR-0002"] = _case(status="approved", created_at="2026-07-02T00:00:00+00:00")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0002"] = _case(status="approved", created_at="2026-07-02T00:00:00+00:00")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.get("/api/feedback-cases")
     assert resp.status == 200
@@ -118,8 +127,14 @@ async def test_list_feedback_cases_filters_by_status(aiohttp_client):
     guild, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
-    app["bot"].feedback_cases["PR-0002"] = _case(status="approved")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0002"] = _case(status="approved")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.get("/api/feedback-cases?status=pending")
     assert resp.status == 200
@@ -143,7 +158,10 @@ async def test_list_feedback_cases_resolves_submitter_display_name(aiohttp_clien
     guild, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(submitter_id=50)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(submitter_id=50)
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.get("/api/feedback-cases")
     body = await resp.json()
@@ -163,7 +181,10 @@ async def test_get_feedback_case_returns_full_detail_with_answers(aiohttp_client
     guild, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case()
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case()
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.get("/api/feedback-cases/PR-0001")
     assert resp.status == 200
@@ -210,13 +231,16 @@ async def test_decide_feedback_case_approves_and_persists(aiohttp_client):
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
     assert resp.status == 200
     assert (await resp.json()) == {"ok": True}
-    assert app["bot"].feedback_cases["PR-0001"]["status"] == "approved"
-    assert app["bot"].feedback_cases["PR-0001"]["reviewed_by"] == 10
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "approved"
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["reviewed_by"] == 10
 
 
 @pytest.mark.asyncio
@@ -235,7 +259,10 @@ async def test_decide_feedback_case_409_when_already_decided(aiohttp_client):
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="approved")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="approved")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
     assert resp.status == 409
@@ -249,10 +276,13 @@ async def test_decide_feedback_case_409_when_category_deleted(aiohttp_client):
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     # Category "players" is deleted from the categories config after the case was created.
-    feedback_categories.save_categories({})
+    feedback_categories.save_categories(1, {})
 
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": True})
     assert resp.status == 409
@@ -264,7 +294,10 @@ async def test_decide_feedback_case_rejects_non_boolean_approved(aiohttp_client)
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json={"approved": "yes"})
     assert resp.status == 400
@@ -284,7 +317,10 @@ async def test_decide_feedback_case_rejects_non_dict_body(aiohttp_client):
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     resp = await client.post("/api/feedback-cases/PR-0001/decide", json=[1, 2, 3])
     assert resp.status == 400
@@ -296,7 +332,10 @@ async def test_decide_feedback_case_unknown_error_maps_to_400(aiohttp_client, mo
     guild, app = build_with_channels()
     client = await aiohttp_client(app)
     await force_login(client, 10)
-    app["bot"].feedback_cases["PR-0001"] = _case(status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _case(status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     async def fake_decide_case(*args, **kwargs):
         return {"ok": False, "error": "some_future_error"}

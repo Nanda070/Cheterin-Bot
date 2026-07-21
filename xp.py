@@ -186,7 +186,7 @@ class XPCog(commands.Cog):
         if message.author.bot or message.guild is None:
             return
 
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(message.guild.id)
         if not settings["enabled"] or not settings["text"]["enabled"]:
             return
         if not channel_allowed(message.channel.id, settings["text"]):
@@ -195,31 +195,31 @@ class XPCog(commands.Cog):
             return
 
         now_ts = int(time.time())
-        row = stats_db.xp_get_member(message.author.id)
+        row = stats_db.xp_get_member(message.guild.id, message.author.id)
         if row is not None and now_ts - row["last_text_xp_ts"] < xp_core.TEXT_XP_COOLDOWN:
             return
 
         amount = xp_core.roll_text_xp(settings["text"]["multiplier"])
         if amount <= 0:
             return
-        stats_db.xp_add_text(message.author.id, amount, now_ts)
-        economy_core.award_for_xp(message.author.id, amount, "text")
+        stats_db.xp_add_text(message.guild.id, message.author.id, amount, now_ts)
+        economy_core.award_for_xp(message.guild.id, message.author.id, amount, "text")
         await self.process_member(message.author, settings, fallback_channel=message.channel)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(member.guild.id)
         if settings["enabled"] and settings["reset_on_leave"]:
-            stats_db.xp_reset_member(member.id)
+            stats_db.xp_reset_member(member.guild.id, member.id)
 
     # ────────────────── Голосовой XP (из voice_tracker) ──────────────────
 
     async def apply_voice_session(self, member: discord.Member, xp_amount: int, active_seconds: int):
         if xp_amount <= 0 and active_seconds <= 0:
             return
-        stats_db.xp_add_voice(member.id, xp_amount, active_seconds)
-        economy_core.award_for_xp(member.id, xp_amount, "voice")
-        settings = xp_core.get_settings()
+        stats_db.xp_add_voice(member.guild.id, member.id, xp_amount, active_seconds)
+        economy_core.award_for_xp(member.guild.id, member.id, xp_amount, "voice")
+        settings = xp_core.get_settings(member.guild.id)
         if settings["enabled"]:
             await self.process_member(member, settings, fallback_channel=None)
 
@@ -227,14 +227,14 @@ class XPCog(commands.Cog):
 
     async def process_member(self, member: discord.Member, settings: dict, fallback_channel):
         """Пересчитывает уровень, синхронизирует роли-награды, шлёт уведомление."""
-        row = stats_db.xp_get_member(member.id)
+        row = stats_db.xp_get_member(member.guild.id, member.id)
         if row is None:
             return
 
         old_level = row["level"]
         new_level = xp_core.level_from_xp(row["xp"])
         if new_level != old_level:
-            stats_db.xp_set_level(member.id, new_level)
+            stats_db.xp_set_level(member.guild.id, member.id, new_level)
 
         roles_added, roles_removed = await self.sync_reward_roles(member, settings, new_level, row["voice_seconds"])
 
@@ -321,17 +321,17 @@ class XPCog(commands.Cog):
     # ────────────────── Сброс (используется дашбордом) ──────────────────
 
     async def reset_member(self, member: discord.Member):
-        stats_db.xp_reset_member(member.id)
-        settings = xp_core.get_settings()
+        stats_db.xp_reset_member(member.guild.id, member.id)
+        settings = xp_core.get_settings(member.guild.id)
         await self.sync_reward_roles(member, settings, 0, 0)
 
     async def set_member_xp(self, member: discord.Member, xp: int):
         level = xp_core.level_from_xp(xp)
-        stats_db.xp_set_xp(member.id, xp, level)
-        settings = xp_core.get_settings()
+        stats_db.xp_set_xp(member.guild.id, member.id, xp, level)
+        settings = xp_core.get_settings(member.guild.id)
         await self.sync_reward_roles(
             member, settings, level,
-            (stats_db.xp_get_member(member.id) or {"voice_seconds": 0})["voice_seconds"],
+            (stats_db.xp_get_member(member.guild.id, member.id) or {"voice_seconds": 0})["voice_seconds"],
         )
 
     # ────────────────── Команда /ранг ──────────────────
@@ -339,7 +339,7 @@ class XPCog(commands.Cog):
     @app_commands.command(name="ранг", description="Показать карточку ранга участника")
     @app_commands.describe(участник="Чей ранг показать (по умолчанию — свой)")
     async def rank_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
 
@@ -349,12 +349,12 @@ class XPCog(commands.Cog):
 
         await interaction.response.defer()
 
-        row = stats_db.xp_get_member(target.id)
+        row = stats_db.xp_get_member(interaction.guild.id, target.id)
         xp = row["xp"] if row else 0
         voice_seconds = row["voice_seconds"] if row else 0
         level, into, step = xp_core.level_progress(xp)
-        rank = stats_db.xp_rank_of(target.id)
-        total = stats_db.xp_member_count()
+        rank = stats_db.xp_rank_of(interaction.guild.id, target.id)
+        total = stats_db.xp_member_count(interaction.guild.id)
 
         avatar_bytes = None
         try:
@@ -367,6 +367,7 @@ class XPCog(commands.Cog):
 
         png = await asyncio.to_thread(
             xp_card.render_rank_card,
+            target.guild.id,
             avatar_bytes,
             target.display_name,
             level,
@@ -386,14 +387,14 @@ class XPCog(commands.Cog):
     @xp_group.command(name="add", description="Добавить (или отнять) опыт участнику")
     @app_commands.describe(участник="Кому изменить опыт", количество="Сколько XP добавить (можно отрицательное число)")
     async def xp_add(self, interaction: discord.Interaction, участник: discord.Member, количество: int):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
         if участник.bot:
             return await interaction.response.send_message("У ботов нет опыта.", ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
-        row = stats_db.xp_get_member(участник.id)
+        row = stats_db.xp_get_member(interaction.guild.id, участник.id)
         current = row["xp"] if row else 0
         new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, current + количество))
         await self.set_member_xp(участник, new_xp)
@@ -406,7 +407,7 @@ class XPCog(commands.Cog):
         self, interaction: discord.Interaction, участник: discord.Member,
         количество: app_commands.Range[int, xp_core.XP_ADMIN_MIN, xp_core.XP_ADMIN_MAX],
     ):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
         if участник.bot:
@@ -419,7 +420,7 @@ class XPCog(commands.Cog):
     @xp_group.command(name="clear", description="Обнулить опыт участника")
     @app_commands.describe(участник="Кому обнулить опыт")
     async def xp_clear(self, interaction: discord.Interaction, участник: discord.Member):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
         await interaction.response.defer(ephemeral=True)
@@ -431,17 +432,17 @@ class XPCog(commands.Cog):
 
     @app_commands.command(name="leaders", description="Показать таблицу лидеров")
     async def leaders_command(self, interaction: discord.Interaction):
-        settings = xp_core.get_settings()
+        settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
         await interaction.response.defer()
 
-        rows_xp = stats_db.xp_leaderboard(limit=1000)
-        rows_voice = stats_db.voice_leaderboard(limit=1000)
+        rows_xp = stats_db.xp_leaderboard(interaction.guild.id, limit=1000)
+        rows_voice = stats_db.voice_leaderboard(interaction.guild.id, limit=1000)
         if not rows_xp and not rows_voice:
             return await interaction.followup.send("Пока никто не заработал опыт.")
 
-        total = stats_db.xp_member_count()
+        total = stats_db.xp_member_count(interaction.guild.id)
         view = LeaderboardView(rows_xp, rows_voice, interaction.guild, total)
         await interaction.followup.send(embed=view.build_embed(), view=view)
 

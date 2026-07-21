@@ -256,7 +256,7 @@ function FilterModal({
         {draft.punishment !== 'none' && draft.punishment !== 'kick' && (
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted">
-              {draft.punishment === 'warn' ? 'Срок действия предупреждения (0 = бессрочно)' : 'Длительность (0 = бессрочно)'}
+              {draft.punishment === 'warn' ? 'Срок действия предупреждения (0 = бессрочно)' : 'Длительность (0 = бессрочно, макс. для таймаута: 28 дней)'}
             </label>
             <DurationInputs minutes={draft.duration_minutes} onChange={(m) => setDraft({ duration_minutes: m })} />
           </div>
@@ -417,7 +417,7 @@ function EscalationSection({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted">Длительность (0 = бессрочно)</label>
+            <label className="text-sm text-muted">Длительность (0 = бессрочно, макс. для таймаута: 28 дней)</label>
             <DurationInputs minutes={form.duration_minutes} onChange={(m) => setForm((f) => ({ ...f, duration_minutes: m }))} />
           </div>
           <div className="flex justify-end gap-2">

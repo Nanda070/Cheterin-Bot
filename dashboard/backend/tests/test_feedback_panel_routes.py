@@ -1,7 +1,15 @@
 import pytest
 
+import settings_db
 from dashboard.backend.routes.feedback import routes as feedback_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, force_login, make_moderation_app
+
+
+@pytest.fixture(autouse=True)
+def isolated_settings_db(tmp_path, monkeypatch):
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(channels=None):

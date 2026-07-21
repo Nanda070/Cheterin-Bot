@@ -1,28 +1,36 @@
 import pytest
 
 import fun_core
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(fun_core, "CONFIG_FILE", str(tmp_path / "fun_config.json"))
-    monkeypatch.setattr(fun_core, "_cache", None, raising=False)
-    monkeypatch.setattr(fun_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_get_settings_defaults():
-    settings = fun_core.get_settings()
+    settings = fun_core.get_settings(404)
     assert settings["enabled"] is False
     assert settings["roulette_timeout_minutes"] == fun_core.DEFAULT_ROULETTE_TIMEOUT_MINUTES
     assert settings["roulette_cooldown_sec"] == fun_core.DEFAULT_ROULETTE_COOLDOWN_SEC
 
 
 def test_save_config_roundtrip():
-    fun_core.save_config({"enabled": True, "roulette_timeout_minutes": 5, "roulette_cooldown_sec": 60})
-    settings = fun_core.get_settings()
+    fun_core.save_config(404, {"enabled": True, "roulette_timeout_minutes": 5, "roulette_cooldown_sec": 60})
+    settings = fun_core.get_settings(404)
     assert settings["enabled"] is True
     assert settings["roulette_timeout_minutes"] == 5
     assert settings["roulette_cooldown_sec"] == 60
+
+
+def test_get_settings_isolated_by_guild():
+    fun_core.save_config(1, {"enabled": True})
+    fun_core.save_config(2, {"enabled": False})
+    assert fun_core.get_settings(1)["enabled"] is True
+    assert fun_core.get_settings(2)["enabled"] is False
 
 
 def test_spin_trigger_probability_is_one_in_six():

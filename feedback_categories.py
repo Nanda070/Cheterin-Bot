@@ -1,26 +1,20 @@
-import json
 import os
 import re
 
-CONFIG_FILE = "feedback_categories.json"
+import settings_db
+
+MODULE_NAME = "feedback_categories"
 
 KEY_PATTERN = re.compile(r"^[a-z0-9_]+$")
 PREFIX_PATTERN = re.compile(r"^[A-Z0-9]{1,6}$")
 
 
-def load_categories() -> dict:
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def load_categories(guild_id: int) -> dict:
+    return settings_db.get(guild_id, MODULE_NAME)
 
 
-def save_categories(data: dict) -> None:
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_categories(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
 def validate_category_spec(spec: dict, categories: dict, existing_key: str | None = None) -> str | None:
@@ -81,8 +75,8 @@ def validate_category_spec(spec: dict, categories: dict, existing_key: str | Non
     return None
 
 
-def migrate_from_env_if_needed() -> None:
-    if os.path.exists(CONFIG_FILE):
+def migrate_from_env_if_needed(guild_id: int) -> None:
+    if settings_db.has(guild_id, MODULE_NAME):
         return
     channel_id_raw = os.getenv("CHANNEL_COMPLAINT_PLAY")
     role_id_raw = os.getenv("ROLE_PLAYERS")
@@ -134,4 +128,4 @@ def migrate_from_env_if_needed() -> None:
             "mini_summary_key": "offender",
         },
     }
-    save_categories(categories)
+    save_categories(guild_id, categories)

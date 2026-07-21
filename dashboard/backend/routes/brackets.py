@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
 def serialize_bracket_summary(bracket: dict) -> dict:
@@ -58,7 +58,7 @@ def serialize_bracket_detail(bracket: dict) -> dict:
 @routes.get("/api/brackets")
 @require_dashboard_access
 async def list_brackets(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     return web.json_response({"brackets": [serialize_bracket_summary(b) for b in data.values()]})
 
 
@@ -87,7 +87,7 @@ async def create_bracket_route(request: web.Request) -> web.Response:
         return web.json_response({"error": "too_many_entries"}, status=400)
 
     if source_event_id:
-        events_data = await events.load_events()
+        events_data = events.load_events(request["guild_id"])
         ev = events_data.get("events", {}).get(str(source_event_id))
         if ev is None or ev.get("type") != "tournament":
             return web.json_response({"error": "event_not_found"}, status=404)
@@ -100,16 +100,16 @@ async def create_bracket_route(request: web.Request) -> web.Response:
     bracket = brackets.create_bracket_v2(
         title, entries, str(source_event_id) if source_event_id else None, moderator.id, bracket_format
     )
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     data[bracket["id"]] = bracket
-    brackets.save_brackets(data)
+    brackets.save_brackets(request["guild_id"], data)
     return web.json_response(serialize_bracket_detail(bracket), status=201)
 
 
 @routes.get("/api/brackets/entries-from-event/{event_id}")
 @require_dashboard_access
 async def entries_from_event(request: web.Request) -> web.Response:
-    events_data = await events.load_events()
+    events_data = events.load_events(request["guild_id"])
     ev = events_data.get("events", {}).get(request.match_info["event_id"])
     if ev is None or ev.get("type") != "tournament":
         return web.json_response({"error": "event_not_found"}, status=404)
@@ -120,7 +120,7 @@ async def entries_from_event(request: web.Request) -> web.Response:
 @routes.get("/api/brackets/{id}")
 @require_dashboard_access
 async def get_bracket(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     bracket = data.get(request.match_info["id"])
     if bracket is None:
         return web.json_response({"error": "bracket_not_found"}, status=404)
@@ -130,19 +130,19 @@ async def get_bracket(request: web.Request) -> web.Response:
 @routes.delete("/api/brackets/{id}")
 @require_dashboard_access
 async def delete_bracket(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     bracket_id = request.match_info["id"]
     if bracket_id not in data:
         return web.json_response({"error": "bracket_not_found"}, status=404)
     del data[bracket_id]
-    brackets.save_brackets(data)
+    brackets.save_brackets(request["guild_id"], data)
     return web.json_response({"ok": True})
 
 
 @routes.post("/api/brackets/{id}/matches/{round_index}/{match_index}/winner")
 @require_dashboard_access
 async def set_match_winner(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     bracket = data.get(request.match_info["id"])
     if bracket is None:
         return web.json_response({"error": "bracket_not_found"}, status=404)
@@ -166,7 +166,7 @@ async def set_match_winner(request: web.Request) -> web.Response:
             return web.json_response({"error": "invalid_request"}, status=400)
         if not brackets.set_winner_rr(bracket, round_index, match_index, winner):
             return web.json_response({"error": "match_not_found"}, status=404)
-        brackets.save_brackets(data)
+        brackets.save_brackets(request["guild_id"], data)
         return web.json_response(serialize_bracket_detail(bracket))
 
     if winner not in ("a", "b"):
@@ -177,7 +177,7 @@ async def set_match_winner(request: web.Request) -> web.Response:
             return web.json_response({"error": "invalid_request"}, status=400)
         if not brackets.set_winner_de(bracket, segment, round_index, match_index, winner):
             return web.json_response({"error": "match_not_ready"}, status=400)
-        brackets.save_brackets(data)
+        brackets.save_brackets(request["guild_id"], data)
         return web.json_response(serialize_bracket_detail(bracket))
 
     rounds = bracket.get("rounds", [])
@@ -191,38 +191,38 @@ async def set_match_winner(request: web.Request) -> web.Response:
         return web.json_response({"error": "match_not_ready"}, status=400)
 
     brackets.set_winner(bracket, round_index, match_index, winner)
-    brackets.save_brackets(data)
+    brackets.save_brackets(request["guild_id"], data)
     return web.json_response(serialize_bracket_detail(bracket))
 
 
 @routes.post("/api/brackets/{id}/share")
 @require_dashboard_access
 async def enable_share(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     bracket = data.get(request.match_info["id"])
     if bracket is None:
         return web.json_response({"error": "bracket_not_found"}, status=404)
     token = secrets.token_urlsafe(32)
     bracket["share_token"] = token
-    brackets.save_brackets(data)
+    brackets.save_brackets(request["guild_id"], data)
     return web.json_response({"share_token": token})
 
 
 @routes.delete("/api/brackets/{id}/share")
 @require_dashboard_access
 async def disable_share(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     bracket = data.get(request.match_info["id"])
     if bracket is None:
         return web.json_response({"error": "bracket_not_found"}, status=404)
     bracket["share_token"] = None
-    brackets.save_brackets(data)
+    brackets.save_brackets(request["guild_id"], data)
     return web.json_response({"ok": True})
 
 
 @routes.get("/api/public/brackets/{token}")
 async def get_public_bracket(request: web.Request) -> web.Response:
-    data = brackets.load_brackets()
+    data = brackets.load_brackets(request["guild_id"])
     token = request.match_info["token"]
     bracket = next((b for b in data.values() if b.get("share_token") == token), None)
     if bracket is None:

@@ -109,8 +109,8 @@ def member_log_value(member: discord.Member) -> str:
     return f"{member.mention}\n`{member.id}`"
 
 
-async def send_log(bot: commands.Bot, title: str, description: str, color: int, fields=None):
-    log_channel_id = family_core.get_settings()["applications"]["log_channel_id"]
+async def send_log(bot: commands.Bot, guild_id: int, title: str, description: str, color: int, fields=None):
+    log_channel_id = family_core.get_settings(guild_id)["applications"]["log_channel_id"]
     if not log_channel_id:
         return
     channel = bot.get_channel(int(log_channel_id))
@@ -129,7 +129,7 @@ async def send_log(bot: commands.Bot, title: str, description: str, color: int, 
 
 
 async def send_ticket_created_log(bot, applicant, ticket, active_role, thread, message):
-    await send_log(bot, "Создан новый тикет", "Новая заявка успешно создана.", 0x5865F2, [
+    await send_log(bot, applicant.guild.id, "Создан новый тикет", "Новая заявка успешно создана.", 0x5865F2, [
         ("Участник", member_log_value(applicant), True),
         ("Никнейм", ticket["nickname"], True),
         ("Имя", ticket["real_name"], True),
@@ -141,8 +141,9 @@ async def send_ticket_created_log(bot, applicant, ticket, active_role, thread, m
 
 
 async def send_ticket_result_log(bot, status, applicant, moderator, roles_added, removed_role, thread):
+    guild_id = applicant.guild.id
     if status == "approved":
-        await send_log(bot, "Заявка одобрена", "Администрация приняла участника.", 0x57F287, [
+        await send_log(bot, guild_id, "Заявка одобрена", "Администрация приняла участника.", 0x57F287, [
             ("Участник", member_log_value(applicant), True),
             ("Модератор", member_log_value(moderator), True),
             ("Роли", "\n".join(r.mention for r in roles_added) or "Нет", False),
@@ -150,14 +151,14 @@ async def send_ticket_result_log(bot, status, applicant, moderator, roles_added,
             ("Тред", thread.mention, False),
         ])
     elif status == "denied":
-        await send_log(bot, "Заявка отклонена", "Администрация отклонила заявку.", 0xED4245, [
+        await send_log(bot, guild_id, "Заявка отклонена", "Администрация отклонила заявку.", 0xED4245, [
             ("Участник", member_log_value(applicant), True),
             ("Модератор", member_log_value(moderator), True),
             ("Снята роль", removed_role.mention if removed_role else "Нет", False),
             ("Тред", thread.mention, False),
         ])
     else:
-        await send_log(bot, "Тикет закрыт", "Заявка была закрыта без принятия.", 0xFEE75C, [
+        await send_log(bot, guild_id, "Тикет закрыт", "Заявка была закрыта без принятия.", 0xFEE75C, [
             ("Участник", member_log_value(applicant), True),
             ("Модератор", member_log_value(moderator), True),
             ("Снята роль", removed_role.mention if removed_role else "Нет", False),
@@ -188,7 +189,7 @@ class ApplicationModalPart1(discord.ui.Modal, title="Заявка в семью 
 
     async def on_submit(self, interaction: discord.Interaction):
         family_db.save_pending_form(
-            interaction.user.id, str(self.nickname), str(self.game_level),
+            interaction.guild.id, interaction.user.id, str(self.nickname), str(self.game_level),
             str(self.faction_pref), str(self.online_timezone),
         )
         await interaction.response.send_message(
@@ -208,19 +209,19 @@ class ApplicationModalPart2(discord.ui.Modal, title="Заявка в семью 
     inviter_nickname = discord.ui.TextInput(label="Никнейм пригласившего", required=False, max_length=50)
 
     async def on_submit(self, interaction: discord.Interaction):
-        first_part = family_db.get_pending_form(interaction.user.id)
+        first_part = family_db.get_pending_form(interaction.guild.id, interaction.user.id)
         if not first_part:
             await interaction.response.send_message("Первая часть не найдена.", ephemeral=True)
             return
 
         applicant, guild = interaction.user, interaction.guild
-        existing = family_db.get_ticket_by_user(applicant.id)
+        existing = family_db.get_ticket_by_user(guild.id, applicant.id)
         if existing and existing["status"] == "open":
-            family_db.delete_pending_form(applicant.id)
+            family_db.delete_pending_form(guild.id, applicant.id)
             return await interaction.response.send_message("Уже есть активная заявка.", ephemeral=True)
 
         await interaction.response.defer(ephemeral=True, thinking=True)
-        settings = family_core.get_settings()["applications"]
+        settings = family_core.get_settings(interaction.guild.id)["applications"]
 
         data = {
             **first_part,
@@ -242,10 +243,10 @@ class ApplicationModalPart2(discord.ui.Modal, title="Заявка в семью 
 
         app_channel_id = settings["application_channel_id"]
         app_channel = guild.get_channel(int(app_channel_id)) if app_channel_id else None
-        ticket = family_db.get_ticket_by_user(applicant.id)
+        ticket = family_db.get_ticket_by_user(guild.id, applicant.id)
 
         if not isinstance(app_channel, discord.TextChannel):
-            family_db.delete_pending_form(applicant.id)
+            family_db.delete_pending_form(guild.id, applicant.id)
             return await interaction.followup.send(
                 "Канал заявок не настроен — обратитесь к администрации.", ephemeral=True
             )
@@ -264,7 +265,7 @@ class ApplicationModalPart2(discord.ui.Modal, title="Заявка в семью 
             reason=f"family ticket for {applicant}",
         )
 
-        family_db.update_ticket_indexes(applicant.id, mini_message.id, thread.id)
+        family_db.update_ticket_indexes(guild.id, applicant.id, mini_message.id, thread.id)
         try:
             await thread.add_user(applicant)
         except discord.HTTPException:
@@ -280,7 +281,7 @@ class ApplicationModalPart2(discord.ui.Modal, title="Заявка в семью 
 
         await send_ticket_created_log(interaction.client, applicant, ticket, active_role, thread, mini_message)
 
-        family_db.delete_pending_form(applicant.id)
+        family_db.delete_pending_form(guild.id, applicant.id)
         await interaction.followup.send(f"Твой приватный тикет: {thread.mention}", ephemeral=True)
 
 
@@ -296,7 +297,7 @@ class ContinueApplicationView(discord.ui.View):
 
     @discord.ui.button(label="Продолжить", style=discord.ButtonStyle.primary)
     async def continue_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
-        data = family_db.get_pending_form(interaction.user.id)
+        data = family_db.get_pending_form(interaction.guild.id, interaction.user.id)
         if not data:
             return await interaction.response.send_message("Анкета сброшена.", ephemeral=True)
         await interaction.response.send_modal(ApplicationModalPart2())
@@ -308,13 +309,13 @@ class OpenTicketView(discord.ui.View):
 
     @discord.ui.button(label="Создать тикет", style=discord.ButtonStyle.success, custom_id="family_open_ticket")
     async def open_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
-        if not family_core.get_settings()["enabled"]:
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
             return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
 
-        existing = family_db.get_ticket_by_user(interaction.user.id)
+        existing = family_db.get_ticket_by_user(interaction.guild.id, interaction.user.id)
         if existing and existing["status"] == "open":
             return await interaction.response.send_message("Активная заявка уже есть.", ephemeral=True)
-        family_db.delete_pending_form(interaction.user.id)
+        family_db.delete_pending_form(interaction.guild.id, interaction.user.id)
         await interaction.response.send_modal(ApplicationModalPart1())
 
 
@@ -332,7 +333,7 @@ class TicketResolution:
 
 async def resolve_ticket(bot: commands.Bot, guild: discord.Guild, thread: discord.Thread, status: str, moderator: discord.Member) -> TicketResolution:
     """Общая логика решения по тикету — используется и кнопками в Discord, и дашбордом."""
-    ticket = family_db.get_ticket_by_thread(thread.id)
+    ticket = family_db.get_ticket_by_thread(guild.id, thread.id)
     if not ticket or ticket["status"] != "open":
         return TicketResolution(False, error="not_open")
 
@@ -345,7 +346,7 @@ async def resolve_ticket(bot: commands.Bot, guild: discord.Guild, thread: discor
     if applicant is None:
         return TicketResolution(False, error="member_not_found")
 
-    settings = family_core.get_settings()["applications"]
+    settings = family_core.get_settings(guild.id)["applications"]
     roles_added: list[discord.Role] = []
     if status == "approved":
         roles_added = [guild.get_role(int(rid)) for rid in settings["approve_role_ids"] if rid]
@@ -364,14 +365,14 @@ async def resolve_ticket(bot: commands.Bot, guild: discord.Guild, thread: discor
         except discord.HTTPException:
             pass
 
-    family_db.update_ticket_status(ticket["user_id"], status, moderator.id)
+    family_db.update_ticket_status(guild.id, ticket["user_id"], status, moderator.id)
 
     app_channel_id = settings["application_channel_id"]
     app_channel = guild.get_channel(int(app_channel_id)) if app_channel_id else None
     if isinstance(app_channel, discord.TextChannel) and ticket["mini_message_id"]:
         try:
             msg = await app_channel.fetch_message(ticket["mini_message_id"])
-            t_data = family_db.get_ticket_by_user(ticket["user_id"])
+            t_data = family_db.get_ticket_by_user(guild.id, ticket["user_id"])
             await msg.edit(embed=build_mini_embed(applicant, t_data))
         except discord.HTTPException:
             pass
@@ -399,7 +400,7 @@ class TicketControlView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def _process(self, interaction: discord.Interaction, status: str):
-        if not family_core.get_settings()["enabled"]:
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
             return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not family_core.can_manage_tickets(interaction.user):
             return await interaction.response.send_message("Нет доступа.", ephemeral=True)
@@ -434,7 +435,7 @@ class FamilyTicketsCog(commands.Cog):
 
     @app_commands.command(name="семья-заявки", description="Развернуть панель создания заявки в семью")
     async def create_panel(self, interaction: discord.Interaction):
-        if not family_core.get_settings()["enabled"]:
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
             return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not family_core.has_staff_access(interaction.user):
             return await interaction.response.send_message("Нет доступа.", ephemeral=True)
@@ -443,7 +444,7 @@ class FamilyTicketsCog(commands.Cog):
 
     async def resolve_ticket_by_user(self, guild: discord.Guild, user_id: int, status: str, moderator: discord.Member) -> TicketResolution:
         """Точка входа для дашборда: находит тред по user_id и вызывает resolve_ticket."""
-        ticket = family_db.get_ticket_by_user(user_id)
+        ticket = family_db.get_ticket_by_user(guild.id, user_id)
         if not ticket or ticket["status"] != "open" or not ticket["thread_id"]:
             return TicketResolution(False, error="not_open")
 

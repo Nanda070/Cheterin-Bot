@@ -1,17 +1,18 @@
 import pytest
 
 import mafia_core
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(mafia_core, "CONFIG_FILE", str(tmp_path / "mafia_config.json"))
-    monkeypatch.setattr(mafia_core, "_cache", None, raising=False)
-    monkeypatch.setattr(mafia_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_get_settings_defaults():
-    settings = mafia_core.get_settings()
+    settings = mafia_core.get_settings(404)
     assert settings["enabled"] is False
     assert settings["default_min_players"] == mafia_core.DEFAULT_MIN_PLAYERS
     assert settings["default_max_players"] == mafia_core.DEFAULT_MAX_PLAYERS
@@ -20,8 +21,8 @@ def test_get_settings_defaults():
 
 
 def test_save_config_roundtrip():
-    mafia_core.save_config({"enabled": True, "default_min_players": 6, "log_channel_id": "123"})
-    settings = mafia_core.get_settings()
+    mafia_core.save_config(404, {"enabled": True, "default_min_players": 6, "log_channel_id": "123"})
+    settings = mafia_core.get_settings(404)
     assert settings["enabled"] is True
     assert settings["default_min_players"] == 6
     assert settings["log_channel_id"] == "123"

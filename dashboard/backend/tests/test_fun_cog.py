@@ -7,20 +7,18 @@ import pytest
 import economy_core
 import economy_db
 import fun_core
+import settings_db
 from fun import FunCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(fun_core, "CONFIG_FILE", str(tmp_path / "fun_config.json"))
-    monkeypatch.setattr(fun_core, "_cache", None, raising=False)
-    monkeypatch.setattr(fun_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
     economy_db.init()
-    monkeypatch.setattr(economy_core, "CONFIG_FILE", str(tmp_path / "economy_config.json"))
-    monkeypatch.setattr(economy_core, "_cache", None, raising=False)
-    monkeypatch.setattr(economy_core, "_cache_mtime", None, raising=False)
 
 
 class FakeResponse:
@@ -32,6 +30,7 @@ class FakeResponse:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild):
         self.user = user
         self.guild = guild
@@ -39,13 +38,13 @@ class FakeInteraction:
 
 
 def build(enabled=True, timeout_minutes=1, cooldown_sec=0):
-    fun_core.save_config({
+    player = FakeMember(20, name="player")
+    guild = FakeGuild(members=[player])
+    fun_core.save_config(guild.id, {
         "enabled": enabled,
         "roulette_timeout_minutes": timeout_minutes,
         "roulette_cooldown_sec": cooldown_sec,
     })
-    player = FakeMember(20, name="player")
-    guild = FakeGuild(members=[player])
     bot = FakeBot(guild)
     cog = FunCog(bot)
     return cog, player, guild
@@ -184,7 +183,7 @@ class FakeMsg:
         self.reactions_removed.append(str(emoji))
 
 
-def _auto_emoji_config(**overrides):
+def _auto_emoji_config(guild_id=1, **overrides):
     data = {
         "enabled": True,
         "auto_emoji_enabled": True,
@@ -193,7 +192,7 @@ def _auto_emoji_config(**overrides):
         "auto_emoji_remove_after_sec": 0,
     }
     data.update(overrides)
-    fun_core.save_config(data)
+    fun_core.save_config(guild_id, data)  # 1 — совпадает с дефолтным FakeGuild.id ниже
 
 
 @pytest.mark.asyncio
@@ -343,8 +342,8 @@ async def test_roulette_shows_chamber_number(monkeypatch):
 
 # ────────────────────────── Ставки монет ──────────────────────────
 
-def enable_economy(max_bet=1000):
-    economy_core.save_config({"enabled": True, "roulette_max_bet": max_bet})
+def enable_economy(guild_id, max_bet=1000):
+    economy_core.save_config(guild_id, {"enabled": True, "roulette_max_bet": max_bet})
 
 
 @pytest.mark.asyncio
@@ -359,7 +358,7 @@ async def test_roulette_bet_requires_economy(monkeypatch):
 @pytest.mark.asyncio
 async def test_roulette_bet_survive_doubles(monkeypatch):
     cog, player, guild = build()
-    enable_economy()
+    enable_economy(guild.id)
     economy_db.add(player.id, 100, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
 
@@ -373,7 +372,7 @@ async def test_roulette_bet_survive_doubles(monkeypatch):
 @pytest.mark.asyncio
 async def test_roulette_bet_death_burns(monkeypatch):
     cog, player, guild = build(timeout_minutes=0)
-    enable_economy()
+    enable_economy(guild.id)
     economy_db.add(player.id, 100, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
 
@@ -387,7 +386,7 @@ async def test_roulette_bet_death_burns(monkeypatch):
 @pytest.mark.asyncio
 async def test_roulette_bet_insufficient_funds(monkeypatch):
     cog, player, guild = build(cooldown_sec=30)
-    enable_economy()
+    enable_economy(guild.id)
     economy_db.add(player.id, 5, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
 
@@ -405,7 +404,7 @@ async def test_roulette_bet_insufficient_funds(monkeypatch):
 @pytest.mark.asyncio
 async def test_roulette_bet_over_max(monkeypatch):
     cog, player, guild = build()
-    enable_economy(max_bet=100)
+    enable_economy(guild.id, max_bet=100)
     economy_db.add(player.id, 5000, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
 

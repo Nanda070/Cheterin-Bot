@@ -33,9 +33,10 @@ def _serialize_giveaway(giveaway: dict, guild) -> dict:
 @routes.get("/api/giveaways")
 @require_dashboard_access
 async def giveaways_overview(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
-    active = [_serialize_giveaway(g, guild) for g in giveaway_core.list_active()]
-    history = [_serialize_giveaway(g, guild) for g in giveaway_core.list_history()]
+    guild_id = request["guild_id"]
+    guild = request.app["bot"].get_guild(guild_id)
+    active = [_serialize_giveaway(g, guild) for g in giveaway_core.list_active(guild_id)]
+    history = [_serialize_giveaway(g, guild) for g in giveaway_core.list_history(guild_id)]
     return web.json_response({"active": active, "history": history})
 
 
@@ -43,7 +44,7 @@ async def giveaways_overview(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def giveaways_create(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -85,7 +86,7 @@ async def giveaways_create(request: web.Request) -> web.Response:
         return web.json_response({"error": "channel_not_messageable"}, status=400)
 
     moderator = request["moderator"]
-    giveaway = await cog.publish_giveaway(channel, moderator.id, prize.strip(), duration_str, winners_count)
+    giveaway = await cog.publish_giveaway(request["guild_id"], channel, moderator.id, prize.strip(), duration_str, winners_count)
     return web.json_response(_serialize_giveaway(giveaway, guild), status=201)
 
 
@@ -98,7 +99,7 @@ async def giveaways_reroll(request: web.Request) -> web.Response:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
     giveaway_id = request.match_info["giveaway_id"]
-    winners = await cog.reroll_and_announce(giveaway_id)
+    winners = await cog.reroll_and_announce(request["guild_id"], giveaway_id)
     if winners is None:
         return web.json_response({"error": "not_finished"}, status=409)
     return web.json_response({"ok": True, "winners": winners})
@@ -112,11 +113,12 @@ async def giveaways_end(request: web.Request) -> web.Response:
     if cog is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
+    guild_id = request["guild_id"]
     giveaway_id = request.match_info["giveaway_id"]
-    if giveaway_core.get_giveaway(giveaway_id) is None:
+    if giveaway_core.get_giveaway(guild_id, giveaway_id) is None:
         return web.json_response({"error": "not_found"}, status=404)
 
-    ok = await cog.finalize_giveaway(giveaway_id)
+    ok = await cog.finalize_giveaway(guild_id, giveaway_id)
     if not ok:
         return web.json_response({"error": "not_active"}, status=409)
     return web.json_response({"ok": True})

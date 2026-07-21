@@ -1,6 +1,7 @@
 import pytest
 
 import daily_topic_core
+import settings_db
 from dashboard.backend.routes.daily_topic import routes as daily_topic_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -14,17 +15,19 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(daily_topic_core, "CONFIG_FILE", str(tmp_path / "daily_topic_config.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 class FakeDailyTopicCog:
     def __init__(self):
         self.posted = []
 
-    async def post_topic_now(self):
-        topic = daily_topic_core.pick_next_topic()
+    async def post_topic_now(self, guild_id):
+        topic = daily_topic_core.pick_next_topic(guild_id)
         if topic is not None:
-            daily_topic_core.mark_posted_today()
+            daily_topic_core.mark_posted_today(guild_id)
             self.posted.append(topic["id"])
         return topic
 

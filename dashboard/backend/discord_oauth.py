@@ -38,3 +38,35 @@ async def fetch_discord_identity(
         if resp.status != 200:
             raise DiscordOAuthError(f"Fetching identity failed with status {resp.status}")
         return await resp.json()
+
+
+async def fetch_user_guilds(
+    session: aiohttp.ClientSession,
+    access_token: str,
+    api_base: str = DISCORD_API_BASE,
+) -> list[dict]:
+    """Список серверов пользователя (`/users/@me/guilds`, требует scope `guilds`)."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    async with session.get(f"{api_base}/users/@me/guilds", headers=headers) as resp:
+        if resp.status != 200:
+            raise DiscordOAuthError(f"Fetching guilds failed with status {resp.status}")
+        return await resp.json()
+
+
+async def refresh_access_token(
+    session: aiohttp.ClientSession,
+    refresh_token: str,
+    client_id: str,
+    client_secret: str,
+    api_base: str = DISCORD_API_BASE,
+) -> dict:
+    data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+    }
+    async with session.post(f"{api_base}/oauth2/token", data=data) as resp:
+        if resp.status != 200:
+            raise DiscordOAuthError(f"Token refresh failed with status {resp.status}")
+        return await resp.json()

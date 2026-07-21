@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-import mafia_core
 import mafia_db
+import settings_db
 from mafia import MafiaCog
 from dashboard.backend.routes.mafia import routes as mafia_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, make_moderation_app
@@ -13,9 +13,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeM
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("MAFIA_DB_PATH", str(tmp_path / "mafia.db"))
     mafia_db.init()
-    monkeypatch.setattr(mafia_core, "CONFIG_FILE", str(tmp_path / "mafia_config.json"))
-    monkeypatch.setattr(mafia_core, "_cache", None, raising=False)
-    monkeypatch.setattr(mafia_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(members=None):

@@ -178,5 +178,17 @@
   "176": "BaseException",
   "177": "Embed",
   "178": "test_serverlog_routes.py",
-  "179": "test_member_detail.py"
+  "179": "test_member_detail.py",
+  "180": "can_double",
+  "181": "card_suit",
+  "182": "format_hand",
+  "183": "Button",
+  "184": "Application",
+  "185": "Path",
+  "186": "Request",
+  "187": "Response",
+  "188": "Interaction",
+  "189": "Message",
+  "190": "User",
+  "191": "Range"
 }

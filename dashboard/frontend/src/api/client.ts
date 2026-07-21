@@ -1,9 +1,11 @@
 export interface DashboardUser {
   id: string
-  username: string
-  avatar: string | null
-  is_admin: boolean
+  username?: string
+  avatar?: string | null
+  is_admin?: boolean
   is_super_admin: boolean
+  is_main_guild?: boolean
+  active_guild_id: string | null
 }
 
 export async function fetchCurrentUser(): Promise<DashboardUser | null> {
@@ -23,6 +25,28 @@ export async function logout(): Promise<void> {
 
 export function loginUrl(): string {
   return '/api/auth/login'
+}
+
+export interface ManageableGuild {
+  id: string
+  name: string
+  icon: string | null
+  has_bot: boolean
+}
+
+export async function fetchManageableGuilds(): Promise<ManageableGuild[]> {
+  const data = await apiFetch<{ guilds: ManageableGuild[] }>('/api/auth/guilds')
+  return data.guilds
+}
+
+export async function selectGuild(guildId: string): Promise<void> {
+  await apiFetch('/api/auth/select-guild', jsonInit('POST', { guild_id: guildId }))
+}
+
+export async function fetchInviteUrl(guildId?: string): Promise<string> {
+  const query = guildId ? `?guild_id=${encodeURIComponent(guildId)}` : ''
+  const data = await apiFetch<{ url: string }>(`/api/auth/invite-url${query}`)
+  return data.url
 }
 
 export class ApiError extends Error {
@@ -488,8 +512,6 @@ export interface BotConfig {
   RULES_CHANNEL_ID: string
   ROLES_CHANNEL_ID: string
   SEARCH_PLAYERS_CHANNEL_ID: string
-  CTD_ROLE_ID: string
-  CTD_CHANNEL_ID: string
   BUTTON_CREATE_ALLOWED_ROLES: string[]
   BUTTON_WEBHOOK_URL: string
   SERVER_INVITE_LINK: string
@@ -509,6 +531,20 @@ export function fetchConfig(): Promise<BotConfig> {
 
 export function updateConfig(config: BotConfig): Promise<BotConfig> {
   return apiFetch('/api/config', jsonInit('PUT', config))
+}
+
+// CTD — привилегия основного сервера (Фаза 2b): отдельный роут, доступен только на мейне.
+export interface CtdConfig {
+  CTD_ROLE_ID: string
+  CTD_CHANNEL_ID: string
+}
+
+export function fetchCtdConfig(): Promise<CtdConfig> {
+  return apiFetch('/api/ctd')
+}
+
+export function updateCtdConfig(config: CtdConfig): Promise<CtdConfig> {
+  return apiFetch('/api/ctd', jsonInit('PUT', config))
 }
 
 export interface SupplyMember {
@@ -1673,7 +1709,8 @@ export function updateFunSettings(settings: FunSettings): Promise<FunSettings> {
 
 export interface WordleSettings {
   enabled: boolean
-  channel_id: number
+  // Строка, не число: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+  channel_id: string
   announce_time: string
 }
 
@@ -1808,8 +1845,9 @@ export function updateAntiRaidSettings(settings: AntiRaidSettings): Promise<Anti
 
 export interface VerificationSettings {
   enabled: boolean
-  unverified_role_id: number
-  verified_role_id: number
+  // Строки, не числа: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+  unverified_role_id: string
+  verified_role_id: string
   welcome_text: string
 }
 

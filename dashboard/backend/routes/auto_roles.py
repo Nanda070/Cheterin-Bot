@@ -8,7 +8,7 @@ routes = web.RouteTableDef()
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
 def _is_role_assignable(role, guild) -> bool:
@@ -18,7 +18,7 @@ def _is_role_assignable(role, guild) -> bool:
 @routes.get("/api/auto-roles")
 @require_dashboard_access
 async def get_auto_roles(request: web.Request) -> web.Response:
-    role_ids = bot_config.get("AUTO_ROLE_IDS", [])
+    role_ids = bot_config.get(request["guild_id"], "AUTO_ROLE_IDS", [])
     return web.json_response({"role_ids": [str(r) for r in role_ids]})
 
 
@@ -50,8 +50,8 @@ async def update_auto_roles(request: web.Request) -> web.Response:
         if role is None or not _is_role_assignable(role, guild):
             return web.json_response({"error": "role_not_assignable"}, status=403)
 
-    data = bot_config.load_config()
+    data = bot_config.load_config(request["guild_id"])
     data["AUTO_ROLE_IDS"] = [str(r) for r in role_ids]
-    bot_config.save_config(data)
+    bot_config.save_config(request["guild_id"], data)
 
     return web.json_response({"role_ids": [str(r) for r in role_ids]})

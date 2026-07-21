@@ -18,8 +18,8 @@ def build():
 
 @pytest.mark.asyncio
 async def test_get_moderation_log_returns_events_newest_first(aiohttp_client):
-    moderation_log.append_event("spam_punish", 1, "userA", "reason1")
-    moderation_log.append_event("tempban", 2, "userB", "reason2")
+    moderation_log.append_event(1, "spam_punish", 1, "userA", "reason1")
+    moderation_log.append_event(1, "tempban", 2, "userB", "reason2")
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -33,7 +33,7 @@ async def test_get_moderation_log_returns_events_newest_first(aiohttp_client):
 @pytest.mark.asyncio
 async def test_get_moderation_log_respects_limit(aiohttp_client):
     for i in range(5):
-        moderation_log.append_event("spam_punish", i, f"user{i}", "reason")
+        moderation_log.append_event(1, "spam_punish", i, f"user{i}", "reason")
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)

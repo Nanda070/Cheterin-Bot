@@ -77,13 +77,13 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="daily", description="Забрать ежедневный бонус монет — растёт со стриком дней подряд")
     async def daily_command(self, interaction: discord.Interaction):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
         if not settings["daily_bonus_enabled"]:
             return await interaction.response.send_message("Ежедневный бонус отключён.", ephemeral=True)
 
-        result = economy_core.claim_daily_bonus(interaction.user.id)
+        result = economy_core.claim_daily_bonus(interaction.guild.id, interaction.user.id)
         if result["already_claimed"]:
             return await interaction.response.send_message(
                 f"Бонус за сегодня уже получен. Стрик: **{result['streak']}** 🔥 Возвращайся завтра!",
@@ -103,7 +103,7 @@ class EconomyCog(commands.Cog):
     @app_commands.command(name="баланс", description="Показать баланс монет (свой или другого участника)")
     @app_commands.describe(участник="Чей баланс показать (по умолчанию — свой)")
     async def balance_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -133,7 +133,7 @@ class EconomyCog(commands.Cog):
         self, interaction: discord.Interaction, участник: discord.Member,
         количество: app_commands.Range[int, -economy_core.BALANCE_ADMIN_MAX, economy_core.BALANCE_ADMIN_MAX],
     ):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
         if участник.bot:
@@ -157,7 +157,7 @@ class EconomyCog(commands.Cog):
         self, interaction: discord.Interaction, участник: discord.Member,
         количество: app_commands.Range[int, 1, economy_core.BALANCE_ADMIN_MAX],
     ):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
         if not settings["transfer_enabled"]:
@@ -186,7 +186,7 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="монеты-топ", description="Топ участников по количеству монет")
     async def top_command(self, interaction: discord.Interaction):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -214,7 +214,7 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="магазин", description="Магазин ролей за монеты")
     async def shop_command(self, interaction: discord.Interaction):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -250,7 +250,7 @@ class EconomyCog(commands.Cog):
         return f"• **{name}** — {target}: {price_text}"
 
     async def handle_purchase(self, interaction: discord.Interaction, item_id: str):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -322,7 +322,7 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="косметика", description="Выбрать рамку карточки ранга и титул из купленного в магазине")
     async def cosmetics_command(self, interaction: discord.Interaction):
-        settings = economy_core.get_settings()
+        settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 

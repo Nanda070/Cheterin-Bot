@@ -24,7 +24,7 @@ def serialize_member_summary(member) -> dict:
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
 @routes.get("/api/members")
@@ -124,7 +124,7 @@ def dashboard_reason(reason: str, moderator) -> str:
 
 
 async def _send_action_log(
-    bot, title: str, target, moderator, reason: str, extra: str = "", event_type: str | None = None
+    bot, guild_id: int, title: str, target, moderator, reason: str, extra: str = "", event_type: str | None = None
 ):
     embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=bot.utcnow())
     embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
@@ -133,9 +133,10 @@ async def _send_action_log(
     if extra:
         embed.add_field(name="Дополнительно", value=extra, inline=False)
     embed.set_footer(text="Dashboard · Moderation")
-    await bot.send_log(embed)
+    await bot.send_log(guild_id, embed)
     if event_type:
         moderation_log.append_event(
+            guild_id,
             event_type,
             target.id,
             target.name,
@@ -154,7 +155,7 @@ async def get_moderation_log(request: web.Request) -> web.Response:
     except ValueError:
         limit = 50
     limit = max(0, min(limit, moderation_log.MAX_ENTRIES))
-    events = moderation_log.load_events()[:limit]
+    events = moderation_log.load_events(request["guild_id"])[:limit]
     return web.json_response({"events": events})
 
 
@@ -204,7 +205,7 @@ async def ban_member(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], "🔨 Бан через дашборд", target, moderator, reason,
+        request.app["bot"], request["guild_id"], "🔨 Бан через дашборд", target, moderator, reason,
         extra=f"Удаление сообщений: {days} дн.", event_type="manual_ban",
     )
     return web.json_response({"ok": True})
@@ -232,7 +233,7 @@ async def kick_member(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], "👢 Кик через дашборд", target, moderator, reason, event_type="manual_kick"
+        request.app["bot"], request["guild_id"], "👢 Кик через дашборд", target, moderator, reason, event_type="manual_kick"
     )
     return web.json_response({"ok": True})
 
@@ -304,7 +305,7 @@ async def grant_role(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], "🎖️ Роль выдана через дашборд", target, moderator, role.name
+        request.app["bot"], request["guild_id"], "🎖️ Роль выдана через дашборд", target, moderator, role.name
     )
     return web.json_response({"ok": True})
 
@@ -326,7 +327,7 @@ async def revoke_role(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], "🎖️ Роль снята через дашборд", target, moderator, role.name
+        request.app["bot"], request["guild_id"], "🎖️ Роль снята через дашборд", target, moderator, role.name
     )
     return web.json_response({"ok": True})
 

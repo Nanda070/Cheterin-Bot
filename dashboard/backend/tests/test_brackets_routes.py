@@ -45,7 +45,7 @@ def _tournament_event(mode="solo", participants=None, **overrides):
 @pytest.mark.asyncio
 async def test_list_brackets_returns_summaries(aiohttp_client):
     data = {"b1": brackets.create_bracket("T1", ["A", "B"], None, 10)}
-    brackets.save_brackets(data)
+    brackets.save_brackets(1, data)
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -80,7 +80,7 @@ async def test_create_bracket_manual(aiohttp_client):
     assert body["entries"] == ["X", "Y", "Z"]
     assert len(body["rounds"]) == 2
 
-    stored = brackets.load_brackets()
+    stored = brackets.load_brackets(1)
     assert len(stored) == 1
 
 
@@ -108,7 +108,7 @@ async def test_create_bracket_rejects_blank_title(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_create_bracket_from_event(aiohttp_client):
-    await events.save_events(
+    events.save_events(1, 
         {
             "events": {
                 "900": _tournament_event(
@@ -132,7 +132,7 @@ async def test_create_bracket_from_event(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_create_bracket_from_event_rejects_tampered_entries(aiohttp_client):
-    await events.save_events(
+    events.save_events(1, 
         {
             "events": {
                 "900": _tournament_event(
@@ -169,7 +169,7 @@ async def test_create_bracket_from_missing_event_404s(aiohttp_client):
 @pytest.mark.asyncio
 async def test_get_bracket_detail(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -192,19 +192,19 @@ async def test_get_bracket_detail_404_when_missing(aiohttp_client):
 @pytest.mark.asyncio
 async def test_delete_bracket(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     resp = await client.delete(f"/api/brackets/{bracket['id']}")
     assert resp.status == 200
-    assert brackets.load_brackets() == {}
+    assert brackets.load_brackets(1) == {}
 
 
 @pytest.mark.asyncio
 async def test_entries_from_event_preview(aiohttp_client):
-    await events.save_events(
+    events.save_events(1, 
         {
             "events": {
                 "900": _tournament_event(
@@ -240,7 +240,7 @@ async def test_create_bracket_rejects_non_dict_json_body(aiohttp_client):
 @pytest.mark.asyncio
 async def test_set_match_winner_advances_entry(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -255,7 +255,7 @@ async def test_set_match_winner_advances_entry(aiohttp_client):
 @pytest.mark.asyncio
 async def test_set_match_winner_rejects_invalid_winner_value(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -268,7 +268,7 @@ async def test_set_match_winner_rejects_invalid_winner_value(aiohttp_client):
 @pytest.mark.asyncio
 async def test_set_match_winner_rejects_a_match_that_is_not_ready(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -292,7 +292,7 @@ async def test_set_match_winner_404_when_bracket_missing(aiohttp_client):
 @pytest.mark.asyncio
 async def test_set_match_winner_404_for_out_of_range_indices(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -304,7 +304,7 @@ async def test_set_match_winner_404_for_out_of_range_indices(aiohttp_client):
 @pytest.mark.asyncio
 async def test_set_match_winner_requires_auth(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B", "C", "D"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
 
@@ -315,7 +315,7 @@ async def test_set_match_winner_requires_auth(aiohttp_client):
 @pytest.mark.asyncio
 async def test_enable_share_generates_a_token(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -324,28 +324,28 @@ async def test_enable_share_generates_a_token(aiohttp_client):
     assert resp.status == 200
     token = (await resp.json())["share_token"]
     assert token
-    assert brackets.load_brackets()[bracket["id"]]["share_token"] == token
+    assert brackets.load_brackets(1)[bracket["id"]]["share_token"] == token
 
 
 @pytest.mark.asyncio
 async def test_disable_share_clears_the_token(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
     bracket["share_token"] = "existing-token"
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     resp = await client.delete(f"/api/brackets/{bracket['id']}/share")
     assert resp.status == 200
-    assert brackets.load_brackets()[bracket["id"]]["share_token"] is None
+    assert brackets.load_brackets(1)[bracket["id"]]["share_token"] is None
 
 
 @pytest.mark.asyncio
 async def test_public_bracket_returns_data_with_no_auth(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
     bracket["share_token"] = "my-token"
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     # deliberately no force_login call
@@ -368,7 +368,7 @@ async def test_public_bracket_404s_on_unknown_token(aiohttp_client):
 async def test_public_bracket_404s_after_share_disabled(aiohttp_client):
     bracket = brackets.create_bracket("T1", ["A", "B"], None, 10)
     bracket["share_token"] = "my-token"
-    brackets.save_brackets({bracket["id"]: bracket})
+    brackets.save_brackets(1, {bracket["id"]: bracket})
     app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)

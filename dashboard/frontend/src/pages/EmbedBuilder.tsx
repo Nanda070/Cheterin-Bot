@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   createEmbedMessage,
   deleteEmbedTemplate,
@@ -283,7 +283,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-title">
-          Title
+          Title (макс. 256 символов)
         </label>
         <input
           id="eb-title"
@@ -293,7 +293,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-description">
-          Description
+          Description (макс. 4096 символов)
         </label>
         <textarea
           id="eb-description"
@@ -334,7 +334,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-footer-text">
-          Footer
+          Footer (макс. 2048 символов)
         </label>
         <input
           id="eb-footer-text"
@@ -392,7 +392,7 @@ export function EmbedBuilderPage() {
             </div>
           ))}
           <button type="button" onClick={addField} className="cursor-pointer self-start text-sm text-primary hover:text-primary-hover">
-            + Добавить поле
+            + Добавить поле (макс. 25)
           </button>
         </div>
 

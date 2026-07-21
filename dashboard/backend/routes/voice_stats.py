@@ -22,9 +22,9 @@ async def voice_stats(request: web.Request) -> web.Response:
     except ValueError:
         days = 30
 
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     since_ts = int(time.time()) - days * 24 * 3600
-    sessions = stats_db.voice_sessions_since(since_ts)
+    sessions = stats_db.voice_sessions_since(request["guild_id"], since_ts)
 
     by_hour = [0] * 24          # суммарные минуты по часам суток (МСК)
     by_weekday = [0] * 7        # суммарные минуты по дням недели (0=Пн)

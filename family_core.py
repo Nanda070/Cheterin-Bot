@@ -10,11 +10,11 @@
 настраивается через дашборд вместо хардкода .env, как в оригинале.
 """
 
-import json
-import os
 import re
 
-CONFIG_FILE = "family_config.json"
+import settings_db
+
+MODULE_NAME = "family"
 
 DEFAULT_THREAD_ARCHIVE_MINUTES = 10080  # 7 дней
 
@@ -39,40 +39,13 @@ MONTH_ALIASES = {
     "декабрь": 12, "декабря": 12,
 }
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Настройки модуля с дефолтами (выключен по умолчанию)."""
-    data = load_config()
+def get_settings(guild_id: int) -> dict:
+    """Настройки модуля сервера с дефолтами (выключен по умолчанию)."""
+    data = settings_db.get(guild_id, MODULE_NAME)
     roster = data.get("roster", {})
     applications = data.get("applications", {})
     birthdays = data.get("birthdays", {})
@@ -109,14 +82,14 @@ def get_settings() -> dict:
 def has_staff_access(member) -> bool:
     if member.guild_permissions.administrator:
         return True
-    staff_ids = {int(v) for v in get_settings()["applications"]["staff_role_ids"]}
+    staff_ids = {int(v) for v in get_settings(member.guild.id)["applications"]["staff_role_ids"]}
     return bool({role.id for role in member.roles} & staff_ids)
 
 
 def can_manage_tickets(member) -> bool:
     if member.guild_permissions.administrator:
         return True
-    raw = get_settings()["applications"]["ticket_manager_role_id"]
+    raw = get_settings(member.guild.id)["applications"]["ticket_manager_role_id"]
     if not raw:
         return False
     return any(role.id == int(raw) for role in member.roles)

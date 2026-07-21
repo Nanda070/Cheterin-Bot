@@ -8,6 +8,14 @@ import bot_config
 
 logger = logging.getLogger("chetbot.memobb")
 
+# CTD — привилегия основного сервера (Фаза 2b): ког активен только на мейне.
+# Разрешение id мейна единообразно с main.get_main_guild_id().
+MAIN_GUILD_ID = int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
+
+
+def _is_main_guild(interaction: discord.Interaction) -> bool:
+    return interaction.guild is not None and interaction.guild.id == MAIN_GUILD_ID
+
 
 class CTDCloseView(discord.ui.View):
     def __init__(self):
@@ -15,7 +23,10 @@ class CTDCloseView(discord.ui.View):
 
     @discord.ui.button(label="Закрыть Тикет", style=discord.ButtonStyle.danger, custom_id="ctd_close_ticket")
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-        raw_role_id = bot_config.get("CTD_ROLE_ID")
+        if not _is_main_guild(interaction):
+            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            return
+        raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
         if not raw_role_id:
             await interaction.response.send_message("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
             return
@@ -36,7 +47,7 @@ class CTDCloseView(discord.ui.View):
             color=discord.Color.red(),
             timestamp=interaction.client.utcnow()
         )
-        await interaction.client.send_log(embed)
+        await interaction.client.send_log(interaction.guild.id, embed)
 
 
 class CTDView(discord.ui.View):
@@ -45,9 +56,12 @@ class CTDView(discord.ui.View):
 
     @discord.ui.button(label="Создать Тикет", style=discord.ButtonStyle.primary, custom_id="ctd_create_ticket")
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not _is_main_guild(interaction):
+            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            return
         await interaction.response.defer(ephemeral=True)
         channel = interaction.channel
-        raw_role_id = bot_config.get("CTD_ROLE_ID")
+        raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
         if not raw_role_id:
             await interaction.followup.send("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
             return
@@ -98,7 +112,7 @@ class CTDView(discord.ui.View):
             color=discord.Color.green(),
             timestamp=interaction.client.utcnow()
         )
-        await interaction.client.send_log(embed)
+        await interaction.client.send_log(interaction.guild.id, embed)
 
 
 class CTD(commands.Cog):
@@ -119,42 +133,53 @@ class CTD(commands.Cog):
     from discord.ext import tasks
     @tasks.loop(hours=6)
     async def _auto_close_tickets(self):
-        guild_id_raw = os.getenv("GUILD_ID")
-        if not guild_id_raw: return
-        guild = self.bot.get_guild(int(guild_id_raw))
-        if not guild: return
-        
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
-            threads = await guild.active_threads()
-        except Exception as e:
-            logger.error("Auto-close error fetching threads: %s", e)
-            return
+            guild = self.bot.get_guild(MAIN_GUILD_ID)
+            if not guild: return
 
-        for thread in threads:
-            if thread.name.startswith("new-ticket-"):
-                if thread.last_message_id:
-                    try:
-                        msg = await thread.fetch_message(thread.last_message_id)
-                        diff = discord.utils.utcnow() - msg.created_at
-                        if diff.total_seconds() > 48 * 3600 and msg.author != self.bot.user:
-                            await thread.send("⏳ Тикет неактивен более 48 часов и будет автоматически закрыт через 24 часа.")
-                        elif diff.total_seconds() > 24 * 3600 and msg.author == self.bot.user and "неактивен" in msg.content:
-                            new_name = thread.name.replace("new-ticket-", "closed-ticket-", 1)
-                            await thread.edit(name=new_name, archived=True, locked=True)
-                            await thread.send("🔒 Тикет автоматически закрыт по неактивности.")
-                    except discord.NotFound:
-                        pass
-                    except Exception as e:
-                        logger.warning("Error processing thread %s for auto-close: %s", thread.id, e)
+            try:
+                threads = await guild.active_threads()
+            except Exception as e:
+                logger.error("Auto-close error fetching threads: %s", e)
+                return
+
+            for thread in threads:
+                if thread.name.startswith("new-ticket-"):
+                    if thread.last_message_id:
+                        try:
+                            msg = await thread.fetch_message(thread.last_message_id)
+                            diff = discord.utils.utcnow() - msg.created_at
+                            if diff.total_seconds() > 48 * 3600 and msg.author != self.bot.user:
+                                await thread.send("⏳ Тикет неактивен более 48 часов и будет автоматически закрыт через 24 часа.")
+                            elif diff.total_seconds() > 24 * 3600 and msg.author == self.bot.user and "неактивен" in msg.content:
+                                new_name = thread.name.replace("new-ticket-", "closed-ticket-", 1)
+                                await thread.edit(name=new_name, archived=True, locked=True)
+                                await thread.send("🔒 Тикет автоматически закрыт по неактивности.")
+                        except discord.NotFound:
+                            pass
+                        except Exception as e:
+                            logger.warning("Error processing thread %s for auto-close: %s", thread.id, e)
+        except Exception:
+            logger.exception("_auto_close_tickets: ошибка итерации — цикл продолжает работать")
+
+    @_auto_close_tickets.error
+    async def _auto_close_tickets_error(self, _error: BaseException):
+        logger.exception("_auto_close_tickets: критическая ошибка — перезапуск цикла")
+        self._auto_close_tickets.restart()
 
     @_auto_close_tickets.before_loop
     async def _before_auto_close(self):
         await self.bot.wait_until_ready()
 
     @app_commands.command(name="ctd_setup", description="Установить панель тикетов CTD")
+    @app_commands.guilds(discord.Object(id=MAIN_GUILD_ID))
     @app_commands.default_permissions(manage_guild=True)
     async def ctd_setup(self, interaction: discord.Interaction):
-        raw_channel_id = bot_config.get("CTD_CHANNEL_ID")
+        if not _is_main_guild(interaction):
+            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            return
+        raw_channel_id = bot_config.get(interaction.guild.id, "CTD_CHANNEL_ID")
         if not raw_channel_id:
             await interaction.response.send_message("CTD_CHANNEL_ID не задан в переменных окружения.", ephemeral=True)
             return

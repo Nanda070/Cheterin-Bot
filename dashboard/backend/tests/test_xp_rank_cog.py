@@ -3,6 +3,7 @@
 import pytest
 
 import economy_db
+import settings_db
 import stats_db
 import xp_card
 import xp_core
@@ -14,9 +15,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("STATS_DB_PATH", str(tmp_path / "stats.db"))
     stats_db.init()
-    monkeypatch.setattr(xp_core, "CONFIG_FILE", str(tmp_path / "xp_config.json"))
-    monkeypatch.setattr(xp_core, "_cache", None, raising=False)
-    monkeypatch.setattr(xp_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
     economy_db.init()
 
@@ -38,6 +39,7 @@ class FakeFollowup:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild):
         self.user = user
         self.guild = guild
@@ -46,9 +48,9 @@ class FakeInteraction:
 
 
 def build():
-    xp_core.save_config({"enabled": True})
     member = FakeMember(20, name="player", display_name="Player")
     guild = FakeGuild(members=[member])
+    xp_core.save_config(guild.id, {"enabled": True})
     bot = FakeBot(guild)
     cog = XPCog(bot)
     return cog, guild, member
@@ -57,7 +59,7 @@ def build():
 @pytest.mark.asyncio
 async def test_rank_command_without_cosmetics_passes_none(monkeypatch):
     cog, guild, member = build()
-    stats_db.xp_add_text(member.id, 100, 1000)
+    stats_db.xp_add_text(1, member.id, 100, 1000)
     captured = {}
 
     def fake_render(*args, **kwargs):
@@ -77,7 +79,7 @@ async def test_rank_command_without_cosmetics_passes_none(monkeypatch):
 @pytest.mark.asyncio
 async def test_rank_command_passes_equipped_frame_and_title(monkeypatch):
     cog, guild, member = build()
-    stats_db.xp_add_text(member.id, 100, 1000)
+    stats_db.xp_add_text(1, member.id, 100, 1000)
     economy_db.grant_cosmetic(member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
     economy_db.set_equipped(member.id, "frame_color", "frame1")
     economy_db.grant_cosmetic(member.id, "title1", "title", "Легенда", "Титул «Легенда»")
@@ -101,7 +103,7 @@ async def test_rank_command_passes_equipped_frame_and_title(monkeypatch):
 @pytest.mark.asyncio
 async def test_rank_command_ignores_unequipped_owned_cosmetics(monkeypatch):
     cog, guild, member = build()
-    stats_db.xp_add_text(member.id, 100, 1000)
+    stats_db.xp_add_text(1, member.id, 100, 1000)
     economy_db.grant_cosmetic(member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")  # куплено, но не надето
 
     captured = {}

@@ -1,6 +1,6 @@
 # План перехода к фазе «общий доступ» (мульти-серверный бот уровня MEE6)
 
-> Статус: **утверждён, реализация не начата**. Этот файл — источник истины для всех сессий работ.
+> Статус: **утверждён, в работе — Фазы 0.1, 1, 2.1, 2.2а, 2.2б, «семья» per-guild, 2.3, 2.4 и 2b выполнены (21.07.2026); Фаза 2 завершена. Следующая — Фаза 3 (двуязычность RU/EN)**. Этот файл — источник истины для всех сессий работ.
 > Мейн-сервер (он же «Основной/Супер/Сервер 404»): **ID 1324239354154975252**.
 
 ## Принятые решения (зафиксированы с владельцем)
@@ -19,7 +19,7 @@
 - `app["guild_id"]` — один на всё приложение; ~25 файлов роутов читают его.
 - **10 плоских конфигов** без измерения guild: automod, bunker, daily_topic, family, mafia, xp (+ giveaways/supply data, lockdown backup).
 - **Плоские data-файлы** без guild: events_data, brackets_data, reaction_roles, buttons_config, feedback_categories, invites_stats, moderation_log, news_relay, voice_panel, serverlog_config, streams_config, embed_templates, xp_card_bg.png.
-- **`stats.db`: `xp_members(user_id PK)` и `voice_sessions(user_id)` — БЕЗ guild_id вообще** (XP сейчас глобальный). `audit_log` — тоже без guild.
+- ~~**`stats.db`: `xp_members(user_id PK)` и `voice_sessions(user_id)` — БЕЗ guild_id вообще** (XP сейчас глобальный). `audit_log` — тоже без guild.~~ → **устранено в 2.2а**: все три таблицы получили `guild_id`, миграция старых строк → guild 404 в `stats_db.init()`.
 - Уже имеют guild_id: mafia.db/bunker.db (games), warns.db, private_rooms.db, family.db (частично — проверить при миграции).
 - Супер-админ: хардкод роли `1505359848433516734`, проверяется на единственном сервере.
 - CTD: `memobb.py` + `CTD_ROLE_ID`/`CTD_CHANNEL_ID` в config.json.
@@ -29,35 +29,33 @@
 
 ## Фаза 0 — Ускорение и устойчивость бота (перформанс и нагрузка, всё в одном месте)
 
-> Статус: **зафиксировано, не реализовано**. Найдено при разборе вопроса «насколько бот может
-> виснуть/глючить при включении всех функций» — **как именно ускорять, нужно обсуждать отдельно,
-> не в этой сессии**. Объединяет находки сегодняшнего ревью (0.1) и то, что раньше было отдельной
-> «Фазой 4» (0.2) — тематически это один и тот же вопрос («не ложился от перенагрузки»), поэтому
-> собрано в одном месте вместо двух.
+> Статус: **0.1 ВЫПОЛНЕНО (21.07.2026), 0.2 сознательно отложено**. Найдено при разборе вопроса
+> «насколько бот может виснуть/глючить при включении всех функций». Решение сессии 21.07: чинить 0.1
+> точечно сейчас, отдельно от 0.2 (масштаб — шардинг/Postgres/health-метрики обсуждаются отдельно,
+> когда встанет вопрос роста числа серверов). Объединяет находки ревью 20.07 (0.1) и то, что раньше
+> было отдельной «Фазой 4» (0.2) — тематически один и тот же вопрос («не ложился от перенагрузки»).
 
-### 0.1 Найдено сейчасу (20.07) (точечные проблемы, подтверждены по коду)
+### 0.1 Точечные фиксы (найдено 20.07, исправлено 21.07)
 
-1. **Рендер PNG в Вордле блокирует весь event loop.** `wordle_card.render_playing_card` /
-   `render_summary_card` вызываются напрямую в `wordle.py`, без `asyncio.to_thread` — в отличие от
+1. ✅ **Рендер PNG в Вордле блокировал весь event loop.** `wordle_card.render_playing_card` /
+   `render_summary_card` вызывались напрямую в `wordle.py`, без `asyncio.to_thread` — в отличие от
    `/ранг` (`xp.py`), где рендер уже вынесен в поток. Pillow — синхронный CPU-bound код: на время
-   отрисовки карточки (обычно 10–30 мс, может быть больше) блокируется **весь бот на всех
-   серверах**, не только сама игра в Вордл.
-2. **SQLite без WAL, синхронный драйвер.** 8+ отдельных `.db`-файлов (economy, stats, wordle,
-   bunker, mafia, warns, family, ban) — обычный `sqlite3`, без `PRAGMA journal_mode=WAL`. Каждый
-   запрос блокирует event loop на время выполнения; при одновременной нагрузке на несколько модулей
-   разом (казино + экономика + XP-хук + Вордл) эффект накопительный. Пересекается с пунктом «SQLite:
-   WAL везде» в 0.2 ниже — здесь зафиксировано как более срочный самостоятельный пункт, независимый
-   от мульти-серверной миграции.
-3. **Только 2 из 9 фоновых `tasks.loop` защищены от падения.** `wordle.py` и `daily_topic.py` имеют
-   `try/except` + `@loop.error` (цикл переживает необработанное исключение и сам перезапускается).
-   Без этой защиты: `voice_tracker.py`, `automod.py`, `button.py`, `memobb.py` (CTD), `spam.py`,
-   `streams.py`, `family_birthdays.py` — при необработанном исключении внутри цикл **молча
-   останавливается навсегда** до перезапуска бота (сам бот не падает). Симптом на проде: одна
-   конкретная фича «просто перестала работать» без явной ошибки, если не смотреть логи внимательно.
+   отрисовки карточки блокировался весь бот на всех серверах. **Исправлено**: оба вызова обёрнуты в
+   `asyncio.to_thread` в `wordle.py`.
+2. ✅ **SQLite без WAL, синхронный драйвер.** 10 отдельных `.db`-модулей (`economy_db`, `stats_db`,
+   `wordle_db`, `bunker_db`, `mafia_db`, `warns_db`, `family_db`, `ban_db`, `voice_db`, `casino_db`)
+   не включали `PRAGMA journal_mode=WAL`. **Исправлено**: во всех `connect()`/`db_connect()` добавлены
+   `PRAGMA journal_mode=WAL` и `PRAGMA busy_timeout=5000`. Пересекается с пунктом «SQLite: WAL везде»
+   в 0.2 — там же остаётся более масштабный `busy_timeout`/writer-паттерн под Postgres-переход.
+3. ✅ **Только 2 из 9 фоновых `tasks.loop` были защищены от падения** (`wordle.py`, `daily_topic.py` —
+   `try/except` + `@loop.error`). **Исправлено**: тот же паттерн (тело в `try/except`, `@loop.error`
+   логирует и рестартует цикл) добавлен во все оставшиеся 8 циклов в 7 файлах: `voice_tracker.py`
+   (`_tick`, `_prune`), `automod.py` (`_cleanup_repeat_cache`), `button.py` (`_cleanup_cooldowns`),
+   `memobb.py` (`_auto_close_tickets`, CTD), `spam.py` (`_cleanup_cache`), `streams.py` (`_poll`),
+   `family_birthdays.py` (`birthday_loop`).
 
-**Итог 0.1**: полное зависание бота маловероятно (discord.py сам управляет рейт-лимитами Discord),
-но реальны точечные микро-фризы всего процесса (пункт 1) и тихая смерть отдельных фоновых фич
-(пункт 3) при высокой нагрузке со всеми включёнными модулями сразу.
+**Итог 0.1**: все 3 находки устранены точечно, без изменения видимого поведения бота; полный прогон
+1260 backend + 232 frontend тестов зелёный.
 
 ### 0.2 Для будущего масштаба (было «Фаза 4», актуально по мере роста числа серверов)
 
@@ -68,16 +66,13 @@
 - **Организационное**: при 75+ серверах Discord требует верификацию бота (и одобрение privileged intents — members/message content, которые сейчас используются анти-спамом/XP). Подготовить описание использования интентов заранее.
 - Health/метрики в супер-админ: число серверов, задержка gateway, размер БД.
 
-**Не решено (обсудить в будущей сессии)**: чинить 0.1 точечно сейчас (обернуть Вордл в `to_thread`,
-добавить `@loop.error` в оставшиеся 7 циклов — несколько часов работы) отдельно от 0.2, или сразу
-проектировать оба подраздела единым заходом (WAL, шардинг, кэши) в рамках одной большой сессии по
-нагрузке. Пока без решения — не реализовывать ни то, ни другое.
+**Статус 0.2**: сознательно отложено до момента реального роста числа серверов — точечные фиксы 0.1
+(WAL, to_thread, loop.error) уже сделаны и не требуют этого захода как предпосылки.
 
 ---
 
-## Фаза 1 — Чистка текстов и лимиты (пункты ТЗ №1, №3)
-
-Ничего не ломает, делается первой.
+## Фаза 1 — Подготовка и «уборка» фронтенда
+> Статус: **ВЫПОЛНЕНО**. (Завершено в рамках текущей сессии 21.07). Ничего не ломает, сделано первой.
 
 1. **Аудит всех страниц дашборда** (`dashboard/frontend/src/pages/*.tsx`): убрать формулировки «импортировано/перенесено из другого бота», «как в X-боте» и т.п.; каждой странице — вводный абзац «что это и зачем» (по образцу страниц Бункер/Мафия).
 2. **Лимиты — явно на страницах**, рядом с полями ввода. Известные лимиты для выписывания:
@@ -94,7 +89,7 @@
 
 ## Фаза 2 — Мульти-серверное ядро (пункты ТЗ №6, №7)
 
-### 2.1 Хранилище настроек: `settings_db.py`
+### 2.1 Хранилище настроек: `settings_db.py` (✅ ВЫПОЛНЕНО)
 
 - Новый модуль `settings_db.py`: таблица `module_settings (guild_id INTEGER, module TEXT, data TEXT/json, updated_at, PRIMARY KEY(guild_id, module))`. SQLite с `PRAGMA journal_mode=WAL` и `busy_timeout`.
 - API: `get(guild_id, module, default)` / `put(guild_id, module, data)` — заменяет все `load_config/save_config` в `*_core.py`.
@@ -107,19 +102,21 @@
 
 | Хранилище | Сейчас | Что делаем |
 |---|---|---|
-| `stats.db` xp_members | PK user_id | **PK (guild_id, user_id)**; миграция: текущие строки → guild 404. Все функции xp_* получают guild_id. Лидерборды per-guild |
-| `stats.db` voice_sessions | user_id | + guild_id (существующие → 404) |
-| `stats.db` audit_log | глобальный | + guild_id; страница аудита показывает выбранный сервер |
-| `events_data.json`, `brackets_data.json` | плоские | в settings.db (module='events'/'brackets') per-guild |
-| `reaction_roles.json`, `buttons_config.json`, `embed_templates.json` | плоские | per-guild |
-| `feedback_categories.json`, `invites_stats.json`, `moderation_log.json` | плоские | per-guild |
-| `supply_data.json`, `giveaways_data.json` | плоские | per-guild |
-| `voice_panel.json`, `antispam_backup.json`, `serverlog_config.json`, `streams_config.json` | плоские | per-guild |
-| `xp_card_bg.png` | один файл | `card_bg/<guild_id>.png` |
+| `stats.db` xp_members | ✅ PK (guild_id, user_id) | **ВЫПОЛНЕНО (2.2а)**: миграция старых строк → guild 404 в `stats_db.init()`; все `xp_*` получили guild_id; лидерборды/ранги per-guild; тесты `test_stats_db.py` (изоляция + миграция) |
+| `stats.db` voice_sessions | ✅ + guild_id | **ВЫПОЛНЕНО (2.2а)**: миграция `ADD COLUMN guild_id DEFAULT 404`; `voice_session_add`/`voice_sessions_since` per-guild, prune глобальный |
+| `stats.db` audit_log | ✅ + guild_id | **ВЫПОЛНЕНО (2.2а)**: `audit_add`/`audit_list`/`audit_count` per-guild; middleware пишет `request.app["guild_id"]` |
+| `xp_card_bg.png` | ✅ `card_bgs/card_bg_<guild_id>.png` | **ВЫПОЛНЕНО (2.2а)**: `xp_core.get_card_bg_path(guild_id)`, `xp_card.render` берёт фон по guild_id |
+| `events_data.json`, `brackets_data.json` | ✅ settings.db (events/brackets) | per-guild (2.1) |
+| `reaction_roles.json`, `buttons_config.json`, `embed_templates.json` | ✅ settings.db | **2.2б**: `buttons`/`embed_templates` — чинили сломанную half-миграцию (load читал плоский файл + отсутствовал import settings_db) + тесты CRUD |
+| `feedback_categories.json`, `invites_stats.json`, `moderation_log.json` | ✅ settings.db | per-guild (2.1) |
+| `supply_data.json`, `giveaways_data.json` | ✅ settings.db | **2.2б ВЫПОЛНЕНО**: `supply_core`/`giveaway_core` переведены на per-guild (guild_id в каждой функции, запись `guild_id` в записи, таймеры/recovery когов по (guild_id, id), роуты + тесты изоляции) |
+| `voice_panel.json` | ✅ settings.db | **2.2б ВЫПОЛНЕНО**: состояние панели — синглтон мейн-сервера в settings_db (voice_rooms) + тест |
+| `antispam_backup.json`, `serverlog_config.json`, `streams_config.json` | ✅ settings.db | per-guild (2.1) |
 | `config.json` (bot_config: ID каналов/ролей) | плоский | per-guild (module='config'); CTD-ключи — см. Фазу 2b |
-| mafia/bunker/warns/private_rooms/family БД | guild_id есть | проверить каждый запрос на фильтрацию по guild_id (сейчас часть запросов может неявно полагаться на «один сервер») |
+| mafia/bunker/warns/private_rooms БД | ✅ проверено (2.2б) | guild_id есть; поиск по глобально-уникальным ключам (game id/message_id/channel_id, warn id) — межсерверных утечек нет, recovery использует сохранённый guild_id |
+| family БД | ✅ per-guild (2.2б) | **ВЫПОЛНЕНО**: `roster_msg`/`birthday_msg` → PK `guild_id`; `pending_forms`/`tickets`/`birthdays` → композитный PK `(guild_id, user_id)`; идемпотентная миграция старой схемы → guild 404; guild_id проведён через family_db/tickets/roster/birthdays коги и роут + тесты изоляции/миграции |
 
-### 2.3 Авторизация и выбор сервера (пункт №6)
+### 2.3 Авторизация и выбор сервера (пункт №6) — ✅ ВЫПОЛНЕНО (21.07.2026)
 
 - OAuth scope: `identify guilds`. В сессии дополнительно храним `access_token`/`refresh_token`/`expires_at` (cookie-сессия шифрованная).
 - **Callback больше не проверяет членство одного сервера** — просто логинит и редиректит на `/servers`.
@@ -132,14 +129,19 @@
 - Супер-админ: проверка всегда против МЕЙН-сервера (константа `MAIN_GUILD_ID = 1324239354154975252` в `access.py`) + существующая роль.
 - **Frontend**: страница `/servers` (карточки серверов: иконка, имя, «Настроить» или «Добавить бота»); в шапке DashboardShell — переключатель текущего сервера (dropdown, ведёт на select-guild + перезагрузка данных). `/api/auth/me` возвращает и активный сервер.
 
-### 2.4 Бот: отвязка от GUILD_ID (пункт №7)
+### 2.4 Бот: отвязка от GUILD_ID (пункт №7) — ✅ ВЫПОЛНЕНО (21.07.2026)
 
-- `main.py`: убрать обязательный `GUILD_ID`, `copy_global_to`, `clear_commands`; глобальный `tree.sync()` (+ одноразовая очистка старых guild-команд мейна). Ввести `MAIN_GUILD_ID` (env, дефолт 1324239354154975252) только для CTD/news/супер-админа.
-- Каждый ког: настройки по `guild_id` из события (`message.guild.id`, `interaction.guild_id`, `member.guild.id`).
-- Планировщики (daily_topic расписание, giveaways таймеры, tempban авторазбан, supply напоминания, family birthdays): цикл по всем гильдиям с включённым модулем (запрос к settings.db `SELECT guild_id WHERE module=? AND json_extract(data,'$.enabled')=1` или итерация bot.guilds).
-- Приветствия/прощания (`welcome.py`): проверить и покрыть тестом — канал и тумблеры строго из настроек сервера события (пункт ТЗ №7).
-- Восстановление игр (mafia/bunker recover_games) уже guild-aware через games.guild_id — проверить.
-- `on_guild_join`: приветственное сообщение владельцу/системный канал со ссылкой на дашборд; `on_guild_remove`: пометить настройки неактивными (не удалять).
+- ✅ `main.py`: `GUILD_ID` больше не обязателен (helper `get_main_guild_id()`: `GUILD_ID` → `MAIN_GUILD_ID` → дефолт мейна). Убраны `copy_global_to`/`clear_commands(guild=None)`; теперь глобальный `tree.sync()` + одноразовая очистка старых guild-скоуп команд мейна (`clear_commands(guild=main)` + пустой `sync(guild=main)`), чтобы участники мейна не видели дубли. Миграция плоских конфигов/ENV привязана к мейн-серверу.
+- ✅ Коги читают настройки по `guild_id` из события: `tempban`, `welcome`, `daily_topic`, `giveaways`, `supply`, `family`, `reaction_roles` — все per-guild.
+- ✅ Планировщики цикл по `bot.guilds`: daily_topic (расписание), tempban (recovery-разбан на всех серверах), giveaways/supply/family (уже итерировали гильдии).
+- ✅ Приветствия (`welcome.py`): канал/тумблеры/тексты строго из настроек сервера события; захардкоженное имя «Server 404» в приветственной ЛС → `guild.name`. Покрыто `test_welcome_cog.py` (публичное сообщение, ЛС-заголовок, тумблеры, изоляция между серверами).
+- ✅ `tempban`: текст ЛС об исключении теперь использует `guild.name` вместо захардкоженного «404 : Server Not Found».
+- ✅ `reaction_roles`: очистка «мёртвых» записей перенесена из `setup()` (один `GUILD_ID`) в `on_ready` — по всем `bot.guilds`, один раз за процесс.
+- ✅ `feedback_menu`: категории/счётчики кейсов per-guild — `get_feedback_categories(guild_id)`; панель-`View` строится под сервер публикации, коллбэк резолвит категорию по `interaction.guild_id`; on_ready регистрирует `View` для каждого сервера с категориями. Исправлен баг вызова `get_next_case_id` (не хватало `guild_id`).
+- ✅ `on_guild_join`: реактивирует настройки (`settings_db.set_guild_active(True)`) + приветствие в system channel/владельцу со ссылкой на дашборд. `on_guild_remove`: `set_guild_active(False)` — настройки помечаются неактивными, не удаляются.
+- Восстановление игр (mafia/bunker recover_games) уже guild-aware через games.guild_id.
+
+> Примечание (долг, вне 2.4): `feedback_menu.create_feedback_case` пишет кейсы в `bot.feedback_cases` (плоский стор + `update_file`), тогда как чтение/решение/восстановление идут через `settings_db` per-guild — предсуществующая рассинхронизация хранилищ, устранять отдельной задачей.
 
 ### Приёмка Фазы 2
 - Бот работает одновременно на ≥2 серверах с разными настройками каждого модуля; действия на сервере A ничего не меняют на B.
@@ -148,7 +150,15 @@
 
 ---
 
-## Фаза 2b — Привилегии мейн-сервера (пункты ТЗ №4, №5)
+## Фаза 2b — Привилегии мейн-сервера (пункты ТЗ №4, №5) — ✅ ВЫПОЛНЕНО (21.07.2026)
+
+**Итог:** CTD и ретрансляция новостей стали привилегиями основного сервера; тесты зелёные (backend 1330, frontend 245).
+
+- **CTD** (`memobb.py`): команда `/ctd_setup` привязана к мейну через `@app_commands.guilds` (+ рантайм-гард `_is_main_guild` во всех вьюхах/командах, авто-закрытие тикетов по `MAIN_GUILD_ID`). `main.py`: глобальный `tree.sync()` + отдельный `sync(guild=main)` пушит команды-привилегии мейна и заодно вычищает старые guild-дубли. Ключи `CTD_*` убраны из `/api/config`; заведён отдельный роут `/api/ctd` (доступен только когда активный сервер == мейн приложения, иначе `not_main_guild`) и страница «Тикеты CTD» (пункт меню виден по `is_main_guild`). В `/api/auth/me` добавлен флаг `is_main_guild`.
+- **Ретрансляция** (`news.py`): роут `/api/news` переведён на `require_super_admin`; настройки читаются/пишутся под мейн-сервером (`request.app["guild_id"]`), целевые и лог-каналы валидируются на принадлежность мейну (`target_channel_not_found` / `log_channel_id_not_found`). Источником может быть любой сервер. `_main_guild_id()` резолвится единообразно с `main.get_main_guild_id()`. В дашборде «Ретрансляция новостей» перенесена в раздел «Супер-админ».
+- **Docs**: разделы CTD и ретрансляции помечены как функции основного сервера (Note-блоки), инструкция по CTD ссылается на отдельный раздел вместо общей конфигурации.
+
+<details><summary>Исходное ТЗ фазы</summary>
 
 1. **CTD** (`memobb.py`): ког активен только при `guild.id == MAIN_GUILD_ID`; страница CTD-настроек в дашборде видна только когда выбран мейн-сервер; ключи CTD из общего config-роута убрать.
 2. **Ретрансляция новостей** (`news.py`):
@@ -156,6 +166,8 @@
    - Логика: слушать источники на ЛЮБЫХ серверах (source_guild_id — любой), публиковать ТОЛЬКО в каналы мейн-сервера (валидация target_channel_id ∈ мейн).
    - `news_relay.json` → settings.db под guild_id мейна.
 3. Docs: упоминания CTD/ретрансляции пометить как «функции основного сервера» или убрать из публичных доков.
+
+</details>
 
 ---
 
@@ -181,14 +193,14 @@
 
 | # | Сессия | Содержание |
 |---|---|---|
-| 0 | Фаза 0 (не назначена) | Ускорение (0.1 точечно + 0.2 масштаб) — решить объём, затем реализовать |
-| 1 | Фаза 1 | Тексты, лимиты, чистка Docs |
-| 2 | 2.1 | settings_db + миграция конфигов + перевод *_core на guild_id |
-| 3 | 2.2а | stats.db (XP/voice/audit) миграция guild_id |
-| 4 | 2.2б | Остальные data-файлы per-guild |
-| 5 | 2.3 | OAuth guilds + выбор сервера + Manage Server доступ + frontend /servers |
+| 0 | Фаза 0.1 | ✅ ВЫПОЛНЕНО (21.07.2026) — to_thread, WAL, loop.error; 0.2 (масштаб) отложено |
+| 1 | Фаза 1 | ✅ ВЫПОЛНЕНО (21.07.2026) — тексты, лимиты, чистка Docs |
+| 2 | 2.1 | ✅ ВЫПОЛНЕНО (21.07.2026) — settings_db + миграция конфигов + перевод *_core на guild_id |
+| 3 | 2.2а | ✅ ВЫПОЛНЕНО (21.07.2026) — stats.db (XP/voice/audit) + xp_card_bg per-guild + миграция → guild 404 + test_stats_db.py |
+| 4 | 2.2б | ✅ ВЫПОЛНЕНО (21.07.2026) — supply/giveaway/voice_panel → settings_db per-guild; починена half-миграция buttons/embed_templates; проверены mafia/bunker/warns/private_rooms; **family полностью переведена на per-guild** (композитные PK + миграция → 404) |
+| 5 | 2.3 | ✅ ВЫПОЛНЕНО (21.07.2026) — OAuth `identify guilds` + токены/refresh; логин без проверки членства → `/servers`; `/api/auth/{guilds,select-guild,invite-url}`; доступ = Manage Server (роль-списки опциональны, переходный грант); per-request `guild_id` (guild_context_middleware, ~200 call sites); супер-админ на мейне; фронтенд ServerSelect + гейт выбора сервера |
 | 6 | 2.4 | Коги/планировщики per-guild, global sync, on_guild_join |
-| 7 | 2b | CTD gate + news → супер-админ |
+| 7 | 2b | ✅ ВЫПОЛНЕНО (21.07.2026) — CTD gate (guild-bound `/ctd_setup` + `/api/ctd` только на мейне) + news → супер-админ с валидацией целевых каналов мейна + `is_main_guild` в me + Docs-пометки |
 | 8 | 3.1+3.2(1) | i18n-инфраструктура + UI дашборда |
 | 9 | 3.2(2,3) | Сообщения бота + локализация команд |
 | 10 | 3.2(4) | Карточки игр EN |

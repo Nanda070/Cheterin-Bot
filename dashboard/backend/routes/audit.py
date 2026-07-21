@@ -26,8 +26,8 @@ async def audit_list(request: web.Request) -> web.Response:
             return web.json_response({"error": "invalid_request"}, status=400)
 
     offset = (page - 1) * PAGE_SIZE
-    rows = stats_db.audit_list(limit=PAGE_SIZE, offset=offset, moderator_id=moderator_id)
-    total = stats_db.audit_count(moderator_id=moderator_id)
+    rows = stats_db.audit_list(request["guild_id"], limit=PAGE_SIZE, offset=offset, moderator_id=moderator_id)
+    total = stats_db.audit_count(request["guild_id"], moderator_id=moderator_id)
 
     return web.json_response({
         "total": total,

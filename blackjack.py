@@ -193,8 +193,8 @@ class BlackjackView(discord.ui.View):
                 await interaction.response.defer()
                 return
 
-            settings = casino_core.get_settings()
-            econ = economy_core.get_settings()
+            settings = casino_core.get_settings(interaction.guild.id)
+            econ = economy_core.get_settings(interaction.guild.id)
 
             bj.hit(game)
 
@@ -217,8 +217,8 @@ class BlackjackView(discord.ui.View):
                 await interaction.response.defer()
                 return
 
-            settings = casino_core.get_settings()
-            econ = economy_core.get_settings()
+            settings = casino_core.get_settings(interaction.guild.id)
+            econ = economy_core.get_settings(interaction.guild.id)
 
             game.finished = True
             bj.dealer_play(game)
@@ -234,8 +234,8 @@ class BlackjackView(discord.ui.View):
                 await interaction.response.defer()
                 return
 
-            settings = casino_core.get_settings()
-            econ = economy_core.get_settings()
+            settings = casino_core.get_settings(interaction.guild.id)
+            econ = economy_core.get_settings(interaction.guild.id)
 
             # Списать ещё раз ту же ставку
             if not economy_db.try_spend(self.player.id, game.bet, "blackjack_double"):
@@ -288,11 +288,11 @@ class BlackjackCog(commands.Cog):
     @app_commands.describe(ставка="Сколько монет поставить")
     async def blackjack_command(self, interaction: discord.Interaction, ставка: int):
 
-        settings = casino_core.get_settings()
+        settings = casino_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
-        econ = economy_core.get_settings()
+        econ = economy_core.get_settings(interaction.guild.id)
         if not econ["enabled"]:
             return await interaction.response.send_message(ECONOMY_DISABLED_TEXT, ephemeral=True)
 
@@ -349,6 +349,13 @@ class BlackjackCog(commands.Cog):
             prize = bj.payout(game.bet, result, settings["house_edge_percent"])
             if prize > 0:
                 economy_db.add(user_id, prize, f"blackjack_{result.value}")
+            db_result = "win"
+            if result == bj.GameResult.LOSE:
+                db_result = "lose"
+            elif result == bj.GameResult.PUSH:
+                db_result = "push"
+            casino_db.record_bj(user_id, db_result)
+            await check_loss_roles(interaction, settings)
             # Кулдаун стартует с окончания партии
             self._cooldowns[user_id] = time.monotonic() + settings["cooldown_sec"]
             self._games.pop(user_id, None)

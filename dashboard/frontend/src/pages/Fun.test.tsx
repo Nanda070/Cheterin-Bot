@@ -15,7 +15,7 @@ const emptySettings: client.FunSettings = {
 
 const emptyWordle: client.WordleSettings = {
   enabled: false,
-  channel_id: 0,
+  channel_id: '',
   announce_time: '09:00',
 }
 
@@ -93,7 +93,7 @@ describe('FunPage', () => {
     vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
     const wordleSpy = vi
       .spyOn(client, 'updateWordleSettings')
-      .mockResolvedValue({ enabled: true, channel_id: 555, announce_time: '18:30' })
+      .mockResolvedValue({ enabled: true, channel_id: '555', announce_time: '18:30' })
     render(<FunPage />)
 
     expect(await screen.findByText(/Вордл — \/вордл/)).toBeInTheDocument()
@@ -104,7 +104,7 @@ describe('FunPage', () => {
 
     await waitFor(() =>
       expect(wordleSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ enabled: true, channel_id: 555, announce_time: '18:30' }),
+        expect.objectContaining({ enabled: true, channel_id: '555', announce_time: '18:30' }),
       ),
     )
   })

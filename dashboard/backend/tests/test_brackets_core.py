@@ -9,19 +9,19 @@ def isolated_brackets_file(tmp_path, monkeypatch):
 
 
 def test_load_brackets_returns_empty_dict_when_file_missing():
-    assert brackets.load_brackets() == {}
+    assert brackets.load_brackets(1) == {}
 
 
 def test_load_brackets_returns_empty_dict_on_corrupt_json():
     with open(brackets.BRACKETS_FILE, "w", encoding="utf-8") as f:
         f.write("{not valid json")
-    assert brackets.load_brackets() == {}
+    assert brackets.load_brackets(1) == {}
 
 
 def test_save_then_load_round_trip():
     data = {"abc": {"id": "abc", "title": "T"}}
-    brackets.save_brackets(data)
-    assert brackets.load_brackets() == data
+    brackets.save_brackets(1, data)
+    assert brackets.load_brackets(1) == data
 
 
 class _FakeMember:

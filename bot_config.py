@@ -1,7 +1,8 @@
-import json
 import os
 
-CONFIG_FILE = "config.json"
+import settings_db
+
+MODULE_NAME = "bot_config"
 
 CONFIG_KEYS = [
     "LOG_CHANNEL_ID",
@@ -33,27 +34,20 @@ CONFIG_KEYS = [
 LIST_KEYS = {"SPAM_EXCEPTION_CHANNELS", "BUTTON_CREATE_ALLOWED_ROLES"}
 
 
-def load_config() -> dict:
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def load_config(guild_id: int) -> dict:
+    return settings_db.get(guild_id, MODULE_NAME)
 
 
-def save_config(data: dict) -> None:
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def get(key: str, default=None):
-    return load_config().get(key, default)
+def get(guild_id: int, key: str, default=None):
+    return load_config(guild_id).get(key, default)
 
 
-def migrate_from_env_if_needed() -> None:
-    if os.path.exists(CONFIG_FILE):
+def migrate_from_env_if_needed(guild_id: int) -> None:
+    if settings_db.has(guild_id, MODULE_NAME):
         return
 
     data = {}
@@ -63,4 +57,4 @@ def migrate_from_env_if_needed() -> None:
             data[key] = [v.strip() for v in raw.split(",") if v.strip()]
         else:
             data[key] = os.getenv(key, "")
-    save_config(data)
+    save_config(guild_id, data)

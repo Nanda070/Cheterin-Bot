@@ -1,17 +1,22 @@
 import pytest
 
 import automod_core
+import settings_db
+
+GUILD_ID = 404
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(automod_core, "CONFIG_FILE", str(tmp_path / "automod_config.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 # ────────────────────────── Настройки ──────────────────────────
 
 def test_get_settings_defaults():
-    settings = automod_core.get_settings()
+    settings = automod_core.get_settings(GUILD_ID)
     assert settings["enabled"] is False
     assert set(settings["filters"].keys()) == set(automod_core.FILTER_KEYS)
     assert settings["escalation"] == []
@@ -25,49 +30,49 @@ def test_get_settings_defaults():
 
 
 def test_update_module_enabled():
-    settings = automod_core.update_module_enabled(True)
+    settings = automod_core.update_module_enabled(GUILD_ID, True)
     assert settings["enabled"] is True
 
 
 def test_update_filter():
-    updated = automod_core.update_filter("bad_words", {"enabled": True, "words": ["плохое"]})
+    updated = automod_core.update_filter(GUILD_ID, "bad_words", {"enabled": True, "words": ["плохое"]})
     assert updated["enabled"] is True
     assert updated["words"] == ["плохое"]
     # прочие фильтры не затронуты
-    assert automod_core.get_settings()["filters"]["links"]["enabled"] is False
+    assert automod_core.get_settings(GUILD_ID)["filters"]["links"]["enabled"] is False
 
 
 def test_update_filter_unknown_key_returns_none():
-    assert automod_core.update_filter("unknown", {"enabled": True}) is None
+    assert automod_core.update_filter(GUILD_ID, "unknown", {"enabled": True}) is None
 
 
 def test_update_manual_warn_duration():
-    settings = automod_core.update_manual_warn_duration(1440)
+    settings = automod_core.update_manual_warn_duration(GUILD_ID, 1440)
     assert settings["manual_warn_duration_minutes"] == 1440
 
 
 # ────────────────────────── Эскалация ──────────────────────────
 
 def test_escalation_crud():
-    rule = automod_core.add_escalation_rule(3, "mute", 1440)
+    rule = automod_core.add_escalation_rule(GUILD_ID, 3, "mute", 1440)
     assert rule["id"] == "1"
     assert rule["count"] == 3
 
-    updated = automod_core.update_escalation_rule(rule["id"], {"action": "kick"})
+    updated = automod_core.update_escalation_rule(GUILD_ID, rule["id"], {"action": "kick"})
     assert updated["action"] == "kick"
-    assert automod_core.update_escalation_rule("999", {"action": "ban"}) is None
+    assert automod_core.update_escalation_rule(GUILD_ID, "999", {"action": "ban"}) is None
 
-    assert automod_core.delete_escalation_rule(rule["id"]) is True
-    assert automod_core.delete_escalation_rule(rule["id"]) is False
+    assert automod_core.delete_escalation_rule(GUILD_ID, rule["id"]) is True
+    assert automod_core.delete_escalation_rule(GUILD_ID, rule["id"]) is False
 
 
 def test_find_escalation_rule_exact_match():
-    automod_core.add_escalation_rule(3, "mute", 1440)
-    automod_core.add_escalation_rule(5, "kick", 0)
+    automod_core.add_escalation_rule(GUILD_ID, 3, "mute", 1440)
+    automod_core.add_escalation_rule(GUILD_ID, 5, "kick", 0)
 
-    assert automod_core.find_escalation_rule(3)["action"] == "mute"
-    assert automod_core.find_escalation_rule(5)["action"] == "kick"
-    assert automod_core.find_escalation_rule(4) is None
+    assert automod_core.find_escalation_rule(GUILD_ID, 3)["action"] == "mute"
+    assert automod_core.find_escalation_rule(GUILD_ID, 5)["action"] == "kick"
+    assert automod_core.find_escalation_rule(GUILD_ID, 4) is None
 
 
 # ────────────────────────── Шаблон уведомления ──────────────────────────

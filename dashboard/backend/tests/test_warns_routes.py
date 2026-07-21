@@ -1,5 +1,6 @@
 import pytest
 
+import settings_db
 import warns_core
 import warns_db
 from dashboard.backend.routes.warns import routes as warns_routes
@@ -10,6 +11,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_
 def isolated_db(tmp_path, monkeypatch):
     monkeypatch.setattr(warns_db, "get_db_path", lambda: str(tmp_path / "warns.db"))
     warns_db.db_init()
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 class FakeAutoModCog:

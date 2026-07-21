@@ -70,7 +70,7 @@ describe('DailyTopicPage', () => {
     await screen.findByText('Ежедневная рубрика')
 
     fireEvent.click(screen.getByRole('button', { name: /Добавить тему/ }))
-    fireEvent.change(screen.getByLabelText('Текст темы/вопроса'), { target: { value: 'Вопрос дня?' } })
+    fireEvent.change(screen.getByLabelText(/^Текст темы\/вопроса/), { target: { value: 'Вопрос дня?' } })
     fireEvent.click(screen.getByRole('button', { name: 'Добавить' }))
 
     await waitFor(() => expect(createSpy).toHaveBeenCalledWith('Вопрос дня?'))

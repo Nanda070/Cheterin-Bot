@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/verification")
 @require_dashboard_access
 async def verification_get(request: web.Request) -> web.Response:
-    return web.json_response(verification_core.get_settings())
+    return web.json_response(verification_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/verification")
@@ -39,9 +39,10 @@ async def verification_put(request: web.Request) -> web.Response:
     if not isinstance(welcome_text, str) or not 1 <= len(welcome_text.strip()) <= 1000:
         return web.json_response({"error": "invalid_welcome_text"}, status=400)
 
-    verification_core.save_config({
+    guild_id = request["guild_id"]
+    verification_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "welcome_text": welcome_text.strip(),
         **values,
     })
-    return web.json_response(verification_core.get_settings())
+    return web.json_response(verification_core.get_settings(guild_id))

@@ -121,3 +121,47 @@ def test_validate_embed_spec_accepts_empty_embed_with_content():
 
 def test_validate_embed_spec_rejects_empty_embed_and_blank_content():
     assert embed_builder.validate_embed_spec({}, content="   ") == "empty_embed"
+
+
+# ────────────────────── Шаблоны: per-guild персистентность (settings_db) ──────────────────────
+
+def test_save_and_list_template_round_trips():
+    saved = embed_builder.save_template(1, "Welcome", "hi", {"title": "T"}, ["10"])
+    assert saved["id"] == "1"
+    templates = embed_builder.list_templates(1)
+    assert len(templates) == 1
+    assert templates[0]["name"] == "Welcome"
+    assert templates[0]["embed"] == {"title": "T"}
+    assert templates[0]["role_ids"] == ["10"]
+
+
+def test_templates_are_scoped_per_guild():
+    embed_builder.save_template(1, "A", "", {"title": "T"}, [])
+    embed_builder.save_template(2, "B", "", {"title": "T"}, [])
+    assert [t["name"] for t in embed_builder.list_templates(1)] == ["A"]
+    assert [t["name"] for t in embed_builder.list_templates(2)] == ["B"]
+
+
+def test_save_template_rejects_duplicate_name():
+    embed_builder.save_template(1, "Dup", "", {"title": "T"}, [])
+    assert embed_builder.save_template(1, "Dup", "", {"title": "T"}, []) == "duplicate_name"
+    # то же имя на другом сервере — не дубликат
+    assert isinstance(embed_builder.save_template(2, "Dup", "", {"title": "T"}, []), dict)
+
+
+def test_save_template_enforces_max_limit():
+    for i in range(embed_builder.MAX_TEMPLATES):
+        embed_builder.save_template(1, f"t{i}", "", {"title": "T"}, [])
+    assert embed_builder.save_template(1, "overflow", "", {"title": "T"}, []) == "too_many_templates"
+
+
+def test_delete_template_removes_only_target_and_guild():
+    a = embed_builder.save_template(1, "A", "", {"title": "T"}, [])
+    embed_builder.save_template(2, "A", "", {"title": "T"}, [])
+    assert embed_builder.delete_template(1, a["id"]) is True
+    assert embed_builder.list_templates(1) == []
+    assert len(embed_builder.list_templates(2)) == 1
+
+
+def test_delete_template_missing_returns_false():
+    assert embed_builder.delete_template(1, "999") is False

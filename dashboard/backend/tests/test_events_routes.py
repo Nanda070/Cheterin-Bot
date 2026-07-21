@@ -113,7 +113,7 @@ def _poll_create_spec(channel_id="500", **overrides):
 
 @pytest.mark.asyncio
 async def test_list_events_defaults_to_open(aiohttp_client):
-    await events.save_events(
+    events.save_events(1, 
         {"events": {"900": _tournament_event(status="open"), "901": _tournament_event(status="closed")}}
     )
     _, app = build()
@@ -128,7 +128,7 @@ async def test_list_events_defaults_to_open(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_list_events_filters_by_closed(aiohttp_client):
-    await events.save_events(
+    events.save_events(1, 
         {"events": {"900": _tournament_event(status="open"), "901": _tournament_event(status="closed")}}
     )
     _, app = build()
@@ -163,7 +163,7 @@ async def test_list_events_requires_auth(aiohttp_client):
 @pytest.mark.asyncio
 async def test_get_event_detail_tournament_solo_shape(aiohttp_client):
     ev = _tournament_event(mode="solo", participants=[{"user_id": 20, "ign": "PlayerOne"}])
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -182,7 +182,7 @@ async def test_get_event_detail_tournament_team_code_groups_by_team(aiohttp_clie
         {"user_id": 2, "team_code": "ABC123", "team_name": "Alpha", "ign": "mate", "is_captain": False},
     ]
     ev = _tournament_event(mode="team_code", participants=participants)
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -199,7 +199,7 @@ async def test_get_event_detail_tournament_team_code_groups_by_team(aiohttp_clie
 @pytest.mark.asyncio
 async def test_get_event_detail_poll_shape_with_percentages(aiohttp_client):
     ev = _poll_event(options=["Yes", "No"], votes={"1": [0], "2": [0], "3": [1]})
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -233,7 +233,7 @@ async def test_get_event_detail_requires_auth(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_close_event_route_success(aiohttp_client):
-    await events.save_events({"events": {"900": _tournament_event()}})
+    events.save_events(1, {"events": {"900": _tournament_event()}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -241,7 +241,7 @@ async def test_close_event_route_success(aiohttp_client):
     resp = await client.post("/api/events/900/close")
     assert resp.status == 200
     assert (await resp.json()) == {"ok": True}
-    data = await events.load_events()
+    data = events.load_events(1)
     assert data["events"]["900"]["status"] == "closed"
 
 
@@ -266,14 +266,14 @@ async def test_close_event_route_requires_auth(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_delete_event_route_success(aiohttp_client):
-    await events.save_events({"events": {"900": _tournament_event()}})
+    events.save_events(1, {"events": {"900": _tournament_event()}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     resp = await client.delete("/api/events/900")
     assert resp.status == 200
-    data = await events.load_events()
+    data = events.load_events(1)
     assert "900" not in data["events"]
 
 
@@ -298,7 +298,7 @@ async def test_delete_event_route_requires_auth(aiohttp_client):
 @pytest.mark.asyncio
 async def test_notify_event_route_success(aiohttp_client):
     ev = _tournament_event(participants=[{"user_id": 20, "ign": "a"}])
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     member = FakeMember(20, name="p1")
     guild = FakeGuild(members=[FakeMember(10, name="mod", role_ids=[111]), member])
     app = make_moderation_app(FakeBot(guild), [events_routes])
@@ -313,7 +313,7 @@ async def test_notify_event_route_success(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_notify_event_route_rejects_missing_message(aiohttp_client):
-    await events.save_events({"events": {"900": _tournament_event(participants=[{"user_id": 20}])}})
+    events.save_events(1, {"events": {"900": _tournament_event(participants=[{"user_id": 20}])}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -325,7 +325,7 @@ async def test_notify_event_route_rejects_missing_message(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_notify_event_route_400_when_no_participants(aiohttp_client):
-    await events.save_events({"events": {"900": _tournament_event(participants=[])}})
+    events.save_events(1, {"events": {"900": _tournament_event(participants=[])}})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)

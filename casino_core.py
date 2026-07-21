@@ -10,11 +10,11 @@ house_edge_percent — единый параметр «преимущества 
 бесконтрольно даже при активной игре.
 """
 
-import json
-import os
 import random
 
-CONFIG_FILE = "casino_config.json"
+import settings_db
+
+MODULE_NAME = "casino"
 
 DEFAULT_HOUSE_EDGE_PERCENT = 5
 DEFAULT_COOLDOWN_SEC = 5
@@ -35,42 +35,13 @@ SLOT_PAIR_MULTIPLIER = 1.5
 COINFLIP_MULTIPLIER = 2
 COINFLIP_SIDES = ("орел", "решка")
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    tmp_path = CONFIG_FILE + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.replace(tmp_path, CONFIG_FILE)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Настройки модуля с дефолтами (выключен по умолчанию)."""
-    data = load_config()
+def get_settings(guild_id: int) -> dict:
+    """Настройки модуля сервера с дефолтами (выключен по умолчанию)."""
+    data = settings_db.get(guild_id, MODULE_NAME)
     return {
         "enabled": bool(data.get("enabled", False)),
         "house_edge_percent": int(data.get("house_edge_percent", DEFAULT_HOUSE_EDGE_PERCENT)),

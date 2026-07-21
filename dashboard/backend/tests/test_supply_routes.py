@@ -12,9 +12,7 @@ from dashboard.backend.tests.fakes import (
 )
 
 
-@pytest.fixture(autouse=True)
-def isolated_data(tmp_path, monkeypatch):
-    monkeypatch.setattr(supply_core, "DATA_FILE", str(tmp_path / "supply_data.json"))
+GUILD = 1
 
 
 class FakeSupplyCog:
@@ -22,14 +20,14 @@ class FakeSupplyCog:
         self.published = []
         self.finalized = []
 
-    async def publish_supply(self, channel, initiator_id, opponent, limit, time_str):
-        supply = supply_core.create_supply(initiator_id, opponent, limit, time_str)
-        supply = supply_core.update_supply(supply["id"], channel_id=str(channel.id), message_id="555")
+    async def publish_supply(self, guild_id, channel, initiator_id, opponent, limit, time_str):
+        supply = supply_core.create_supply(guild_id, initiator_id, opponent, limit, time_str)
+        supply = supply_core.update_supply(guild_id, supply["id"], channel_id=str(channel.id), message_id="555")
         self.published.append(supply["id"])
         return supply
 
-    async def finalize_supply(self, supply_id, reason, status="finished"):
-        supply = supply_core.close_supply(supply_id, status=status)
+    async def finalize_supply(self, guild_id, supply_id, reason, status="finished"):
+        supply = supply_core.close_supply(guild_id, supply_id, status=status)
         if supply is None:
             return False
         self.finalized.append((supply_id, status))
@@ -60,9 +58,9 @@ async def test_overview_empty(aiohttp_client):
 @pytest.mark.asyncio
 async def test_overview_with_data(aiohttp_client):
     _, _, app = build()
-    supply = supply_core.create_supply(10, "Ballas", 2, "15:10")
-    supply_core.join_supply(supply["id"], 100)
-    supply_core.join_supply(supply["id"], 100500)  # не участник гильдии
+    supply = supply_core.create_supply(GUILD, 10, "Ballas", 2, "15:10")
+    supply_core.join_supply(GUILD, supply["id"], 100)
+    supply_core.join_supply(GUILD, supply["id"], 100500)  # не участник гильдии
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -115,19 +113,19 @@ async def test_create_supply_validation(aiohttp_client):
 @pytest.mark.asyncio
 async def test_close_and_cancel(aiohttp_client):
     _, cog, app = build()
-    supply = supply_core.create_supply(10, "Ballas", 2, "15:10")
-    other = supply_core.create_supply(10, "Vagos", 2, "16:10")
+    supply = supply_core.create_supply(GUILD, 10, "Ballas", 2, "15:10")
+    other = supply_core.create_supply(GUILD, 10, "Vagos", 2, "16:10")
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     resp = await client.post(f"/api/supply/{supply['id']}/close")
     assert resp.status == 200
-    assert supply_core.get_supply(supply["id"])["status"] == "finished"
+    assert supply_core.get_supply(GUILD, supply["id"])["status"] == "finished"
 
     resp = await client.post(f"/api/supply/{other['id']}/cancel")
     assert resp.status == 200
-    assert supply_core.get_supply(other["id"])["status"] == "cancelled"
+    assert supply_core.get_supply(GUILD, other["id"])["status"] == "cancelled"
 
     # Повторное закрытие -> 409, несуществующий -> 404
     resp = await client.post(f"/api/supply/{supply['id']}/close")

@@ -12,9 +12,7 @@ from dashboard.backend.tests.fakes import (
 )
 
 
-@pytest.fixture(autouse=True)
-def isolated_data(tmp_path, monkeypatch):
-    monkeypatch.setattr(giveaway_core, "DATA_FILE", str(tmp_path / "giveaways_data.json"))
+GUILD = 1
 
 
 class FakeGiveawayCog:
@@ -23,20 +21,20 @@ class FakeGiveawayCog:
         self.rerolled = []
         self.finalized = []
 
-    async def publish_giveaway(self, channel, initiator_id, prize, duration_str, winners_count):
-        giveaway = giveaway_core.create_giveaway(initiator_id, prize, duration_str, winners_count)
-        giveaway = giveaway_core.update_giveaway(giveaway["id"], channel_id=str(channel.id), message_id="555")
+    async def publish_giveaway(self, guild_id, channel, initiator_id, prize, duration_str, winners_count):
+        giveaway = giveaway_core.create_giveaway(guild_id, initiator_id, prize, duration_str, winners_count)
+        giveaway = giveaway_core.update_giveaway(guild_id, giveaway["id"], channel_id=str(channel.id), message_id="555")
         self.published.append(giveaway["id"])
         return giveaway
 
-    async def reroll_and_announce(self, giveaway_id):
-        winners = giveaway_core.reroll_giveaway(giveaway_id)
+    async def reroll_and_announce(self, guild_id, giveaway_id):
+        winners = giveaway_core.reroll_giveaway(guild_id, giveaway_id)
         if winners is not None:
             self.rerolled.append(giveaway_id)
         return winners
 
-    async def finalize_giveaway(self, giveaway_id, status="finished"):
-        giveaway = giveaway_core.close_giveaway(giveaway_id, status=status)
+    async def finalize_giveaway(self, guild_id, giveaway_id, status="finished"):
+        giveaway = giveaway_core.close_giveaway(guild_id, giveaway_id, status=status)
         if giveaway is None:
             return False
         self.finalized.append((giveaway_id, status))
@@ -67,9 +65,9 @@ async def test_overview_empty(aiohttp_client):
 @pytest.mark.asyncio
 async def test_overview_with_data(aiohttp_client):
     _, _, app = build()
-    giveaway = giveaway_core.create_giveaway(10, "Nitro", "10m", 1)
-    giveaway_core.join_giveaway(giveaway["id"], 100)
-    giveaway_core.join_giveaway(giveaway["id"], 100500)  # не участник гильдии
+    giveaway = giveaway_core.create_giveaway(GUILD, 10, "Nitro", "10m", 1)
+    giveaway_core.join_giveaway(GUILD, giveaway["id"], 100)
+    giveaway_core.join_giveaway(GUILD, giveaway["id"], 100500)  # не участник гильдии
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -123,14 +121,14 @@ async def test_create_giveaway_validation(aiohttp_client):
 @pytest.mark.asyncio
 async def test_end_giveaway(aiohttp_client):
     _, cog, app = build()
-    giveaway = giveaway_core.create_giveaway(10, "Приз", "10m", 1)
+    giveaway = giveaway_core.create_giveaway(GUILD, 10, "Приз", "10m", 1)
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
     resp = await client.post(f"/api/giveaways/{giveaway['id']}/end")
     assert resp.status == 200
-    assert giveaway_core.get_giveaway(giveaway["id"])["status"] == "finished"
+    assert giveaway_core.get_giveaway(GUILD, giveaway["id"])["status"] == "finished"
 
     # Повторное завершение -> 409, несуществующий -> 404
     resp = await client.post(f"/api/giveaways/{giveaway['id']}/end")
@@ -142,10 +140,10 @@ async def test_end_giveaway(aiohttp_client):
 @pytest.mark.asyncio
 async def test_reroll_giveaway(aiohttp_client):
     _, cog, app = build()
-    giveaway = giveaway_core.create_giveaway(10, "Приз", "10m", 1)
-    giveaway_core.join_giveaway(giveaway["id"], 100)
-    giveaway_core.join_giveaway(giveaway["id"], 200)
-    giveaway_core.close_giveaway(giveaway["id"], status="finished")
+    giveaway = giveaway_core.create_giveaway(GUILD, 10, "Приз", "10m", 1)
+    giveaway_core.join_giveaway(GUILD, giveaway["id"], 100)
+    giveaway_core.join_giveaway(GUILD, giveaway["id"], 200)
+    giveaway_core.close_giveaway(GUILD, giveaway["id"], status="finished")
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -160,7 +158,7 @@ async def test_reroll_giveaway(aiohttp_client):
 @pytest.mark.asyncio
 async def test_reroll_not_finished_returns_409(aiohttp_client):
     _, _, app = build()
-    giveaway = giveaway_core.create_giveaway(10, "Приз", "10m", 1)
+    giveaway = giveaway_core.create_giveaway(GUILD, 10, "Приз", "10m", 1)
 
     client = await aiohttp_client(app)
     await force_login(client, 10)

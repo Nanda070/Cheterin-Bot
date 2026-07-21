@@ -9,12 +9,12 @@
 (с шаблоном сообщения). Модуль в целом выключен по умолчанию.
 """
 
-import json
-import os
 import re
 from urllib.parse import urlparse
 
-CONFIG_FILE = "automod_config.json"
+import settings_db
+
+MODULE_NAME = "automod"
 
 FILTER_KEYS = [
     "links",
@@ -86,21 +86,6 @@ def _default_filter(key: str) -> dict:
     return {**_DEFAULT_FILTER, **FILTER_EXTRA_DEFAULTS.get(key, {})}
 
 
-def load_config() -> dict:
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
-
-
-def save_config(data: dict) -> None:
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-
 def _normalized(data: dict) -> dict:
     data.setdefault("enabled", False)
     data.setdefault("escalation_seq", 0)
@@ -114,8 +99,8 @@ def _normalized(data: dict) -> dict:
     return data
 
 
-def get_settings() -> dict:
-    data = _normalized(load_config())
+def get_settings(guild_id: int) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     return {
         "enabled": bool(data["enabled"]),
         "filters": {
@@ -131,67 +116,67 @@ def get_settings() -> dict:
     }
 
 
-def get_filter_config(key: str) -> dict | None:
+def get_filter_config(guild_id: int, key: str) -> dict | None:
     if key not in FILTER_KEYS:
         return None
-    return _normalized(load_config())["filters"][key]
+    return _normalized(settings_db.get(guild_id, MODULE_NAME))["filters"][key]
 
 
-def update_module_enabled(enabled: bool) -> dict:
-    data = _normalized(load_config())
+def update_module_enabled(guild_id: int, enabled: bool) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["enabled"] = bool(enabled)
-    save_config(data)
-    return get_settings()
+    settings_db.put(guild_id, MODULE_NAME, data)
+    return get_settings(guild_id)
 
 
-def update_filter(key: str, fields: dict) -> dict | None:
+def update_filter(guild_id: int, key: str, fields: dict) -> dict | None:
     if key not in FILTER_KEYS:
         return None
-    data = _normalized(load_config())
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["filters"][key].update(fields)
-    save_config(data)
-    return get_settings()["filters"][key]
+    settings_db.put(guild_id, MODULE_NAME, data)
+    return get_settings(guild_id)["filters"][key]
 
 
-def update_manual_warn_duration(minutes: int) -> dict:
-    data = _normalized(load_config())
+def update_manual_warn_duration(guild_id: int, minutes: int) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["manual_warn_duration_minutes"] = int(minutes)
-    save_config(data)
-    return get_settings()
+    settings_db.put(guild_id, MODULE_NAME, data)
+    return get_settings(guild_id)
 
 
-def add_escalation_rule(count: int, action: str, duration_minutes: int) -> dict:
-    data = _normalized(load_config())
+def add_escalation_rule(guild_id: int, count: int, action: str, duration_minutes: int) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["escalation_seq"] += 1
     rule = {"id": str(data["escalation_seq"]), "count": count, "action": action, "duration_minutes": duration_minutes}
     data["escalation"].append(rule)
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return rule
 
 
-def update_escalation_rule(rule_id: str, fields: dict) -> dict | None:
-    data = _normalized(load_config())
+def update_escalation_rule(guild_id: int, rule_id: str, fields: dict) -> dict | None:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     for rule in data["escalation"]:
         if rule["id"] == str(rule_id):
             rule.update(fields)
-            save_config(data)
+            settings_db.put(guild_id, MODULE_NAME, data)
             return rule
     return None
 
 
-def delete_escalation_rule(rule_id: str) -> bool:
-    data = _normalized(load_config())
+def delete_escalation_rule(guild_id: int, rule_id: str) -> bool:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     before = len(data["escalation"])
     data["escalation"] = [r for r in data["escalation"] if r["id"] != str(rule_id)]
     if len(data["escalation"]) == before:
         return False
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return True
 
 
-def find_escalation_rule(active_warn_count: int) -> dict | None:
+def find_escalation_rule(guild_id: int, active_warn_count: int) -> dict | None:
     """Правило эскалации, точно соответствующее текущему числу активных варнов."""
-    data = _normalized(load_config())
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     for rule in data["escalation"]:
         if rule["count"] == active_warn_count:
             return rule

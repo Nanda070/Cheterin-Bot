@@ -1,32 +1,25 @@
-import json
 import logging
-import os
 
 import discord
 from discord.ext import commands
 
+import settings_db
+
 logger = logging.getLogger(__name__)
 
-CONFIG_FILE = "reaction_roles.json"
+MODULE_NAME = "reaction_roles"
 
 
-def load_config() -> dict:
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
+def load_config(guild_id: int) -> dict:
+    return settings_db.get(guild_id, MODULE_NAME)
 
 
-def save_config(data: dict) -> None:
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def get_pairs_for_message(message_id: str) -> list | None:
-    config = load_config()
+def get_pairs_for_message(guild_id: int, message_id: str) -> list | None:
+    config = load_config(guild_id)
     entry = config.get(str(message_id))
     return entry["pairs"] if entry else None
 
@@ -61,7 +54,7 @@ async def handle_reaction_change(bot, payload, action: str) -> None:
     if payload.user_id == bot.user.id:
         return
 
-    pairs = get_pairs_for_message(str(payload.message_id))
+    pairs = get_pairs_for_message(payload.guild_id, str(payload.message_id))
     if pairs is None:
         return
 
@@ -103,6 +96,19 @@ class ReactionRoles(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
+    async def on_ready(self):
+        # Фаза 2.4: чистим «мёртвые» записи по всем серверам, где есть бот
+        # (раньше — только по мейн-серверу из GUILD_ID). Один раз за процесс.
+        if getattr(self.bot, "_reaction_roles_cleaned", False):
+            return
+        self.bot._reaction_roles_cleaned = True
+        for guild in self.bot.guilds:
+            try:
+                await cleanup_missing_messages(self.bot, guild.id)
+            except Exception:
+                logger.exception("reaction_roles: ошибка очистки для guild=%s", guild.id)
+
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         await handle_reaction_change(self.bot, payload, "add")
 
@@ -115,7 +121,7 @@ async def cleanup_missing_messages(bot, guild_id: int) -> int:
     """Removes config entries whose message or channel no longer exists.
 
     Returns the number of entries removed."""
-    config = load_config()
+    config = load_config(guild_id)
     guild = bot.get_guild(guild_id)
     if guild is None:
         return 0
@@ -136,12 +142,9 @@ async def cleanup_missing_messages(bot, guild_id: int) -> int:
             continue
 
     if removed:
-        save_config(config)
+        save_config(guild_id, config)
     return removed
 
 
 async def setup(bot):
     await bot.add_cog(ReactionRoles(bot))
-    guild_id_raw = os.getenv("GUILD_ID")
-    if guild_id_raw:
-        await cleanup_missing_messages(bot, int(guild_id_raw))

@@ -129,7 +129,7 @@ export function DailyTopicPage() {
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-muted">
-            Время публикации (МСК) — каждый день бот случайно выбирает одно из них
+            Время публикации (МСК, формат HH:MM, макс. 10) — каждый день бот случайно выбирает одно из них
           </label>
           <div className="flex flex-wrap gap-2">
             {postTimes.length === 0 && <span className="text-sm text-muted">Время не задано</span>}
@@ -235,7 +235,7 @@ export function DailyTopicPage() {
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="daily-topic-text">
-              Текст темы/вопроса
+              Текст темы/вопроса (макс. 300 символов)
             </label>
             <textarea id="daily-topic-text" rows={3} value={topicDraft} onChange={(e) => setTopicDraft(e.target.value)} className={inputClass} />
           </div>

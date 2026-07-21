@@ -253,7 +253,7 @@ class MafiaCog(commands.Cog):
         таймер_обсуждения: app_commands.Range[int, 10, 3600] = None,
         таймер_голосования: app_commands.Range[int, 10, 3600] = None,
     ):
-        settings = mafia_core.get_settings()
+        settings = mafia_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Мафия» отключён.", ephemeral=True)
 
@@ -612,7 +612,7 @@ class MafiaCog(commands.Cog):
         await self._send_log(game, winner)
 
     async def _send_log(self, game: dict, winner: str | None):
-        log_channel_id = mafia_core.get_settings()["log_channel_id"]
+        log_channel_id = mafia_core.get_settings(game["guild_id"])["log_channel_id"]
         if not log_channel_id:
             return
         channel = self.bot.get_channel(int(log_channel_id))

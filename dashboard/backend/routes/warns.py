@@ -13,7 +13,7 @@ MAX_REASON_LENGTH = 500
 @routes.get("/api/members/{member_id}/warns")
 @require_dashboard_access
 async def member_warns_list(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -32,7 +32,7 @@ async def member_warns_list(request: web.Request) -> web.Response:
 @routes.post("/api/members/{member_id}/warns")
 @require_dashboard_access
 async def member_warns_create(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -50,7 +50,7 @@ async def member_warns_create(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_reason"}, status=400)
 
     moderator = request["moderator"]
-    settings = automod_core.get_settings()
+    settings = automod_core.get_settings(guild.id)
     warn = warns_core.add_warn(
         guild.id,
         member_id,

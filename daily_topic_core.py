@@ -6,17 +6,16 @@
 день бот случайно выбирает одно время из набора и одну тему (без повторов,
 пока не закончится весь список). Выключено по умолчанию.
 
-Хранение — daily_topic_config.json, тот же паттерн load/save, что и у
-giveaway_core.py.
+Хранение — settings_db, per-guild (Фаза 2.1 MULTIGUILD_PLAN.md).
 """
 
-import json
-import os
 import random
 import re
 from datetime import datetime, timezone, timedelta
 
-CONFIG_FILE = "daily_topic_config.json"
+import settings_db
+
+MODULE_NAME = "daily_topic"
 
 MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
@@ -28,28 +27,6 @@ MAX_POST_TIMES = 10
 
 def is_valid_time(value: str) -> bool:
     return bool(TIME_RE.match(value or ""))
-
-
-def load_config() -> dict:
-    """Чтение конфига, устойчивое к гонкам с параллельной записью (дашборд пишет,
-    планировщик читает каждую минуту): любая ошибка чтения/парсинга — пустой конфиг,
-    а не исключение, которое убило бы tasks.loop планировщика."""
-    try:
-        if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return {}
-    return {}
-
-
-def save_config(data: dict) -> None:
-    """Атомарная запись (tmp + os.replace): читатель никогда не увидит недописанный
-    JSON, даже если планировщик читает файл в момент сохранения из дашборда."""
-    tmp_path = CONFIG_FILE + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.replace(tmp_path, CONFIG_FILE)
 
 
 def _normalized(data: dict) -> dict:
@@ -70,8 +47,8 @@ def _today_msk() -> str:
     return datetime.now(MOSCOW_TZ).strftime("%Y-%m-%d")
 
 
-def get_settings() -> dict:
-    data = _normalized(load_config())
+def get_settings(guild_id: int) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     return {
         "enabled": bool(data["enabled"]),
         "channel_id": str(data["channel_id"] or ""),
@@ -80,53 +57,53 @@ def get_settings() -> dict:
     }
 
 
-def update_settings(*, enabled: bool, channel_id: str, post_times: list[str]) -> dict:
-    data = _normalized(load_config())
+def update_settings(guild_id: int, *, enabled: bool, channel_id: str, post_times: list[str]) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["enabled"] = bool(enabled)
     data["channel_id"] = channel_id
     data["post_times"] = list(post_times)
-    save_config(data)
-    return get_settings()
+    settings_db.put(guild_id, MODULE_NAME, data)
+    return get_settings(guild_id)
 
 
-def add_topic(text: str) -> dict:
-    data = _normalized(load_config())
+def add_topic(guild_id: int, text: str) -> dict:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["seq"] += 1
     topic = {"id": str(data["seq"]), "text": text}
     data["topics"].append(topic)
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return topic
 
 
-def update_topic(topic_id: str, text: str) -> dict | None:
-    data = _normalized(load_config())
+def update_topic(guild_id: int, topic_id: str, text: str) -> dict | None:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     for topic in data["topics"]:
         if topic["id"] == str(topic_id):
             topic["text"] = text
-            save_config(data)
+            settings_db.put(guild_id, MODULE_NAME, data)
             return topic
     return None
 
 
-def delete_topic(topic_id: str) -> bool:
-    data = _normalized(load_config())
+def delete_topic(guild_id: int, topic_id: str) -> bool:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     topic_id = str(topic_id)
     before = len(data["topics"])
     data["topics"] = [t for t in data["topics"] if t["id"] != topic_id]
     if len(data["topics"]) == before:
         return False
     data["queue"] = [tid for tid in data["queue"] if tid != topic_id]
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return True
 
 
-def pick_next_topic() -> dict | None:
+def pick_next_topic(guild_id: int) -> dict | None:
     """Выбирает следующую тему по кругу без повторов, пока список не закончится.
 
     Возвращает None, если тем нет вообще. Меняет состояние (очередь, последняя
     выбранная тема) — вызывать только при реальной публикации, не для превью.
     """
-    data = _normalized(load_config())
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     ids = [t["id"] for t in data["topics"]]
     if not ids:
         return None
@@ -141,25 +118,25 @@ def pick_next_topic() -> dict | None:
 
     topic_id = data["queue"].pop(0)
     data["last_topic_id"] = topic_id
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
 
     return next((t for t in data["topics"] if t["id"] == topic_id), None)
 
 
-def already_posted_today() -> bool:
-    data = _normalized(load_config())
+def already_posted_today(guild_id: int) -> bool:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     return data["last_posted_date"] == _today_msk()
 
 
-def mark_posted_today() -> None:
-    data = _normalized(load_config())
+def mark_posted_today(guild_id: int) -> None:
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["last_posted_date"] = _today_msk()
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def get_today_post_time() -> str | None:
+def get_today_post_time(guild_id: int) -> str | None:
     """Возвращает выбранное на сегодня время публикации, выбирая его при первом обращении."""
-    data = _normalized(load_config())
+    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     post_times = data["post_times"]
     if not post_times:
         return None
@@ -171,15 +148,15 @@ def get_today_post_time() -> str | None:
     chosen = random.choice(post_times)
     data["chosen_time"] = chosen
     data["chosen_time_date"] = today
-    save_config(data)
+    settings_db.put(guild_id, MODULE_NAME, data)
     return chosen
 
 
-def should_post_now() -> bool:
+def should_post_now(guild_id: int) -> bool:
     """Пора ли публиковать тему дня: время настало и сегодня ещё не публиковали."""
-    if already_posted_today():
+    if already_posted_today(guild_id):
         return False
-    target = get_today_post_time()
+    target = get_today_post_time(guild_id)
     if target is None:
         return False
     now_hhmm = datetime.now(MOSCOW_TZ).strftime("%H:%M")

@@ -30,7 +30,7 @@ async def test_activate_strips_permissions_and_saves_backup():
     assert errors == []
     assert noisy.edit_calls  # got edited
     assert quiet.edit_calls == []
-    active, count = lockdown_core.antispam_status()
+    active, count = lockdown_core.antispam_status(1)
     assert active is True
     assert count == 1
 
@@ -58,7 +58,7 @@ async def test_deactivate_restores_from_backup():
     restored, errors = result
     assert restored == 1
     assert errors == []
-    active, _ = lockdown_core.antispam_status()
+    active, _ = lockdown_core.antispam_status(1)
     assert active is False
 
 

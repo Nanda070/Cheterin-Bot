@@ -2,6 +2,7 @@ import pytest
 
 import bunker_core
 import bunker_db
+import settings_db
 from dashboard.backend.routes.bunker import routes as bunker_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
@@ -10,9 +11,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("BUNKER_DB_PATH", str(tmp_path / "bunker.db"))
     bunker_db.init()
-    monkeypatch.setattr(bunker_core, "CONFIG_FILE", str(tmp_path / "bunker_config.json"))
-    monkeypatch.setattr(bunker_core, "_cache", None, raising=False)
-    monkeypatch.setattr(bunker_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():
@@ -57,7 +58,7 @@ async def test_put_then_get(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["enabled"] = True
     payload["default_min_players"] = 5
     payload["log_channel_id"] = "42"
@@ -78,28 +79,28 @@ async def test_put_validation(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["enabled"] = "yes"
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 400
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["default_min_players"] = 50
     payload["default_max_players"] = 10
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 400
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["default_discussion_timer_sec"] = 5
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 400
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["log_channel_id"] = "abc"
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 400
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["default_unique_cards"] = "yes"
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 400
@@ -111,7 +112,7 @@ async def test_put_unique_cards_roundtrip(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = bunker_core.get_settings()
+    payload = bunker_core.get_settings(1)
     payload["default_unique_cards"] = False
     resp = await client.put("/api/bunker", json=payload)
     assert resp.status == 200

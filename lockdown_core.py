@@ -1,3 +1,4 @@
+import settings_db
 import json
 import os
 
@@ -6,19 +7,14 @@ import discord
 BACKUP_FILE = "antispam_backup.json"
 
 
-def load_backup() -> dict:
-    if os.path.exists(BACKUP_FILE):
-        with open(BACKUP_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
+def load_backup(guild_id: int) -> dict:
+    return settings_db.get(guild_id, "lockdown_backup", {})
+
     return {}
 
 
-def save_backup(data: dict):
-    with open(BACKUP_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_backup(guild_id: int, data: dict):
+    settings_db.put(guild_id, "lockdown_backup", data)
 
 
 def get_mention_exempt_ids() -> set[int]:
@@ -31,15 +27,15 @@ def get_mentionable_exempt_ids() -> set[int]:
     return {int(x.strip()) for x in raw.split(",") if x.strip()}
 
 
-def antispam_status() -> tuple[bool, int]:
-    backup = load_backup()
+def antispam_status(guild_id: int) -> tuple[bool, int]:
+    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
     return bool(backup.get("active", False)), len(backup.get("roles", {}))
 
 
 async def activate_antispam(
     guild, mention_exempt: set[int], mentionable_exempt: set[int]
 ) -> tuple[int, list[str]]:
-    backup = load_backup()
+    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
     backup_roles: dict[str, dict] = {}
     modified_count = 0
     errors: list[str] = []
@@ -79,12 +75,12 @@ async def activate_antispam(
 
     backup["roles"] = backup_roles
     backup["active"] = True
-    save_backup(backup)
+    save_backup(guild.id, backup)
     return modified_count, errors
 
 
 async def deactivate_antispam(guild) -> tuple[int, list[str]] | None:
-    backup = load_backup()
+    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
     backup_roles: dict[str, dict] = backup.get("roles", {})
     if not backup_roles:
         return None
@@ -114,5 +110,5 @@ async def deactivate_antispam(guild) -> tuple[int, list[str]] | None:
 
     backup["roles"] = {}
     backup["active"] = False
-    save_backup(backup)
+    save_backup(guild.id, backup)
     return restored_count, errors

@@ -233,7 +233,7 @@ export function LevelsPage() {
             />
             <div className="flex items-center gap-3">
               <label className="text-sm text-muted" htmlFor="text-mult">
-                Множитель опыта: {settings.text.multiplier}%
+                Множитель опыта (0–300%): {settings.text.multiplier}%
               </label>
               <input
                 id="text-mult"
@@ -281,7 +281,7 @@ export function LevelsPage() {
             />
             <div className="flex items-center gap-3">
               <label className="text-sm text-muted" htmlFor="voice-mult">
-                Множитель опыта: {settings.voice.multiplier}%
+                Множитель опыта (0–300%): {settings.voice.multiplier}%
               </label>
               <input
                 id="voice-mult"

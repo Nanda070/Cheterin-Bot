@@ -1,6 +1,6 @@
 """Ког «Гивевеи»: /giveaway start приз время победителей — с таймером, реролом и
-автовыбором победителя. Портировано по образцу supply.py: розыгрыши хранятся в
-giveaways_data.json и восстанавливаются после перезапуска бота (таймеры
+автовыбором победителя. Портировано по образцу supply.py: розыгрыши хранятся
+per-guild в settings_db и восстанавливаются после перезапуска бота (таймеры
 пересоздаются, кнопка участия продолжает работать через persistent view).
 """
 
@@ -51,9 +51,9 @@ class GiveawayView(discord.ui.View):
         self.cog = cog
 
     def _get_giveaway(self, interaction: discord.Interaction) -> dict | None:
-        if interaction.message is None:
+        if interaction.message is None or interaction.guild_id is None:
             return None
-        return giveaway_core.get_giveaway_by_message(interaction.message.id)
+        return giveaway_core.get_giveaway_by_message(interaction.guild_id, interaction.message.id)
 
     @discord.ui.button(label="🎉 Участвовать", style=discord.ButtonStyle.green, custom_id="giveaway:join")
     async def join_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
@@ -61,9 +61,9 @@ class GiveawayView(discord.ui.View):
         if giveaway is None:
             return await interaction.response.send_message("Розыгрыш не найден.", ephemeral=True)
 
-        result = giveaway_core.join_giveaway(giveaway["id"], interaction.user.id)
+        result = giveaway_core.join_giveaway(interaction.guild_id, giveaway["id"], interaction.user.id)
         if result == "already":
-            result = giveaway_core.leave_giveaway(giveaway["id"], interaction.user.id)
+            result = giveaway_core.leave_giveaway(interaction.guild_id, giveaway["id"], interaction.user.id)
             note = "Ты вышел из розыгрыша." if result == "left" else "Розыгрыш уже закрыт."
         elif result == "joined":
             note = "Ты участвуешь в розыгрыше!"
@@ -72,7 +72,7 @@ class GiveawayView(discord.ui.View):
         else:
             note = "Розыгрыш не найден."
 
-        giveaway = giveaway_core.get_giveaway(giveaway["id"])
+        giveaway = giveaway_core.get_giveaway(interaction.guild_id, giveaway["id"])
         if giveaway is None:
             return await interaction.response.send_message(note, ephemeral=True)
 
@@ -108,35 +108,38 @@ class GiveawayCog(commands.Cog):
         await self.recover_giveaways()
 
     async def recover_giveaways(self):
-        for giveaway in giveaway_core.list_active():
-            self.schedule_giveaway(giveaway)
+        for guild in self.bot.guilds:
+            for giveaway in giveaway_core.list_active(guild.id):
+                self.schedule_giveaway(giveaway)
 
     def schedule_giveaway(self, giveaway: dict):
-        old = self._timers.pop(giveaway["id"], None)
+        guild_id = int(giveaway["guild_id"])
+        key = (guild_id, giveaway["id"])
+        old = self._timers.pop(key, None)
         if old:
             old.cancel()
-        self._timers[giveaway["id"]] = self.bot.loop.create_task(self._run_giveaway_timer(giveaway["id"]))
+        self._timers[key] = self.bot.loop.create_task(self._run_giveaway_timer(guild_id, giveaway["id"]))
 
-    async def _run_giveaway_timer(self, giveaway_id: str):
+    async def _run_giveaway_timer(self, guild_id: int, giveaway_id: str):
         try:
-            giveaway = giveaway_core.get_giveaway(giveaway_id)
+            giveaway = giveaway_core.get_giveaway(guild_id, giveaway_id)
             if giveaway is None or giveaway["status"] != "active":
                 return
             now_ts = int(datetime.now(timezone.utc).timestamp())
             if giveaway["target_ts"] > now_ts:
                 await asyncio.sleep(giveaway["target_ts"] - now_ts)
-            await self.finalize_giveaway(giveaway_id)
+            await self.finalize_giveaway(guild_id, giveaway_id)
         except asyncio.CancelledError:
             raise
         except Exception:
             logger.exception("Giveaway timer failed: %s", giveaway_id)
 
-    async def finalize_giveaway(self, giveaway_id: str, status: str = "finished") -> bool:
-        giveaway = giveaway_core.close_giveaway(giveaway_id, status=status)
+    async def finalize_giveaway(self, guild_id: int, giveaway_id: str, status: str = "finished") -> bool:
+        giveaway = giveaway_core.close_giveaway(guild_id, giveaway_id, status=status)
         if giveaway is None:
             return False
 
-        task = self._timers.pop(giveaway_id, None)
+        task = self._timers.pop((guild_id, giveaway_id), None)
         if task and task is not asyncio.current_task():
             task.cancel()
 
@@ -162,12 +165,12 @@ class GiveawayCog(commands.Cog):
             logger.warning("Не удалось объявить итоги розыгрыша %s", giveaway_id)
         return True
 
-    async def publish_giveaway(self, channel, initiator_id: int, prize: str, duration_str: str, winners_count: int) -> dict:
+    async def publish_giveaway(self, guild_id: int, channel, initiator_id: int, prize: str, duration_str: str, winners_count: int) -> dict:
         """Создаёт розыгрыш и публикует сообщение с кнопкой. Используется командой и дашбордом."""
-        giveaway = giveaway_core.create_giveaway(initiator_id, prize, duration_str, winners_count)
+        giveaway = giveaway_core.create_giveaway(guild_id, initiator_id, prize, duration_str, winners_count)
         message = await channel.send(embed=generate_embed(giveaway), view=self.view)
         giveaway = giveaway_core.update_giveaway(
-            giveaway["id"], channel_id=str(message.channel.id), message_id=str(message.id)
+            guild_id, giveaway["id"], channel_id=str(message.channel.id), message_id=str(message.id)
         )
         self.schedule_giveaway(giveaway)
         return giveaway
@@ -191,16 +194,16 @@ class GiveawayCog(commands.Cog):
             return await interaction.response.send_message(f"❌ {exc}", ephemeral=True)
 
         await interaction.response.defer()
-        giveaway = await self.publish_giveaway(interaction.channel, interaction.user.id, приз, время, победителей)
+        giveaway = await self.publish_giveaway(interaction.guild_id, interaction.channel, interaction.user.id, приз, время, победителей)
         await interaction.followup.send(f"Розыгрыш №{giveaway['id']} запущен.", ephemeral=True)
 
-    async def reroll_and_announce(self, giveaway_id: str) -> list[str] | None:
+    async def reroll_and_announce(self, guild_id: int, giveaway_id: str) -> list[str] | None:
         """Перевыбирает победителей и объявляет в канале розыгрыша. Используется командой и дашбордом."""
-        winners = giveaway_core.reroll_giveaway(giveaway_id)
+        winners = giveaway_core.reroll_giveaway(guild_id, giveaway_id)
         if winners is None:
             return None
 
-        giveaway = giveaway_core.get_giveaway(giveaway_id)
+        giveaway = giveaway_core.get_giveaway(guild_id, giveaway_id)
         channel = self.bot.get_channel(int(giveaway["channel_id"] or 0)) if giveaway else None
         if channel is not None:
             if winners:
@@ -221,7 +224,7 @@ class GiveawayCog(commands.Cog):
     @app_commands.describe(giveaway_id="ID розыгрыша (указан в футере эмбеда)")
     async def giveaway_reroll(self, interaction: discord.Interaction, giveaway_id: str):
         await interaction.response.defer(ephemeral=True)
-        winners = await self.reroll_and_announce(giveaway_id)
+        winners = await self.reroll_and_announce(interaction.guild_id, giveaway_id)
         if winners is None:
             return await interaction.followup.send("Розыгрыш не найден или ещё не завершён.", ephemeral=True)
         if not winners:
@@ -232,7 +235,7 @@ class GiveawayCog(commands.Cog):
     @app_commands.describe(giveaway_id="ID розыгрыша (указан в футере эмбеда)")
     async def giveaway_end(self, interaction: discord.Interaction, giveaway_id: str):
         await interaction.response.defer(ephemeral=True)
-        ok = await self.finalize_giveaway(giveaway_id)
+        ok = await self.finalize_giveaway(interaction.guild_id, giveaway_id)
         if not ok:
             return await interaction.followup.send("Розыгрыш не найден или уже завершён.", ephemeral=True)
         await interaction.followup.send("Розыгрыш завершён.", ephemeral=True)

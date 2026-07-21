@@ -13,7 +13,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/economy")
 @require_dashboard_access
 async def economy_get(request: web.Request) -> web.Response:
-    return web.json_response(economy_core.get_settings())
+    return web.json_response(economy_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/economy")
@@ -102,7 +102,8 @@ async def economy_put(request: web.Request) -> web.Response:
 
         shop_items.append(item)
 
-    economy_core.save_config({
+    guild_id = request["guild_id"]
+    economy_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "currency_name": currency_name.strip(),
         "currency_emoji": currency_emoji.strip(),
@@ -112,14 +113,14 @@ async def economy_put(request: web.Request) -> web.Response:
         **int_values,
         "shop_items": shop_items,
     })
-    return web.json_response(economy_core.get_settings())
+    return web.json_response(economy_core.get_settings(guild_id))
 
 
 @routes.get("/api/economy/top")
 @require_dashboard_access
 async def economy_top(request: web.Request) -> web.Response:
     economy_db.init()
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     result = []
     for row in economy_db.top(25):
         member = guild.get_member(row["user_id"]) if guild else None

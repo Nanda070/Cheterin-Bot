@@ -1,15 +1,15 @@
 import pytest
 
-import verification_core
+import settings_db
 from dashboard.backend.routes.verification import routes as verification_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(verification_core, "CONFIG_FILE", str(tmp_path / "verification_config.json"))
-    monkeypatch.setattr(verification_core, "_cache", None, raising=False)
-    monkeypatch.setattr(verification_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():
@@ -29,7 +29,7 @@ async def test_get_defaults_disabled(aiohttp_client):
     assert resp.status == 200
     body = await resp.json()
     assert body["enabled"] is False
-    assert body["verified_role_id"] == 0
+    assert body["verified_role_id"] == ""
 
 
 @pytest.mark.asyncio
@@ -39,11 +39,11 @@ async def test_put_then_get(aiohttp_client):
     await force_login(client, 10)
 
     resp = await client.put("/api/verification", json={
-        "enabled": True, "unverified_role_id": 111, "verified_role_id": 222, "welcome_text": "Жми кнопку",
+        "enabled": True, "unverified_role_id": "111", "verified_role_id": "222", "welcome_text": "Жми кнопку",
     })
     assert resp.status == 200
     body = await resp.json()
-    assert body["verified_role_id"] == 222
+    assert body["verified_role_id"] == "222"
 
     resp = await client.get("/api/verification")
     assert (await resp.json())["welcome_text"] == "Жми кнопку"

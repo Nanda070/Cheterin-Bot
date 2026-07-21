@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-import bunker_core
 import bunker_db
+import settings_db
 from bunker import BunkerCog
 from dashboard.backend.routes.bunker import routes as bunker_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, make_moderation_app
@@ -13,9 +13,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeM
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("BUNKER_DB_PATH", str(tmp_path / "bunker.db"))
     bunker_db.init()
-    monkeypatch.setattr(bunker_core, "CONFIG_FILE", str(tmp_path / "bunker_config.json"))
-    monkeypatch.setattr(bunker_core, "_cache", None, raising=False)
-    monkeypatch.setattr(bunker_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(members=None):

@@ -43,6 +43,7 @@ class FakeFollowup:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild, channel=None):
         self.user = user
         self.guild = guild

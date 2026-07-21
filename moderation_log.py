@@ -1,3 +1,4 @@
+import settings_db
 import json
 import os
 from datetime import datetime, timezone
@@ -6,19 +7,15 @@ LOG_FILE = "moderation_log.json"
 MAX_ENTRIES = 200
 
 
-def load_events() -> list[dict]:
-    """Returns stored events newest-first."""
-    if not os.path.exists(LOG_FILE):
-        return []
-    with open(LOG_FILE, "r", encoding="utf-8") as f:
-        try:
-            events = json.load(f)
-        except json.JSONDecodeError:
-            return []
+def load_events(guild_id: int) -> list[dict]:
+    events = settings_db.get(guild_id, "moderation_log", [])
     return list(reversed(events))
 
+def save_events(guild_id: int, events: list[dict]) -> None:
+    settings_db.put(guild_id, "moderation_log", events)
 
 def append_event(
+    guild_id: int,
     event_type: str,
     user_id: int,
     user_display: str,
@@ -27,13 +24,7 @@ def append_event(
     moderator_display: str | None = None,
     extra: str = "",
 ) -> None:
-    events = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r", encoding="utf-8") as f:
-            try:
-                events = json.load(f)
-            except json.JSONDecodeError:
-                events = []
+    events = settings_db.get(guild_id, "moderation_log", [])
 
     events.append(
         {
@@ -51,5 +42,4 @@ def append_event(
     if len(events) > MAX_ENTRIES:
         events = events[-MAX_ENTRIES:]
 
-    with open(LOG_FILE, "w", encoding="utf-8") as f:
-        json.dump(events, f, ensure_ascii=False, indent=4)
+    save_events(guild_id, events)

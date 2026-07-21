@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/serverlog")
 @require_dashboard_access
 async def serverlog_get(request: web.Request) -> web.Response:
-    settings = serverlog.get_settings()
+    settings = serverlog.get_settings(request["guild_id"])
     return web.json_response({
         "labels": serverlog.EVENT_TYPES,
         "events": settings["events"],
@@ -42,5 +42,6 @@ async def serverlog_put(request: web.Request) -> web.Response:
             return web.json_response({"error": f"channel_required_{event_type}"}, status=400)
         events[event_type] = {"enabled": enabled, "channel_id": channel_id}
 
-    serverlog.save_config({"events": events})
-    return web.json_response({"labels": serverlog.EVENT_TYPES, "events": serverlog.get_settings()["events"]})
+    guild_id = request["guild_id"]
+    serverlog.save_config(guild_id, {"events": events})
+    return web.json_response({"labels": serverlog.EVENT_TYPES, "events": serverlog.get_settings(guild_id)["events"]})

@@ -38,10 +38,10 @@ def _font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont | ImageFon
     return ImageFont.load_default()
 
 
-def _background() -> Image.Image:
-    if os.path.exists(xp_core.CARD_BG_FILE):
+def _background(guild_id: int) -> Image.Image:
+    if os.path.exists(xp_core.get_card_bg_path(guild_id)):
         try:
-            bg = Image.open(xp_core.CARD_BG_FILE).convert("RGB")
+            bg = Image.open(xp_core.get_card_bg_path(guild_id)).convert("RGB")
             bg = bg.resize((CARD_W, CARD_H))
             # Затемняем, чтобы текст читался на любом фоне
             overlay = Image.new("RGB", (CARD_W, CARD_H), (11, 14, 20))
@@ -71,6 +71,7 @@ def _circle_avatar(avatar_bytes: bytes, size: int) -> Image.Image:
 
 
 def render_rank_card(
+    guild_id: int,
     avatar_bytes: bytes | None,
     display_name: str,
     level: int,
@@ -82,7 +83,7 @@ def render_rank_card(
     frame_color: str | None = None,
     title_text: str | None = None,
 ) -> bytes:
-    card = _background().convert("RGBA")
+    card = _background(guild_id).convert("RGBA")
     draw = ImageDraw.Draw(card)
 
     # Полупрозрачная плашка

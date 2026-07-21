@@ -147,33 +147,24 @@ def parse_role_button_ids(message) -> list[int]:
 
 # ────────────────────────── Шаблоны эмбедов ──────────────────────────
 
-import json as _json
-import os as _os
+import settings_db
 
-TEMPLATES_FILE = "embed_templates.json"
+MODULE_NAME = "embed_templates"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 MAX_TEMPLATES = 50
 
 
-def _load_templates_data() -> dict:
-    if _os.path.exists(TEMPLATES_FILE):
-        with open(TEMPLATES_FILE, "r", encoding="utf-8") as f:
-            try:
-                data = _json.load(f)
-            except _json.JSONDecodeError:
-                data = {}
-    else:
-        data = {}
+def _load_templates_data(guild_id: int) -> dict:
+    data = settings_db.get(guild_id, MODULE_NAME)
     data.setdefault("seq", 0)
     data.setdefault("templates", [])
     return data
 
 
-def _save_templates_data(data: dict) -> None:
-    with open(TEMPLATES_FILE, "w", encoding="utf-8") as f:
-        _json.dump(data, f, ensure_ascii=False, indent=4)
+def _save_templates_data(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def list_templates() -> list[dict]:
+def list_templates(guild_id: int) -> list[dict]:
     return [
         {
             "id": str(t.get("id") or ""),
@@ -182,13 +173,13 @@ def list_templates() -> list[dict]:
             "embed": t.get("embed") or {},
             "role_ids": [str(r) for r in t.get("role_ids", [])],
         }
-        for t in _load_templates_data()["templates"]
+        for t in _load_templates_data(guild_id)["templates"]
     ]
 
 
-def save_template(name: str, content: str, embed_spec: dict, role_ids: list[str]) -> dict | str:
+def save_template(guild_id: int, name: str, content: str, embed_spec: dict, role_ids: list[str]) -> dict | str:
     """Сохраняет шаблон. Возвращает шаблон или код ошибки строкой."""
-    data = _load_templates_data()
+    data = _load_templates_data(guild_id)
     if len(data["templates"]) >= MAX_TEMPLATES:
         return "too_many_templates"
     if any(t.get("name") == name for t in data["templates"]):
@@ -202,15 +193,15 @@ def save_template(name: str, content: str, embed_spec: dict, role_ids: list[str]
         "role_ids": list(role_ids),
     }
     data["templates"].append(template)
-    _save_templates_data(data)
+    _save_templates_data(guild_id, data)
     return template
 
 
-def delete_template(template_id: str) -> bool:
-    data = _load_templates_data()
+def delete_template(guild_id: int, template_id: str) -> bool:
+    data = _load_templates_data(guild_id)
     before = len(data["templates"])
     data["templates"] = [t for t in data["templates"] if str(t.get("id")) != str(template_id)]
     if len(data["templates"]) != before:
-        _save_templates_data(data)
+        _save_templates_data(guild_id, data)
         return True
     return False

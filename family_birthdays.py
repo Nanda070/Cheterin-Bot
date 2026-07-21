@@ -32,8 +32,8 @@ def build_birthday_embed(member: discord.abc.User) -> discord.Embed:
     return embed
 
 
-async def send_birthday_log(bot: commands.Bot, text: str):
-    log_channel_id = family_core.get_settings()["applications"]["log_channel_id"]
+async def send_birthday_log(bot: commands.Bot, guild_id: int, text: str):
+    log_channel_id = family_core.get_settings(guild_id)["applications"]["log_channel_id"]
     if not log_channel_id:
         return
     channel = bot.get_channel(int(log_channel_id))
@@ -63,7 +63,7 @@ class BirthdayCog(commands.Cog):
             await self.update_birthday_message(guild)
 
     async def update_birthday_message(self, guild: discord.Guild):
-        settings = family_core.get_settings()
+        settings = family_core.get_settings(guild.id)
         list_channel_id = settings["birthdays"]["list_channel_id"]
         if not list_channel_id:
             return
@@ -80,7 +80,7 @@ class BirthdayCog(commands.Cog):
                 try:
                     member = await guild.fetch_member(user_id)
                 except discord.NotFound:
-                    family_db.delete_birthday(user_id)
+                    family_db.delete_birthday(guild.id, user_id)
                     continue
                 except discord.HTTPException:
                     pass
@@ -88,7 +88,7 @@ class BirthdayCog(commands.Cog):
                 valid_rows.append(row)
 
         content = family_core.build_birthday_text(valid_rows, guild)
-        data = family_db.get_birthday_message_data()
+        data = family_db.get_birthday_message_data(guild.id)
 
         if data:
             old_channel = guild.get_channel(data["channel_id"])
@@ -98,27 +98,27 @@ class BirthdayCog(commands.Cog):
                     await message.edit(content=content, allowed_mentions=discord.AllowedMentions.none())
                     return
                 except discord.NotFound:
-                    family_db.clear_birthday_message_data()
+                    family_db.clear_birthday_message_data(guild.id)
                 except discord.HTTPException:
                     return
 
         message = await channel.send(content=content, allowed_mentions=discord.AllowedMentions.none())
-        family_db.save_birthday_message_data(message.channel.id, message.id)
+        family_db.save_birthday_message_data(guild.id, message.channel.id, message.id)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        if not family_core.get_settings()["enabled"]:
+        if not family_core.get_settings(member.guild.id)["enabled"]:
             return
-        deleted = family_db.delete_birthday(member.id)
+        deleted = family_db.delete_birthday(member.guild.id, member.id)
         if deleted:
             await self.update_birthday_message(member.guild)
             await send_birthday_log(
-                self.bot,
+                self.bot, member.guild.id,
                 f"Пользователь {member.mention} ({member.name}) покинул сервер. Его день рождения был удалён из базы.",
             )
 
     async def send_today_birthdays(self, guild: discord.Guild):
-        settings = family_core.get_settings()
+        settings = family_core.get_settings(guild.id)
         channel_id = settings["birthdays"]["channel_id"]
         if not channel_id:
             return
@@ -144,24 +144,32 @@ class BirthdayCog(commands.Cog):
                     continue
 
             await channel.send(content=content, embed=build_birthday_embed(member))
-            await send_birthday_log(self.bot, f"День рождения: отправлено поздравление для {member.mention}.")
+            await send_birthday_log(self.bot, guild.id, f"День рождения: отправлено поздравление для {member.mention}.")
 
     @tasks.loop(minutes=1)
     async def birthday_loop(self):
-        if not family_core.get_settings()["enabled"]:
-            return
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            now_msk = datetime.now(MOSCOW_TZ)
+            today = now_msk.strftime("%Y-%m-%d")
+            if now_msk.hour != 0 or now_msk.minute != 0 or self.last_announcement_date == today:
+                return
 
-        now_msk = datetime.now(MOSCOW_TZ)
-        today = now_msk.strftime("%Y-%m-%d")
-        if now_msk.hour != 0 or now_msk.minute != 0 or self.last_announcement_date == today:
-            return
+            for guild in self.bot.guilds:
+                if not family_core.get_settings(guild.id)["enabled"]:
+                    continue
+                try:
+                    await self.send_today_birthdays(guild)
+                except Exception:
+                    logger.exception("send_today_birthdays failed for guild %s", guild.id)
+            self.last_announcement_date = today
+        except Exception:
+            logger.exception("birthday_loop: ошибка итерации — цикл продолжает работать")
 
-        for guild in self.bot.guilds:
-            try:
-                await self.send_today_birthdays(guild)
-            except Exception:
-                logger.exception("send_today_birthdays failed for guild %s", guild.id)
-        self.last_announcement_date = today
+    @birthday_loop.error
+    async def birthday_loop_error(self, _error: BaseException):
+        logger.exception("birthday_loop: критическая ошибка — перезапуск цикла")
+        self.birthday_loop.restart()
 
     @birthday_loop.before_loop
     async def before_birthday_loop(self):
@@ -170,10 +178,10 @@ class BirthdayCog(commands.Cog):
     @app_commands.command(name="добавить-др", description="Добавить свой день рождения")
     @app_commands.describe(дата="Дата рождения (дд.мм, дд.мм.гггг или «1 января»)")
     async def add_birthday(self, interaction: discord.Interaction, дата: str):
-        if not family_core.get_settings()["enabled"]:
-            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not interaction.guild:
             return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
+            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
 
         try:
             day, month, display = family_core.parse_birthday_date(дата)
@@ -183,16 +191,16 @@ class BirthdayCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         family_db.save_birthday(interaction.user.id, interaction.guild.id, day, month, display)
         await self.update_birthday_message(interaction.guild)
-        await send_birthday_log(self.bot, f"/добавить-др: {interaction.user.mention} добавил дату {display}.")
+        await send_birthday_log(self.bot, interaction.guild.id, f"/добавить-др: {interaction.user.mention} добавил дату {display}.")
         await interaction.followup.send("День рождения добавлен.")
 
     @app_commands.command(name="установить-др", description="Установить день рождения участнику")
     @app_commands.describe(участник="Участник", дата="Дата рождения")
     async def set_birthday(self, interaction: discord.Interaction, участник: discord.Member, дата: str):
-        if not family_core.get_settings()["enabled"]:
-            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
+            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not family_core.has_staff_access(interaction.user):
             return await interaction.response.send_message("Нет доступа.", ephemeral=True)
 
@@ -205,28 +213,29 @@ class BirthdayCog(commands.Cog):
         family_db.save_birthday(участник.id, interaction.guild.id, day, month, display)
         await self.update_birthday_message(interaction.guild)
         await send_birthday_log(
-            self.bot, f"/установить-др: {interaction.user.mention} установил {display} для {участник.mention}."
+            self.bot, interaction.guild.id,
+            f"/установить-др: {interaction.user.mention} установил {display} для {участник.mention}.",
         )
         await interaction.followup.send("День рождения установлен.")
 
     @app_commands.command(name="удалить-др", description="Удалить день рождения")
     @app_commands.describe(участник="Участник (по умолчанию — вы сами)")
     async def delete_birthday(self, interaction: discord.Interaction, участник: discord.Member | None = None):
-        if not family_core.get_settings()["enabled"]:
-            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+        if not family_core.get_settings(interaction.guild.id)["enabled"]:
+            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
 
         target = участник or interaction.user
         if target.id != interaction.user.id and not family_core.has_staff_access(interaction.user):
             return await interaction.response.send_message("Нет доступа.", ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        deleted = family_db.delete_birthday(target.id)
+        deleted = family_db.delete_birthday(interaction.guild.id, target.id)
         await self.update_birthday_message(interaction.guild)
         if deleted:
             await send_birthday_log(
-                self.bot, f"/удалить-др: {interaction.user.mention} удалил запись {target.mention}."
+                self.bot, interaction.guild.id, f"/удалить-др: {interaction.user.mention} удалил запись {target.mention}."
             )
             await interaction.followup.send("День рождения удалён.")
         else:

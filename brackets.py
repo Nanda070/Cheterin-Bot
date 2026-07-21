@@ -6,19 +6,16 @@ from datetime import datetime, timezone
 BRACKETS_FILE = "brackets_data.json"
 
 
-def load_brackets() -> dict:
-    if os.path.exists(BRACKETS_FILE):
-        with open(BRACKETS_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
+import settings_db
+
+def load_brackets(guild_id: int) -> dict:
+    return settings_db.get(guild_id, "brackets", {})
+
     return {}
 
 
-def save_brackets(data: dict) -> None:
-    with open(BRACKETS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+def save_brackets(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, "brackets", data)
 
 
 def extract_entries_from_event(ev: dict, guild) -> list[str]:

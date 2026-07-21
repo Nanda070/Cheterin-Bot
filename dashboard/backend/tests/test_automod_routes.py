@@ -1,13 +1,16 @@
 import pytest
 
 import automod_core
+import settings_db
 from dashboard.backend.routes.automod import routes as automod_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(automod_core, "CONFIG_FILE", str(tmp_path / "automod_config.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():

@@ -47,7 +47,7 @@ describe('MafiaPage', () => {
     const updateSpy = vi.spyOn(client, 'updateMafiaSettings').mockResolvedValue(emptySettings)
     render(<MafiaPage />)
 
-    const input = await screen.findByLabelText('Ночь')
+    const input = await screen.findByLabelText(/^Ночь/)
     fireEvent.change(input, { target: { value: '90' } })
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 

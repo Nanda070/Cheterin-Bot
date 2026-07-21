@@ -14,7 +14,7 @@ MAX_ROLE_BUTTONS = 5
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
 def _is_role_assignable(role, guild) -> bool:
@@ -100,7 +100,7 @@ async def create_embed_message(request: web.Request) -> web.Response:
 @routes.get("/api/embed-templates")
 @require_dashboard_access
 async def list_embed_templates(request: web.Request) -> web.Response:
-    return web.json_response({"templates": embed_builder.list_templates()})
+    return web.json_response({"templates": embed_builder.list_templates(request["guild_id"])})
 
 
 @routes.post("/api/embed-templates")
@@ -125,7 +125,7 @@ async def create_embed_template(request: web.Request) -> web.Response:
     if error:
         return error
 
-    result = embed_builder.save_template(name.strip(), content, spec, [str(r) for r in role_ids_raw])
+    result = embed_builder.save_template(request["guild_id"], name.strip(), content, spec, [str(r) for r in role_ids_raw])
     if isinstance(result, str):
         return web.json_response({"error": result}, status=409 if result == "duplicate_name" else 400)
     return web.json_response(result, status=201)
@@ -134,7 +134,7 @@ async def create_embed_template(request: web.Request) -> web.Response:
 @routes.delete("/api/embed-templates/{template_id}")
 @require_dashboard_access
 async def delete_embed_template(request: web.Request) -> web.Response:
-    if not embed_builder.delete_template(request.match_info["template_id"]):
+    if not embed_builder.delete_template(request["guild_id"], request.match_info["template_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})
 

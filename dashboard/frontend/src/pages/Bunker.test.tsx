@@ -91,7 +91,7 @@ describe('BunkerPage', () => {
     const updateSpy = vi.spyOn(client, 'updateBunkerSettings').mockResolvedValue(emptySettings)
     render(<BunkerPage />)
 
-    const input = await screen.findByLabelText('Голосование за исключение')
+    const input = await screen.findByLabelText(/^Голосование за исключение/)
     fireEvent.change(input, { target: { value: '120' } })
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 

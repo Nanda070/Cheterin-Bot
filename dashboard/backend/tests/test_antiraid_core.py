@@ -6,17 +6,18 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import antiraid_core
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(antiraid_core, "CONFIG_FILE", str(tmp_path / "antiraid_config.json"))
-    monkeypatch.setattr(antiraid_core, "_cache", None, raising=False)
-    monkeypatch.setattr(antiraid_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_settings_disabled_by_default():
-    settings = antiraid_core.get_settings()
+    settings = antiraid_core.get_settings(404)
     assert settings["enabled"] is False
     assert settings["join_window_sec"] == 10
     assert settings["join_threshold"] == 5
@@ -27,8 +28,8 @@ def test_settings_disabled_by_default():
 
 
 def test_settings_roundtrip():
-    antiraid_core.save_config({"enabled": True, "join_threshold": 10, "action_slowmode_sec": 30})
-    settings = antiraid_core.get_settings()
+    antiraid_core.save_config(404, {"enabled": True, "join_threshold": 10, "action_slowmode_sec": 30})
+    settings = antiraid_core.get_settings(404)
     assert settings["enabled"] is True
     assert settings["join_threshold"] == 10
     assert settings["action_slowmode_sec"] == 30

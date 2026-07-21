@@ -1,7 +1,7 @@
 import pytest
 
-import economy_core
 import economy_db
+import settings_db
 from dashboard.backend.routes.economy import routes as economy_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
@@ -10,9 +10,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
     economy_db.init()
-    monkeypatch.setattr(economy_core, "CONFIG_FILE", str(tmp_path / "economy_config.json"))
-    monkeypatch.setattr(economy_core, "_cache", None, raising=False)
-    monkeypatch.setattr(economy_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():
@@ -57,7 +57,7 @@ async def test_put_roundtrip_with_shop(aiohttp_client):
         "daily_base_amount": 100,
         "daily_growth_per_day": 50,
         "daily_max_streak_days": 14,
-        "shop_items": [{"role_id": 777, "price": 1000, "name": "VIP"}],
+        "shop_items": [{"role_id": "777", "price": 1000, "name": "VIP"}],
     })
     assert resp.status == 200
     body = await resp.json()

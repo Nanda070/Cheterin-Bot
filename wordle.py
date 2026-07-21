@@ -12,6 +12,7 @@
 Модуль выключен по умолчанию, настраивается в дашборде (раздел «Развлечения»).
 """
 
+import asyncio
 import io
 import logging
 from datetime import datetime
@@ -120,7 +121,7 @@ class WordleCog(commands.Cog):
     # ────────────────────────── Доска дня ──────────────────────────
 
     async def open_daily_board(self, interaction: discord.Interaction):
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -139,7 +140,7 @@ class WordleCog(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     async def handle_daily_guess(self, interaction: discord.Interaction, raw_word: str):
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -178,7 +179,7 @@ class WordleCog(commands.Cog):
                                 states: list[str], day_no: int, finished: bool, won: bool):
         """Публичная карточка «X играет»: создаётся на первой догадке, дальше редактируется."""
         avatar = await _avatar_bytes(interaction.user)
-        png = wordle_card.render_playing_card(avatar, day_no, states)
+        png = await asyncio.to_thread(wordle_card.render_playing_card, avatar, day_no, states)
         name = interaction.user.display_name
         if finished:
             score = wordle_core.result_score_text(won, len(game["guesses"]))
@@ -197,7 +198,7 @@ class WordleCog(commands.Cog):
             except discord.HTTPException:
                 pass  # сообщение удалили — публикуем заново ниже
 
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         channel = self.bot.get_channel(int(settings["channel_id"])) if settings["channel_id"] else None
         if channel is None:
             channel = interaction.channel
@@ -242,7 +243,7 @@ class WordleCog(commands.Cog):
 
     @app_commands.command(name="вордл-тренировка", description="Тренировочный Вордл со случайным словом (без статистики)")
     async def training_command(self, interaction: discord.Interaction):
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -253,7 +254,7 @@ class WordleCog(commands.Cog):
 
     @app_commands.command(name="вордл-стата", description="Ваша статистика Вордла: победы, стрики, распределение")
     async def stats_command(self, interaction: discord.Interaction):
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -279,7 +280,7 @@ class WordleCog(commands.Cog):
 
     @app_commands.command(name="вордл-топ", description="Топ игроков сервера в Вордл")
     async def top_command(self, interaction: discord.Interaction):
-        settings = wordle_core.get_settings()
+        settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
 
@@ -307,27 +308,35 @@ class WordleCog(commands.Cog):
         # Всё тело под try/except: необработанное исключение навсегда остановило бы
         # tasks.loop (урок «Ежедневной рубрики»).
         try:
-            settings = wordle_core.get_settings()
-            if not settings["enabled"] or not settings["channel_id"]:
-                return
-            if not wordle_core.is_valid_announce_time(settings["announce_time"]):
-                return
-
-            now = datetime.now(wordle_core.MSK)
-            hour, minute = (int(p) for p in settings["announce_time"].split(":"))
-            if (now.hour, now.minute) != (hour, minute):
-                return
-
             day_no = wordle_core.day_number()
             if wordle_db.get_last_announced_day() >= day_no:
                 return
 
-            channel = self.bot.get_channel(int(settings["channel_id"]))
-            if channel is None:
-                return
+            now = datetime.now(wordle_core.MSK)
 
-            await self.post_daily_announce(channel, day_no)
-            wordle_db.set_last_announced_day(day_no)
+            for guild in self.bot.guilds:
+                settings = wordle_core.get_settings(guild.id)
+                if not settings["enabled"] or not settings["channel_id"]:
+                    continue
+                if not wordle_core.is_valid_announce_time(settings["announce_time"]):
+                    continue
+
+                hour, minute = (int(p) for p in settings["announce_time"].split(":"))
+                if (now.hour, now.minute) != (hour, minute):
+                    continue
+
+                channel = self.bot.get_channel(int(settings["channel_id"]))
+                if channel is None:
+                    continue
+
+                try:
+                    await self.post_daily_announce(channel, day_no)
+                    # Глобальный (не per-guild) трекер — как и раньше, пока бот работает на
+                    # одном сервере. С несколькими серверами и разным announce_time это
+                    # потребует per-guild отметки (Фаза 2.2/2.4 MULTIGUILD_PLAN.md).
+                    wordle_db.set_last_announced_day(day_no)
+                except Exception:
+                    logger.exception("announce_loop: не удалось опубликовать анонс для guild %s", guild.id)
         except Exception:
             logger.exception("announce_loop: ошибка итерации — цикл продолжает работать")
 
@@ -373,7 +382,8 @@ class WordleCog(commands.Cog):
                     "states_rows": [wordle_core.evaluate(g, answer) for g in game["guesses"]],
                 })
             try:
-                file = _card_file(wordle_card.render_summary_card(yesterday, players))
+                png = await asyncio.to_thread(wordle_card.render_summary_card, yesterday, players)
+                file = _card_file(png)
             except Exception:
                 logger.exception("Не удалось отрисовать сводную карточку Вордла")
 

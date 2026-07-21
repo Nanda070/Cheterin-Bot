@@ -12,7 +12,7 @@ routes = web.RouteTableDef()
 
 
 def _get_guild_or_none(request):
-    return request.app["bot"].get_guild(request.app["guild_id"])
+    return request.app["bot"].get_guild(request["guild_id"])
 
 
 def _is_role_assignable(role, guild) -> bool:
@@ -26,7 +26,7 @@ def serialize_entry(message_id: str, entry: dict) -> dict:
 @routes.get("/api/reaction-roles")
 @require_dashboard_access
 async def list_reaction_roles(request: web.Request) -> web.Response:
-    config = reaction_roles.load_config()
+    config = reaction_roles.load_config(request["guild_id"])
     return web.json_response(
         {"reaction_roles": [serialize_entry(mid, entry) for mid, entry in config.items()]}
     )
@@ -98,9 +98,9 @@ async def create_reaction_role(request: web.Request) -> web.Response:
     if error:
         return error
 
-    config = reaction_roles.load_config()
+    config = reaction_roles.load_config(request["guild_id"])
     config[str(message_id)] = {"channel_id": str(channel_id), "pairs": pairs}
-    reaction_roles.save_config(config)
+    reaction_roles.save_config(request["guild_id"], config)
 
     for pair in pairs:
         try:
@@ -120,7 +120,7 @@ async def update_reaction_role(request: web.Request) -> web.Response:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
     message_id_raw = request.match_info["message_id"]
-    config = reaction_roles.load_config()
+    config = reaction_roles.load_config(request["guild_id"])
     entry = config.get(message_id_raw)
     if entry is None:
         return web.json_response({"error": "not_found"}, status=404)
@@ -143,7 +143,7 @@ async def update_reaction_role(request: web.Request) -> web.Response:
         message = await channel.fetch_message(int(message_id_raw))
     except discord.NotFound:
         del config[message_id_raw]
-        reaction_roles.save_config(config)
+        reaction_roles.save_config(request["guild_id"], config)
         return web.json_response({"error": "message_not_found"}, status=404)
     except discord.HTTPException:
         return web.json_response({"error": "discord_error"}, status=502)
@@ -169,7 +169,7 @@ async def update_reaction_role(request: web.Request) -> web.Response:
             continue
 
     config[message_id_raw] = {"channel_id": entry["channel_id"], "pairs": pairs}
-    reaction_roles.save_config(config)
+    reaction_roles.save_config(request["guild_id"], config)
 
     return web.json_response(serialize_entry(message_id_raw, config[message_id_raw]))
 
@@ -178,7 +178,7 @@ async def update_reaction_role(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def delete_reaction_role(request: web.Request) -> web.Response:
     message_id_raw = request.match_info["message_id"]
-    config = reaction_roles.load_config()
+    config = reaction_roles.load_config(request["guild_id"])
     entry = config.get(message_id_raw)
     if entry is None:
         return web.json_response({"error": "not_found"}, status=404)
@@ -203,7 +203,7 @@ async def delete_reaction_role(request: web.Request) -> web.Response:
                 pass
 
     del config[message_id_raw]
-    reaction_roles.save_config(config)
+    reaction_roles.save_config(request["guild_id"], config)
     return web.json_response({"ok": True})
 
 

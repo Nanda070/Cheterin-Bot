@@ -22,6 +22,7 @@ from .routes.embed_builder import routes as embed_builder_routes
 from .routes.feedback import routes as feedback_routes
 from .routes.events import routes as events_routes
 from .routes.config import routes as config_routes
+from .routes.ctd import routes as ctd_routes
 from .routes.welcome import routes as welcome_routes
 from .routes.auto_roles import routes as auto_roles_routes
 from .routes.supply import routes as supply_routes
@@ -47,6 +48,7 @@ from .routes.casino import routes as casino_routes
 from .routes.antiraid import routes as antiraid_routes
 from .routes.verification import routes as verification_routes
 from .audit_middleware import audit_middleware
+from .guild_context import guild_context_middleware
 from .session import setup_session
 from .static import setup_static_routes
 
@@ -77,10 +79,10 @@ def create_app(
     warns_db.db_init()
     bunker_db.init()
 
-    app = web.Application(middlewares=[json_error_middleware, audit_middleware])
+    app = web.Application(middlewares=[json_error_middleware, guild_context_middleware, audit_middleware])
     app["bot"] = bot
     app["dashboard_config"] = config
-    app["guild_id"] = guild_id
+    app["guild_id"] = guild_id  # мейн-сервер: дефолт для guild_context и публичных роутов
     app["http_session"] = aiohttp.ClientSession()
     setup_session(app, config.session_secret)
     app.add_routes(auth_routes)
@@ -92,6 +94,7 @@ def create_app(
     app.add_routes(feedback_routes)
     app.add_routes(events_routes)
     app.add_routes(config_routes)
+    app.add_routes(ctd_routes)
     app.add_routes(welcome_routes)
     app.add_routes(auto_roles_routes)
     app.add_routes(supply_routes)

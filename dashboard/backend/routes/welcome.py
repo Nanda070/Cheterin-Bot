@@ -12,8 +12,8 @@ routes = web.RouteTableDef()
 async def get_welcome_settings(request: web.Request) -> web.Response:
     return web.json_response(
         {
-            "channel_enabled": bool(bot_config.get("WELCOME_CHANNEL_ENABLED", True)),
-            "dm_enabled": bool(bot_config.get("WELCOME_DM_ENABLED", True)),
+            "channel_enabled": bool(bot_config.get(request["guild_id"], "WELCOME_CHANNEL_ENABLED", True)),
+            "dm_enabled": bool(bot_config.get(request["guild_id"], "WELCOME_DM_ENABLED", True)),
         }
     )
 
@@ -33,9 +33,9 @@ async def update_welcome_settings(request: web.Request) -> web.Response:
     if not isinstance(channel_enabled, bool) or not isinstance(dm_enabled, bool):
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    data = bot_config.load_config()
+    data = bot_config.load_config(request["guild_id"])
     data["WELCOME_CHANNEL_ENABLED"] = channel_enabled
     data["WELCOME_DM_ENABLED"] = dm_enabled
-    bot_config.save_config(data)
+    bot_config.save_config(request["guild_id"], data)
 
     return web.json_response({"channel_enabled": channel_enabled, "dm_enabled": dm_enabled})

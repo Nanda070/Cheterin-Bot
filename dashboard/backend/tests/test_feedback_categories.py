@@ -1,11 +1,16 @@
 import pytest
 
 import feedback_categories
+import settings_db
+
+GUILD_ID = 404
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(feedback_categories, "CONFIG_FILE", str(tmp_path / "feedback_categories.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def _valid_spec(key="players", case_prefix="PR"):
@@ -29,13 +34,13 @@ def _valid_spec(key="players", case_prefix="PR"):
 
 
 def test_load_categories_returns_empty_dict_when_file_missing():
-    assert feedback_categories.load_categories() == {}
+    assert feedback_categories.load_categories(GUILD_ID) == {}
 
 
 def test_save_then_load_round_trip():
     data = {"players": {"title": "X"}}
-    feedback_categories.save_categories(data)
-    assert feedback_categories.load_categories() == data
+    feedback_categories.save_categories(GUILD_ID, data)
+    assert feedback_categories.load_categories(GUILD_ID) == data
 
 
 def test_validate_category_spec_accepts_valid_spec():
@@ -111,8 +116,8 @@ def test_validate_category_spec_rejects_invalid_field_style():
 def test_migrate_from_env_if_needed_creates_config_from_env(monkeypatch):
     monkeypatch.setenv("CHANNEL_COMPLAINT_PLAY", "500")
     monkeypatch.setenv("ROLE_PLAYERS", "111")
-    feedback_categories.migrate_from_env_if_needed()
-    categories = feedback_categories.load_categories()
+    feedback_categories.migrate_from_env_if_needed(GUILD_ID)
+    categories = feedback_categories.load_categories(GUILD_ID)
     assert "players" in categories
     assert categories["players"]["channel_id"] == "500"
     assert categories["players"]["case_prefix"] == "PR"
@@ -121,12 +126,12 @@ def test_migrate_from_env_if_needed_creates_config_from_env(monkeypatch):
 def test_migrate_from_env_if_needed_skips_when_file_already_exists(monkeypatch):
     monkeypatch.setenv("CHANNEL_COMPLAINT_PLAY", "500")
     monkeypatch.setenv("ROLE_PLAYERS", "111")
-    feedback_categories.save_categories({"existing": {"case_prefix": "EX"}})
-    feedback_categories.migrate_from_env_if_needed()
-    categories = feedback_categories.load_categories()
+    feedback_categories.save_categories(GUILD_ID, {"existing": {"case_prefix": "EX"}})
+    feedback_categories.migrate_from_env_if_needed(GUILD_ID)
+    categories = feedback_categories.load_categories(GUILD_ID)
     assert categories == {"existing": {"case_prefix": "EX"}}
 
 
 def test_migrate_from_env_if_needed_skips_when_env_vars_missing():
-    feedback_categories.migrate_from_env_if_needed()
-    assert feedback_categories.load_categories() == {}
+    feedback_categories.migrate_from_env_if_needed(GUILD_ID)
+    assert feedback_categories.load_categories(GUILD_ID) == {}

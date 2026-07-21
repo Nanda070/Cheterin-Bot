@@ -37,12 +37,13 @@ def _serialize_supply(supply: dict, guild) -> dict:
 @routes.get("/api/supply")
 @require_dashboard_access
 async def supply_overview(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
-    active = [_serialize_supply(s, guild) for s in supply_core.list_active()]
-    history = [_serialize_supply(s, guild) for s in supply_core.list_history()]
+    guild_id = request["guild_id"]
+    guild = request.app["bot"].get_guild(guild_id)
+    active = [_serialize_supply(s, guild) for s in supply_core.list_active(guild_id)]
+    history = [_serialize_supply(s, guild) for s in supply_core.list_history(guild_id)]
     stats = [
         {"user_id": row["user_id"], "display": _display_name(guild, row["user_id"]), "count": row["count"]}
-        for row in supply_core.get_stats()
+        for row in supply_core.get_stats(guild_id)
     ]
     return web.json_response({"active": active, "history": history, "stats": stats})
 
@@ -51,7 +52,7 @@ async def supply_overview(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def supply_create(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -90,7 +91,7 @@ async def supply_create(request: web.Request) -> web.Response:
         return web.json_response({"error": "channel_not_messageable"}, status=400)
 
     moderator = request["moderator"]
-    supply = await cog.publish_supply(channel, moderator.id, opponent.strip(), limit, time_str)
+    supply = await cog.publish_supply(request["guild_id"], channel, moderator.id, opponent.strip(), limit, time_str)
     return web.json_response(_serialize_supply(supply, guild), status=201)
 
 
@@ -100,12 +101,13 @@ async def _finalize(request: web.Request, status: str, reason: str) -> web.Respo
     if cog is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
+    guild_id = request["guild_id"]
     supply_id = request.match_info["supply_id"]
-    if supply_core.get_supply(supply_id) is None:
+    if supply_core.get_supply(guild_id, supply_id) is None:
         return web.json_response({"error": "not_found"}, status=404)
 
     moderator = request["moderator"]
-    ok = await cog.finalize_supply(supply_id, reason=f"{reason} через дашборд ({moderator.display_name})", status=status)
+    ok = await cog.finalize_supply(guild_id, supply_id, reason=f"{reason} через дашборд ({moderator.display_name})", status=status)
     if not ok:
         return web.json_response({"error": "not_active"}, status=409)
     return web.json_response({"ok": True})

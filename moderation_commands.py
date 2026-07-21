@@ -88,7 +88,7 @@ class ModerationCommandsCog(commands.Cog):
     # ────────────────────────── Журнал действий ──────────────────────────
 
     async def _log_action(
-        self, title: str, target_id: int, target_name: str, moderator: discord.abc.User,
+        self, guild_id: int, title: str, target_id: int, target_name: str, moderator: discord.abc.User,
         reason: str, extra: str = "", event_type: str = "",
     ):
         embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=discord.utils.utcnow())
@@ -98,11 +98,11 @@ class ModerationCommandsCog(commands.Cog):
         if extra:
             embed.add_field(name="Дополнительно", value=extra, inline=False)
         embed.set_footer(text="Модерация · Команда")
-        await self.bot.send_log(embed)
+        await self.bot.send_log(guild_id, embed)
         if event_type:
             moderation_log.append_event(
-                event_type, target_id, target_name, reason,
-                moderator_id=moderator.id, moderator_display=moderator.name, extra=extra,
+                guild_id, event_type, target_id, target_name,
+                str(moderator.id), moderator.name, reason,
             )
 
     # ────────────────────────── /ban ──────────────────────────
@@ -148,7 +148,7 @@ class ModerationCommandsCog(commands.Cog):
             duration_display = moderation_commands_core.format_duration(time_str)
 
         await self._log_action(
-            "🔨 Бан (команда)", user.id, user.name, interaction.user, reason_text,
+            interaction.guild.id, "🔨 Бан (команда)", user.id, user.name, interaction.user, reason_text,
             extra=f"Срок: {duration_display}", event_type="command_ban",
         )
         await interaction.followup.send(
@@ -176,7 +176,7 @@ class ModerationCommandsCog(commands.Cog):
             return await interaction.followup.send(f"Не удалось кикнуть: {exc}", ephemeral=True)
 
         await self._log_action(
-            "👢 Кик (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_kick"
+            interaction.guild.id, "👢 Кик (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_kick"
         )
         await interaction.followup.send(f"✅ {user.mention} кикнут. Причина: {reason_text}", ephemeral=True)
 
@@ -214,7 +214,7 @@ class ModerationCommandsCog(commands.Cog):
 
         duration_display = moderation_commands_core.format_duration(time_str)
         await self._log_action(
-            "🔇 Таймаут (команда)", user.id, user.name, interaction.user, reason_text,
+            interaction.guild.id, "🔇 Таймаут (команда)", user.id, user.name, interaction.user, reason_text,
             extra=f"Срок: {duration_display}", event_type="command_mute",
         )
         await interaction.followup.send(
@@ -244,7 +244,7 @@ class ModerationCommandsCog(commands.Cog):
             return await interaction.followup.send(f"Не удалось снять таймаут: {exc}", ephemeral=True)
 
         await self._log_action(
-            "🔊 Снятие таймаута (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_unmute"
+            interaction.guild.id, "🔊 Снятие таймаута (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_unmute"
         )
         await interaction.followup.send(f"✅ Таймаут с {user.mention} снят. Причина: {reason_text}", ephemeral=True)
 
@@ -279,7 +279,7 @@ class ModerationCommandsCog(commands.Cog):
         self._cancel_scheduled_unban(interaction.guild.id, user_id)
 
         await self._log_action(
-            "🔓 Разбан (команда)", target.id, target.name, interaction.user, reason_text, event_type="command_unban"
+            interaction.guild.id, "🔓 Разбан (команда)", target.id, target.name, interaction.user, reason_text, event_type="command_unban"
         )
         await interaction.followup.send(f"✅ {target} (`{target.id}`) разбанен. Причина: {reason_text}", ephemeral=True)
 
@@ -307,7 +307,7 @@ class ModerationCommandsCog(commands.Cog):
             return await interaction.followup.send(f"Не удалось удалить сообщения: {exc}", ephemeral=True)
 
         await self._log_action(
-            "🧹 Очистка чата (команда)", interaction.user.id, interaction.user.name, interaction.user,
+            interaction.guild.id, "🧹 Очистка чата (команда)", interaction.user.id, interaction.user.name, interaction.user,
             f"Удалено сообщений: {len(deleted)}", extra=f"Канал: {channel.mention}", event_type="command_clear",
         )
         await interaction.followup.send(f"✅ Удалено сообщений: **{len(deleted)}**.", ephemeral=True)

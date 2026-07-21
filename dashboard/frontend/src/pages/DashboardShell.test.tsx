@@ -112,6 +112,57 @@ describe('DashboardShell', () => {
     expect(screen.queryByText('Супер-админ')).not.toBeInTheDocument()
   })
 
+  it('shows the CTD entry only when the main guild is active', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: false,
+      is_main_guild: true,
+      active_guild_id: '1',
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/members']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/members" element={<DashboardShell />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText('Тикеты CTD')).toBeInTheDocument()
+  })
+
+  it('hides the CTD entry when a non-main guild is active', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: false,
+      is_main_guild: false,
+      active_guild_id: '2',
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/members']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/members" element={<DashboardShell />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('Модерация')
+    expect(screen.queryByText('Тикеты CTD')).not.toBeInTheDocument()
+  })
+
   it('shows the super-admin nav group for a super admin', async () => {
     vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
       id: '1',

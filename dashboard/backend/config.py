@@ -23,7 +23,6 @@ REQUIRED_KEYS = (
     "DISCORD_CLIENT_SECRET",
     "DISCORD_OAUTH_REDIRECT_URI",
     "SESSION_SECRET",
-    "DASHBOARD_ACCESS_ROLE_IDS",
 )
 
 
@@ -39,13 +38,14 @@ def load_dashboard_config(env: dict) -> DashboardConfig:
             f"DASHBOARD_PORT must be an integer, got {env['DASHBOARD_PORT']!r}"
         ) from exc
 
+    # Фаза 2.3: доступ = Manage Server на выбранном сервере. DASHBOARD_ACCESS_ROLE_IDS
+    # больше не обязателен; если задан — работает как дополнительный (переходный)
+    # грант по роли на активном сервере.
     role_ids = frozenset(
         role_id.strip()
-        for role_id in env["DASHBOARD_ACCESS_ROLE_IDS"].split(",")
+        for role_id in env.get("DASHBOARD_ACCESS_ROLE_IDS", "").split(",")
         if role_id.strip()
     )
-    if not role_ids:
-        raise ConfigError("DASHBOARD_ACCESS_ROLE_IDS must contain at least one role id")
 
     session_secret = env["SESSION_SECRET"]
     if len(session_secret) < 32:

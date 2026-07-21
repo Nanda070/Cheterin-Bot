@@ -45,5 +45,9 @@ antiraid_config.json
 verification_config.json
 giveaways_data.json
 embed_templates.json
+casino.db
+settings.db
+test_settings.db
+*.migrated.bak
 venv/
 .env 

@@ -1,53 +1,25 @@
-import json
 import logging
 import os
 
 import discord
 from discord.ext import commands
 
+import settings_db
+
 logger = logging.getLogger("news-relay")
 
-CONFIG_FILE = "news_relay.json"
+MODULE_NAME = "news"
 
 MAX_LOG_LENGTH = 2600
 
 
-# Кэш конфига: on_message вызывается на каждое сообщение сервера,
-# поэтому файл перечитывается только когда изменился на диске.
-_cache: dict | None = None
-_cache_mtime: float | None = None
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Настройки ретрансляции с дефолтами."""
-    data = load_config()
+def get_settings(guild_id: int) -> dict:
+    """Настройки ретрансляции сервера с дефолтами."""
+    data = settings_db.get(guild_id, MODULE_NAME)
     return {
         "enabled": bool(data.get("enabled", True)),
         "source_guild_id": str(data.get("source_guild_id") or ""),
@@ -64,9 +36,9 @@ def get_settings() -> dict:
     }
 
 
-def get_channel_map() -> dict[int, int]:
+def get_channel_map(guild_id: int) -> dict[int, int]:
     result = {}
-    for m in get_settings()["mappings"]:
+    for m in get_settings(guild_id)["mappings"]:
         try:
             result[int(m["source_channel_id"])] = int(m["target_channel_id"])
         except (TypeError, ValueError):
@@ -83,13 +55,20 @@ def make_embed(title: str, description: str, color: int) -> discord.Embed:
     return embed
 
 
+def _main_guild_id() -> int:
+    """Ретрансляция — функция мейн-сервера (Фаза 2b MULTIGUILD_PLAN.md): слушает
+    источники на любых серверах, публикует только в целевые каналы мейна. Настройки
+    привязаны к мейн-серверу; id резолвится единообразно с main.get_main_guild_id()."""
+    return int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
+
+
 class NewsRelay(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def send_log(self, title: str, description: str, color: int):
         """Отправляет лог-сообщение в лог-канал ретрансляции и выводит его в консоль."""
-        settings = get_settings()
+        settings = get_settings(_main_guild_id())
         raw = settings["log_channel_id"]
         if raw:
             embed = make_embed(title, description, color)
@@ -105,7 +84,7 @@ class NewsRelay(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         try:
-            settings = get_settings()
+            settings = get_settings(_main_guild_id())
             if not settings["enabled"]:
                 return
 
@@ -122,7 +101,7 @@ class NewsRelay(commands.Cog):
                 return
 
             # Проверяем, что канал есть в channel_map
-            channel_map = get_channel_map()
+            channel_map = get_channel_map(_main_guild_id())
             if message.channel.id not in channel_map:
                 return
 

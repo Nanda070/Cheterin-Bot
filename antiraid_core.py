@@ -10,12 +10,12 @@
 и, опционально, slowmode в текстовых каналах.
 """
 
-import json
-import os
 from collections import deque
 from datetime import datetime, timezone
 
-CONFIG_FILE = "antiraid_config.json"
+import settings_db
+
+MODULE_NAME = "antiraid"
 
 DEFAULT_JOIN_WINDOW_SEC = 10
 DEFAULT_JOIN_THRESHOLD = 5
@@ -30,43 +30,14 @@ ACCOUNT_AGE_HOURS_MAX = 8760  # год
 SLOWMODE_SEC_MAX = 21600      # лимит Discord на slowmode — 6 часов
 COOLDOWN_MINUTES_MAX = 1440
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    tmp_path = CONFIG_FILE + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.replace(tmp_path, CONFIG_FILE)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Настройки модуля с дефолтами. enabled=False по умолчанию — модуль не
+def get_settings(guild_id: int) -> dict:
+    """Настройки модуля сервера с дефолтами. enabled=False по умолчанию — модуль не
     активен, пока администратор явно не включит его в дашборде."""
-    data = load_config()
+    data = settings_db.get(guild_id, MODULE_NAME)
     return {
         "enabled": bool(data.get("enabled", False)),
         "join_window_sec": int(data.get("join_window_sec", DEFAULT_JOIN_WINDOW_SEC)),

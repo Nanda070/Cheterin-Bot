@@ -3,58 +3,60 @@
 import pytest
 
 import casino_core
+import settings_db
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(casino_core, "CONFIG_FILE", str(tmp_path / "casino_config.json"))
-    monkeypatch.setattr(casino_core, "_cache", None, raising=False)
-    monkeypatch.setattr(casino_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def test_settings_defaults():
-    settings = casino_core.get_settings()
+    settings = casino_core.get_settings(404)
     assert settings == {
         "enabled": False,
         "house_edge_percent": 5,
         "cooldown_sec": 5,
         "min_bet": 10,
         "max_bet": 5000,
+        "loss_roles": [],
     }
 
 
 def test_settings_roundtrip():
-    casino_core.save_config({"enabled": True, "house_edge_percent": 10, "min_bet": 50, "max_bet": 0})
-    settings = casino_core.get_settings()
+    casino_core.save_config(404,{"enabled": True, "house_edge_percent": 10, "min_bet": 50, "max_bet": 0})
+    settings = casino_core.get_settings(404)
     assert settings["enabled"] is True
     assert settings["house_edge_percent"] == 10
     assert settings["max_bet"] == 0  # 0 — без лимита
 
 
 def test_bet_error_below_min():
-    settings = casino_core.get_settings()
+    settings = casino_core.get_settings(404)
     assert "Минимальная" in casino_core.bet_error(1, 1000, settings)
 
 
 def test_bet_error_above_max():
-    casino_core.save_config({"enabled": True, "max_bet": 100})
-    settings = casino_core.get_settings()
+    casino_core.save_config(404,{"enabled": True, "max_bet": 100})
+    settings = casino_core.get_settings(404)
     assert "Максимальная" in casino_core.bet_error(200, 1000, settings)
 
 
 def test_bet_error_unlimited_when_max_zero():
-    casino_core.save_config({"enabled": True, "max_bet": 0})
-    settings = casino_core.get_settings()
+    casino_core.save_config(404,{"enabled": True, "max_bet": 0})
+    settings = casino_core.get_settings(404)
     assert casino_core.bet_error(999999, 1000000, settings) is None
 
 
 def test_bet_error_insufficient_funds():
-    settings = casino_core.get_settings()
+    settings = casino_core.get_settings(404)
     assert "Недостаточно" in casino_core.bet_error(50, 10, settings)
 
 
 def test_bet_error_ok():
-    settings = casino_core.get_settings()
+    settings = casino_core.get_settings(404)
     assert casino_core.bet_error(50, 1000, settings) is None
 
 

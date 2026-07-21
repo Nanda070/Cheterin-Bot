@@ -19,7 +19,7 @@ async def streams_list(request: web.Request) -> web.Response:
     cog = request.app["bot"].get_cog("Streams")
     return web.json_response({
         "twitch_configured": bool(cog and cog.twitch_configured()),
-        "subscriptions": [_public_sub(s) for s in streams.get_subscriptions()],
+        "subscriptions": [_public_sub(s) for s in streams.get_subscriptions(request["guild_id"])],
     })
 
 
@@ -58,11 +58,12 @@ async def streams_create(request: web.Request) -> web.Response:
     if resolved is None:
         return web.json_response({"error": "channel_not_found"}, status=404)
 
-    existing = [s for s in streams.get_subscriptions() if s["platform"] == platform and s["identifier"] == resolved["identifier"]]
+    guild_id = request["guild_id"]
+    existing = [s for s in streams.get_subscriptions(guild_id) if s["platform"] == platform and s["identifier"] == resolved["identifier"]]
     if existing:
         return web.json_response({"error": "already_subscribed"}, status=409)
 
-    sub = streams.add_subscription({
+    sub = streams.add_subscription(guild_id, {
         "platform": platform,
         "identifier": resolved["identifier"],
         "display_name": resolved["display_name"],
@@ -116,7 +117,7 @@ async def streams_update(request: web.Request) -> web.Response:
                 return web.json_response({"error": "invalid_interval"}, status=400)
         fields[key] = value
 
-    updated = streams.update_subscription(sub_id, **fields)
+    updated = streams.update_subscription(request["guild_id"], sub_id, **fields)
     if updated is None:
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response(_public_sub({**updated}))
@@ -125,6 +126,6 @@ async def streams_update(request: web.Request) -> web.Response:
 @routes.delete("/api/streams/{sub_id}")
 @require_dashboard_access
 async def streams_delete(request: web.Request) -> web.Response:
-    if not streams.delete_subscription(request.match_info["sub_id"]):
+    if not streams.delete_subscription(request["guild_id"], request.match_info["sub_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})

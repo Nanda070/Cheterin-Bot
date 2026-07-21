@@ -4,6 +4,7 @@ import pytest
 
 import economy_core
 import economy_db
+import settings_db
 from economy import EconomyCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
 
@@ -12,9 +13,9 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRo
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
     economy_db.init()
-    monkeypatch.setattr(economy_core, "CONFIG_FILE", str(tmp_path / "economy_config.json"))
-    monkeypatch.setattr(economy_core, "_cache", None, raising=False)
-    monkeypatch.setattr(economy_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 class FakeResponse:
@@ -26,6 +27,7 @@ class FakeResponse:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild):
         self.user = user
         self.guild = guild
@@ -33,10 +35,10 @@ class FakeInteraction:
 
 
 def build(enabled=True, **extra):
-    economy_core.save_config({"enabled": enabled, **extra})
     player = FakeMember(20, name="player", display_name="Player")
     friend = FakeMember(21, name="friend", display_name="Friend")
     guild = FakeGuild(members=[player, friend])
+    economy_core.save_config(guild.id, {"enabled": enabled, **extra})
     bot = FakeBot(guild)
     cog = EconomyCog(bot)
     return cog, guild, player, friend
@@ -268,7 +270,7 @@ async def test_shop_empty():
 @pytest.mark.asyncio
 async def test_shop_lists_items_with_buttons():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config())
+    economy_core.save_config(guild.id, shop_config())
     guild.roles.append(FakeRole(777, name="VIP"))
     interaction = FakeInteraction(player, guild)
 
@@ -282,7 +284,7 @@ async def test_shop_lists_items_with_buttons():
 @pytest.mark.asyncio
 async def test_purchase_success_assigns_role_and_spends():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config(price=100))
+    economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
     economy_db.add(player.id, 150, "seed")
     interaction = FakeInteraction(player, guild)
@@ -297,7 +299,7 @@ async def test_purchase_success_assigns_role_and_spends():
 @pytest.mark.asyncio
 async def test_purchase_insufficient_funds():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config(price=100))
+    economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
     economy_db.add(player.id, 10, "seed")
     interaction = FakeInteraction(player, guild)
@@ -312,7 +314,7 @@ async def test_purchase_insufficient_funds():
 @pytest.mark.asyncio
 async def test_purchase_refunds_on_role_failure():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config(price=100))
+    economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
     economy_db.add(player.id, 150, "seed")
     import discord
@@ -329,7 +331,7 @@ async def test_purchase_refunds_on_role_failure():
 @pytest.mark.asyncio
 async def test_purchase_already_owned():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config())
+    economy_core.save_config(guild.id, shop_config())
     vip = FakeRole(777, name="VIP")
     guild.roles.append(vip)
     player.roles.append(vip)
@@ -345,7 +347,7 @@ async def test_purchase_already_owned():
 @pytest.mark.asyncio
 async def test_purchase_unknown_item():
     cog, guild, player, friend = build()
-    economy_core.save_config(shop_config())
+    economy_core.save_config(guild.id, shop_config())
     interaction = FakeInteraction(player, guild)
     await cog.handle_purchase(interaction, "nope")
     assert "убрали" in interaction.response.messages[0]["content"]
@@ -366,7 +368,7 @@ def cosmetics_shop_config():
 @pytest.mark.asyncio
 async def test_purchase_frame_color_grants_cosmetic():
     cog, guild, player, friend = build()
-    economy_core.save_config(cosmetics_shop_config())
+    economy_core.save_config(guild.id, cosmetics_shop_config())
     economy_db.add(player.id, 200, "seed")
     interaction = FakeInteraction(player, guild)
 
@@ -381,7 +383,7 @@ async def test_purchase_frame_color_grants_cosmetic():
 @pytest.mark.asyncio
 async def test_purchase_title_grants_cosmetic():
     cog, guild, player, friend = build()
-    economy_core.save_config(cosmetics_shop_config())
+    economy_core.save_config(guild.id, cosmetics_shop_config())
     economy_db.add(player.id, 300, "seed")
     interaction = FakeInteraction(player, guild)
 
@@ -393,7 +395,7 @@ async def test_purchase_title_grants_cosmetic():
 @pytest.mark.asyncio
 async def test_purchase_cosmetic_already_owned():
     cog, guild, player, friend = build()
-    economy_core.save_config(cosmetics_shop_config())
+    economy_core.save_config(guild.id, cosmetics_shop_config())
     economy_db.add(player.id, 1000, "seed")
     interaction = FakeInteraction(player, guild)
 
@@ -408,7 +410,7 @@ async def test_purchase_cosmetic_already_owned():
 @pytest.mark.asyncio
 async def test_purchase_cosmetic_insufficient_funds():
     cog, guild, player, friend = build()
-    economy_core.save_config(cosmetics_shop_config())
+    economy_core.save_config(guild.id, cosmetics_shop_config())
     economy_db.add(player.id, 10, "seed")
     interaction = FakeInteraction(player, guild)
 

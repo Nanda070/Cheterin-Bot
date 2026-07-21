@@ -6,18 +6,17 @@
 игнорируемые каналы/роли, множители.
 """
 
-import json
-import os
 import re
 from datetime import date, datetime, timedelta, timezone
 
 import economy_db
+import settings_db
 
 COLOR_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 SHOP_ITEM_TYPES = ("role", "frame_color", "title")
 TITLE_TEXT_MAX = 30
 
-CONFIG_FILE = "economy_config.json"
+MODULE_NAME = "economy"
 
 DEFAULT_CURRENCY_NAME = "монеты"
 DEFAULT_CURRENCY_EMOJI = "🪙"
@@ -41,37 +40,8 @@ DAILY_STREAK_DAYS_MAX = 365
 
 _MSK = timezone(timedelta(hours=3))
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
-
-
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    tmp_path = CONFIG_FILE + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.replace(tmp_path, CONFIG_FILE)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
 def _normalize_shop_item(item: dict) -> dict:
@@ -92,9 +62,9 @@ def _normalize_shop_item(item: dict) -> dict:
     }
 
 
-def get_settings() -> dict:
-    """Настройки модуля с дефолтами (выключен по умолчанию)."""
-    data = load_config()
+def get_settings(guild_id: int) -> dict:
+    """Настройки модуля сервера с дефолтами (выключен по умолчанию)."""
+    data = settings_db.get(guild_id, MODULE_NAME)
     return {
         "enabled": bool(data.get("enabled", False)),
         "currency_name": str(data.get("currency_name", DEFAULT_CURRENCY_NAME)),
@@ -113,8 +83,7 @@ def get_settings() -> dict:
     }
 
 
-def format_amount(amount: int, settings: dict | None = None) -> str:
-    settings = settings or get_settings()
+def format_amount(amount: int, settings: dict) -> str:
     return f"{amount} {settings['currency_emoji']}"
 
 
@@ -125,13 +94,13 @@ def coins_from_xp(xp_amount: int, rate_percent: int) -> int:
     return xp_amount * rate_percent // 100
 
 
-def award_for_xp(user_id: int, xp_amount: int, kind: str) -> int:
+def award_for_xp(guild_id: int, user_id: int, xp_amount: int, kind: str) -> int:
     """Хук из xp.py: начислить монеты за только что выданный XP.
 
     kind — "text" или "voice". Возвращает начисленную сумму (0, если модуль
     выключен или по курсу вышло 0).
     """
-    settings = get_settings()
+    settings = get_settings(guild_id)
     if not settings["enabled"]:
         return 0
     rate = settings["text_rate_percent"] if kind == "text" else settings["voice_rate_percent"]
@@ -179,14 +148,14 @@ def daily_bonus_amount(streak: int, settings: dict) -> int:
     return settings["daily_base_amount"] + settings["daily_growth_per_day"] * (effective_day - 1)
 
 
-def claim_daily_bonus(user_id: int, today: str | None = None) -> dict:
+def claim_daily_bonus(guild_id: int, user_id: int, today: str | None = None) -> dict:
     """Забрать бонус за сегодня. Стрик продолжается, если предыдущий клейм был
     вчера; пропуск дня (или первый визит) начинает стрик заново с 1.
 
     today — только для тестов; в бою всегда берётся реальная дата по МСК.
     """
     today = today or today_msk_date()
-    settings = get_settings()
+    settings = get_settings(guild_id)
     state = economy_db.get_daily_bonus(user_id)
 
     if state["last_claim_date"] == today:

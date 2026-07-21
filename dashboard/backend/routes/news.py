@@ -2,15 +2,15 @@ from aiohttp import web
 
 import news
 
-from ..access_middleware import require_dashboard_access
+from ..access_middleware import require_super_admin
 
 routes = web.RouteTableDef()
 
 
 @routes.get("/api/news")
-@require_dashboard_access
+@require_super_admin
 async def news_get(request: web.Request) -> web.Response:
-    return web.json_response(news.get_settings())
+    return web.json_response(news.get_settings(request["guild_id"]))
 
 
 def _is_id_like(value) -> bool:
@@ -22,8 +22,13 @@ def _is_id_like(value) -> bool:
 
 
 @routes.put("/api/news")
-@require_dashboard_access
+@require_super_admin
 async def news_put(request: web.Request) -> web.Response:
+    bot = request.app["bot"]
+    main_guild = bot.get_guild(request["guild_id"])
+    if main_guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
     try:
         body = await request.json()
     except ValueError:
@@ -45,6 +50,9 @@ async def news_put(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_source_bot_ids"}, status=400)
     if not _is_id_like(log_channel_id):
         return web.json_response({"error": "invalid_log_channel_id"}, status=400)
+    # Лог-канал (как и целевые) обязан быть каналом мейн-сервера.
+    if log_channel_id and main_guild.get_channel(int(log_channel_id)) is None:
+        return web.json_response({"error": "log_channel_id_not_found"}, status=404)
 
     if not isinstance(mappings, list):
         return web.json_response({"error": "invalid_mappings"}, status=400)
@@ -60,6 +68,9 @@ async def news_put(request: web.Request) -> web.Response:
             return web.json_response({"error": "invalid_mappings"}, status=400)
         if not isinstance(label, str):
             return web.json_response({"error": "invalid_mappings"}, status=400)
+        # Источник — на любом сервере (не валидируем), а цель обязана быть каналом мейна.
+        if main_guild.get_channel(int(target)) is None:
+            return web.json_response({"error": "target_channel_not_found"}, status=404)
         if source in seen_sources:
             return web.json_response({"error": "duplicate_source_channel"}, status=400)
         seen_sources.add(source)
@@ -69,11 +80,12 @@ async def news_put(request: web.Request) -> web.Response:
             "label": label.strip(),
         })
 
-    news.save_config({
+    guild_id = request["guild_id"]
+    news.save_config(guild_id, {
         "enabled": enabled,
         "source_guild_id": source_guild_id,
         "source_bot_ids": list(source_bot_ids),
         "log_channel_id": log_channel_id,
         "mappings": clean_mappings,
     })
-    return web.json_response(news.get_settings())
+    return web.json_response(news.get_settings(guild_id))

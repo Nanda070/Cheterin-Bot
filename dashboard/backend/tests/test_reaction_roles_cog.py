@@ -2,12 +2,15 @@ import discord
 import pytest
 
 import reaction_roles
+import settings_db
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeRole
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(reaction_roles, "CONFIG_FILE", str(tmp_path / "reaction_roles.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 class FakePayload:
@@ -19,9 +22,9 @@ class FakePayload:
         self.member = member
 
 
-def _setup_config(message_id, role_id, emoji="📖"):
+def _setup_config(message_id, role_id, emoji="📖", guild_id=1):
     reaction_roles.save_config(
-        {str(message_id): {"channel_id": "500", "pairs": [{"emoji": emoji, "role_id": str(role_id)}]}}
+        guild_id, {str(message_id): {"channel_id": "500", "pairs": [{"emoji": emoji, "role_id": str(role_id)}]}}
     )
 
 
@@ -123,7 +126,7 @@ async def test_cleanup_missing_messages_removes_entries_for_deleted_messages():
     removed = await reaction_roles.cleanup_missing_messages(bot, guild_id=1)
 
     assert removed == 1
-    assert reaction_roles.load_config() == {}
+    assert reaction_roles.load_config(1) == {}
 
 
 @pytest.mark.asyncio
@@ -137,4 +140,4 @@ async def test_cleanup_missing_messages_keeps_entries_for_existing_messages():
     removed = await reaction_roles.cleanup_missing_messages(bot, guild_id=1)
 
     assert removed == 0
-    assert "999" in reaction_roles.load_config()
+    assert "999" in reaction_roles.load_config(1)

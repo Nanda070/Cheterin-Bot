@@ -2,6 +2,7 @@
 import pytest
 
 import reaction_roles
+import settings_db
 from dashboard.backend.routes.reaction_roles import routes as reaction_roles_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -17,7 +18,9 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(reaction_roles, "CONFIG_FILE", str(tmp_path / "reaction_roles.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(roles=None, channels=None):
@@ -57,7 +60,7 @@ async def test_create_reaction_role_success(aiohttp_client):
     assert body["message_id"] == "999"
     assert body["pairs"] == [{"emoji": "📖", "role_id": "7"}]
     assert message.reaction_calls == [("add", "📖")]
-    assert reaction_roles.load_config()["999"]["channel_id"] == "500"
+    assert reaction_roles.load_config(1)["999"]["channel_id"] == "500"
 
 
 @pytest.mark.asyncio
@@ -75,7 +78,7 @@ async def test_create_reaction_role_succeeds_even_if_add_reaction_fails(aiohttp_
         json={"channel_id": "500", "message_id": "999", "pairs": [{"emoji": "📖", "role_id": "7"}]},
     )
     assert resp.status == 201
-    assert reaction_roles.load_config()["999"]["channel_id"] == "500"
+    assert reaction_roles.load_config(1)["999"]["channel_id"] == "500"
 
 
 @pytest.mark.asyncio
@@ -237,7 +240,7 @@ async def test_update_reaction_role_resets_binding_when_message_gone(aiohttp_cli
 
     resp = await client.put("/api/reaction-roles/999", json={"pairs": [{"emoji": "✅", "role_id": "7"}]})
     assert resp.status == 404
-    assert reaction_roles.load_config() == {}
+    assert reaction_roles.load_config(1) == {}
 
 
 @pytest.mark.asyncio
@@ -279,7 +282,7 @@ async def test_delete_reaction_role_removes_config_and_reactions(aiohttp_client)
     )
     resp = await client.delete("/api/reaction-roles/999")
     assert resp.status == 200
-    assert reaction_roles.load_config() == {}
+    assert reaction_roles.load_config(1) == {}
     assert ("remove", "📖") in message.reaction_calls
 
 

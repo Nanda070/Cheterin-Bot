@@ -7,8 +7,11 @@ from dashboard.backend.tests.fakes import FakeChannel, FakeRole
 
 
 @pytest.fixture(autouse=True)
-def isolated_config_file(tmp_path, monkeypatch):
-    monkeypatch.setattr(bot_config, "CONFIG_FILE", str(tmp_path / "config.json"))
+def isolated_settings_db(tmp_path, monkeypatch):
+    import settings_db
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "test_settings.db"))
+    settings_db._cache.clear()
+    settings_db.init()
 
 
 def build():
@@ -33,7 +36,7 @@ async def test_get_config_returns_defaults_when_file_missing(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_get_config_returns_stored_values(aiohttp_client):
-    bot_config.save_config(
+    bot_config.save_config(1,
         {
             "LOG_CHANNEL_ID": "500",
             "SPAM_EXCEPTION_CHANNELS": ["600", "700"],
@@ -98,7 +101,7 @@ async def test_update_config_success_updates_all_fields(aiohttp_client):
     resp = await client.put("/api/config", json=_full_config(LOG_CHANNEL_ID="500"))
     assert resp.status == 200
     assert (await resp.json())["LOG_CHANNEL_ID"] == "500"
-    assert bot_config.load_config()["LOG_CHANNEL_ID"] == "500"
+    assert bot_config.load_config(1)["LOG_CHANNEL_ID"] == "500"
 
 
 @pytest.mark.asyncio
@@ -129,9 +132,9 @@ async def test_update_config_404_when_role_not_found(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    resp = await client.put("/api/config", json=_full_config(CTD_ROLE_ID="200"))
+    resp = await client.put("/api/config", json=_full_config(SUPPLY_ROLE_ID="200"))
     assert resp.status == 404
-    assert (await resp.json())["error"] == "ctd_role_id_not_found"
+    assert (await resp.json())["error"] == "supply_role_id_not_found"
 
 
 @pytest.mark.asyncio
@@ -177,22 +180,22 @@ async def test_update_config_requires_auth(aiohttp_client):
 @pytest.mark.asyncio
 async def test_update_config_round_trips_via_get(aiohttp_client):
     channel = FakeChannel(500, name="webhook-log")
-    role = FakeRole(200, name="CTD")
+    role = FakeRole(200, name="Supply")
     _, app = build_with_guild(channels=[channel], roles=[role])
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    await client.put("/api/config", json=_full_config(LOG_CHANNEL_ID="500", CTD_ROLE_ID="200"))
+    await client.put("/api/config", json=_full_config(LOG_CHANNEL_ID="500", SUPPLY_ROLE_ID="200"))
     resp = await client.get("/api/config")
     body = await resp.json()
     assert body["LOG_CHANNEL_ID"] == "500"
-    assert body["CTD_ROLE_ID"] == "200"
+    assert body["SUPPLY_ROLE_ID"] == "200"
 
 
 @pytest.mark.asyncio
 async def test_put_config_preserves_foreign_keys(aiohttp_client):
     """PUT /api/config не должен затирать ключи других разделов (авто-роли, приветствия)."""
-    bot_config.save_config(
+    bot_config.save_config(1,
         {
             "AUTO_ROLE_IDS": ["42"],
             "WELCOME_CHANNEL_ENABLED": False,
@@ -209,7 +212,7 @@ async def test_put_config_preserves_foreign_keys(aiohttp_client):
     resp = await client.put("/api/config", json=body)
     assert resp.status == 200
 
-    stored = bot_config.load_config()
+    stored = bot_config.load_config(1)
     assert stored["AUTO_ROLE_IDS"] == ["42"]
     assert stored["WELCOME_CHANNEL_ENABLED"] is False
     assert stored["WELCOME_DM_ENABLED"] is True

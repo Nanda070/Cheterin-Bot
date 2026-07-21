@@ -11,18 +11,18 @@
 """
 
 import asyncio
-import json
 import logging
-import os
 import random
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+import settings_db
+
 logger = logging.getLogger("serverlog")
 
-CONFIG_FILE = "serverlog_config.json"
+MODULE_NAME = "serverlog"
 
 # Тип события -> подпись для дашборда. Порядок = порядок в панели.
 EVENT_TYPES: dict[str, str] = {
@@ -61,40 +61,13 @@ EVENT_TYPES: dict[str, str] = {
 MAX_CONTENT = 1000
 AUDIT_LOOKUP_WINDOW_SECONDS = 5
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
-
-
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Полные настройки с дефолтами по каждому типу события."""
-    data = load_config()
+def get_settings(guild_id: int) -> dict:
+    """Полные настройки сервера с дефолтами по каждому типу события."""
+    data = settings_db.get(guild_id, MODULE_NAME)
     events = data.get("events", {})
     result = {}
     for event_type in EVENT_TYPES:
@@ -106,9 +79,9 @@ def get_settings() -> dict:
     return {"events": result}
 
 
-def event_channel_id(event_type: str) -> int:
+def event_channel_id(guild_id: int, event_type: str) -> int:
     """ID канала для типа события, 0 если тип выключен или канал не задан."""
-    entry = get_settings()["events"].get(event_type)
+    entry = get_settings(guild_id)["events"].get(event_type)
     if not entry or not entry["enabled"]:
         return 0
     try:
@@ -198,8 +171,8 @@ class ServerLog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def emit(self, event_type: str, embed: discord.Embed):
-        channel_id = event_channel_id(event_type)
+    async def emit(self, guild_id: int, event_type: str, embed: discord.Embed):
+        channel_id = event_channel_id(guild_id, event_type)
         if not channel_id:
             return
         channel = self.bot.get_channel(channel_id)
@@ -245,7 +218,7 @@ class ServerLog(commands.Cog):
         embed.add_field(name="До", value=_clip(before.content), inline=False)
         embed.add_field(name="После", value=_clip(after.content), inline=False)
         embed.add_field(name="Ссылка", value=f"[Перейти]({after.jump_url})", inline=False)
-        await self.emit("message_edit", embed)
+        await self.emit(before.guild.id, "message_edit", embed)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -259,7 +232,7 @@ class ServerLog(commands.Cog):
         if message.attachments:
             names = ", ".join(a.filename for a in message.attachments[:5])
             embed.add_field(name="Вложения", value=_clip(names), inline=False)
-        await self.emit("message_delete", embed)
+        await self.emit(message.guild.id, "message_delete", embed)
 
     # ────────────────── Участники ──────────────────
 
@@ -272,7 +245,7 @@ class ServerLog(commands.Cog):
         ts = int(member.created_at.timestamp())
         embed.add_field(name="Дата регистрации", value=f"<t:{ts}:D> (<t:{ts}:R>)", inline=False)
         embed.add_field(name="Участников", value=str(member.guild.member_count), inline=True)
-        await self.emit("member_join", embed)
+        await self.emit(member.guild.id, "member_join", embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -286,17 +259,17 @@ class ServerLog(commands.Cog):
         if member.joined_at is not None:
             stayed = (discord.utils.utcnow() - member.joined_at).total_seconds()
             embed.add_field(name="Пробыл на сервере", value=format_stay_duration(stayed), inline=False)
-        await self.emit("member_leave", embed)
+        await self.emit(member.guild.id, "member_leave", embed)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.abc.User):
         embed = self._embed(f"🔨 Участник {user.mention} забанен на сервере", discord.Color.dark_red(), user)
-        await self.emit("member_ban", embed)
+        await self.emit(guild.id, "member_ban", embed)
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
         embed = self._embed(f"🕊️ Участник {user.mention} разбанен", discord.Color.green(), user)
-        await self.emit("member_unban", embed)
+        await self.emit(guild.id, "member_unban", embed)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -304,7 +277,7 @@ class ServerLog(commands.Cog):
             embed = self._embed(f"📛 Участник {after.mention} сменил никнейм", discord.Color.blurple(), after)
             embed.add_field(name="До", value=_clip(before.nick or before.name), inline=True)
             embed.add_field(name="После", value=_clip(after.nick or after.name), inline=True)
-            await self.emit("nickname_change", embed)
+            await self.emit(after.guild.id, "nickname_change", embed)
 
         if before.roles != after.roles:
             added = [r for r in after.roles if r not in before.roles]
@@ -320,7 +293,7 @@ class ServerLog(commands.Cog):
                     embed.add_field(name="Сняты роли", value=_clip(", ".join(r.mention for r in removed)), inline=False)
                 entry = await _recent_audit_entry(after.guild, discord.AuditLogAction.member_role_update, target_id=after.id)
                 self._add_actor_fields(embed, entry)
-                await self.emit("roles_change", embed)
+                await self.emit(after.guild.id, "roles_change", embed)
 
         if before.timed_out_until != after.timed_out_until:
             now = discord.utils.utcnow()
@@ -331,10 +304,10 @@ class ServerLog(commands.Cog):
                 embed.add_field(name="До", value=f"<t:{int(after.timed_out_until.timestamp())}:F>", inline=False)
                 entry = await _recent_audit_entry(after.guild, discord.AuditLogAction.member_update, target_id=after.id)
                 self._add_actor_fields(embed, entry)
-                await self.emit("member_timeout", embed)
+                await self.emit(after.guild.id, "member_timeout", embed)
             elif was_active and not is_active:
                 embed = self._embed(f"✅ С участника {after.mention} снят тайм-аут", discord.Color.green(), after)
-                await self.emit("member_timeout", embed)
+                await self.emit(after.guild.id, "member_timeout", embed)
 
     # ────────────────── Войс ──────────────────
 
@@ -348,10 +321,10 @@ class ServerLog(commands.Cog):
                 f"🔊 Участник {member.mention} зашёл в голосовой канал {after.channel.mention}",
                 discord.Color.teal(), member,
             )
-            await self.emit("voice_join", embed)
+            await self.emit(member.guild.id, "voice_join", embed)
 
         elif before.channel is not None and after.channel is None:
-            if not (event_channel_id("voice_leave") or event_channel_id("voice_disconnect_admin")):
+            if not (event_channel_id(member.guild.id, "voice_leave") or event_channel_id(member.guild.id, "voice_disconnect_admin")):
                 return
             entry = await _recent_audit_entry(member.guild, discord.AuditLogAction.member_disconnect)
             if entry is not None and entry.user is not None:
@@ -360,16 +333,16 @@ class ServerLog(commands.Cog):
                     discord.Color.red(), member,
                 )
                 embed.add_field(name="Кем", value=f"{entry.user.mention} ({entry.user})", inline=False)
-                await self.emit("voice_disconnect_admin", embed)
+                await self.emit(member.guild.id, "voice_disconnect_admin", embed)
             else:
                 embed = self._embed(
                     f"🔇 Участник {member.mention} покинул голосовой канал {before.channel.mention}",
                     discord.Color.dark_grey(), member,
                 )
-                await self.emit("voice_leave", embed)
+                await self.emit(member.guild.id, "voice_leave", embed)
 
         elif before.channel is not None and after.channel is not None and before.channel.id != after.channel.id:
-            if not (event_channel_id("voice_move") or event_channel_id("voice_move_admin")):
+            if not (event_channel_id(member.guild.id, "voice_move") or event_channel_id(member.guild.id, "voice_move_admin")):
                 return
             entry = await _recent_audit_entry(member.guild, discord.AuditLogAction.member_move, channel=after.channel)
             if entry is not None and entry.user is not None:
@@ -377,12 +350,12 @@ class ServerLog(commands.Cog):
                 embed.add_field(name="Из", value=before.channel.mention, inline=True)
                 embed.add_field(name="В", value=after.channel.mention, inline=True)
                 embed.add_field(name="Кем", value=f"{entry.user.mention} ({entry.user})", inline=False)
-                await self.emit("voice_move_admin", embed)
+                await self.emit(member.guild.id, "voice_move_admin", embed)
             else:
                 embed = self._embed(f"↔️ Участник {member.mention} перешёл в другой голосовой канал", discord.Color.teal(), member)
                 embed.add_field(name="Из", value=before.channel.mention, inline=True)
                 embed.add_field(name="В", value=after.channel.mention, inline=True)
-                await self.emit("voice_move", embed)
+                await self.emit(member.guild.id, "voice_move", embed)
 
         else:
             changes = []
@@ -394,7 +367,7 @@ class ServerLog(commands.Cog):
                 embed = self._embed(f"🎚️ Мут/деф участника {member.mention} от администратора", discord.Color.dark_grey(), member)
                 embed.add_field(name="Канал", value=after.channel.mention, inline=False)
                 embed.add_field(name="Изменения", value="\n".join(changes), inline=False)
-                await self.emit("voice_state", embed)
+                await self.emit(member.guild.id, "voice_state", embed)
 
     # ────────────────── Роли ──────────────────
 
@@ -402,13 +375,13 @@ class ServerLog(commands.Cog):
     async def on_guild_role_create(self, role: discord.Role):
         embed = self._embed(f"➕ Роль {role.mention} создана", discord.Color.green())
         embed.add_field(name="Роль", value=f"{role.mention} (`{role.id}`)", inline=False)
-        await self.emit("role_create", embed)
+        await self.emit(role.guild.id, "role_create", embed)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
         embed = self._embed(f"➖ Роль **{role.name}** удалена", discord.Color.red())
         embed.add_field(name="Роль", value=f"{role.name} (`{role.id}`)", inline=False)
-        await self.emit("role_delete", embed)
+        await self.emit(role.guild.id, "role_delete", embed)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: discord.Role, after: discord.Role):
@@ -428,7 +401,7 @@ class ServerLog(commands.Cog):
         embed = self._embed(f"🎭 Роль {after.mention} изменена", discord.Color.orange())
         embed.add_field(name="Роль", value=f"{after.mention} (`{after.id}`)", inline=False)
         embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
-        await self.emit("role_update", embed)
+        await self.emit(after.guild.id, "role_update", embed)
 
     # ────────────────── Каналы ──────────────────
 
@@ -436,13 +409,13 @@ class ServerLog(commands.Cog):
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         embed = self._embed(f"➕ Канал {channel.mention} создан", discord.Color.green())
         embed.add_field(name="Канал", value=f"{channel.mention} (`{channel.id}`)", inline=False)
-        await self.emit("channel_create", embed)
+        await self.emit(channel.guild.id, "channel_create", embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         embed = self._embed(f"➖ Канал **#{channel.name}** удалён", discord.Color.red())
         embed.add_field(name="Канал", value=f"#{channel.name} (`{channel.id}`)", inline=False)
-        await self.emit("channel_delete", embed)
+        await self.emit(channel.guild.id, "channel_delete", embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel):
@@ -455,12 +428,12 @@ class ServerLog(commands.Cog):
             embed = self._embed(f"🔧 Канал {after.mention} изменён", discord.Color.orange())
             embed.add_field(name="Канал", value=f"{after.mention} (`{after.id}`)", inline=False)
             embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
-            await self.emit("channel_update", embed)
+            await self.emit(after.guild.id, "channel_update", embed)
 
         if before.overwrites != after.overwrites:
             embed = self._embed(f"🔐 Права канала {after.mention} изменены", discord.Color.orange())
             embed.add_field(name="Канал", value=f"{after.mention} (`{after.id}`)", inline=False)
-            await self.emit("channel_permissions_update", embed)
+            await self.emit(after.guild.id, "channel_permissions_update", embed)
 
     # ────────────────── Треды ──────────────────
 
@@ -471,13 +444,13 @@ class ServerLog(commands.Cog):
         parent = thread.parent
         if parent is not None:
             embed.add_field(name="Канал", value=parent.mention, inline=False)
-        await self.emit("thread_create", embed)
+        await self.emit(thread.guild.id, "thread_create", embed)
 
     @commands.Cog.listener()
     async def on_thread_delete(self, thread: discord.Thread):
         embed = self._embed(f"➖ Тред **{thread.name}** удалён", discord.Color.red())
         embed.add_field(name="Тред", value=f"{thread.name} (`{thread.id}`)", inline=False)
-        await self.emit("thread_delete", embed)
+        await self.emit(thread.guild.id, "thread_delete", embed)
 
     @commands.Cog.listener()
     async def on_thread_update(self, before: discord.Thread, after: discord.Thread):
@@ -493,7 +466,7 @@ class ServerLog(commands.Cog):
         embed = self._embed(f"🧵 Тред {after.mention} изменён", discord.Color.orange())
         embed.add_field(name="Тред", value=f"{after.mention} (`{after.id}`)", inline=False)
         embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
-        await self.emit("thread_update", embed)
+        await self.emit(after.guild.id, "thread_update", embed)
 
     # ────────────────── Сервер ──────────────────
 
@@ -514,7 +487,7 @@ class ServerLog(commands.Cog):
             return
         embed = self._embed("⚙️ Настройки сервера изменены", discord.Color.orange())
         embed.add_field(name="Изменения", value=_clip("\n".join(changes)), inline=False)
-        await self.emit("guild_update", embed)
+        await self.emit(after.id, "guild_update", embed)
 
     # ────────────────── Команды модерации ──────────────────
 
@@ -530,7 +503,7 @@ class ServerLog(commands.Cog):
         channel = interaction.channel
         if channel is not None:
             embed.add_field(name="Канал", value=getattr(channel, "mention", str(channel)), inline=False)
-        await self.emit("moderation_command", embed)
+        await self.emit(interaction.guild.id, "moderation_command", embed)
 
     # ────────────────── Эмодзи и приглашения ──────────────────
 
@@ -545,7 +518,7 @@ class ServerLog(commands.Cog):
             embed.add_field(name="Добавлены", value=_clip(" ".join(str(e) for e in added[:20])), inline=False)
         if removed:
             embed.add_field(name="Удалены", value=_clip(", ".join(e.name for e in removed[:20])), inline=False)
-        await self.emit("emoji_update", embed)
+        await self.emit(guild.id, "emoji_update", embed)
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
@@ -558,13 +531,13 @@ class ServerLog(commands.Cog):
             embed.add_field(name="Канал", value=getattr(invite.channel, "mention", str(invite.channel)), inline=True)
         if invite.max_uses:
             embed.add_field(name="Макс. использований", value=str(invite.max_uses), inline=True)
-        await self.emit("invite_create", embed)
+        await self.emit(invite.guild.id, "invite_create", embed)
 
     @commands.Cog.listener()
     async def on_invite_delete(self, invite: discord.Invite):
         embed = self._embed("🔗 Приглашение удалено", discord.Color.red())
         embed.add_field(name="Код", value=f"`{invite.code}`", inline=True)
-        await self.emit("invite_delete", embed)
+        await self.emit(invite.guild.id, "invite_delete", embed)
 
 
 async def setup(bot: commands.Bot):

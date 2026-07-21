@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/fun")
 @require_dashboard_access
 async def fun_get(request: web.Request) -> web.Response:
-    return web.json_response(fun_core.get_settings())
+    return web.json_response(fun_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/fun")
@@ -57,11 +57,12 @@ async def fun_put(request: web.Request) -> web.Response:
             return web.json_response({"error": f"invalid_{key}"}, status=400)
         auto_emoji_values[key] = value
 
-    fun_core.save_config({
+    guild_id = request["guild_id"]
+    fun_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "roulette_timeout_minutes": timeout_minutes,
         "roulette_cooldown_sec": cooldown_sec,
         "auto_emoji_enabled": body.get("auto_emoji_enabled", False),
         **auto_emoji_values,
     })
-    return web.json_response(fun_core.get_settings())
+    return web.json_response(fun_core.get_settings(guild_id))

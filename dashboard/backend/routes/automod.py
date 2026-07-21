@@ -86,7 +86,7 @@ def _validate_filter_fields(key: str, body: dict) -> tuple[dict, str | None]:
 @routes.get("/api/automod")
 @require_dashboard_access
 async def automod_get(request: web.Request) -> web.Response:
-    return web.json_response(automod_core.get_settings())
+    return web.json_response(automod_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/automod")
@@ -99,7 +99,7 @@ async def automod_update_enabled(request: web.Request) -> web.Response:
     enabled = body.get("enabled") if isinstance(body, dict) else None
     if not isinstance(enabled, bool):
         return web.json_response({"error": "invalid_enabled"}, status=400)
-    return web.json_response(automod_core.update_module_enabled(enabled))
+    return web.json_response(automod_core.update_module_enabled(request["guild_id"], enabled))
 
 
 @routes.put("/api/automod/filters/{filter_key}")
@@ -120,7 +120,7 @@ async def automod_update_filter(request: web.Request) -> web.Response:
     if error:
         return web.json_response({"error": error}, status=400)
 
-    updated = automod_core.update_filter(key, cleaned)
+    updated = automod_core.update_filter(request["guild_id"], key, cleaned)
     return web.json_response(updated)
 
 
@@ -134,7 +134,7 @@ async def automod_update_manual_warn_duration(request: web.Request) -> web.Respo
     minutes = body.get("duration_minutes") if isinstance(body, dict) else None
     if not isinstance(minutes, int) or isinstance(minutes, bool) or not (0 <= minutes <= MAX_STORED_DURATION_MINUTES):
         return web.json_response({"error": "invalid_duration_minutes"}, status=400)
-    return web.json_response(automod_core.update_manual_warn_duration(minutes))
+    return web.json_response(automod_core.update_manual_warn_duration(request["guild_id"], minutes))
 
 
 def _validate_escalation_body(body: dict) -> str | None:
@@ -164,7 +164,7 @@ async def automod_create_escalation(request: web.Request) -> web.Response:
     if error:
         return web.json_response({"error": error}, status=400)
 
-    rule = automod_core.add_escalation_rule(body["count"], body["action"], body["duration_minutes"])
+    rule = automod_core.add_escalation_rule(request["guild_id"], body["count"], body["action"], body["duration_minutes"])
     return web.json_response(rule, status=201)
 
 
@@ -188,7 +188,7 @@ async def automod_update_escalation(request: web.Request) -> web.Response:
         if error:
             return web.json_response({"error": error}, status=400)
 
-    updated = automod_core.update_escalation_rule(request.match_info["rule_id"], fields)
+    updated = automod_core.update_escalation_rule(request["guild_id"], request.match_info["rule_id"], fields)
     if updated is None:
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response(updated)
@@ -197,6 +197,6 @@ async def automod_update_escalation(request: web.Request) -> web.Response:
 @routes.delete("/api/automod/escalation/{rule_id}")
 @require_dashboard_access
 async def automod_delete_escalation(request: web.Request) -> web.Response:
-    if not automod_core.delete_escalation_rule(request.match_info["rule_id"]):
+    if not automod_core.delete_escalation_rule(request["guild_id"], request.match_info["rule_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})

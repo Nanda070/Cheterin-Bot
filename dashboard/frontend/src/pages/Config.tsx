@@ -5,7 +5,6 @@ import {
   LinkSimple,
   Package,
   ShieldWarning,
-  Ticket,
   type Icon,
 } from '@phosphor-icons/react'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -34,8 +33,6 @@ const EMPTY_CONFIG: BotConfig = {
   RULES_CHANNEL_ID: '',
   ROLES_CHANNEL_ID: '',
   SEARCH_PLAYERS_CHANNEL_ID: '',
-  CTD_ROLE_ID: '',
-  CTD_CHANNEL_ID: '',
   BUTTON_CREATE_ALLOWED_ROLES: [],
   BUTTON_WEBHOOK_URL: '',
   SERVER_INVITE_LINK: '',
@@ -199,11 +196,6 @@ export function ConfigPage() {
           {channelField('Канал правил', 'RULES_CHANNEL_ID')}
           {channelField('Канал ролей', 'ROLES_CHANNEL_ID')}
           {channelField('Канал поиска игроков', 'SEARCH_PLAYERS_CHANNEL_ID')}
-        </Section>
-
-        <Section icon={Ticket} title="Тикеты CTD">
-          {roleField('Роль поддержки', 'CTD_ROLE_ID')}
-          {channelField('Канал панели тикетов', 'CTD_CHANNEL_ID')}
         </Section>
 
         <Section icon={LinkSimple} title="Кнопки и вебхуки">

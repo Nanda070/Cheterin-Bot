@@ -132,7 +132,7 @@ export function FunPage() {
         </div>
         <p className="text-sm text-muted">
           Бот изредка ставит случайное серверное эмодзи реакцией на сообщения участников (в любом канале, только на
-          сообщения людей) — как в Juniper. Частота управляется шансом и минимальным интервалом на канал, а чтобы
+          сообщения людей). Частота управляется шансом и минимальным интервалом на канал, а чтобы
           реакции «не висели долго», бот сам снимает свою реакцию через заданное время.
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -199,14 +199,15 @@ export function FunPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="wordle-channel">
-              ID канала для анонсов и live-карточек (0 — карточки в канале команды, без ежедневных анонсов)
+              ID канала для анонсов и live-карточек (пусто — карточки в канале команды, без ежедневных анонсов)
             </label>
             <input
               id="wordle-channel"
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              placeholder="ID канала"
               value={wordle.channel_id}
-              onChange={(e) => setWordle({ ...wordle, channel_id: Number(e.target.value) })}
+              onChange={(e) => setWordle({ ...wordle, channel_id: e.target.value.replace(/\D/g, '') })}
               className={inputClass}
             />
           </div>

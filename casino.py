@@ -87,10 +87,10 @@ class CasinoCog(commands.Cog):
         Возвращает (casino, economy, error_text).
         Блокирует слоты/монетку если у игрока есть незавершённая BJ-партия.
         """
-        settings = casino_core.get_settings()
+        settings = casino_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return settings, {}, DISABLED_TEXT
-        econ = economy_core.get_settings()
+        econ = economy_core.get_settings(interaction.guild.id)
         if not econ["enabled"]:
             return settings, econ, ECONOMY_DISABLED_TEXT
 
@@ -342,10 +342,10 @@ class CasinoLeaderboardView(discord.ui.View):
 
 @app_commands.command(name="казино-топ", description="Таблица лидеров казино по победам и проигрышам")
 async def casino_top_command(interaction: discord.Interaction):
-    settings = casino_core.get_settings()
+    settings = casino_core.get_settings(interaction.guild.id)
     if not settings["enabled"]:
         return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
-    econ = economy_core.get_settings()
+    econ = economy_core.get_settings(interaction.guild.id)
     if not econ["enabled"]:
         return await interaction.response.send_message(ECONOMY_DISABLED_TEXT, ephemeral=True)
 

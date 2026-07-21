@@ -2,6 +2,7 @@
 
 import pytest
 
+import settings_db
 import wordle_core
 import wordle_db
 from wordle import WordleCog, build_board_embed
@@ -15,9 +16,9 @@ ANSWER = "канат"
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("WORDLE_DB_PATH", str(tmp_path / "wordle.db"))
     wordle_db.init()
-    monkeypatch.setattr(wordle_core, "CONFIG_FILE", str(tmp_path / "wordle_config.json"))
-    monkeypatch.setattr(wordle_core, "_cache", None, raising=False)
-    monkeypatch.setattr(wordle_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setattr(wordle_core, "day_number", lambda today=None: DAY)
     monkeypatch.setattr(wordle_core, "word_for_day", lambda day_no: ANSWER)
 
@@ -35,6 +36,7 @@ class FakeResponse:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild, channel):
         self.user = user
         self.guild = guild
@@ -43,10 +45,10 @@ class FakeInteraction:
 
 
 def build(enabled=True, channel_id=0):
-    wordle_core.save_config({"enabled": enabled, "channel_id": channel_id, "announce_time": "09:00"})
     player = FakeMember(20, name="player", display_name="Player")
     channel = FakeChannel(500)
     guild = FakeGuild(members=[player], channels=[channel])
+    wordle_core.save_config(guild.id, {"enabled": enabled, "channel_id": channel_id, "announce_time": "09:00"})
     bot = FakeBot(guild)
     cog = WordleCog(bot)
     cog.announce_loop.cancel()  # в тестах цикл не нужен

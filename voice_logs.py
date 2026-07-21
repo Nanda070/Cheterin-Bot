@@ -27,16 +27,16 @@ class VCTheme:
     }
 
 
-def get_log_channel_id() -> int:
-    raw = bot_config.get("VOICE_LOG_CHANNEL_ID") or bot_config.get("LOG_CHANNEL_ID")
+def get_log_channel_id(guild_id: int) -> int:
+    raw = bot_config.get(guild_id, "VOICE_LOG_CHANNEL_ID") or bot_config.get(guild_id, "LOG_CHANNEL_ID")
     try:
         return int(raw)
     except (TypeError, ValueError):
         return 0
 
 
-async def send_log_embed(bot: discord.Client, title: str, description: str, color: discord.Color):
-    log_channel_id = get_log_channel_id()
+async def send_log_embed(bot: discord.Client, guild_id: int, title: str, description: str, color: discord.Color):
+    log_channel_id = get_log_channel_id(guild_id)
     channel = bot.get_channel(log_channel_id)
     if not channel:
         logger.warning("Log channel not found: %s", log_channel_id)
@@ -46,32 +46,33 @@ async def send_log_embed(bot: discord.Client, title: str, description: str, colo
     await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
 
 
-async def log_action(bot: discord.Client, actor: discord.abc.User | None, action: str, channel: discord.VoiceChannel | None = None, target: discord.abc.User | None = None, color: discord.Color | None = None):
+async def log_action(bot: discord.Client, guild_id: int, actor: discord.abc.User | None, action: str, channel: discord.VoiceChannel | None = None, target: discord.abc.User | None = None, color: discord.Color | None = None):
     lines = []
     if actor: lines.append(f"**Кто:** {actor.mention} (`{actor.id}`)")
     if channel: lines.append(f"**Канал:** {channel.name} (`{channel.id}`)")
     if target: lines.append(f"**Цель:** {target.mention} (`{target.id}`)")
     lines.append(f"**Действие:** {action}")
 
-    await send_log_embed(bot, "Лог приватных комнат", "\n".join(lines), color or VCTheme.COLOR)
+    await send_log_embed(bot, guild_id, "Лог приватных комнат", "\n".join(lines), color or VCTheme.COLOR)
 
 
-async def log_security(bot: discord.Client, actor: discord.abc.User | None, reason: str, channel: discord.VoiceChannel | None = None):
+async def log_security(bot: discord.Client, guild_id: int, actor: discord.abc.User | None, reason: str, channel: discord.VoiceChannel | None = None):
     lines = []
     if actor: lines.append(f"**Пользователь:** {actor.mention} (`{actor.id}`)")
     if channel: lines.append(f"**Канал:** {channel.name} (`{channel.id}`)")
     lines.append(f"**Событие:** {reason}")
 
-    await send_log_embed(bot, "Безопасность / отклонённое действие", "\n".join(lines), VCTheme.ERROR)
+    await send_log_embed(bot, guild_id, "Безопасность / отклонённое действие", "\n".join(lines), VCTheme.ERROR)
 
 
-async def log_error(bot: discord.Client, context: str, exc: Exception):
-    await send_log_embed(bot, "Ошибка", f"**Контекст:** {context}\n**Ошибка:** `{type(exc).__name__}: {exc}`", VCTheme.ERROR)
+async def log_error(bot: discord.Client, guild_id: int, context: str, exc: Exception):
+    await send_log_embed(bot, guild_id, "Ошибка", f"**Контекст:** {context}\n**Ошибка:** `{type(exc).__name__}: {exc}`", VCTheme.ERROR)
 
 
-async def log_unhide_action(bot: discord.Client, actor: discord.Member, channel: discord.VoiceChannel):
+async def log_unhide_action(bot: discord.Client, guild_id: int, actor: discord.Member, channel: discord.VoiceChannel):
     await log_action(
         bot,
+        guild_id,
         actor=actor,
         action="Попытка скрыть канал (бот автоматически вернул видимость)",
         channel=channel,

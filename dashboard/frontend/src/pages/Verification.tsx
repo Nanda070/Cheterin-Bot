@@ -67,14 +67,15 @@ export function VerificationPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="ver-unverified">
-              ID роли «Unverified» (0 — не выдавать роль при входе)
+              ID роли «Unverified» (пусто — не выдавать роль при входе)
             </label>
             <input
               id="ver-unverified"
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              placeholder="ID роли"
               value={settings.unverified_role_id}
-              onChange={(e) => setSettings({ ...settings, unverified_role_id: Number(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, unverified_role_id: e.target.value.replace(/\D/g, '') })}
               className={inputClass}
             />
           </div>
@@ -84,10 +85,11 @@ export function VerificationPage() {
             </label>
             <input
               id="ver-verified"
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              placeholder="ID роли"
               value={settings.verified_role_id}
-              onChange={(e) => setSettings({ ...settings, verified_role_id: Number(e.target.value) })}
+              onChange={(e) => setSettings({ ...settings, verified_role_id: e.target.value.replace(/\D/g, '') })}
               className={inputClass}
             />
           </div>

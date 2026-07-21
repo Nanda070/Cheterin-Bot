@@ -6,8 +6,11 @@ from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_
 
 
 @pytest.fixture(autouse=True)
-def isolated_config_file(tmp_path, monkeypatch):
-    monkeypatch.setattr(bot_config, "CONFIG_FILE", str(tmp_path / "config.json"))
+def isolated_settings_db(tmp_path, monkeypatch):
+    import settings_db
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "test_settings.db"))
+    settings_db._cache.clear()
+    settings_db.init()
 
 
 def build():
@@ -29,7 +32,7 @@ async def test_get_welcome_settings_defaults_to_enabled_when_file_missing(aiohtt
 
 @pytest.mark.asyncio
 async def test_get_welcome_settings_returns_stored_values(aiohttp_client):
-    bot_config.save_config({"WELCOME_CHANNEL_ENABLED": False, "WELCOME_DM_ENABLED": True})
+    bot_config.save_config(1, {"WELCOME_CHANNEL_ENABLED": False, "WELCOME_DM_ENABLED": True})
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -57,8 +60,8 @@ async def test_update_welcome_settings_persists(aiohttp_client):
     )
     assert resp.status == 200
     assert (await resp.json()) == {"channel_enabled": False, "dm_enabled": False}
-    assert bot_config.load_config()["WELCOME_CHANNEL_ENABLED"] is False
-    assert bot_config.load_config()["WELCOME_DM_ENABLED"] is False
+    assert bot_config.load_config(1)["WELCOME_CHANNEL_ENABLED"] is False
+    assert bot_config.load_config(1)["WELCOME_DM_ENABLED"] is False
 
 
 @pytest.mark.asyncio

@@ -39,7 +39,7 @@ async def test_close_event_not_found_returns_error():
     import events
 
     bot = FakeBot(FakeGuild())
-    result = await events_core.close_event(bot, "MISSING")
+    result = await events_core.close_event(bot, 1, "MISSING")
     assert result == {"ok": False, "error": "not_found"}
 
 
@@ -47,13 +47,13 @@ async def test_close_event_not_found_returns_error():
 async def test_close_event_sets_status_and_persists():
     import events
 
-    await events.save_events({"events": {"900": _tournament_event()}})
+    events.save_events(1, {"events": {"900": _tournament_event()}})
     bot = FakeBot(FakeGuild())
 
-    result = await events_core.close_event(bot, "900")
+    result = await events_core.close_event(bot, 1, "900")
 
     assert result == {"ok": True}
-    data = await events.load_events()
+    data = events.load_events(1)
     assert data["events"]["900"]["status"] == "closed"
 
 
@@ -62,14 +62,14 @@ async def test_close_event_disables_participation_buttons_on_live_message():
     import events
 
     ev = _tournament_event()
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     base_embed = discord.Embed(title="Test Tournament")
     message = FakeMessage(900, embeds=[base_embed])
     channel = FakeChannel(500, messages={900: message})
     guild = FakeGuild(channels=[channel])
     bot = FakeBot(guild)
 
-    await events_core.close_event(bot, "900")
+    await events_core.close_event(bot, 1, "900")
 
     assert len(message.edit_calls) == 1
     edited_view = message.edit_calls[0]["view"]
@@ -81,14 +81,14 @@ async def test_close_event_disables_participation_buttons_on_live_message():
 async def test_close_event_survives_missing_channel():
     import events
 
-    await events.save_events({"events": {"900": _tournament_event()}})
+    events.save_events(1, {"events": {"900": _tournament_event()}})
     guild = FakeGuild(channels=[])  # channel 500 won't resolve
     bot = FakeBot(guild)
 
-    result = await events_core.close_event(bot, "900")
+    result = await events_core.close_event(bot, 1, "900")
 
     assert result == {"ok": True}
-    data = await events.load_events()
+    data = events.load_events(1)
     assert data["events"]["900"]["status"] == "closed"
 
 
@@ -96,7 +96,7 @@ async def test_close_event_survives_missing_channel():
 async def test_delete_event_not_found_returns_error():
     guild = FakeGuild()
     bot = FakeBot(guild)
-    result = await events_core.delete_event(bot, guild, "MISSING")
+    result = await events_core.delete_event(bot, 1, "MISSING")
     assert result == {"ok": False, "error": "not_found"}
 
 
@@ -104,14 +104,14 @@ async def test_delete_event_not_found_returns_error():
 async def test_delete_event_removes_from_storage():
     import events
 
-    await events.save_events({"events": {"900": _tournament_event()}})
+    events.save_events(1, {"events": {"900": _tournament_event()}})
     guild = FakeGuild()
     bot = FakeBot(guild)
 
-    result = await events_core.delete_event(bot, guild, "900")
+    result = await events_core.delete_event(bot, 1, "900")
 
     assert result == {"ok": True}
-    data = await events.load_events()
+    data = events.load_events(1)
     assert "900" not in data["events"]
 
 
@@ -123,11 +123,11 @@ async def test_delete_event_removes_role_from_all_participants():
     member1 = FakeMember(10, name="p1")
     member2 = FakeMember(20, name="p2")
     ev = _tournament_event(role_reward=200, participants=[{"user_id": 10, "ign": "a"}, {"user_id": 20, "ign": "b"}])
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     guild = FakeGuild(members=[member1, member2], roles=[role])
     bot = FakeBot(guild)
 
-    await events_core.delete_event(bot, guild, "900")
+    await events_core.delete_event(bot, 1, "900")
 
     assert member1.action_calls == [("remove_roles", {"role": role})]
     assert member2.action_calls == [("remove_roles", {"role": role})]
@@ -138,13 +138,13 @@ async def test_delete_event_deletes_live_message():
     import events
 
     ev = _tournament_event()
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     message = FakeMessage(900)
     channel = FakeChannel(500, messages={900: message})
     guild = FakeGuild(channels=[channel])
     bot = FakeBot(guild)
 
-    await events_core.delete_event(bot, guild, "900")
+    await events_core.delete_event(bot, 1, "900")
 
     # FakeMessage.delete() is a no-op recorder-free stub; absence of an
     # exception is the assertion here (fetch_message succeeded and delete
@@ -156,7 +156,7 @@ async def test_delete_event_deletes_live_message():
 async def test_notify_participants_not_found_returns_error():
     guild = FakeGuild()
     bot = FakeBot(guild)
-    result = await events_core.notify_participants(bot, guild, "MISSING", "hello")
+    result = await events_core.notify_participants(bot, 1, "MISSING", "hello")
     assert result == {"ok": False, "error": "not_found"}
 
 
@@ -164,11 +164,11 @@ async def test_notify_participants_not_found_returns_error():
 async def test_notify_participants_empty_participants_returns_error():
     import events
 
-    await events.save_events({"events": {"900": _tournament_event(participants=[])}})
+    events.save_events(1, {"events": {"900": _tournament_event(participants=[])}})
     guild = FakeGuild()
     bot = FakeBot(guild)
 
-    result = await events_core.notify_participants(bot, guild, "900", "hello")
+    result = await events_core.notify_participants(bot, 1, "900", "hello")
 
     assert result == {"ok": False, "error": "no_participants"}
 
@@ -181,11 +181,11 @@ async def test_notify_participants_sends_dm_and_counts_results():
     unreachable = FakeMember(20, name="unreachable")
     unreachable.send_raises = discord.Forbidden.__new__(discord.Forbidden)
     ev = _tournament_event(participants=[{"user_id": 10, "ign": "a"}, {"user_id": 20, "ign": "b"}])
-    await events.save_events({"events": {"900": ev}})
+    events.save_events(1, {"events": {"900": ev}})
     guild = FakeGuild(members=[reachable, unreachable])
     bot = FakeBot(guild)
 
-    result = await events_core.notify_participants(bot, guild, "900", "Hello everyone")
+    result = await events_core.notify_participants(bot, 1, "900", "Hello everyone")
 
     assert result == {"ok": True, "success": 1, "failed": 1}
     assert len(reachable.send_calls) == 1

@@ -1,3 +1,4 @@
+import settings_db
 import logging
 
 import discord
@@ -16,14 +17,15 @@ def upsert_embed_field(embed: discord.Embed, field_name: str, value: str, inline
 async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: int, decided_by_mention: str) -> dict:
     from feedback_menu import FeedbackDecisionView, get_feedback_categories
 
-    case_data = bot.feedback_cases.get(case_id)
+    cases = settings_db.get(guild.id, "feedback_cases", {})
+    case_data = cases.get(case_id)
     if not case_data:
         return {"ok": False, "error": "not_found"}
     if case_data.get("status") != "pending":
         return {"ok": False, "error": "already_decided"}
 
     category_key = case_data["category_key"]
-    config = get_feedback_categories().get(category_key)
+    config = get_feedback_categories(guild.id).get(category_key)
     if config is None:
         return {"ok": False, "error": "category_deleted"}
     status_text = "Принято" if approved else "Отклонено"
@@ -33,7 +35,7 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
     case_data["status_label"] = reviewed_status
     case_data["reviewed_by"] = decided_by_id
     case_data["reviewed_at"] = bot.utcnow().isoformat()
-    await bot.update_file()
+    settings_db.put(guild.id, "feedback_cases", cases)
 
     color = discord.Color.green() if approved else discord.Color.red()
 
@@ -105,7 +107,7 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
         color=color,
         timestamp=bot.utcnow(),
     )
-    await bot.send_log(log_emb)
+    await bot.send_log(guild.id if guild else 0, log_emb)
 
     if thread is not None:
         dec_emb = discord.Embed(
@@ -139,7 +141,7 @@ async def publish_feedback_panel(bot, channel, published_by_id: int, published_b
     )
     embed.set_image(url=PANEL_BANNER_URL)
 
-    message = await channel.send(embed=embed, view=FeedbackView(bot))
+    message = await channel.send(embed=embed, view=FeedbackView(bot, channel.guild.id))
 
     log_embed = discord.Embed(
         title="🧩 Панель feedback опубликована",
@@ -151,6 +153,6 @@ async def publish_feedback_panel(bot, channel, published_by_id: int, published_b
         color=discord.Color.blurple(),
         timestamp=bot.utcnow(),
     )
-    await bot.send_log(log_embed)
+    await bot.send_log(channel.guild.id, log_embed)
 
     return message

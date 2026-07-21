@@ -73,7 +73,7 @@ def _serialize_ability_announcement(announcement: dict, guild) -> dict:
 @routes.get("/api/bunker")
 @require_dashboard_access
 async def bunker_get(request: web.Request) -> web.Response:
-    return web.json_response(bunker_core.get_settings())
+    return web.json_response(bunker_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/bunker")
@@ -115,7 +115,8 @@ async def bunker_put(request: web.Request) -> web.Response:
     if not isinstance(unique_cards, bool):
         return web.json_response({"error": "invalid_default_unique_cards"}, status=400)
 
-    bunker_core.save_config({
+    guild_id = request["guild_id"]
+    bunker_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "default_min_players": min_players,
         "default_max_players": max_players,
@@ -124,7 +125,7 @@ async def bunker_put(request: web.Request) -> web.Response:
         "default_unique_cards": unique_cards,
         "log_channel_id": log_channel_id,
     })
-    return web.json_response(bunker_core.get_settings())
+    return web.json_response(bunker_core.get_settings(guild_id))
 
 
 @routes.get("/api/bunker/card-pools")

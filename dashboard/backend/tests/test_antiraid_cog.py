@@ -7,15 +7,16 @@ import pytest
 import antiraid_core
 import lockdown_core
 import moderation_log
+import settings_db
 from antiraid import AntiRaidCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
-    monkeypatch.setattr(antiraid_core, "CONFIG_FILE", str(tmp_path / "antiraid_config.json"))
-    monkeypatch.setattr(antiraid_core, "_cache", None, raising=False)
-    monkeypatch.setattr(antiraid_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setattr(lockdown_core, "BACKUP_FILE", str(tmp_path / "antispam_backup.json"))
     monkeypatch.setattr(moderation_log, "LOG_FILE", str(tmp_path / "moderation_log.json"))
 
@@ -29,9 +30,9 @@ def fresh_member(member_id, joined_at, guild=None):
 
 
 def build(**settings_extra):
-    antiraid_core.save_config({"enabled": True, **settings_extra})
     channel = FakeChannel(500, name="general")
     guild = FakeGuild(members=[], channels=[channel])
+    antiraid_core.save_config(guild.id, {"enabled": True, **settings_extra})
     bot = FakeBot(guild)
     cog = AntiRaidCog(bot)
     return cog, guild, channel, bot
@@ -47,7 +48,7 @@ async def test_disabled_by_default_does_nothing():
     cog = AntiRaidCog(bot)  # antiraid_core.save_config НЕ вызывался — чистый дефолт
 
     for i in range(20):
-        await cog.on_member_join(fresh_member(i, antiraid_core.utcnow()))
+        await cog.on_member_join(fresh_member(i, antiraid_core.utcnow(), guild))
 
     assert bot.sent_logs == []
     assert channel.edit_calls == []
@@ -58,7 +59,7 @@ async def test_explicitly_disabled_ignores_burst():
     cog, guild, channel, bot = build(enabled=False, join_threshold=3)
 
     for i in range(10):
-        await cog.on_member_join(fresh_member(i, antiraid_core.utcnow()))
+        await cog.on_member_join(fresh_member(i, antiraid_core.utcnow(), guild))
 
     assert bot.sent_logs == []
 
@@ -76,7 +77,7 @@ async def test_triggers_lockdown_on_burst():
 
     assert len(bot.sent_logs) == 1
     assert "Антирейд" in bot.sent_logs[0].title
-    is_active, _ = lockdown_core.antispam_status()
+    is_active, _ = lockdown_core.antispam_status(1)
     assert is_active is True
 
 
@@ -125,7 +126,7 @@ async def test_lockdown_disabled_skips_activation():
     await cog.on_member_join(fresh_member(1, now, guild))
     await cog.on_member_join(fresh_member(2, now, guild))
 
-    is_active, _ = lockdown_core.antispam_status()
+    is_active, _ = lockdown_core.antispam_status(1)
     assert is_active is False
     assert len(bot.sent_logs) == 1  # лог всё равно пишется
 

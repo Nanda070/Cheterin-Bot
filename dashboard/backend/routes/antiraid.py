@@ -10,7 +10,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/antiraid")
 @require_dashboard_access
 async def antiraid_get(request: web.Request) -> web.Response:
-    return web.json_response(antiraid_core.get_settings())
+    return web.json_response(antiraid_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/antiraid")
@@ -41,9 +41,10 @@ async def antiraid_put(request: web.Request) -> web.Response:
             return web.json_response({"error": f"invalid_{key}"}, status=400)
         values[key] = value
 
-    antiraid_core.save_config({
+    guild_id = request["guild_id"]
+    antiraid_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "action_lockdown": body.get("action_lockdown", True),
         **values,
     })
-    return web.json_response(antiraid_core.get_settings())
+    return web.json_response(antiraid_core.get_settings(guild_id))

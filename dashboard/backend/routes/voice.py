@@ -12,7 +12,7 @@ routes = web.RouteTableDef()
 @require_dashboard_access
 async def voice_rooms_list(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
 
     rooms = []
     for row in voice_db.db_get_all_rooms():
@@ -35,7 +35,7 @@ async def voice_rooms_list(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def voice_room_delete(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 

@@ -46,9 +46,9 @@ def _serialize_row(row, guild, rank: int) -> dict:
 @require_dashboard_access
 async def xp_get(request: web.Request) -> web.Response:
     return web.json_response({
-        "settings": xp_core.get_settings(),
-        "member_count": stats_db.xp_member_count(),
-        "has_card_bg": os.path.exists(xp_core.CARD_BG_FILE),
+        "settings": xp_core.get_settings(request["guild_id"]),
+        "member_count": stats_db.xp_member_count(request["guild_id"]),
+        "has_card_bg": os.path.exists(xp_core.get_card_bg_path(request["guild_id"])),
     })
 
 
@@ -121,7 +121,8 @@ async def xp_put(request: web.Request) -> web.Response:
             return web.json_response({"error": "duplicate_voice_reward"}, status=400)
         seen_minutes.add(reward["minutes"])
 
-    xp_core.save_config({
+    guild_id = request["guild_id"]
+    xp_core.save_config(guild_id, {
         "enabled": body.get("enabled", False),
         "public_leaderboard": body.get("public_leaderboard", True),
         "reset_on_leave": body.get("reset_on_leave", False),
@@ -151,7 +152,7 @@ async def xp_put(request: web.Request) -> web.Response:
         "level_rewards": sorted(level_rewards, key=lambda r: r["level"]),
         "voice_rewards": sorted(voice_rewards, key=lambda r: r["minutes"]),
     })
-    return web.json_response({"settings": xp_core.get_settings()})
+    return web.json_response({"settings": xp_core.get_settings(guild_id)})
 
 
 # ────────────────── Лидерборд и участники ──────────────────
@@ -163,7 +164,7 @@ async def xp_leaderboard(request: web.Request) -> web.Response:
     кто уже где-то отметился — иначе большая часть сервера невидима админу.
     Публичный топ (/api/public/leaderboard) не трогаем — там осознанно
     только реально заработавшие XP."""
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -173,7 +174,7 @@ async def xp_leaderboard(request: web.Request) -> web.Response:
         page = 1
     search = request.query.get("search", "").strip().lower()
 
-    xp_by_user = {row["user_id"]: row for row in stats_db.xp_all_members()}
+    xp_by_user = {row["user_id"]: row for row in stats_db.xp_all_members(request["guild_id"])}
 
     rows: list[dict] = []
     for member in guild.members:
@@ -221,7 +222,7 @@ async def xp_leaderboard(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def xp_member_set(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -239,7 +240,7 @@ async def xp_member_set(request: web.Request) -> web.Response:
     if member is not None and cog is not None:
         await cog.set_member_xp(member, xp_value)
     else:
-        stats_db.xp_set_xp(user_id, xp_value, xp_core.level_from_xp(xp_value))
+        stats_db.xp_set_xp(request["guild_id"], user_id, xp_value, xp_core.level_from_xp(xp_value))
     return web.json_response({"ok": True, "level": xp_core.level_from_xp(xp_value)})
 
 
@@ -247,7 +248,7 @@ async def xp_member_set(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def xp_member_reset(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     try:
         user_id = int(request.match_info["user_id"])
     except ValueError:
@@ -258,7 +259,7 @@ async def xp_member_reset(request: web.Request) -> web.Response:
     if member is not None and cog is not None:
         await cog.reset_member(member)
     else:
-        stats_db.xp_reset_member(user_id)
+        stats_db.xp_reset_member(request["guild_id"], user_id)
     return web.json_response({"ok": True})
 
 
@@ -266,18 +267,18 @@ async def xp_member_reset(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def xp_reset_all(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     cog = bot.get_cog("XPCog")
 
     # Снимаем награды у всех, кто есть в рейтинге и на сервере
     if guild is not None and cog is not None:
-        settings = xp_core.get_settings()
-        for row in stats_db.xp_leaderboard(limit=100000):
+        settings = xp_core.get_settings(request["guild_id"])
+        for row in stats_db.xp_leaderboard(request["guild_id"], limit=100000):
             member = guild.get_member(row["user_id"])
             if member is not None:
                 await cog.sync_reward_roles(member, {**settings, "level_rewards": [], "voice_rewards": []}, 0, 0)
 
-    stats_db.xp_reset_all()
+    stats_db.xp_reset_all(request["guild_id"])
     return web.json_response({"ok": True})
 
 
@@ -292,7 +293,7 @@ async def xp_card_bg_upload(request: web.Request) -> web.Response:
     # PNG или JPEG по сигнатуре
     if not (body.startswith(b"\x89PNG") or body.startswith(b"\xff\xd8\xff")):
         return web.json_response({"error": "invalid_format"}, status=400)
-    with open(xp_core.CARD_BG_FILE, "wb") as f:
+    with open(xp_core.get_card_bg_path(request["guild_id"]), "wb") as f:
         f.write(body)
     return web.json_response({"ok": True})
 
@@ -300,8 +301,8 @@ async def xp_card_bg_upload(request: web.Request) -> web.Response:
 @routes.delete("/api/xp/card-bg")
 @require_dashboard_access
 async def xp_card_bg_delete(request: web.Request) -> web.Response:
-    if os.path.exists(xp_core.CARD_BG_FILE):
-        os.remove(xp_core.CARD_BG_FILE)
+    if os.path.exists(xp_core.get_card_bg_path(request["guild_id"])):
+        os.remove(xp_core.get_card_bg_path(request["guild_id"]))
     return web.json_response({"ok": True})
 
 
@@ -309,12 +310,12 @@ async def xp_card_bg_delete(request: web.Request) -> web.Response:
 
 @routes.get("/api/public/leaderboard")
 async def xp_public_leaderboard(request: web.Request) -> web.Response:
-    settings = xp_core.get_settings()
+    settings = xp_core.get_settings(request["guild_id"])
     if not settings["enabled"] or not settings["public_leaderboard"]:
         return web.json_response({"error": "not_found"}, status=404)
 
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
-    rows = stats_db.xp_leaderboard(limit=100)
+    guild = request.app["bot"].get_guild(request["guild_id"])
+    rows = stats_db.xp_leaderboard(request["guild_id"], limit=100)
     entries = []
     for i, row in enumerate(rows):
         member = guild.get_member(row["user_id"]) if guild else None

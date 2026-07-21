@@ -1,15 +1,15 @@
 import pytest
 
-import casino_core
+import settings_db
 from dashboard.backend.routes.casino import routes as casino_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(casino_core, "CONFIG_FILE", str(tmp_path / "casino_config.json"))
-    monkeypatch.setattr(casino_core, "_cache", None, raising=False)
-    monkeypatch.setattr(casino_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build():

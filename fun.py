@@ -73,7 +73,7 @@ class FunCog(commands.Cog):
         if message.author.bot or message.guild is None:
             return
 
-        settings = fun_core.get_settings()
+        settings = fun_core.get_settings(message.guild.id)
         if not settings["enabled"] or not settings["auto_emoji_enabled"]:
             return
 
@@ -113,7 +113,7 @@ class FunCog(commands.Cog):
     )
     @app_commands.describe(ставка="Ставка монет: выжил — удвоил, погиб — потерял (необязательно)")
     async def russian_roulette(self, interaction: discord.Interaction, ставка: int | None = None):
-        settings = fun_core.get_settings()
+        settings = fun_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Развлечения» отключён.", ephemeral=True)
 
@@ -127,7 +127,7 @@ class FunCog(commands.Cog):
             )
 
         # Ставка проверяется и списывается ДО установки кулдауна и спуска курка
-        econ = economy_core.get_settings()
+        econ = economy_core.get_settings(interaction.guild.id)
         bet = ставка or 0
         if bet > 0:
             if not econ["enabled"]:
@@ -198,7 +198,7 @@ class FunCog(commands.Cog):
 
     @app_commands.command(name="эмодзи-рулетка", description="Крутануть рулетку и получить случайное эмодзи сервера")
     async def emoji_roulette(self, interaction: discord.Interaction):
-        settings = fun_core.get_settings()
+        settings = fun_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Развлечения» отключён.", ephemeral=True)
 

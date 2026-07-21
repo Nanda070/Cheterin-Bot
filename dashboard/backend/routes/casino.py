@@ -11,7 +11,7 @@ routes = web.RouteTableDef()
 @routes.get("/api/casino")
 @require_dashboard_access
 async def casino_get(request: web.Request) -> web.Response:
-    return web.json_response(casino_core.get_settings())
+    return web.json_response(casino_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/casino")
@@ -70,8 +70,9 @@ async def casino_put(request: web.Request) -> web.Response:
             continue
     values["loss_roles"] = valid_roles
 
-    casino_core.save_config({"enabled": body["enabled"], **values})
-    return web.json_response(casino_core.get_settings())
+    guild_id = request["guild_id"]
+    casino_core.save_config(guild_id, {"enabled": body["enabled"], **values})
+    return web.json_response(casino_core.get_settings(guild_id))
 
 
 @routes.get("/api/casino/leaderboard")
@@ -98,7 +99,7 @@ async def casino_leaderboard(request: web.Request) -> web.Response:
     start = (page - 1) * page_size
     entries = all_rows[start:start+page_size]
     
-    guild_id = request.app["guild_id"]
+    guild_id = request["guild_id"]
     guild = request.app["bot"].get_guild(guild_id)
     
     results = []

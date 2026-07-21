@@ -7,14 +7,13 @@
 затем «жёлтые» расходуют оставшийся запас буквы.
 """
 
-import json
-import os
 import random
 from datetime import date, datetime, timedelta, timezone
 
+import settings_db
 import wordle_data
 
-CONFIG_FILE = "wordle_config.json"
+MODULE_NAME = "wordle"
 
 WORD_LEN = 5
 MAX_ATTEMPTS = 6
@@ -30,48 +29,21 @@ GREEN, YELLOW, GRAY = "g", "y", "b"
 SQUARES = {GREEN: "🟩", YELLOW: "🟨", GRAY: "⬛"}
 EMPTY_SQUARE = "⬜"
 
-_cache: dict | None = None
-_cache_mtime: float | None = None
 _shuffled_answers: list[str] | None = None
 
 
 # ────────────────────────── Настройки ──────────────────────────
 
-def load_config() -> dict:
-    global _cache, _cache_mtime
-    if not os.path.exists(CONFIG_FILE):
-        _cache, _cache_mtime = None, None
-        return {}
-
-    mtime = os.path.getmtime(CONFIG_FILE)
-    if _cache is not None and _cache_mtime == mtime:
-        return _cache
-
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = {}
-    _cache, _cache_mtime = data, mtime
-    return data
+def save_config(guild_id: int, data: dict) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
-def save_config(data: dict) -> None:
-    global _cache, _cache_mtime
-    tmp_path = CONFIG_FILE + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    os.replace(tmp_path, CONFIG_FILE)
-    _cache = data
-    _cache_mtime = os.path.getmtime(CONFIG_FILE)
-
-
-def get_settings() -> dict:
-    """Настройки модуля с дефолтами (выключен по умолчанию).
+def get_settings(guild_id: int) -> dict:
+    """Настройки модуля сервера с дефолтами (выключен по умолчанию).
 
     channel_id — строка, не число: Discord ID (snowflake) превышает
     Number.MAX_SAFE_INTEGER во фронтенде, JS-числом его хранить нельзя."""
-    data = load_config()
+    data = settings_db.get(guild_id, MODULE_NAME)
     return {
         "enabled": bool(data.get("enabled", False)),
         "channel_id": str(data.get("channel_id", "") or ""),

@@ -280,7 +280,7 @@ class BunkerCog(commands.Cog):
         таймер_голосования: app_commands.Range[int, 10, 3600] = None,
         уникальные_карты: bool = None,
     ):
-        settings = bunker_core.get_settings()
+        settings = bunker_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Бункер» отключён.", ephemeral=True)
 
@@ -607,7 +607,7 @@ class BunkerCog(commands.Cog):
         await self._send_log(game, players, stopped)
 
     async def _send_log(self, game: dict, players: list[dict], stopped: bool):
-        log_channel_id = bunker_core.get_settings()["log_channel_id"]
+        log_channel_id = bunker_core.get_settings(game["guild_id"])["log_channel_id"]
         if not log_channel_id:
             return
         channel = self.bot.get_channel(int(log_channel_id))

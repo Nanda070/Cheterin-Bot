@@ -8,6 +8,7 @@ import discord
 import pytest
 
 import serverlog
+import settings_db
 from serverlog import ServerLog
 from dashboard.backend.tests.fakes import (
     FakeAuditLogEntry,
@@ -21,21 +22,21 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
-    monkeypatch.setattr(serverlog, "CONFIG_FILE", str(tmp_path / "serverlog_config.json"))
-    monkeypatch.setattr(serverlog, "_cache", None, raising=False)
-    monkeypatch.setattr(serverlog, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
-def enable(*event_types: str, channel_id: int = 500):
-    serverlog.save_config({
+def enable(guild_id, *event_types: str, channel_id: int = 500):
+    serverlog.save_config(guild_id, {
         "events": {et: {"enabled": True, "channel_id": str(channel_id)} for et in event_types}
     })
 
 
 def build(*event_types: str, channel_id: int = 500, members=None, roles=None):
-    enable(*event_types, channel_id=channel_id)
     channel = FakeChannel(channel_id, name="logs")
     guild = FakeGuild(members=members or [], roles=roles or [], channels=[channel])
+    enable(guild.id, *event_types, channel_id=channel_id)
     bot = FakeBot(guild)
     cog = ServerLog(bot)
     return cog, guild, channel
@@ -104,6 +105,7 @@ async def test_member_remove_embed_style_with_roles_and_duration():
     cog, guild, channel = build("member_leave")
     role = FakeRole(50, name="Homie")
     member = FakeMember(20, name="leaver", display_name="Leaver", role_ids=[50])
+    member.guild = guild
     member.joined_at = datetime.now(timezone.utc) - timedelta(seconds=31)
     member.roles = [guild.default_role, role]
 
@@ -194,6 +196,7 @@ async def test_voice_join():
     cog, guild, channel = build("voice_join")
     voice_channel = FakeChannel(700, name="voice")
     member = FakeMember(20, name="talker")
+    member.guild = guild
     before = type("VS", (), {"channel": None})()
     after = type("VS", (), {"channel": voice_channel})()
 

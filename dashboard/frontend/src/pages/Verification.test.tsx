@@ -5,8 +5,8 @@ import { VerificationPage } from './Verification'
 
 const emptySettings: client.VerificationSettings = {
   enabled: false,
-  unverified_role_id: 0,
-  verified_role_id: 0,
+  unverified_role_id: '',
+  verified_role_id: '',
   welcome_text: 'Нажмите кнопку ниже.',
 }
 
@@ -25,7 +25,7 @@ describe('VerificationPage', () => {
     vi.spyOn(client, 'fetchVerificationSettings').mockResolvedValue(emptySettings)
     const updateSpy = vi
       .spyOn(client, 'updateVerificationSettings')
-      .mockResolvedValue({ ...emptySettings, enabled: true, verified_role_id: 222 })
+      .mockResolvedValue({ ...emptySettings, enabled: true, verified_role_id: '222' })
     render(<VerificationPage />)
 
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
@@ -33,7 +33,7 @@ describe('VerificationPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() =>
-      expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, verified_role_id: 222 })),
+      expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, verified_role_id: '222' })),
     )
     expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
   })

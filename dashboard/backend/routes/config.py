@@ -16,7 +16,6 @@ CHANNEL_FIELDS = [
     "RULES_CHANNEL_ID",
     "ROLES_CHANNEL_ID",
     "SEARCH_PLAYERS_CHANNEL_ID",
-    "CTD_CHANNEL_ID",
     "VOICE_LOBBY_CHANNEL_ID",
     "VOICE_PANEL_CHANNEL_ID",
     "VOICE_LOG_CHANNEL_ID",
@@ -26,7 +25,6 @@ CHANNEL_FIELDS = [
 
 ROLE_FIELDS = [
     "SPAM_LOG_ROLE_ID",
-    "CTD_ROLE_ID",
     "SUPPLY_ROLE_ID",
 ]
 
@@ -42,7 +40,7 @@ ALL_LIST_FIELDS = LIST_CHANNEL_FIELDS + LIST_ROLE_FIELDS
 @routes.get("/api/config")
 @require_dashboard_access
 async def get_config(request: web.Request) -> web.Response:
-    data = bot_config.load_config()
+    data = bot_config.load_config(request["guild_id"])
     result = {}
     for key in ALL_FIELDS:
         if key in ALL_LIST_FIELDS:
@@ -118,7 +116,7 @@ def _validate_relations(body: dict, guild) -> web.Response | None:
 @require_dashboard_access
 async def update_config(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -139,10 +137,10 @@ async def update_config(request: web.Request) -> web.Response:
 
     # Обновляем только свои поля, не затирая ключи других разделов
     # (AUTO_ROLE_IDS, WELCOME_CHANNEL_ENABLED и т.п. живут в том же config.json).
-    data = bot_config.load_config()
+    data = bot_config.load_config(request["guild_id"])
     for key in ALL_FIELDS:
         data[key] = body.get(key, [] if key in ALL_LIST_FIELDS else "")
-    bot_config.save_config(data)
+    bot_config.save_config(request["guild_id"], data)
 
     result = {key: (list(data[key]) if key in ALL_LIST_FIELDS else str(data[key] or "")) for key in ALL_FIELDS}
     return web.json_response(result)

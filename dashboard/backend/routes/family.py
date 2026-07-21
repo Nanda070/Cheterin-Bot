@@ -29,7 +29,7 @@ def _display_name(guild, user_id: int) -> str:
 @routes.get("/api/family")
 @require_dashboard_access
 async def family_get(request: web.Request) -> web.Response:
-    return web.json_response(family_core.get_settings())
+    return web.json_response(family_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/family")
@@ -73,7 +73,8 @@ async def family_put(request: web.Request) -> web.Response:
     if not isinstance(birthdays, dict) or not _is_id(birthdays.get("channel_id", "")) or not _is_id(birthdays.get("list_channel_id", "")):
         return web.json_response({"error": "invalid_birthdays"}, status=400)
 
-    family_core.save_config({
+    guild_id = request["guild_id"]
+    family_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "roster": {
             "list_channel_id": roster.get("list_channel_id", ""),
@@ -98,7 +99,7 @@ async def family_put(request: web.Request) -> web.Response:
             "list_channel_id": birthdays.get("list_channel_id", ""),
         },
     })
-    return web.json_response(family_core.get_settings())
+    return web.json_response(family_core.get_settings(guild_id))
 
 
 # ────────────────────────── Ростер ──────────────────────────
@@ -106,12 +107,12 @@ async def family_put(request: web.Request) -> web.Response:
 @routes.get("/api/family/roster")
 @require_dashboard_access
 async def family_roster(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
     groups = []
-    for entry in family_core.get_settings()["roster"]["target_roles"]:
+    for entry in family_core.get_settings(request["guild_id"])["roster"]["target_roles"]:
         role = guild.get_role(int(entry["role_id"])) if entry["role_id"] else None
         groups.append({
             "label": entry["label"] or (role.name if role else entry["role_id"]),
@@ -149,7 +150,7 @@ def _serialize_ticket(row: dict, guild) -> dict:
 @routes.get("/api/family/tickets")
 @require_dashboard_access
 async def family_tickets_list(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
 
     status = request.query.get("status") or None
     if status and status not in VALID_STATUSES:
@@ -160,8 +161,8 @@ async def family_tickets_list(request: web.Request) -> web.Response:
         page = 1
     offset = (page - 1) * PAGE_SIZE
 
-    rows = family_db.list_tickets(status=status, limit=PAGE_SIZE, offset=offset)
-    total = family_db.count_tickets(status=status)
+    rows = family_db.list_tickets(request["guild_id"], status=status, limit=PAGE_SIZE, offset=offset)
+    total = family_db.count_tickets(request["guild_id"], status=status)
     return web.json_response({
         "total": total,
         "page": page,
@@ -172,7 +173,7 @@ async def family_tickets_list(request: web.Request) -> web.Response:
 
 async def _decide_ticket(request: web.Request, status: str) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -216,8 +217,8 @@ async def family_ticket_close(request: web.Request) -> web.Response:
 @routes.get("/api/family/birthdays")
 @require_dashboard_access
 async def family_birthdays_list(request: web.Request) -> web.Response:
-    guild = request.app["bot"].get_guild(request.app["guild_id"])
-    rows = family_db.get_all_birthdays(request.app["guild_id"])
+    guild = request.app["bot"].get_guild(request["guild_id"])
+    rows = family_db.get_all_birthdays(request["guild_id"])
     return web.json_response({
         "entries": [
             {
@@ -236,7 +237,7 @@ async def family_birthdays_list(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def family_birthday_set(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -257,7 +258,7 @@ async def family_birthday_set(request: web.Request) -> web.Response:
     except ValueError as exc:
         return web.json_response({"error": str(exc)}, status=400)
 
-    family_db.save_birthday(user_id, request.app["guild_id"], day, month, display)
+    family_db.save_birthday(user_id, request["guild_id"], day, month, display)
 
     cog = bot.get_cog("BirthdayCog")
     if cog is not None:
@@ -270,13 +271,13 @@ async def family_birthday_set(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def family_birthday_delete(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request.app["guild_id"])
+    guild = bot.get_guild(request["guild_id"])
     try:
         user_id = int(request.match_info["user_id"])
     except ValueError:
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    deleted = family_db.delete_birthday(user_id)
+    deleted = family_db.delete_birthday(request["guild_id"], user_id)
     if not deleted:
         return web.json_response({"error": "not_found"}, status=404)
 

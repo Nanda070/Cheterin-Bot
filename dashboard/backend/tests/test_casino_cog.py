@@ -3,22 +3,23 @@
 import pytest
 
 import casino_core
+import casino_db
 import economy_core
 import economy_db
+import settings_db
 from casino import CasinoCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
-    monkeypatch.setattr(casino_core, "CONFIG_FILE", str(tmp_path / "casino_config.json"))
-    monkeypatch.setattr(casino_core, "_cache", None, raising=False)
-    monkeypatch.setattr(casino_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
     economy_db.init()
-    monkeypatch.setattr(economy_core, "CONFIG_FILE", str(tmp_path / "economy_config.json"))
-    monkeypatch.setattr(economy_core, "_cache", None, raising=False)
-    monkeypatch.setattr(economy_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("CASINO_DB_PATH", str(tmp_path / "casino.db"))
+    casino_db.init()
 
 
 class FakeResponse:
@@ -30,6 +31,7 @@ class FakeResponse:
 
 
 class FakeInteraction:
+    guild_id = 1
     def __init__(self, user, guild):
         self.user = user
         self.guild = guild
@@ -42,10 +44,10 @@ class FakeChoice:
 
 
 def build(casino_enabled=True, economy_enabled=True, **casino_extra):
-    casino_core.save_config({"enabled": casino_enabled, **casino_extra})
-    economy_core.save_config({"enabled": economy_enabled})
     player = FakeMember(20, name="player")
     guild = FakeGuild(members=[player])
+    casino_core.save_config(guild.id, {"enabled": casino_enabled, **casino_extra})
+    economy_core.save_config(guild.id, {"enabled": economy_enabled})
     bot = FakeBot(guild)
     cog = CasinoCog(bot)
     return cog, player, guild

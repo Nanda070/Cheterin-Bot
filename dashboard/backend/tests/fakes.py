@@ -5,6 +5,7 @@ from aiohttp import web
 from aiohttp_session import new_session
 
 from dashboard.backend.config import DashboardConfig
+from dashboard.backend.guild_context import guild_context_middleware
 from dashboard.backend.session import setup_session
 
 TEST_CONFIG = DashboardConfig(
@@ -21,6 +22,11 @@ TEST_CONFIG = DashboardConfig(
 class FakeColor:
     def __init__(self, value=0):
         self.value = value
+
+
+class FakeGuildInner:
+    def __init__(self, guild_id=1):
+        self.id = guild_id
 
 
 class FakeRole:
@@ -47,9 +53,10 @@ class FakeRole:
 
 
 class FakePermissions:
-    def __init__(self, administrator=False, mention_everyone=False):
+    def __init__(self, administrator=False, mention_everyone=False, manage_guild=False):
         self.administrator = administrator
         self.mention_everyone = mention_everyone
+        self.manage_guild = manage_guild
 
 
 class FakeAsset:
@@ -123,12 +130,19 @@ class FakeComponentRow:
         self.children = children
 
 
+class _FakeChannelType:
+    def __init__(self, name):
+        self.name = name
+
+
 class FakeChannel:
-    def __init__(self, channel_id, name="channel", messages=None, next_message_id=1000):
+    def __init__(self, channel_id, name="channel", messages=None, next_message_id=1000, type_name="text"):
         self.id = channel_id
         self.name = name
         self._messages = messages or {}
         self._next_message_id = next_message_id
+        self.type = _FakeChannelType(type_name)
+        self.guild = FakeGuildInner(1)
         self.send_calls = []
         self.send_raises = None
         self.purge_calls = []
@@ -166,9 +180,11 @@ class FakeChannel:
             self._messages.pop(message.id, None)
         return deleted
 
-    async def send(self, **kwargs):
+    async def send(self, content=None, **kwargs):
         if self.send_raises:
             raise self.send_raises
+        if content is not None:
+            kwargs["content"] = content
         self.send_calls.append(kwargs)
         message = FakeMessage(
             self._next_message_id,
@@ -203,9 +219,11 @@ class FakeThread:
             raise discord.NotFound.__new__(discord.NotFound)
         return message
 
-    async def send(self, **kwargs):
+    async def send(self, content=None, **kwargs):
         if self.send_raises:
             raise self.send_raises
+        if content is not None:
+            kwargs["content"] = content
         self.send_calls.append(kwargs)
         message = FakeMessage(
             self._next_message_id,
@@ -238,6 +256,7 @@ class FakeMember:
         administrator=False,
         bot=False,
         top_role=None,
+        manage_guild=False,
     ):
         self.id = member_id
         self.name = name
@@ -249,7 +268,7 @@ class FakeMember:
         self.created_at = datetime(2020, 6, 1, tzinfo=timezone.utc)
         default_role = FakeRole(0, name="@everyone", position=0, default=True)
         self.roles = [default_role] + (roles if roles is not None else [FakeRole(r) for r in role_ids])
-        self.guild_permissions = FakePermissions(administrator)
+        self.guild_permissions = FakePermissions(administrator, manage_guild=manage_guild)
         self.display_avatar = FakeAsset()
         self.top_role = top_role or (self.roles[-1] if len(self.roles) > 1 else default_role)
         self.action_calls = []
@@ -340,6 +359,11 @@ class FakeGuild:
         self.members = members or []
         self.roles = roles or []
         self.me = me or FakeMember(1, name="bot", top_role=FakeRole(900, name="bot-role", position=50))
+        # Как в discord.py: у каждого Member есть обратная ссылка на его guild —
+        # многие *_core.py читают настройки по member.guild.id / interaction.guild.id.
+        for _member in self.members:
+            _member.guild = self
+        self.me.guild = self
         self.channels = channels or []
         self.emojis = emojis or []
         self._fetchable_members = fetchable_members or []
@@ -428,12 +452,16 @@ class FakeGuild:
             raise discord.NotFound.__new__(discord.NotFound)
         return member
 
+    async def invites(self):
+        return list(getattr(self, "_invites", []))
+
 
 class FakeBot:
     def __init__(self, guild, user=None, fetchable_users=None, guilds=None):
         self._guild = guild
         self.guilds = guilds if guilds is not None else [guild]
         self.user = user or FakeMember(999999, name="ChetBot", bot=True)
+        self.cogs = {}  # имя кога → ког (как bot.cogs в discord.py)
         self.stats = {}
         self.feedback_cases = {}
         self.sent_logs = []
@@ -474,7 +502,7 @@ class FakeBot:
     async def update_file(self):
         self.update_file_calls += 1
 
-    async def send_log(self, embed):
+    async def send_log(self, guild_id, embed):
         self.sent_logs.append(embed)
 
     def utcnow(self):
@@ -482,7 +510,7 @@ class FakeBot:
 
 
 def make_moderation_app(bot, routes_tables, config=TEST_CONFIG):
-    app = web.Application()
+    app = web.Application(middlewares=[guild_context_middleware])
     app["bot"] = bot
     app["dashboard_config"] = config
     app["guild_id"] = 1
@@ -493,12 +521,18 @@ def make_moderation_app(bot, routes_tables, config=TEST_CONFIG):
     async def test_login(request):
         session = await new_session(request)
         session["discord_user_id"] = request.query["user_id"]
+        active_guild_id = request.query.get("active_guild_id")
+        if active_guild_id:
+            session["active_guild_id"] = active_guild_id
         return web.json_response({"ok": True})
 
     app.router.add_get("/test/login", test_login)
     return app
 
 
-async def force_login(client, user_id):
-    resp = await client.get(f"/test/login?user_id={user_id}")
+async def force_login(client, user_id, active_guild_id=None):
+    url = f"/test/login?user_id={user_id}"
+    if active_guild_id is not None:
+        url += f"&active_guild_id={active_guild_id}"
+    resp = await client.get(url)
     assert resp.status == 200

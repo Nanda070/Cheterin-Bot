@@ -45,7 +45,7 @@ def _serialize_game_summary(game: dict, bot) -> dict:
 @routes.get("/api/mafia")
 @require_dashboard_access
 async def mafia_get(request: web.Request) -> web.Response:
-    return web.json_response(mafia_core.get_settings())
+    return web.json_response(mafia_core.get_settings(request["guild_id"]))
 
 
 @routes.put("/api/mafia")
@@ -85,7 +85,8 @@ async def mafia_put(request: web.Request) -> web.Response:
     if not _is_id(log_channel_id):
         return web.json_response({"error": "invalid_log_channel_id"}, status=400)
 
-    mafia_core.save_config({
+    guild_id = request["guild_id"]
+    mafia_core.save_config(guild_id, {
         "enabled": body["enabled"],
         "default_min_players": min_players,
         "default_max_players": max_players,
@@ -94,7 +95,7 @@ async def mafia_put(request: web.Request) -> web.Response:
         "default_day_vote_timer_sec": vote_timer,
         "log_channel_id": log_channel_id,
     })
-    return web.json_response(mafia_core.get_settings())
+    return web.json_response(mafia_core.get_settings(guild_id))
 
 
 @routes.get("/api/mafia/games")

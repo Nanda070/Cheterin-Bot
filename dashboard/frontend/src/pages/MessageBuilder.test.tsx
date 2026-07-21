@@ -20,6 +20,6 @@ describe('MessageBuilderPage', () => {
     expect(screen.getByText('Пока ничего не настроено.')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Эмбеды' }))
-    await waitFor(() => screen.getByLabelText('Title'))
+    await waitFor(() => screen.getByLabelText(/^Title/))
   })
 })

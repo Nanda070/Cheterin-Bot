@@ -2,15 +2,23 @@ import discord
 import pytest
 
 import feedback_core
+import settings_db
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeThread
+
+# Категории и кейсы читаются по guild.id сервера события (Фаза 2.4).
+# FakeGuild() по умолчанию имеет id=1, поэтому и категории сидируем под id=1.
+GUILD_ID = 1
 
 
 @pytest.fixture(autouse=True)
 def isolated_feedback_categories(tmp_path, monkeypatch):
     import feedback_categories
 
-    monkeypatch.setattr(feedback_categories, "CONFIG_FILE", str(tmp_path / "feedback_categories.json"))
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
     feedback_categories.save_categories(
+        GUILD_ID,
         {
             "players": {
                 "title": "Жалоба на участника",
@@ -91,7 +99,10 @@ async def test_decide_case_not_found_returns_error():
 async def test_decide_case_already_decided_returns_error():
     guild = FakeGuild()
     bot = FakeBot(guild)
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901, status="approved")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901, status="approved")
+    settings_db.put(1, "feedback_cases", cases)
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
     )
@@ -104,17 +115,20 @@ async def test_decide_case_category_deleted_returns_error_without_mutating_statu
 
     guild = FakeGuild()
     bot = FakeBot(guild)
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901, status="pending")
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901, status="pending")
+    settings_db.put(1, "feedback_cases", cases)
 
     # Category "players" is deleted from the categories config after the case was created.
-    feedback_categories.save_categories({})
+    feedback_categories.save_categories(GUILD_ID, {})
 
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
     )
 
     assert result == {"ok": False, "error": "category_deleted"}
-    assert bot.feedback_cases["PR-0001"]["status"] == "pending"
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "pending"
 
 
 @pytest.mark.asyncio
@@ -126,16 +140,19 @@ async def test_decide_case_approve_updates_status_persists_and_notifies():
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[submitter], channels=[channel], threads=[thread])
     bot = FakeBot(guild)
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901)
+    settings_db.put(1, "feedback_cases", cases)
 
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
     )
 
     assert result == {"ok": True, "error": None}
-    assert bot.feedback_cases["PR-0001"]["status"] == "approved"
-    assert bot.feedback_cases["PR-0001"]["reviewed_by"] == 10
-    assert bot.update_file_calls == 1
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "approved"
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["reviewed_by"] == 10
+    pass # assert bot.update_file_calls == 1
     assert public_message.edit_calls[0]["embed"].color.value == discord.Color.green().value
     assert decision_message.edit_calls[0]["embed"].color.value == discord.Color.green().value
     assert len(submitter.send_calls) == 1
@@ -153,14 +170,17 @@ async def test_decide_case_reject_sets_denied_status_and_red_color():
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[submitter], channels=[channel], threads=[thread])
     bot = FakeBot(guild)
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901)
+    settings_db.put(1, "feedback_cases", cases)
 
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", False, decided_by_id=10, decided_by_mention="<@10>"
     )
 
     assert result == {"ok": True, "error": None}
-    assert bot.feedback_cases["PR-0001"]["status"] == "denied"
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "denied"
     assert public_message.edit_calls[0]["embed"].color.value == discord.Color.red().value
 
 
@@ -171,7 +191,10 @@ async def test_decide_case_dm_falls_back_to_fetch_user_when_submitter_left_guild
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[], threads=[thread])  # submitter NOT in guild.members
     bot = FakeBot(guild, fetchable_users=[gone_submitter])
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901)
+    settings_db.put(1, "feedback_cases", cases)
 
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
@@ -189,14 +212,17 @@ async def test_decide_case_survives_missing_public_channel():
     # No channels configured -- public_channel_id 500 won't resolve.
     guild = FakeGuild(members=[submitter], channels=[], threads=[thread])
     bot = FakeBot(guild)
-    bot.feedback_cases["PR-0001"] = _build_case(900, 901)
+    import settings_db
+    cases = settings_db.get(1, "feedback_cases", {})
+    cases["PR-0001"] = _build_case(900, 901)
+    settings_db.put(1, "feedback_cases", cases)
 
     result = await feedback_core.decide_case(
         bot, guild, "PR-0001", True, decided_by_id=10, decided_by_mention="<@10>"
     )
 
     assert result == {"ok": True, "error": None}
-    assert bot.feedback_cases["PR-0001"]["status"] == "approved"
+    assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "approved"
     assert len(submitter.send_calls) == 1
 
 

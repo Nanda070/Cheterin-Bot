@@ -15,8 +15,6 @@ const emptyConfig: client.BotConfig = {
   RULES_CHANNEL_ID: '',
   ROLES_CHANNEL_ID: '',
   SEARCH_PLAYERS_CHANNEL_ID: '',
-  CTD_ROLE_ID: '',
-  CTD_CHANNEL_ID: '',
   BUTTON_CREATE_ALLOWED_ROLES: [],
   BUTTON_WEBHOOK_URL: '',
   SERVER_INVITE_LINK: '',
@@ -44,7 +42,8 @@ describe('ConfigPage', () => {
 
     expect(await screen.findByText('Модерация и спам')).toBeInTheDocument()
     expect(screen.getByText('Приветствия и онбординг')).toBeInTheDocument()
-    expect(screen.getByText('Тикеты CTD')).toBeInTheDocument()
+    // CTD вынесен из общей конфигурации в отдельный раздел (Фаза 2b).
+    expect(screen.queryByText('Тикеты CTD')).not.toBeInTheDocument()
     expect(screen.getByText('Кнопки и вебхуки')).toBeInTheDocument()
     expect(screen.getByText('Приватные комнаты')).toBeInTheDocument()
     expect(screen.getByText('Поставки')).toBeInTheDocument()

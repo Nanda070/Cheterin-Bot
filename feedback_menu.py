@@ -1,3 +1,4 @@
+import settings_db
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -12,8 +13,10 @@ logger = logging.getLogger("chetbot.feedback")
 PANEL_BANNER_URL = "https://i.imgur.com/vLAcc7q.png"
 
 
-def get_feedback_categories():
-    return feedback_categories.load_categories()
+def get_feedback_categories(guild_id: int):
+    # Фаза 2.4: категории обращений — per-guild. Панель строится под сервер, где
+    # она публикуется, а обработка нажатий резолвит категории по серверу интеракции.
+    return feedback_categories.load_categories(guild_id)
 
 
 class FeedbackMenu(commands.Cog):
@@ -30,51 +33,58 @@ class FeedbackMenu(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not getattr(self.bot, "_feedback_views_loaded", False):
-            self.bot.add_view(FeedbackView(self.bot))
+            # Регистрируем панель-View для каждого сервера с настроенными категориями
+            # (custom_id вида feedback_open:<key>); коллбэк резолвит категорию по
+            # серверу интеракции, поэтому пересечение ключей между серверами безопасно.
+            for guild in self.bot.guilds:
+                if get_feedback_categories(guild.id):
+                    self.bot.add_view(FeedbackView(self.bot, guild.id))
             await self.restore_feedback_views()
             self.bot._feedback_views_loaded = True
 
     async def restore_feedback_views(self):
-        for case_id, case_data in self.bot.feedback_cases.items():
-            if case_data.get("status") != "pending":
-                continue
-            message_id = case_data.get("decision_message_id")
-            submitter_id = case_data.get("submitter_id")
-            category_key = case_data.get("category_key")
-            if not message_id or not submitter_id or not category_key:
-                continue
-            self.bot.add_view(
-                FeedbackDecisionView(self.bot, case_id, submitter_id, category_key),
-                message_id=message_id,
-            )
+        for guild in self.bot.guilds:
+            cases = settings_db.get(guild.id, "feedback_cases", {})
+            for case_id, case_data in cases.items():
+                if case_data.get("status") != "pending":
+                    continue
+                message_id = case_data.get("decision_message_id")
+                submitter_id = case_data.get("submitter_id")
+                category_key = case_data.get("category_key")
+                if not message_id or not submitter_id or not category_key:
+                    continue
+                self.bot.add_view(
+                    FeedbackDecisionView(self.bot, case_id, submitter_id, category_key),
+                    message_id=message_id,
+                )
 
-    @feedback_panel_group.command(name="send", description="Опубликовать панель обратной связи")
-    @app_commands.describe(channel="Канал для публикации панели")
-    async def feedback_panel_send(
-        self,
-        interaction: discord.Interaction,
-        channel: Optional[discord.TextChannel] = None,
-    ):
-        target_channel = channel or interaction.channel
-        if not isinstance(target_channel, discord.TextChannel):
-            await interaction.response.send_message("Нужен обычный текстовый канал.", ephemeral=True)
-            return
+        @feedback_panel_group.command(name="send", description="Опубликовать панель обратной связи")
+        @app_commands.describe(channel="Канал для публикации панели")
+        async def feedback_panel_send(
+            self,
+            interaction: discord.Interaction,
+            channel: Optional[discord.TextChannel] = None,
+        ):
+            target_channel = channel or interaction.channel
+            if not isinstance(target_channel, discord.TextChannel):
+                await interaction.response.send_message("Нужен обычный текстовый канал.", ephemeral=True)
+                return
 
-        # Сначала отвечаем на interaction, потом отправляем панель
-        await interaction.response.send_message("Панель опубликована.", ephemeral=True)
-        await feedback_core.publish_feedback_panel(
-            self.bot,
-            target_channel,
+            # Сначала отвечаем на interaction, потом отправляем панель
+            await interaction.response.send_message("Панель опубликована.", ephemeral=True)
+            await feedback_core.publish_feedback_panel(
+                self.bot,
+                target_channel,
             published_by_id=interaction.user.id,
             published_by_mention=interaction.user.mention,
         )
 
 
 class FeedbackView(discord.ui.View):
-    def __init__(self, bot):
+    def __init__(self, bot, guild_id: int):
         super().__init__(timeout=None)
         self.bot = bot
-        categories = get_feedback_categories()
+        categories = get_feedback_categories(guild_id)
 
         for category_key, config in categories.items():
             button = discord.ui.Button(
@@ -85,17 +95,20 @@ class FeedbackView(discord.ui.View):
             )
 
             async def callback(interaction: discord.Interaction, ck=category_key):
-                await interaction.response.send_modal(FeedbackModal(self.bot, ck))
+                # Категорию берём по серверу интеракции, а не по серверу публикации:
+                # один и тот же процесс обслуживает много серверов.
+                await interaction.response.send_modal(FeedbackModal(self.bot, interaction.guild_id, ck))
 
             button.callback = callback
             self.add_item(button)
 
 
 class FeedbackModal(discord.ui.Modal):
-    def __init__(self, bot, category_key: str):
+    def __init__(self, bot, guild_id: int, category_key: str):
         self.bot = bot
+        self.guild_id = guild_id
         self.category_key = category_key
-        config = get_feedback_categories()[category_key]
+        config = get_feedback_categories(guild_id)[category_key]
         super().__init__(title=config["modal_title"], timeout=None)
 
         self.field_keys = []
@@ -123,14 +136,14 @@ class FeedbackModal(discord.ui.Modal):
             embed = discord.Embed(
                 title="❌ Ошибка при создании обращения",
                 description=(
-                    f"**Категория:** {get_feedback_categories()[self.category_key]['title']}\n"
+                    f"**Категория:** {get_feedback_categories(self.guild_id)[self.category_key]['title']}\n"
                     f"**Пользователь:** {interaction.user.mention} (`{interaction.user.id}`)\n"
                     f"**Ошибка:** `{exc}`"
                 ),
                 color=discord.Color.red(),
                 timestamp=self.bot.utcnow(),
             )
-            await self.bot.send_log(embed)
+            await self.bot.send_log(interaction.guild.id, embed)
             if interaction.response.is_done():
                 await interaction.followup.send("Не удалось создать обращение.", ephemeral=True)
             else:
@@ -173,10 +186,11 @@ class FeedbackDecisionView(discord.ui.View):
 
 # --- Хелперы для обращений ---
 
-async def get_next_case_id(bot, prefix: str) -> str:
-    current = int(bot.feedback_counters.get(prefix, 0)) + 1
-    bot.feedback_counters[prefix] = current
-    await bot.update_file()
+async def get_next_case_id(bot, guild_id: int, prefix: str) -> str:
+    counters = settings_db.get(guild_id, "feedback_counters", {})
+    current = int(counters.get(prefix, 0)) + 1
+    counters[prefix] = current
+    settings_db.put(guild_id, "feedback_counters", counters)
     return f"{prefix}-{current:04d}"
 
 
@@ -211,7 +225,7 @@ async def add_reviewers(thread: discord.Thread, guild: discord.Guild, config: di
 
 
 async def create_feedback_case(interaction: discord.Interaction, bot, category_key: str, answers: dict):
-    config = get_feedback_categories()[category_key]
+    config = get_feedback_categories(interaction.guild.id)[category_key]
     if not interaction.response.is_done():
         await interaction.response.defer(ephemeral=True)
 
@@ -220,7 +234,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
         await interaction.followup.send("Целевой канал не найден или не является текстовым.", ephemeral=True)
         return
 
-    case_id = await get_next_case_id(bot, config["case_prefix"])
+    case_id = await get_next_case_id(bot, interaction.guild.id, config["case_prefix"])
     summary_val = answers.get(config["mini_summary_key"], "—")
 
     mini_embed = discord.Embed(
@@ -295,7 +309,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
         color=discord.Color.blurple(),
         timestamp=bot.utcnow(),
     )
-    await bot.send_log(log_embed)
+    await bot.send_log(interaction.guild.id, log_embed)
 
     await interaction.followup.send(
         f"Обращение зарегистрировано. Номер: **{case_id}**.\nИтог рассмотрения придёт вам в личные сообщения.",

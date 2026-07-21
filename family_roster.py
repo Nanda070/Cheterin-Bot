@@ -18,7 +18,7 @@ logger = logging.getLogger("family.roster")
 
 
 def generate_roster_text(guild: discord.Guild) -> str:
-    settings = family_core.get_settings()
+    settings = family_core.get_settings(guild.id)
     target_roles = settings["roster"]["target_roles"]
     if not target_roles:
         return "Роли ростера не настроены."
@@ -55,7 +55,7 @@ class RosterCog(commands.Cog):
 
     async def execute_roster_update(self, guild: discord.Guild):
         async with self._update_lock:
-            data = family_db.get_roster_data()
+            data = family_db.get_roster_data(guild.id)
             if not data:
                 return
 
@@ -69,7 +69,7 @@ class RosterCog(commands.Cog):
                 if msg.content != new_content:
                     await msg.edit(content=new_content, allowed_mentions=discord.AllowedMentions.none())
             except discord.NotFound:
-                family_db.clear_roster_data()
+                family_db.clear_roster_data(guild.id)
             except discord.HTTPException as exc:
                 logger.warning("Не удалось обновить ростер: %s", exc)
 
@@ -86,7 +86,7 @@ class RosterCog(commands.Cog):
 
     @app_commands.command(name="список", description="Создать live-сообщение со списком участников семьи")
     async def roster_list(self, interaction: discord.Interaction):
-        settings = family_core.get_settings()
+        settings = family_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
 
@@ -97,7 +97,7 @@ class RosterCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
 
-        data = family_db.get_roster_data()
+        data = family_db.get_roster_data(guild.id)
         if data:
             old_channel = guild.get_channel(data["channel_id"])
             if isinstance(old_channel, discord.TextChannel):
@@ -109,14 +109,15 @@ class RosterCog(commands.Cog):
 
         content = generate_roster_text(guild)
         msg = await interaction.channel.send(content=content, allowed_mentions=discord.AllowedMentions.none())
-        family_db.save_roster_data(msg.channel.id, msg.id)
+        family_db.save_roster_data(guild.id, msg.channel.id, msg.id)
         await interaction.followup.send("Live-список инициализирован.")
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        if not family_core.get_settings()["enabled"]:
+        settings = family_core.get_settings(after.guild.id)
+        if not settings["enabled"]:
             return
-        target_ids = {int(r["role_id"]) for r in family_core.get_settings()["roster"]["target_roles"] if r["role_id"]}
+        target_ids = {int(r["role_id"]) for r in settings["roster"]["target_roles"] if r["role_id"]}
         if not target_ids:
             return
         before_ids = {r.id for r in before.roles} & target_ids
@@ -126,9 +127,10 @@ class RosterCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        if not family_core.get_settings()["enabled"]:
+        settings = family_core.get_settings(member.guild.id)
+        if not settings["enabled"]:
             return
-        target_ids = {int(r["role_id"]) for r in family_core.get_settings()["roster"]["target_roles"] if r["role_id"]}
+        target_ids = {int(r["role_id"]) for r in settings["roster"]["target_roles"] if r["role_id"]}
         if target_ids and {r.id for r in member.roles} & target_ids:
             self.bot.loop.create_task(self.schedule_roster_update(member.guild))
 

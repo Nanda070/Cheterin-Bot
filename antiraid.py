@@ -39,7 +39,7 @@ class AntiRaidCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        settings = antiraid_core.get_settings()
+        settings = antiraid_core.get_settings(member.guild.id)
         if not settings["enabled"]:
             return  # модуль выключен — никакого эффекта, точка входа для всей фичи
 
@@ -97,7 +97,8 @@ class AntiRaidCog(commands.Cog):
             extra_parts.append(f"Slowmode: {slowmode_applied} канал(ов) на {settings['action_slowmode_sec']}с")
 
         moderation_log.append_event(
-            "antiraid_trigger", member.id, member.name,
+            guild.id, "antiraid_trigger", member.id, member.name,
+            self.bot.user.id, self.bot.user.name,
             "Автоматическое срабатывание антирейда", extra=" · ".join(extra_parts),
         )
 
@@ -109,7 +110,7 @@ class AntiRaidCog(commands.Cog):
         )
         embed.add_field(name="Последний вход", value=f"{member.mention} (`{member.id}`)", inline=False)
         embed.set_footer(text="Антирейд · Автоматически")
-        await self.bot.send_log(embed)
+        await self.bot.send_log(guild.id, embed)
 
 
 async def setup(bot: commands.Bot):

@@ -2,6 +2,7 @@ import pytest
 
 import family_core
 import family_db
+import settings_db
 from family_tickets import FamilyTicketsCog
 from dashboard.backend.routes.family import routes as family_routes
 from dashboard.backend.tests.fakes import (
@@ -20,9 +21,9 @@ from dashboard.backend.tests.fakes import (
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("FAMILY_DB_PATH", str(tmp_path / "family.db"))
     family_db.init()
-    monkeypatch.setattr(family_core, "CONFIG_FILE", str(tmp_path / "family_config.json"))
-    monkeypatch.setattr(family_core, "_cache", None, raising=False)
-    monkeypatch.setattr(family_core, "_cache_mtime", None, raising=False)
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setattr(settings_db, "_cache", {})
+    settings_db.init()
 
 
 def build(members=None, **guild_kwargs):
@@ -53,7 +54,7 @@ async def test_put_then_get(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = family_core.get_settings()
+    payload = family_core.get_settings(1)
     payload["enabled"] = True
     payload["roster"]["target_roles"] = [{"label": "High", "role_id": "7"}]
     payload["applications"]["staff_role_ids"] = ["1", "2"]
@@ -74,17 +75,17 @@ async def test_put_validation(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    payload = family_core.get_settings()
+    payload = family_core.get_settings(1)
     payload["enabled"] = "yes"
     resp = await client.put("/api/family", json=payload)
     assert resp.status == 400
 
-    payload = family_core.get_settings()
+    payload = family_core.get_settings(1)
     payload["applications"]["thread_archive_minutes"] = 5
     resp = await client.put("/api/family", json=payload)
     assert resp.status == 400
 
-    payload = family_core.get_settings()
+    payload = family_core.get_settings(1)
     payload["roster"]["target_roles"] = [{"label": "X", "role_id": "abc"}]
     resp = await client.put("/api/family", json=payload)
     assert resp.status == 400
@@ -107,7 +108,7 @@ async def test_roster_preview(aiohttp_client):
     role.members = [member]
     _, _, app = build(roles=[role])
 
-    family_core.save_config({"roster": {"target_roles": [{"label": "Верхушка", "role_id": "7"}]}})
+    family_core.save_config(1, {"roster": {"target_roles": [{"label": "Верхушка", "role_id": "7"}]}})
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -122,7 +123,7 @@ async def test_roster_preview(aiohttp_client):
 @pytest.mark.asyncio
 async def test_roster_preview_missing_role(aiohttp_client):
     _, _, app = build()
-    family_core.save_config({"roster": {"target_roles": [{"label": "Ghost", "role_id": "999"}]}})
+    family_core.save_config(1, {"roster": {"target_roles": [{"label": "Ghost", "role_id": "999"}]}})
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -148,7 +149,7 @@ async def test_tickets_list_and_filter(aiohttp_client):
     _, _, app = build()
     family_db.create_ticket_record(20, 1, _ticket_data("Open1"))
     family_db.create_ticket_record(21, 1, _ticket_data("Closed1"))
-    family_db.update_ticket_status(21, "closed", handled_by=10)
+    family_db.update_ticket_status(1, 21, "closed", handled_by=10)
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -175,7 +176,7 @@ async def test_ticket_approve_full_flow(aiohttp_client):
 
     _, guild, app = build(channels=[app_channel], roles=[approve_role, active_role], members=[applicant], threads=[thread])
 
-    family_core.save_config({
+    family_core.save_config(1, {
         "applications": {
             "application_channel_id": "700",
             "approve_role_ids": ["50"],
@@ -185,7 +186,7 @@ async def test_ticket_approve_full_flow(aiohttp_client):
     })
 
     family_db.create_ticket_record(20, 1, _ticket_data())
-    family_db.update_ticket_indexes(20, mini_message_id=None, thread_id=800)
+    family_db.update_ticket_indexes(1, 20, mini_message_id=None, thread_id=800)
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -207,7 +208,7 @@ async def test_ticket_approve_full_flow(aiohttp_client):
     assert thread.archived is True
     assert thread.locked is True
 
-    ticket = family_db.get_ticket_by_user(20)
+    ticket = family_db.get_ticket_by_user(1, 20)
     assert ticket["status"] == "approved"
     assert ticket["handled_by"] == 10
 
