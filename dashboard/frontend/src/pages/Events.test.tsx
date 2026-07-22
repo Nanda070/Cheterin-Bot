@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'

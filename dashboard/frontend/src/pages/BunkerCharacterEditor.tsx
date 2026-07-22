@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useT } from '../context/LanguageContext'
 import type { BunkerCardPools, BunkerCharacter, BunkerPlayerRef } from '../api/client'
 import {
-  isBunkerHealthy,
   isBunkerHealthySeverity,
   isBunkerRelationshipCategory,
   substituteBunkerRelationshipPlayer,

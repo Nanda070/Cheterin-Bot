@@ -116,38 +116,6 @@ export function ServerEntryPage() {
     return { content: applyPreview(text), embed: EMPTY_EMBED_SPEC }
   }, [settings, t])
 
-  const dmPreview = useMemo(() => {
-    if (!settings) return { content: '', embed: EMPTY_EMBED_SPEC }
-    const msgs = settings.messages
-    const embed = previewEmbed(msgs.dm_embed)
-    if (!embed.title && !embed.description && embed.fields.length === 0) {
-      embed.title = applyPreview(t('welcome.previewDmTitle'))
-      embed.description = t('welcome.previewDmDescription')
-      embed.footer = {
-        ...embed.footer,
-        text: msgs.dm_footer_text || applyPreview(t('welcome.dmFooterPlaceholder')),
-      }
-      const thumbUrl =
-        msgs.dm_thumbnail_url ||
-        msgs.dm_fallback_thumbnail_url ||
-        'https://cdn.discordapp.com/embed/avatars/0.png'
-      embed.thumbnail = { url: thumbUrl }
-    } else {
-      if (msgs.dm_footer_text) {
-        embed.footer = { ...embed.footer, text: applyPreview(msgs.dm_footer_text) }
-      }
-      if (msgs.dm_thumbnail_url) {
-        embed.thumbnail = { url: msgs.dm_thumbnail_url }
-      } else if (msgs.dm_fallback_thumbnail_url) {
-        embed.thumbnail = { url: msgs.dm_fallback_thumbnail_url }
-      }
-    }
-    return {
-      content: applyPreview(msgs.dm_content),
-      embed,
-    }
-  }, [settings, t])
-
   const goodbyePreview = useMemo(() => {
     if (!settings) return ''
     const text = settings.messages.goodbye_text || t('welcome.previewGoodbyeDefault')

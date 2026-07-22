@@ -41,6 +41,7 @@ import { DailyTopicPage } from './pages/DailyTopic'
 import { ServerSettingsPage } from './pages/ServerSettings'
 import { AutoModPage } from './pages/AutoMod'
 import { ServerEntryPage } from './pages/ServerEntry'
+import { CtdPage } from './pages/Ctd'
 
 function App() {
   return (

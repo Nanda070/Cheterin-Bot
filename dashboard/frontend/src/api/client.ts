@@ -815,7 +815,7 @@ export function fetchWelcomeSettings(): Promise<WelcomeSettings> {
   return apiFetch('/api/welcome-settings')
 }
 
-export function updateWelcomeSettings(settings: WelcomeSettings): Promise<WelcomeSettings> {
+export function updateWelcomeSettings(settings: Partial<WelcomeSettings>): Promise<WelcomeSettings> {
   return apiFetch('/api/welcome-settings', jsonInit('PUT', settings))
 }
 

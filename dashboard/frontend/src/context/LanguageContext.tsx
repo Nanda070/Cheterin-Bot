@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { DEFAULT_LANG, STORAGE_KEY, translate, type Lang } from '../i18n'
 
+export type { Lang }
+
 interface LanguageContextValue {
   lang: Lang
   setLang: (lang: Lang) => void
