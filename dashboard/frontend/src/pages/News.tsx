@@ -7,6 +7,7 @@ import {
   type ChannelInfo,
   type NewsSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
@@ -76,8 +77,8 @@ export function NewsPage() {
       setSettings(updated)
       setBotIdsRaw(updated.source_bot_ids.join(', '))
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('news.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'news.errorSave'))
     } finally {
       setBusy(false)
     }

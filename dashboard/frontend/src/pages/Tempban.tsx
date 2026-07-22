@@ -1,6 +1,7 @@
 import { Clock } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchTempbanSettings, updateTempbanSettings, type TempbanSettings } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -32,8 +33,8 @@ export function TempbanPage() {
       const updated = await updateTempbanSettings(tempban)
       setTempban(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('tempban.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'tempban.errorSave'))
     } finally {
       setBusy(false)
     }

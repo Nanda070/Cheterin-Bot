@@ -17,6 +17,7 @@ import {
   type XpLeaderboardPage,
   type XpSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ChipPicker } from '../components/ChipPicker'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -128,8 +129,8 @@ export function LevelsPage() {
       const updated = await updateXpSettings(settings)
       setSettings(updated.settings)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('levels.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'levels.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -143,8 +144,8 @@ export function LevelsPage() {
       if (reload && tab === 'members') {
         setBoard(await fetchXpLeaderboard(boardPage, boardSearch))
       }
-    } catch {
-      setError(t('levels.errorOperation'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'levels.errorOperation'))
     } finally {
       setBusy(false)
     }

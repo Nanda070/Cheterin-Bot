@@ -9,6 +9,7 @@ import {
   type CtdConfig,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { useT } from '../context/LanguageContext'
@@ -52,8 +53,8 @@ export function CtdPage() {
       setConfig(updated)
       setSavedMessage(t('common.saved'))
       setDirty(false)
-    } catch {
-      setError(t('ctd.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'ctd.errorSave'))
     } finally {
       setBusy(false)
     }

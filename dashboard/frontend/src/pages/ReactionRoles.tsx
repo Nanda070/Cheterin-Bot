@@ -8,6 +8,7 @@ import {
   type ReactionRoleEntry,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -44,8 +45,8 @@ export function ReactionRolesPage() {
       await deleteReactionRole(pendingDelete)
       setPendingDelete(null)
       reload()
-    } catch {
-      setError(t('reactionRoles.errorDelete'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'reactionRoles.errorDelete'))
     }
   }
 

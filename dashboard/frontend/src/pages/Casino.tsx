@@ -7,6 +7,7 @@ import {
   type CasinoSettings,
   type CasinoLeaderboardEntry,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -62,8 +63,8 @@ export function CasinoPage() {
       if (!updated.loss_roles) updated.loss_roles = []
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('casino.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'casino.errorSave'))
     } finally {
       setBusy(false)
     }

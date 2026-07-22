@@ -3,6 +3,7 @@ import { ArrowsClockwise, Headset, LockSimple, LockSimpleOpen, Trash, UsersThree
 import { useEffect, useState } from 'react'
 
 import { deleteVoiceRoom, fetchVoiceRooms, publishVoicePanel, type VoiceRoom } from '../api/client'
+import { formatApiError } from '../api/errors'
 
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 
@@ -76,9 +77,9 @@ export function VoiceRoomsPage() {
 
       reload()
 
-    } catch {
+    } catch (err) {
 
-      setError(t('voiceRooms.errorDelete'))
+      setError(formatApiError(err, t, 'voiceRooms.errorDelete'))
 
     } finally {
 
@@ -104,9 +105,9 @@ export function VoiceRoomsPage() {
 
       setNotice(t('voiceRooms.published'))
 
-    } catch {
+    } catch (err) {
 
-      setError(t('voiceRooms.errorPublish'))
+      setError(formatApiError(err, t, 'voiceRooms.errorPublish'))
 
     } finally {
 

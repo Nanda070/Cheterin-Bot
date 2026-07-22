@@ -8,6 +8,7 @@ import {
   type EconomySettings,
   type EconomyTopEntry,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -50,8 +51,8 @@ export function EconomyPage() {
       const updated = await updateEconomySettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('economy.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'economy.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -65,8 +66,8 @@ export function EconomyPage() {
       await setEconomyBalance(userId, value)
       setEditBalances((prev) => ({ ...prev, [userId]: '' }))
       reloadTop()
-    } catch {
-      setError(t('economy.errorBalance'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'economy.errorBalance'))
     }
   }
 

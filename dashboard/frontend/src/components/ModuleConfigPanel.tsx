@@ -8,6 +8,7 @@ import {
   type ChannelInfo,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ChipPicker } from './ChipPicker'
 import { Button } from './ui/Button'
 import { Select } from './ui/Select'
@@ -67,8 +68,8 @@ export function ModuleConfigPanel({ variant, title, intro, children }: ModuleCon
       setConfig(updated)
       setSavedMessage(t('common.saved'))
       setDirty(false)
-    } catch {
-      setError(t('config.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'config.errorSave'))
     } finally {
       setBusy(false)
     }

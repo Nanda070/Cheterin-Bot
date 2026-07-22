@@ -1,6 +1,7 @@
 import { Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchSpamSettings, updateSpamSettings, type SpamSettings } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -31,8 +32,8 @@ export function AntiSpamPage() {
       const updated = await updateSpamSettings(spam)
       setSpam(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('antispam.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'antispam.errorSave'))
     } finally {
       setBusy(false)
     }

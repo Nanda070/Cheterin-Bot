@@ -12,6 +12,7 @@ import {
   type WelcomeMessageSettings,
   type WelcomeSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { EMPTY_EMBED_SPEC, EmbedEditor } from '../components/EmbedEditor'
 import { EmbedPreview } from '../components/EmbedPreview'
 import { Button } from '../components/ui/Button'
@@ -221,8 +222,8 @@ export function ServerEntryPage() {
       const updated = await updateWelcomeSettings(settings)
       setSettings({ ...updated, messages: { ...emptyMessages(), ...updated.messages } })
       setSavedMessage(t('common.saved'))
-    } catch {
-      setError(t('welcome.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'welcome.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -274,8 +275,8 @@ export function ServerEntryPage() {
       setConfig(updatedConfig)
       setEditorOpen(false)
       setSavedMessage(t('common.saved'))
-    } catch {
-      setEditorError(t('welcome.errorSave'))
+    } catch (err) {
+      setEditorError(formatApiError(err, t, 'welcome.errorSave'))
     } finally {
       setEditorBusy(false)
     }

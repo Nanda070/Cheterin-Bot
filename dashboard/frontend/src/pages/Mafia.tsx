@@ -9,6 +9,7 @@ import {
   type MafiaGameSummary,
   type MafiaSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
@@ -82,8 +83,8 @@ export function MafiaPage() {
       const updated = await updateMafiaSettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('mafia.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'mafia.errorSave'))
     } finally {
       setBusy(false)
     }

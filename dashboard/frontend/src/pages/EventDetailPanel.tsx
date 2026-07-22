@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { deleteEvent, fetchEventDetail, notifyEventParticipants, closeEvent, type EventDetail, type EventParticipantTeamCode } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -33,8 +34,8 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
     try {
       await closeEvent(messageId)
       onChanged()
-    } catch {
-      setError(t('events.detail.errorClose'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'events.detail.errorClose'))
     } finally {
       setBusy(false)
     }
@@ -47,8 +48,8 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
       await deleteEvent(messageId)
       setPendingDelete(false)
       onChanged()
-    } catch {
-      setError(t('events.detail.errorDelete'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'events.detail.errorDelete'))
       setPendingDelete(false)
     } finally {
       setBusy(false)
@@ -66,8 +67,8 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
       await notifyEventParticipants(messageId, notifyText.trim())
       setNotifyOpen(false)
       setNotifyText('')
-    } catch {
-      setNotifyError(t('events.detail.notify.error'))
+    } catch (err) {
+      setNotifyError(formatApiError(err, t, 'events.detail.notify.error'))
     } finally {
       setBusy(false)
     }

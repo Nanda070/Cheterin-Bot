@@ -83,7 +83,111 @@ async def test_update_welcome_settings_persists(aiohttp_client):
 
 
 @pytest.mark.asyncio
-async def test_update_welcome_settings_rejects_non_boolean(aiohttp_client):
+async def test_update_welcome_settings_allows_empty_embeds_in_text_mode(aiohttp_client):
+    """Saving toggles with empty channel/dm embed stubs must not fail as empty_embed."""
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put(
+        "/api/welcome-settings",
+        json={
+            "channel_enabled": True,
+            "dm_enabled": True,
+            "goodbye_channel_enabled": False,
+            "goodbye_channel_id": "",
+            "messages": {
+                "channel_mode": "text",
+                "channel_text": "hi {mention}",
+                "channel_embed": {
+                    "title": "",
+                    "description": "",
+                    "url": "",
+                    "color": "#5865F2",
+                    "author": {"name": "", "url": "", "icon_url": ""},
+                    "footer": {"text": "", "icon_url": ""},
+                    "image": {"url": ""},
+                    "thumbnail": {"url": ""},
+                    "timestamp": None,
+                    "fields": [],
+                },
+                "dm_content": "",
+                "dm_embed": {
+                    "title": "",
+                    "description": "",
+                    "url": "",
+                    "color": "#5865F2",
+                    "author": {"name": "", "url": "", "icon_url": ""},
+                    "footer": {"text": "", "icon_url": ""},
+                    "image": {"url": ""},
+                    "thumbnail": {"url": ""},
+                    "timestamp": None,
+                    "fields": [],
+                },
+                "dm_thumbnail_url": "",
+                "dm_fallback_thumbnail_url": "",
+                "dm_footer_text": "",
+                "dm_use_guild_icon": True,
+                "goodbye_text": "",
+            },
+        },
+    )
+    assert resp.status == 200, await resp.json()
+    data = await resp.json()
+    assert data["messages"]["channel_text"] == "hi {mention}"
+
+
+@pytest.mark.asyncio
+async def test_update_welcome_settings_rejects_oversized_dm_field(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put(
+        "/api/welcome-settings",
+        json={
+            "channel_enabled": True,
+            "dm_enabled": True,
+            "goodbye_channel_enabled": False,
+            "goodbye_channel_id": "",
+            "messages": {
+                "channel_mode": "text",
+                "channel_text": "",
+                "channel_embed": {
+                    "title": "",
+                    "description": "",
+                    "url": "",
+                    "color": "#5865F2",
+                    "author": {"name": "", "url": "", "icon_url": ""},
+                    "footer": {"text": "", "icon_url": ""},
+                    "image": {"url": ""},
+                    "thumbnail": {"url": ""},
+                    "timestamp": None,
+                    "fields": [],
+                },
+                "dm_content": "",
+                "dm_embed": {
+                    "title": "Hi",
+                    "description": "",
+                    "url": "",
+                    "color": "#5865F2",
+                    "author": {"name": "", "url": "", "icon_url": ""},
+                    "footer": {"text": "", "icon_url": ""},
+                    "image": {"url": ""},
+                    "thumbnail": {"url": ""},
+                    "timestamp": None,
+                    "fields": [{"name": "x", "value": "y" * 1025, "inline": False}],
+                },
+                "dm_thumbnail_url": "",
+                "dm_fallback_thumbnail_url": "",
+                "dm_footer_text": "",
+                "dm_use_guild_icon": True,
+                "goodbye_text": "",
+            },
+        },
+    )
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "field_value_too_long"
     _, app = build()
     client = await aiohttp_client(app)
     await force_login(client, 10)

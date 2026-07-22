@@ -181,12 +181,6 @@
   "179": "__init__.py",
   "180": "require_super_admin",
   "181": "init",
-  "182": "init",
-  "183": "pick_bunker_conditions",
-  "184": "DocsSearch.tsx",
-  "185": "FakeResponse",
-  "186": "Request",
-  "187": "Response",
-  "188": "Message",
-  "205": "ctd.py"
+  "182": "Command",
+  "183": "pick_bunker_conditions"
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchAutoRoles, fetchRoles, updateAutoRoles, type RoleInfo } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Checkbox } from '../components/ui/Checkbox'
@@ -38,8 +39,8 @@ export function AutoRolesPage({ embedded = false }: { embedded?: boolean }) {
       const updated = await updateAutoRoles(selectedRoleIds)
       setSelectedRoleIds(updated.role_ids)
       setSavedMessage(t('common.saved'))
-    } catch {
-      setError(t('autoRoles.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'autoRoles.errorSave'))
     } finally {
       setBusy(false)
     }

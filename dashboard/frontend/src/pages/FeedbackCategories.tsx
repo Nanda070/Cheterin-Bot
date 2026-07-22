@@ -13,6 +13,7 @@ import {
   type FeedbackCategorySpec,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Checkbox } from '../components/ui/Checkbox'
@@ -145,8 +146,8 @@ export function FeedbackCategoriesPage() {
     try {
       await publishFeedbackPanel(publishChannelId)
       setPublishOpen(false)
-    } catch {
-      setPublishError(t('feedback.categories.publish.error'))
+    } catch (err) {
+      setPublishError(formatApiError(err, t, 'feedback.categories.publish.error'))
     } finally {
       setPublishBusy(false)
     }
@@ -196,8 +197,8 @@ export function FeedbackCategoriesPage() {
       }
       setFormOpen(false)
       reload()
-    } catch {
-      setError(t('feedback.categories.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'feedback.categories.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -209,8 +210,8 @@ export function FeedbackCategoriesPage() {
       await deleteFeedbackCategory(pendingDelete)
       setPendingDelete(null)
       reload()
-    } catch {
-      setError(t('feedback.categories.errorDelete'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'feedback.categories.errorDelete'))
     }
   }
 

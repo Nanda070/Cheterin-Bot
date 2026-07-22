@@ -9,6 +9,7 @@ import {
   type BracketDetail,
   type BracketFormat,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { BracketView, type PickHandler } from '../components/BracketView'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -46,8 +47,8 @@ export function BracketDetailPage() {
     try {
       const updated = await setBracketMatchWinner(id, roundIndex, matchIndex, winner, segment)
       setBracket(updated)
-    } catch {
-      setError(t('brackets.detail.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'brackets.detail.errorSave'))
     }
   }
 
@@ -62,8 +63,8 @@ export function BracketDetailPage() {
         const token = await enableBracketShare(id)
         setBracket({ ...bracket, share_token: token })
       }
-    } catch {
-      setError(t('brackets.detail.errorShare'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'brackets.detail.errorShare'))
     } finally {
       setShareBusy(false)
     }
@@ -75,8 +76,8 @@ export function BracketDetailPage() {
     try {
       await deleteBracket(id)
       navigate('/brackets')
-    } catch {
-      setError(t('brackets.detail.errorDelete'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'brackets.detail.errorDelete'))
       setDeleteBusy(false)
     }
   }

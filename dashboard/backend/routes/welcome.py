@@ -15,13 +15,23 @@ def _serialize_messages(guild_id: int) -> dict:
 
 
 def _validate_messages_payload(body: dict) -> str | None:
-    for key in ("channel_embed", "dm_embed"):
-        err = embed_builder.validate_embed_spec(normalize_embed_spec(body.get(key)))
-        if err:
-            return err
     mode = body.get("channel_mode")
     if mode not in ("text", "embed"):
         return "invalid_channel_mode"
+
+    # Channel embed is only required/validated in embed mode; text mode may send an empty stub.
+    if mode == "embed":
+        err = embed_builder.validate_embed_spec(normalize_embed_spec(body.get("channel_embed")))
+        if err:
+            return err
+
+    # DM embed is optional: empty means "use built-in Server 404 defaults" at send time.
+    dm_embed = normalize_embed_spec(body.get("dm_embed"))
+    dm_content = str(body.get("dm_content") or "")
+    if not embed_builder.is_embed_spec_empty(dm_embed) or dm_content.strip():
+        err = embed_builder.validate_embed_spec(dm_embed, dm_content)
+        if err:
+            return err
     return None
 
 

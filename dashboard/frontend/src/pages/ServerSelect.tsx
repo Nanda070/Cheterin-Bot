@@ -8,6 +8,7 @@ import {
   selectGuild,
   type ManageableGuild,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 import { Card } from '../components/ui/Card'
@@ -46,8 +47,8 @@ export function ServerSelectPage() {
       await selectGuild(guild.id)
       await refresh()
       navigate('/', { replace: true })
-    } catch {
-      setError(t('servers.errorSelect'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'servers.errorSelect'))
       setPendingId(null)
     }
   }
@@ -57,8 +58,8 @@ export function ServerSelectPage() {
     try {
       const url = await fetchInviteUrl(guild.id)
       window.open(url, '_blank', 'noopener,noreferrer')
-    } catch {
-      setError(t('servers.errorInvite'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'servers.errorInvite'))
     } finally {
       setPendingId(null)
     }
@@ -70,8 +71,8 @@ export function ServerSelectPage() {
     try {
       const url = await fetchInviteUrl()
       window.open(url, '_blank', 'noopener,noreferrer')
-    } catch {
-      setError(t('servers.errorInvite'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'servers.errorInvite'))
     } finally {
       setPendingId(null)
     }

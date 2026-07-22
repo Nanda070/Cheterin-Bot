@@ -7,6 +7,7 @@ import {
   type ChannelInfo,
   type ServerLogEventConfig,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
@@ -55,8 +56,8 @@ export function ServerLogPage() {
       const updated = await updateServerLog(events)
       setEvents(updated.events)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('serverlog.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'serverlog.errorSave'))
     } finally {
       setBusy(false)
     }

@@ -10,6 +10,7 @@ import {
   type BracketSummary,
   type EventSummary,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 
 const FORMAT_KEYS: Record<BracketFormat, string> = {
   single_elim: 'brackets.format.singleElim',
@@ -83,8 +84,8 @@ export function BracketsPage() {
     try {
       const loaded = await fetchEventEntries(eventId)
       setEntries(loaded)
-    } catch {
-      setCreateError(t('brackets.errorEntries'))
+    } catch (err) {
+      setCreateError(formatApiError(err, t, 'brackets.errorEntries'))
     }
   }
 
@@ -116,8 +117,8 @@ export function BracketsPage() {
       await createBracket(title, entries, tab === 'event' ? selectedEventId || null : null, format)
       setCreateOpen(false)
       reload()
-    } catch {
-      setCreateError(t('brackets.errorCreate'))
+    } catch (err) {
+      setCreateError(formatApiError(err, t, 'brackets.errorCreate'))
     } finally {
       setCreateBusy(false)
     }

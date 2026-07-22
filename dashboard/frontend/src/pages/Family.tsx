@@ -32,6 +32,7 @@ import {
   type MemberSummary,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ChipPicker } from '../components/ChipPicker'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -139,8 +140,8 @@ export function FamilyPage() {
       const updated = await updateFamilySettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('family.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'family.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -152,8 +153,8 @@ export function FamilyPage() {
     try {
       await decideFamilyTicket(ticket.user_id, decision)
       setTickets(await fetchFamilyTickets(ticketStatus, ticketPage))
-    } catch {
-      setError(t('family.errorDecide'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'family.errorDecide'))
     } finally {
       setBusy(false)
     }
@@ -168,8 +169,8 @@ export function FamilyPage() {
       setBirthdayTarget(null)
       setBirthdaySearch('')
       setBirthdayDate('')
-    } catch {
-      setBirthdayError(t('family.errorBirthdaySave'))
+    } catch (err) {
+      setBirthdayError(formatApiError(err, t, 'family.errorBirthdaySave'))
     }
   }
 
@@ -179,8 +180,8 @@ export function FamilyPage() {
     try {
       await deleteFamilyBirthday(userId)
       setBirthdays((await fetchFamilyBirthdays()).entries)
-    } catch {
-      setError(t('family.errorBirthdayDelete'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'family.errorBirthdayDelete'))
     } finally {
       setBusy(false)
     }

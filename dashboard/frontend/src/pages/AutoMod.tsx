@@ -15,6 +15,7 @@ import {
   type EscalationAction,
   type EscalationRule,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -248,8 +249,8 @@ function FilterModal({
       await updateAutomodFilter(filterKey, draft)
       onSaved()
       onClose()
-    } catch {
-      setError(t('automod.errorSaveFilter'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'automod.errorSaveFilter'))
     } finally {
       setBusy(false)
     }
@@ -501,8 +502,8 @@ export function AutoModPage() {
     try {
       await fn()
       await reload()
-    } catch {
-      setError(t('common.operationFailed'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'common.operationFailed'))
     } finally {
       setBusy(false)
     }

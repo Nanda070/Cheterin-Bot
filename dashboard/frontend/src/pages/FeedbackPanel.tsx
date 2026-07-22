@@ -4,6 +4,7 @@ import {
   updateFeedbackPanelSettings,
   type FeedbackPanelSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { EMPTY_EMBED_SPEC, EmbedEditor } from '../components/EmbedEditor'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -44,8 +45,8 @@ export function FeedbackPanelPage() {
         banner_url: updated.banner_url || '',
       })
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('common.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'common.errorSave'))
     } finally {
       setBusy(false)
     }

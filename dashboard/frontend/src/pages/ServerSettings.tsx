@@ -1,6 +1,7 @@
 import { GlobeHemisphereWest } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchLanguage, updateLanguage, type ServerLanguage } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { useT } from '../context/LanguageContext'
@@ -33,8 +34,8 @@ export function ServerSettingsPage() {
       const data = await updateLanguage(language)
       setLanguage(data.code)
       setSavedMessage(t('settings.saved'))
-    } catch {
-      setError(t('settings.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'settings.errorSave'))
     } finally {
       setBusy(false)
     }

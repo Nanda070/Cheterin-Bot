@@ -1,6 +1,7 @@
 import { UserCheck } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchVerificationSettings, updateVerificationSettings, type VerificationSettings } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -34,8 +35,8 @@ export function VerificationPage() {
       const updated = await updateVerificationSettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('verification.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'verification.errorSave'))
     } finally {
       setBusy(false)
     }

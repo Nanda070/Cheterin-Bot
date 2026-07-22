@@ -17,6 +17,7 @@ import {
   type BunkerSettings,
   type ChannelInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { isBunkerHealthy } from '../config/bunkerMarkers'
 import { BunkerCharacterEditor } from './BunkerCharacterEditor'
 import { Button } from '../components/ui/Button'
@@ -117,8 +118,8 @@ export function BunkerPage() {
       const updated = await updateBunkerSettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('bunker.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'bunker.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -137,8 +138,8 @@ export function BunkerPage() {
       await patchBunkerPlayerCharacter(detail.game.id, editingUserId, character)
       setEditingUserId(null)
       refreshDetail()
-    } catch {
-      setEditError(t('bunker.errorSaveCard'))
+    } catch (err) {
+      setEditError(formatApiError(err, t, 'bunker.errorSaveCard'))
     } finally {
       setEditBusy(false)
     }
@@ -149,8 +150,8 @@ export function BunkerPage() {
     try {
       await applyBunkerAbility(detail.game.id, announcementId)
       refreshDetail()
-    } catch {
-      setError(t('bunker.errorApply'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'bunker.errorApply'))
     }
   }
 

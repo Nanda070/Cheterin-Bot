@@ -5,6 +5,7 @@ import {
   updateAntiRaidSettings,
   type AntiRaidSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -38,8 +39,8 @@ export function AntiRaidPage() {
       const updated = await updateAntiRaidSettings(settings)
       setSettings(updated)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('antiraid.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'antiraid.errorSave'))
     } finally {
       setBusy(false)
     }

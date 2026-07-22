@@ -12,6 +12,7 @@ import {
   type EventSummary,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { EmbedPreview } from '../components/EmbedPreview'
@@ -148,8 +149,8 @@ export function EventsPage() {
       await createEvent(spec)
       setCreateOpen(false)
       reload()
-    } catch {
-      setCreateError(t('events.errorCreate'))
+    } catch (err) {
+      setCreateError(formatApiError(err, t, 'events.errorCreate'))
     } finally {
       setCreateBusy(false)
     }

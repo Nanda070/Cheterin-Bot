@@ -15,6 +15,7 @@ import {
   type EmbedTemplate,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Checkbox } from '../components/ui/Checkbox'
 import { Select } from '../components/ui/Select'
@@ -122,8 +123,8 @@ export function EmbedBuilderPage() {
     try {
       await deleteEmbedTemplate(id)
       setTemplates((prev) => prev.filter((t) => t.id !== id))
-    } catch {
-      setError(t('embedBuilder.error.deleteTemplate'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'embedBuilder.error.deleteTemplate'))
     }
   }
 
@@ -159,8 +160,8 @@ export function EmbedBuilderPage() {
       setContent(data.content)
       setEmbed(data.embed)
       setRoleIds(data.role_ids)
-    } catch {
-      setError(t('embedBuilder.error.load'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'embedBuilder.error.load'))
     } finally {
       setBusy(false)
     }
@@ -195,8 +196,8 @@ export function EmbedBuilderPage() {
           ? await updateEmbedMessage(channelId, messageId, payload)
           : await createEmbedMessage(channelId, payload)
       setSavedResult(result)
-    } catch {
-      setError(t('embedBuilder.error.save'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'embedBuilder.error.save'))
     } finally {
       setBusy(false)
     }

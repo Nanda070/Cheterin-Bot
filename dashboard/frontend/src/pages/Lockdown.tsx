@@ -23,6 +23,7 @@ import {
   type LockdownStatus,
   type ModerationLogEntry,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -99,8 +100,8 @@ export function LockdownPage() {
       if (confirming === 'deactivate') await deactivateLockdown()
       setConfirming(null)
       reload()
-    } catch {
-      setError(t('lockdown.errorOperation'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'lockdown.errorOperation'))
     } finally {
       setBusy(false)
     }

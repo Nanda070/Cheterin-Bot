@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { decideFeedbackCase, fetchFeedbackCaseDetail, type FeedbackCaseDetail } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { useT } from '../context/LanguageContext'
@@ -28,8 +29,8 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
     try {
       await decideFeedbackCase(caseId, approved)
       onDecided()
-    } catch {
-      setError(t('feedback.cases.detail.errorDecide'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'feedback.cases.detail.errorDecide'))
     } finally {
       setBusy(false)
     }

@@ -8,6 +8,7 @@ import {
   type FunSettings,
   type WordleSettings,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
@@ -47,8 +48,8 @@ export function FunPage() {
       const updatedWordle = await updateWordleSettings(wordle)
       setWordle(updatedWordle)
       setSaved(t('common.saved'))
-    } catch {
-      setError(t('fun.errorSave'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'fun.errorSave'))
     } finally {
       setBusy(false)
     }
