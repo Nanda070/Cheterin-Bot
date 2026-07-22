@@ -885,13 +885,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.test.tsx": {
-    "mtime": 1784720301.4993255,
-    "ast_hash": "277d24102e4a29eef5a04ea5442f1a84",
+    "mtime": 1784721332.094667,
+    "ast_hash": "0acd21e53b24b32ac9f515995644e5dd",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.tsx": {
-    "mtime": 1784710902.3598075,
-    "ast_hash": "f2f46b2dbf2983f84e574c656f66b4e3",
+    "mtime": 1784721293.5930645,
+    "ast_hash": "d54c29df19d06be069f090398efb98c2",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Login.tsx": {
@@ -1775,13 +1775,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/AntiRaid.test.tsx": {
-    "mtime": 1784720293.0807323,
-    "ast_hash": "8148f0f7a9ce5c6707990c8d137d9b0f",
+    "mtime": 1784721323.6533155,
+    "ast_hash": "58671a9ef535b006ca13696f24642f6d",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/AntiRaid.tsx": {
-    "mtime": 1784720280.9111168,
-    "ast_hash": "84fe5d410d1da0748d8bdd66ceeacfd3",
+    "mtime": 1784721271.6048245,
+    "ast_hash": "b2ba4e6aedcc4cc6165b5abef6943524",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Verification.test.tsx": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/admin.ts": {
-    "mtime": 1784721092.1387346,
-    "ast_hash": "7110f8a96535a2108d8353a9a0fc7098",
+    "mtime": 1784721313.781397,
+    "ast_hash": "bf5e3495338e6f78c34b0db705461e6c",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/auth.ts": {
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/admin.ts": {
-    "mtime": 1784721092.1387346,
-    "ast_hash": "590f8074a09ebb6bc858349588547144",
+    "mtime": 1784721308.9337945,
+    "ast_hash": "5ffe5219d352050202ab4328d1735178",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/auth.ts": {
@@ -2255,8 +2255,8 @@
     "semantic_hash": ""
   },
   "locales/en/tempban.py": {
-    "mtime": 1784710975.1991498,
-    "ast_hash": "4d5edf38b6e9635a40ad99826319792e",
+    "mtime": 1784721447.323416,
+    "ast_hash": "6c3aab1dd46070e89f38655de3549086",
     "semantic_hash": ""
   },
   "locales/en/voice_rooms.py": {
@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "locales/ru/tempban.py": {
-    "mtime": 1784718953.5189662,
-    "ast_hash": "a087ef5f57a34c968cd3bf1c81d40bf2",
+    "mtime": 1784721444.77246,
+    "ast_hash": "6b8184fd364d1b556480eca1eabcd629",
     "semantic_hash": ""
   },
   "locales/ru/voice_rooms.py": {
@@ -2385,13 +2385,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/components/ModuleConfigPanel.tsx": {
-    "mtime": 1784712397.724857,
-    "ast_hash": "4cd84d3e261191c684f9eb1c5ba74120",
+    "mtime": 1784721276.7377687,
+    "ast_hash": "c622388114ef47a421b19eb19bf81fff",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/config/botConfigDefaults.ts": {
-    "mtime": 1784712389.565533,
-    "ast_hash": "2e072d401bf86186b0cb009219ab54d9",
+    "mtime": 1784721276.3613732,
+    "ast_hash": "2868dfa21062de7bf11699d5754aa4ec",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ServerEntry.tsx": {
@@ -2460,8 +2460,8 @@
     "semantic_hash": ""
   },
   "tempban_core.py": {
-    "mtime": 1784720263.5808365,
-    "ast_hash": "10c404e03e4f43293950b21869745051",
+    "mtime": 1784721448.152125,
+    "ast_hash": "8dd890957b44dce045695c660a20d31f",
     "semantic_hash": ""
   },
   "welcome_core.py": {
@@ -2557,6 +2557,16 @@
   "dashboard/frontend/src/config/welcomeDmDefaults.ts": {
     "mtime": 1784721076.1866817,
     "ast_hash": "244c52900ec9468ba773be265876075b",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/src/pages/AntiSpam.tsx": {
+    "mtime": 1784721257.549917,
+    "ast_hash": "a46b36dfe6735b351c66ed2baf7e5053",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/src/pages/Tempban.tsx": {
+    "mtime": 1784721271.1687472,
+    "ast_hash": "336a3d6d2bf8be39e86341f3d4c708f2",
     "semantic_hash": ""
   }
 }

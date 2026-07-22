@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import settings_db
 import settings_migration
 import i18n
+import slash_i18n
 
 load_dotenv()
 
@@ -64,6 +65,8 @@ class ChetBot(commands.Bot):
 
     async def setup_hook(self):
         settings_db.init()
+        # Slash name/description localizations only reach Discord when a Translator is set.
+        await self.tree.set_translator(slash_i18n.SlashI18nTranslator())
         # Одноразовая миграция исторических плоских конфигов/ENV привязана к мейн-серверу.
         main_guild_id = get_main_guild_id()
         migrated = settings_migration.migrate_all(main_guild_id)
