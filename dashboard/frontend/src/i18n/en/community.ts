@@ -254,7 +254,7 @@ const community: TranslationDict = {
   'fun.errorLoadWordle': 'Failed to load Wordle settings.',
   'fun.errorSave': 'Failed to save settings — check fields.',
   'fun.roulette.title': '🔫 Russian roulette — /russian-roulette',
-  'fun.roulette.desc': 'Player pulls the trigger: cylinder does not respin (odds rise 1/6→…→1/1); 15% chance the cylinder is empty and you can go 6/6. Loser gets a Discord timeout. Voluntary risk — command only affects the caller.',
+  'fun.roulette.desc': 'Player pulls the trigger: cylinder does not respin (odds rise 1/6→…→1/1); 8% chance the cylinder is empty and you can go 6/6. Loser gets a Discord timeout. Voluntary risk — command only affects the caller.',
   'fun.roulette.timeout': 'Loser timeout, min (0 — no penalty, max 1440)',
   'fun.roulette.cooldown': 'Per-player cooldown, sec (0 — none, max 3600)',
   'fun.roulette.hint': 'Bot needs "Timeout Members" permission. Admins cannot be timed out — bot will say the player "got lucky".',

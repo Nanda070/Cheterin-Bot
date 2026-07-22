@@ -1213,7 +1213,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>
             Solo game: the caller pulls the trigger. The cylinder <strong>does not spin anew</strong>: first chamber is
             1/6, after each click the odds rise (1/5 → 1/4 → …), on the sixth pull a shot is usually guaranteed. With a
-            <strong>15%</strong> chance the cylinder loads empty — you can go 6/6 with no shot; after 6/6 it reloads.
+            <strong>8%</strong> chance the cylinder loads empty — you can go 6/6 with no shot; after 6/6 it reloads.
             Chamber number is shown in the message.
           </li>
           <li>
@@ -1905,7 +1905,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ],
             [
               '/russian-roulette',
-              'Pull the trigger: cylinder does not respin; odds rise (1/6 → … → 1/1); 15% empty cylinder (6/6 with no shot). Loser gets a timeout. Optional coin bets: survive — double.',
+              'Pull the trigger: cylinder does not respin; odds rise (1/6 → … → 1/1); 8% empty cylinder (6/6 with no shot). Loser gets a timeout. Optional coin bets: survive — double.',
               'Everyone',
             ],
             [

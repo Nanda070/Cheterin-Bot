@@ -38,9 +38,9 @@ def test_spin_trigger_empty_cylinder_never_fires():
 
 
 def test_roll_empty_cylinder_chance(monkeypatch):
-    monkeypatch.setattr(fun_core.random, "random", lambda: 0.14)
+    monkeypatch.setattr(fun_core.random, "random", lambda: 0.07)
     assert fun_core.roll_empty_cylinder() is True
-    monkeypatch.setattr(fun_core.random, "random", lambda: 0.15)
+    monkeypatch.setattr(fun_core.random, "random", lambda: 0.08)
     assert fun_core.roll_empty_cylinder() is False
 
 

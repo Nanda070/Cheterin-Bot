@@ -34,7 +34,7 @@ MESSAGES: dict[str, str] = {
     "slash.wordle_top.desc": "Топ игроков сервера в Вордл",
     "slash.russian_roulette.en": "russian-roulette",
     "slash.russian_roulette.ru": "русская-рулетка",
-    "slash.russian_roulette.desc": "Спустить курок: шанс растёт (1/6→1/1), 15% пустой барабан. Можно ставить монеты",
+    "slash.russian_roulette.desc": "Спустить курок: шанс растёт (1/6→1/1), 8% пустой барабан. Можно ставить монеты",
     "slash.emoji_roulette.en": "emoji-roulette",
     "slash.emoji_roulette.ru": "эмодзи-рулетка",
     "slash.emoji_roulette.desc": "Крутануть рулетку и получить случайное эмодзи сервера",

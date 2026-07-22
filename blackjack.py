@@ -109,7 +109,7 @@ def build_embed(
 
     balance = economy_db.get_balance(player.id)
     embed.set_footer(text=i18n.t(
-        "casino.bj.balance", lang, balance=economy_core.format_amount(balance, econ),
+        "casino.bj.balance_footer", lang, balance=economy_core.format_amount(balance, econ),
     ))
     return embed
 
@@ -138,16 +138,16 @@ class BlackjackView(discord.ui.View):
             if not isinstance(child, discord.ui.Button):
                 continue
             if child.custom_id == "bj_hit":
-                child.label = i18n.t("casino.bj.btn.hit", self.lang)
+                child.label = i18n.t("casino.bj.btn_hit", self.lang)
             elif child.custom_id == "bj_stand":
-                child.label = i18n.t("casino.bj.btn.stand", self.lang)
+                child.label = i18n.t("casino.bj.btn_stand", self.lang)
             elif child.custom_id == "bj_double":
-                child.label = i18n.t("casino.bj.btn.double", self.lang)
+                child.label = i18n.t("casino.bj.btn_double", self.lang)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.player.id:
             await interaction.response.send_message(
-                i18n.t("error.not_your_turn", self.lang), ephemeral=True,
+                i18n.t("casino.bj.not_your_game", self.lang), ephemeral=True,
             )
             return False
         return True
@@ -159,7 +159,7 @@ class BlackjackView(discord.ui.View):
             try:
                 embed = self.message.embeds[0] if self.message.embeds else discord.Embed()
                 embed.colour = discord.Colour.dark_grey()
-                embed.set_footer(text=i18n.t("casino.bj.timeout", self.lang))
+                embed.set_footer(text=i18n.t("casino.bj.timeout_footer", self.lang))
                 await self.message.edit(embed=embed, view=self)
             except discord.NotFound:
                 pass
