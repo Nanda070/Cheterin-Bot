@@ -785,7 +785,6 @@ export interface TempbanSettings {
   dm_enabled: boolean
   dm_message: string
   log_enabled: boolean
-  log_embed: EmbedSpec
   unban_reason: string
 }
 

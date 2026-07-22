@@ -1,7 +1,7 @@
 MESSAGES: dict[str, str] = {
     "tempban.reason": "Automatic Tempban (purge messages from last 20 min.)",
     "tempban.recovery_unban_reason": "Auto-unban after restart (Tempban recovery)",
-    "tempban.dm_message": 'You were removed from "{guild}" for posting in a channel where you should not write.\nServer link: {invite}',
+    "tempban.dm_message": 'You were removed from "404 : Server Not Found" for posting in a channel where you should not write. Server link: https://discord.gg/cheterin',
     "tempban.dm_success": "✅ Sent",
     "tempban.dm_failed": "❌ Failed (DMs closed)",
     "tempban.dm_disabled": "⏭ DM disabled in settings",
@@ -10,7 +10,7 @@ MESSAGES: dict[str, str] = {
     "tempban.error.forbidden": "Failed to ban {name} (`{id}`) — bot lacks permissions.",
     "tempban.error.http": "HTTP error during Tempban for {name} (`{id}`): {status} {text}",
     "tempban.error.generic": "Error during Tempban for {name} (`{id}`): {error}",
-    "tempban.unban_reason": "Automatic unban after Tempban",
+    "tempban.unban_reason": "TempBan",
     "tempban.unban_forbidden": "Insufficient permissions to unban",
     "tempban.embed.title": "🔨 Automatic Tempban",
     "tempban.embed.user": "User",

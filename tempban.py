@@ -179,7 +179,7 @@ class TempBan(commands.Cog):
                 "message_preview": content_preview,
                 "unban_error": unban_error or "",
             }
-            embed = tempban_core.build_log_embed(tb_settings, lang, log_vars)
+            embed = tempban_core.build_log_embed(lang, log_vars)
             if unban_error:
                 embed.add_field(
                     name=i18n.t("tempban.embed.unban_error", lang),

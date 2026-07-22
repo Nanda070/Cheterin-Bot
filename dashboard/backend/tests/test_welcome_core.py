@@ -24,8 +24,16 @@ def test_resolve_dm_thumbnail_uses_custom_fallback():
     assert welcome_core.resolve_dm_thumbnail_url(settings) == "https://example.com/thumb.png"
 
 
-def test_resolve_dm_thumbnail_returns_empty_without_custom():
-    assert welcome_core.resolve_dm_thumbnail_url({}) == ""
+def test_resolve_dm_thumbnail_returns_default_imgur_without_custom():
+    assert welcome_core.resolve_dm_thumbnail_url({}) == welcome_core.DEFAULT_DM_THUMBNAIL_URL
+
+
+def test_default_dm_embed_uses_channel_placeholders():
+    spec = welcome_core.default_dm_embed_spec("ru")
+    assert "{guild_name}" in spec["title"]
+    assert "{announcements_channel}" in spec["fields"][0]["value"]
+    assert spec["thumbnail"]["url"] == welcome_core.DEFAULT_DM_THUMBNAIL_URL
+    assert spec["color"] == "#1a4a8a"
 
 
 def test_build_goodbye_uses_custom_text():

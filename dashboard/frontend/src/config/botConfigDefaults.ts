@@ -31,6 +31,7 @@ export const EMPTY_BOT_CONFIG: BotConfig = {
 export type ModuleConfigVariant =
   | 'moderation'
   | 'antispam'
+  | 'tempban'
   | 'welcome-onboarding'
   | 'buttons'
   | 'voice'

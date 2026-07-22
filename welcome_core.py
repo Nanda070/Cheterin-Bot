@@ -9,6 +9,7 @@ from embed_builder import build_embed
 import i18n
 
 MODULE_NAME = "welcome_messages"
+DEFAULT_DM_THUMBNAIL_URL = "https://i.imgur.com/4ydti00.png"
 
 
 def _load_raw(guild_id: int) -> dict:
@@ -41,7 +42,9 @@ def resolve_dm_thumbnail_url(settings: dict) -> str:
     if custom:
         return custom
     fallback = (settings.get("dm_fallback_thumbnail_url") or "").strip()
-    return fallback
+    if fallback:
+        return fallback
+    return DEFAULT_DM_THUMBNAIL_URL
 
 
 def resolve_dm_footer_text(settings: dict, lang: str) -> str:
@@ -86,31 +89,29 @@ def default_goodbye_text(lang: str) -> str:
     return i18n.t("welcome.goodbye_message", lang, mention="{mention}", name="{name}")
 
 
-def default_dm_embed_spec(lang: str, bot_config_get, guild_id: int, settings: dict | None = None) -> dict:
+def default_dm_embed_spec(lang: str, bot_config_get=None, guild_id: int = 0, settings: dict | None = None) -> dict:
+    """Server 404-style welcome DM constructor defaults (placeholders substituted at send time)."""
     settings = settings or {}
-    def ch_id(channel_key: str) -> str:
-        raw = bot_config_get(guild_id, channel_key) or "0"
-        return str(raw)
-
+    _ = bot_config_get, guild_id
     fields = [
         {
             "name": i18n.t("welcome.dm_field_announcements", lang),
-            "value": i18n.t("welcome.dm_field_announcements_value", lang, channel_id=ch_id("ANNOUNCEMENTS_CHANNEL_ID")),
+            "value": i18n.t("welcome.dm_field_announcements_value", lang),
             "inline": False,
         },
         {
             "name": i18n.t("welcome.dm_field_rules", lang),
-            "value": i18n.t("welcome.dm_field_rules_value", lang, channel_id=ch_id("RULES_CHANNEL_ID")),
+            "value": i18n.t("welcome.dm_field_rules_value", lang),
             "inline": False,
         },
         {
             "name": i18n.t("welcome.dm_field_roles", lang),
-            "value": i18n.t("welcome.dm_field_roles_value", lang, channel_id=ch_id("ROLES_CHANNEL_ID")),
+            "value": i18n.t("welcome.dm_field_roles_value", lang),
             "inline": False,
         },
         {
             "name": i18n.t("welcome.dm_field_search", lang),
-            "value": i18n.t("welcome.dm_field_search_value", lang, channel_id=ch_id("SEARCH_PLAYERS_CHANNEL_ID")),
+            "value": i18n.t("welcome.dm_field_search_value", lang),
             "inline": False,
         },
         {
@@ -139,27 +140,8 @@ def default_dm_embed_spec(lang: str, bot_config_get, guild_id: int, settings: di
 
 
 def preview_dm_embed_spec(lang: str, settings: dict | None = None) -> dict:
-    settings = settings or {}
     """Static defaults for dashboard preview (no guild context)."""
-    return {
-        "title": i18n.t("welcome.dm_title", lang, guild_name="{guild_name}"),
-        "description": i18n.t("welcome.dm_description", lang),
-        "url": "",
-        "color": "#1a4a8a",
-        "author": {"name": "", "url": "", "icon_url": ""},
-        "footer": {"text": resolve_dm_footer_text(settings, lang), "icon_url": ""},
-        "image": {"url": ""},
-        "thumbnail": {"url": resolve_dm_thumbnail_url(settings)},
-        "timestamp": True,
-        "fields": [
-            {"name": i18n.t("welcome.dm_field_announcements", lang), "value": i18n.t("welcome.dm_field_announcements_value", lang, channel_id="123"), "inline": False},
-            {"name": i18n.t("welcome.dm_field_rules", lang), "value": i18n.t("welcome.dm_field_rules_value", lang, channel_id="456"), "inline": False},
-            {"name": i18n.t("welcome.dm_field_roles", lang), "value": i18n.t("welcome.dm_field_roles_value", lang, channel_id="789"), "inline": False},
-            {"name": i18n.t("welcome.dm_field_search", lang), "value": i18n.t("welcome.dm_field_search_value", lang, channel_id="101"), "inline": False},
-            {"name": i18n.t("welcome.dm_field_levels", lang), "value": i18n.t("welcome.dm_field_levels_value", lang), "inline": False},
-            {"name": i18n.t("welcome.dm_field_tips", lang), "value": i18n.t("welcome.dm_field_tips_value", lang), "inline": False},
-        ],
-    }
+    return default_dm_embed_spec(lang, settings=settings)
 
 
 def build_channel_payload(settings: dict, member, guild, lang: str, bot_config_get):
@@ -204,10 +186,12 @@ def build_dm_payload(settings: dict, member, guild, lang: str, bot_config_get):
         embed.timestamp = __import__("discord").utils.utcnow()
 
     thumb_url = (settings.get("dm_thumbnail_url") or "").strip()
+    if not thumb_url:
+        thumb_url = ((spec.get("thumbnail") or {}).get("url") or "").strip()
     if not thumb_url and settings.get("dm_use_guild_icon", True) and guild.icon:
         thumb_url = guild.icon.url
     if not thumb_url:
-        thumb_url = (spec.get("thumbnail") or {}).get("url") or resolve_dm_thumbnail_url(settings)
+        thumb_url = resolve_dm_thumbnail_url(settings)
     if thumb_url:
         embed.set_thumbnail(url=thumb_url)
 

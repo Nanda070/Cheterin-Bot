@@ -141,6 +141,7 @@
   "139": "test_giveaway_routes.py",
   "140": "format_voice_time",
   "141": "test_feedback_panel_routes.py",
+  "142": "MafiaLobbyView",
   "143": "FakeResponse",
   "144": "FakeResponse",
   "145": "test_news_routes.py",
@@ -179,8 +180,9 @@
   "178": "Welcome.tsx",
   "179": "__init__.py",
   "180": "test_fun_routes.py",
-  "181": "VCTheme",
   "182": "init",
   "183": "pick_bunker_conditions",
-  "187": "FakeResponse"
+  "184": "DocsSearch.tsx",
+  "204": "test_feedback_panel_routes.py",
+  "205": "ctd.py"
 }

@@ -1,7 +1,7 @@
 MESSAGES: dict[str, str] = {
     "tempban.reason": "Автоматический Tempban (Сброс сообщений за 20 мин.)",
     "tempban.recovery_unban_reason": "Авто-разбан после перезапуска (Tempban recovery)",
-    "tempban.dm_message": 'Вы были исключены из сервера "{guild}" за сообщение в канале, в котором вы не должны были писать.\nСсылка на сервер: {invite}',
+    "tempban.dm_message": 'Вы были исключены из сервера "404 : Server Not Found" за запись в канале, в котором вы не должны были писать. Ссылка на сервер: https://discord.gg/cheterin',
     "tempban.dm_success": "✅ Успешно",
     "tempban.dm_failed": "❌ Ошибка (ЛС закрыты)",
     "tempban.dm_disabled": "⏭ ЛС отключено в настройках",
@@ -10,7 +10,7 @@ MESSAGES: dict[str, str] = {
     "tempban.error.forbidden": "Не удалось забанить {name} (`{id}`) — недостаточно прав бота.",
     "tempban.error.http": "HTTP ошибка при Tempban для {name} (`{id}`): {status} {text}",
     "tempban.error.generic": "Ошибка при Tempban для {name} (`{id}`): {error}",
-    "tempban.unban_reason": "Автоматический разбан после Tempban",
+    "tempban.unban_reason": "TempBan",
     "tempban.unban_forbidden": "Недостаточно прав для разбана",
     "tempban.embed.title": "🔨 Автоматический Tempban",
     "tempban.embed.user": "Пользователь",

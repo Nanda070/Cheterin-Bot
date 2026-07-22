@@ -85,34 +85,50 @@ describe('LockdownPage', () => {
       action_slowmode_sec: 0,
       cooldown_minutes: 30,
     })
-    vi.spyOn(client, 'fetchSpamSettings').mockResolvedValue({
-      limit_with_attachments: 3,
-      limit_without_attachments: 5,
-      time_window_sec: 60,
-    })
-    vi.spyOn(client, 'fetchTempbanSettings').mockResolvedValue({
-      dm_enabled: true,
-      dm_message: '',
-      log_enabled: true,
-      log_embed: {
-        title: '',
-        description: '',
-        url: '',
-        color: '#5865F2',
-        author: { name: '', url: '', icon_url: '' },
-        footer: { text: '', icon_url: '' },
-        image: { url: '' },
-        thumbnail: { url: '' },
-        timestamp: null,
-        fields: [],
-      },
-      unban_reason: '',
-    })
 
     renderWithI18n(<LockdownPage />)
     fireEvent.click(await screen.findByText('Антирейд'))
 
     expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()
+  })
+
+  it('switches to the Анти-спам tab', async () => {
+    vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
+    vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
+    vi.spyOn(client, 'fetchSpamSettings').mockResolvedValue({
+      limit_with_attachments: 3,
+      limit_without_attachments: 5,
+      time_window_sec: 60,
+    })
+    const { EMPTY_BOT_CONFIG } = await import('../config/botConfigDefaults')
+    vi.spyOn(client, 'fetchConfig').mockResolvedValue(EMPTY_BOT_CONFIG)
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    renderWithI18n(<LockdownPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Анти-спам' }))
+
+    expect(await screen.findByText('Детектор массовых тегов')).toBeInTheDocument()
+  })
+
+  it('switches to the Tempban tab', async () => {
+    vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
+    vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
+    vi.spyOn(client, 'fetchTempbanSettings').mockResolvedValue({
+      dm_enabled: true,
+      dm_message: '',
+      log_enabled: true,
+      unban_reason: '',
+    })
+    const { EMPTY_BOT_CONFIG } = await import('../config/botConfigDefaults')
+    vi.spyOn(client, 'fetchConfig').mockResolvedValue(EMPTY_BOT_CONFIG)
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    renderWithI18n(<LockdownPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Tempban' }))
+
+    expect(await screen.findByText('Сообщения Tempban')).toBeInTheDocument()
   })
 
   it('switches to the Верификация tab', async () => {

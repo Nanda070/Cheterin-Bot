@@ -126,17 +126,22 @@ export function ModuleConfigPanel({ variant, title, intro, children }: ModuleCon
       case 'antispam':
         return (
           <>
-            {channelField(t('config.field.tempbanChannel'), 'TEMPBAN_CHANNEL_ID')}
-            {channelField(t('config.field.tempbanLogChannel'), 'TEMPBAN_LOG_CHANNEL_ID')}
             {channelField(t('config.field.spamLogChannel'), 'SPAM_LOG_CHANNEL_ID')}
             {roleField(t('config.field.spamLogRole'), 'SPAM_LOG_ROLE_ID')}
-            {textField(t('config.field.serverInviteLink'), 'SERVER_INVITE_LINK', t('config.placeholder.invite'))}
             <ChipPicker
               label={t('config.field.spamExceptions')}
               options={channels}
               selected={config.SPAM_EXCEPTION_CHANNELS}
               onChange={(ids) => setListField('SPAM_EXCEPTION_CHANNELS', ids)}
             />
+          </>
+        )
+      case 'tempban':
+        return (
+          <>
+            {channelField(t('config.field.tempbanChannel'), 'TEMPBAN_CHANNEL_ID')}
+            {channelField(t('config.field.tempbanLogChannel'), 'TEMPBAN_LOG_CHANNEL_ID')}
+            {textField(t('config.field.serverInviteLink'), 'SERVER_INVITE_LINK', t('config.placeholder.invite'))}
           </>
         )
       case 'welcome-onboarding':

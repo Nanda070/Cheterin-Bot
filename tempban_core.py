@@ -1,12 +1,12 @@
-"""Tempban message customization."""
+"""Tempban: DM customization + fixed log embed (not dashboard-editable)."""
 
 from __future__ import annotations
 
-import settings_db
-from message_template_core import embed_spec_has_content, normalize_embed_spec, substitute, substitute_embed_spec
-from embed_builder import build_embed
+import discord
 
 import i18n
+import settings_db
+from message_template_core import substitute
 
 MODULE_NAME = "tempban_messages"
 
@@ -24,17 +24,29 @@ def _load_raw(guild_id: int) -> dict:
 
 
 def save_settings(guild_id: int, data: dict) -> None:
-    settings_db.put(guild_id, MODULE_NAME, data)
+    # Preserve legacy log_embed in storage if present, but never use it for rendering.
+    raw = _load_raw(guild_id)
+    payload = {
+        "dm_enabled": bool(data.get("dm_enabled", True)),
+        "dm_message": str(data.get("dm_message") or ""),
+        "log_enabled": bool(data.get("log_enabled", True)),
+        "unban_reason": str(data.get("unban_reason") or ""),
+    }
+    if "log_embed" in raw:
+        payload["log_embed"] = raw["log_embed"]
+    settings_db.put(guild_id, MODULE_NAME, payload)
 
 
 def get_settings(guild_id: int) -> dict:
     raw = _load_raw(guild_id)
+    lang = i18n.lang_for(guild_id)
+    dm_message = str(raw.get("dm_message") or "").strip()
+    unban = str(raw.get("unban_reason") or "").strip()
     return {
         "dm_enabled": bool(raw.get("dm_enabled", True)),
-        "dm_message": str(raw.get("dm_message") or ""),
+        "dm_message": dm_message or default_dm_message(lang),
         "log_enabled": bool(raw.get("log_enabled", True)),
-        "log_embed": normalize_embed_spec(raw.get("log_embed")),
-        "unban_reason": str(raw.get("unban_reason") or ""),
+        "unban_reason": unban or i18n.t("tempban.unban_reason", lang),
     }
 
 
@@ -62,38 +74,47 @@ def dm_variables(member, guild, invite_link: str) -> dict[str, str]:
 
 
 def default_dm_message(lang: str) -> str:
-    return i18n.t("tempban.dm_message", lang, guild="{guild}", invite="{invite}")
+    return i18n.t("tempban.dm_message", lang)
 
 
-def default_log_embed_spec(lang: str) -> dict:
-    return {
-        "title": i18n.t("tempban.embed.title", lang),
-        "description": "",
-        "color": "#ED4245",
-        "author": {"name": "", "url": "", "icon_url": ""},
-        "footer": {"text": i18n.t("tempban.embed.footer", lang), "icon_url": ""},
-        "image": {"url": ""},
-        "thumbnail": {"url": ""},
-        "timestamp": True,
-        "fields": [
-            {"name": i18n.t("tempban.embed.user", lang), "value": "{name} (ID: {user_id})", "inline": False},
-            {"name": i18n.t("tempban.embed.ban_time", lang), "value": "{ban_time}", "inline": True},
-            {"name": i18n.t("tempban.embed.unban_time", lang), "value": "{unban_time}", "inline": True},
-            {"name": i18n.t("tempban.embed.channel", lang), "value": "{channel}", "inline": False},
-            {"name": i18n.t("tempban.embed.dm_status", lang), "value": "{dm_status}", "inline": True},
-            {"name": i18n.t("tempban.embed.message", lang), "value": "{message_preview}", "inline": False},
-        ],
-    }
-
-
-def build_log_embed(settings: dict, lang: str, variables: dict[str, str]):
-    spec = settings.get("log_embed") or {}
-    if not embed_spec_has_content(spec):
-        spec = default_log_embed_spec(lang)
-    spec = substitute_embed_spec(spec, variables)
-    embed = build_embed(spec)
-    if spec.get("timestamp") or (settings.get("log_embed") or {}).get("timestamp"):
-        embed.timestamp = __import__("discord").utils.utcnow()
+def build_log_embed(lang: str, variables: dict[str, str]) -> discord.Embed:
+    """Fixed Tempban log layout — always the same structure as the product screenshot."""
+    embed = discord.Embed(
+        title=i18n.t("tempban.embed.title", lang),
+        color=discord.Color.red(),
+        timestamp=discord.utils.utcnow(),
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.user", lang),
+        value=f"{variables['name']} (ID: {variables['user_id']})",
+        inline=False,
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.ban_time", lang),
+        value=variables["ban_time"],
+        inline=True,
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.unban_time", lang),
+        value=variables["unban_time"],
+        inline=True,
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.channel", lang),
+        value=variables["channel"],
+        inline=False,
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.dm_status", lang),
+        value=variables["dm_status"],
+        inline=True,
+    )
+    embed.add_field(
+        name=i18n.t("tempban.embed.message", lang),
+        value=variables["message_preview"] or "—",
+        inline=False,
+    )
+    embed.set_footer(text=i18n.t("tempban.embed.footer", lang))
     return embed
 
 
