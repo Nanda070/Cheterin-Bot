@@ -193,4 +193,23 @@ async def test_setup_posts_panel_when_configured():
 
     assert "установлена" in interaction.response.messages[0]["content"]
     assert len(channel.send_calls) == 1
-    assert channel.send_calls[0]["view"] is not None
+    view = channel.send_calls[0]["view"]
+    assert view is not None
+    assert view.children[0].label == "Я не бот"
+
+
+@pytest.mark.asyncio
+async def test_setup_posts_panel_with_english_button_when_guild_language_en():
+    import language_core
+    from dashboard.backend.tests.fakes import FakeChannel
+
+    language_core.set_language(1, "en")
+    cog, guild, member, bot = build()
+    channel = FakeChannel(500)
+    interaction = FakeInteraction(member, guild, channel)
+
+    await VerificationCog.verify_setup.callback(cog, interaction)
+
+    view = channel.send_calls[0]["view"]
+    button = view.children[0]
+    assert button.label == "I'm not a bot"

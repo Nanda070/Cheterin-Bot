@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 import settings_db
 import settings_migration
+import i18n
 
 load_dotenv()
 
@@ -177,12 +178,8 @@ async def on_guild_join(guild: discord.Guild):
             logger.exception("on_guild_join: не удалось синхронизировать команды для guild=%s", guild.id)
 
     embed = discord.Embed(
-        title="Спасибо, что добавили Cheterin!",
-        description=(
-            "Модули по умолчанию выключены — включите и настройте нужные в дашборде.\n\n"
-            f"🔧 Панель управления: {DASHBOARD_URL}\n"
-            "Для доступа нужны права **Управлять сервером** на этом сервере."
-        ),
+        title=i18n.guild_t(guild.id, "guild_join.title"),
+        description=i18n.guild_t(guild.id, "guild_join.description", dashboard_url=DASHBOARD_URL),
         color=discord.Color.blurple(),
     )
     channel = guild.system_channel

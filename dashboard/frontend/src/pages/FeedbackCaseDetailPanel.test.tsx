@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FeedbackCaseDetailPanel } from './FeedbackCaseDetailPanel'
@@ -25,7 +26,7 @@ describe('FeedbackCaseDetailPanel', () => {
   it('shows the case fields and category title', async () => {
     vi.spyOn(client, 'fetchFeedbackCaseDetail').mockResolvedValue(sampleDetail)
 
-    render(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={() => {}} />)
+    renderWithLanguage(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={() => {}} />)
 
     await waitFor(() =>
       screen.getByText((_, element) => element?.textContent === 'Жалоба на участника · PR-0001'),
@@ -38,7 +39,7 @@ describe('FeedbackCaseDetailPanel', () => {
     const decideSpy = vi.spyOn(client, 'decideFeedbackCase').mockResolvedValue(undefined)
     const onDecided = vi.fn()
 
-    render(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={onDecided} />)
+    renderWithLanguage(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={onDecided} />)
 
     await waitFor(() => screen.getByText('Принять'))
     fireEvent.click(screen.getByText('Принять'))
@@ -50,7 +51,7 @@ describe('FeedbackCaseDetailPanel', () => {
   it('disables decision buttons when the case is already decided', async () => {
     vi.spyOn(client, 'fetchFeedbackCaseDetail').mockResolvedValue({ ...sampleDetail, status: 'approved' })
 
-    render(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={() => {}} />)
+    renderWithLanguage(<FeedbackCaseDetailPanel caseId="PR-0001" onClose={() => {}} onDecided={() => {}} />)
 
     await waitFor(() => screen.getByText('Принять'))
     expect(screen.getByText('Принять')).toBeDisabled()

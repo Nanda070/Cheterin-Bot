@@ -16,16 +16,22 @@ import casino_core
 import casino_db
 import economy_core
 import economy_db
+import i18n
+import slash_i18n
+import slash_registry
 
 logger = logging.getLogger("casino")
 
-DISABLED_TEXT = "Модуль «Казино» отключён."
-ECONOMY_DISABLED_TEXT = "Модуль «Экономика» отключён — казино недоступно."
-
 COINFLIP_CHOICES = [
-    app_commands.Choice(name="Орёл", value="орел"),
-    app_commands.Choice(name="Решка", value="решка"),
+    slash_i18n.localized_choice("орел", "casino.coinflip.heads"),
+    slash_i18n.localized_choice("решка", "casino.coinflip.tails"),
 ]
+
+
+def _coinflip_label(side: str, lang: str) -> str:
+    if side == "орел":
+        return i18n.t("casino.coinflip.heads", lang)
+    return i18n.t("casino.coinflip.tails", lang)
 
 
 async def check_loss_roles(interaction: discord.Interaction, settings: dict):
@@ -33,6 +39,7 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
     if not isinstance(user, discord.Member):
         return
 
+    lang = i18n.lang_for(interaction.guild_id)
     loss_roles = settings.get("loss_roles", [])
     if not loss_roles:
         return
@@ -47,7 +54,6 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
         except ValueError:
             continue
 
-        # Skip if member already has this role
         if user.get_role(role_id) is not None:
             continue
 
@@ -71,7 +77,10 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
 
     if roles_to_add:
         try:
-            await user.add_roles(*roles_to_add, reason="Достигнут порог проигрышей в казино")
+            await user.add_roles(
+                *roles_to_add,
+                reason=i18n.t("casino.loss_role_reason", lang),
+            )
         except discord.HTTPException:
             pass
 
@@ -79,36 +88,32 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
 class CasinoCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._cooldowns: dict[int, float] = {}  # общий кулдаун между /слоты и /монетка
+        self._cooldowns: dict[int, float] = {}
 
-    def _gate(self, interaction: discord.Interaction) -> tuple[dict, dict, str | None]:
-        """Проверка тумблеров, активного блэкджека и кулдауна.
-
-        Возвращает (casino, economy, error_text).
-        Блокирует слоты/монетку если у игрока есть незавершённая BJ-партия.
-        """
+    def _gate(
+        self, interaction: discord.Interaction,
+    ) -> tuple[dict, dict, str | None, str]:
+        lang = i18n.lang_for(interaction.guild_id)
         settings = casino_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return settings, {}, DISABLED_TEXT
+            return settings, {}, i18n.module_disabled(lang, "casino"), lang
         econ = economy_core.get_settings(interaction.guild.id)
         if not econ["enabled"]:
-            return settings, econ, ECONOMY_DISABLED_TEXT
+            return settings, econ, i18n.t("error.economy_disabled_casino", lang), lang
 
-        # Нельзя играть в слоты/монетку пока активна партия в блэкджек
         bj_cog = self.bot.cogs.get("BlackjackCog")
         if bj_cog is not None and bj_cog.has_active_game(interaction.user.id):
-            return settings, econ, "Сначала доиграй текущую партию в блэкджек."
+            return settings, econ, i18n.t("casino.bj_active_first", lang), lang
 
         now = time.monotonic()
-        # Проверяем и наш кулдаун, и кулдаун блэкджека (общий пул)
         ready_at = max(
             self._cooldowns.get(interaction.user.id, 0.0),
             bj_cog.cooldown_ready_at(interaction.user.id) if bj_cog else 0.0,
         )
         if settings["cooldown_sec"] > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
-            return settings, econ, f"Казино отдыхает — попробуй через {remaining} сек."
-        return settings, econ, None
+            return settings, econ, i18n.t("casino.cooldown", lang, seconds=remaining), lang
+        return settings, econ, None, lang
 
     def _start_cooldown(self, user_id: int, cooldown_sec: int):
         self._cooldowns[user_id] = time.monotonic() + cooldown_sec
@@ -116,17 +121,22 @@ class CasinoCog(commands.Cog):
     @app_commands.command(name="слоты", description="Крутить слоты на ставку монет: 3 барабана, совпадения дают выигрыш")
     @app_commands.describe(ставка="Сколько монет поставить")
     async def slots_command(self, interaction: discord.Interaction, ставка: int):
-        settings, econ, error = self._gate(interaction)
+        settings, econ, error, lang = self._gate(interaction)
         if error:
             return await interaction.response.send_message(error, ephemeral=True)
 
         balance = economy_db.get_balance(interaction.user.id)
-        bet_problem = casino_core.bet_error(ставка, balance, settings)
+        balance_display = economy_core.format_amount(balance, econ)
+        bet_problem = casino_core.bet_error(
+            ставка, balance, settings, lang=lang, balance_display=balance_display,
+        )
         if bet_problem:
             return await interaction.response.send_message(bet_problem, ephemeral=True)
 
         if not economy_db.try_spend(interaction.user.id, ставка, "slots_bet"):
-            return await interaction.response.send_message("Недостаточно средств для ставки.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
+            )
         self._start_cooldown(interaction.user.id, settings["cooldown_sec"])
 
         reels = casino_core.roll_slots()
@@ -138,20 +148,33 @@ class CasinoCog(commands.Cog):
             await check_loss_roles(interaction, settings)
             balance = economy_db.get_balance(interaction.user.id)
             return await interaction.response.send_message(
-                f"🎰 {reels_text}\n{interaction.user.mention} — мимо. "
-                f"Баланс: {economy_core.format_amount(balance, econ)}."
+                i18n.t(
+                    "casino.slots.miss",
+                    lang,
+                    reels=reels_text,
+                    mention=interaction.user.mention,
+                    balance=economy_core.format_amount(balance, econ),
+                )
             )
 
         casino_db.record_slots(interaction.user.id, won=True)
         payout = casino_core.payout_amount(ставка, multiplier, settings["house_edge_percent"])
         balance = economy_db.add(interaction.user.id, payout, "slots_win")
-        kind = "Джекпот" if reels[0] == reels[1] == reels[2] else "Совпадение"
-        await interaction.response.send_message(
-            f"🎰 {reels_text}\n{interaction.user.mention} — {kind}! Выигрыш: "
-            f"**{economy_core.format_amount(payout, econ)}** (баланс: {economy_core.format_amount(balance, econ)})."
+        kind_key = (
+            "casino.slots.kind.jackpot" if reels[0] == reels[1] == reels[2]
+            else "casino.slots.kind.match"
         )
-
-    # ────────────────────────── /монетка ──────────────────────────
+        await interaction.response.send_message(
+            i18n.t(
+                "casino.slots.win",
+                lang,
+                reels=reels_text,
+                mention=interaction.user.mention,
+                kind=i18n.t(kind_key, lang),
+                payout=economy_core.format_amount(payout, econ),
+                balance=economy_core.format_amount(balance, econ),
+            )
+        )
 
     @app_commands.command(name="монетка", description="Подбросить монетку на ставку: угадал сторону — выигрыш")
     @app_commands.describe(ставка="Сколько монет поставить", сторона="Орёл или решка")
@@ -159,54 +182,79 @@ class CasinoCog(commands.Cog):
     async def coinflip_command(
         self, interaction: discord.Interaction, ставка: int, сторона: app_commands.Choice[str],
     ):
-        settings, econ, error = self._gate(interaction)
+        settings, econ, error, lang = self._gate(interaction)
         if error:
             return await interaction.response.send_message(error, ephemeral=True)
 
         balance = economy_db.get_balance(interaction.user.id)
-        bet_problem = casino_core.bet_error(ставка, balance, settings)
+        balance_display = economy_core.format_amount(balance, econ)
+        bet_problem = casino_core.bet_error(
+            ставка, balance, settings, lang=lang, balance_display=balance_display,
+        )
         if bet_problem:
             return await interaction.response.send_message(bet_problem, ephemeral=True)
 
         if not economy_db.try_spend(interaction.user.id, ставка, "coinflip_bet"):
-            return await interaction.response.send_message("Недостаточно средств для ставки.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
+            )
         self._start_cooldown(interaction.user.id, settings["cooldown_sec"])
 
         result = casino_core.flip_coin()
         emoji = "🦅" if result == "орел" else "🪙"
-        label = "Орёл" if result == "орел" else "Решка"
+        label = _coinflip_label(result, lang)
 
         if result != сторона.value:
             casino_db.record_slots(interaction.user.id, won=False)
             await check_loss_roles(interaction, settings)
             balance = economy_db.get_balance(interaction.user.id)
             return await interaction.response.send_message(
-                f"{emoji} Выпало: **{label}**.\n{interaction.user.mention} не угадал(а). "
-                f"Баланс: {economy_core.format_amount(balance, econ)}."
+                i18n.t(
+                    "casino.coinflip.loss",
+                    lang,
+                    emoji=emoji,
+                    label=label,
+                    mention=interaction.user.mention,
+                    balance=economy_core.format_amount(balance, econ),
+                )
             )
 
         casino_db.record_slots(interaction.user.id, won=True)
         payout = casino_core.payout_amount(ставка, casino_core.COINFLIP_MULTIPLIER, settings["house_edge_percent"])
         balance = economy_db.add(interaction.user.id, payout, "coinflip_win")
         await interaction.response.send_message(
-            f"{emoji} Выпало: **{label}**.\n{interaction.user.mention} угадал(а)! Выигрыш: "
-            f"**{economy_core.format_amount(payout, econ)}** (баланс: {economy_core.format_amount(balance, econ)})."
+            i18n.t(
+                "casino.coinflip.win",
+                lang,
+                emoji=emoji,
+                label=label,
+                mention=interaction.user.mention,
+                payout=economy_core.format_amount(payout, econ),
+                balance=economy_core.format_amount(balance, econ),
+            )
         )
 
 
 class CasinoLeaderboardView(discord.ui.View):
-    def __init__(self, bot: commands.Bot, interaction: discord.Interaction):
+    def __init__(self, bot: commands.Bot, interaction: discord.Interaction, lang: str):
         super().__init__(timeout=120)
         self.bot = bot
         self.original_user = interaction.user
+        self.lang = lang
         self.page = 1
         self.per_page = 10
-        self.mode = "total"  # "slots", "bj", "total"
-        self.stat_type = "losses"  # "wins", "losses"
-        
+        self.mode = "total"
+        self.stat_type = "losses"
+
         self._update_buttons()
 
     def _update_buttons(self):
+        self.btn_type_wins.label = i18n.t("casino.top.btn.wins", self.lang)
+        self.btn_type_losses.label = i18n.t("casino.top.btn.losses", self.lang)
+        self.btn_mode_slots.label = i18n.t("casino.top.btn.mode_slots", self.lang)
+        self.btn_mode_bj.label = i18n.t("casino.top.btn.mode_bj", self.lang)
+        self.btn_mode_total.label = i18n.t("casino.top.btn.mode_total", self.lang)
+
         self.btn_type_wins.style = discord.ButtonStyle.primary if self.stat_type == "wins" else discord.ButtonStyle.secondary
         self.btn_type_losses.style = discord.ButtonStyle.primary if self.stat_type == "losses" else discord.ButtonStyle.secondary
 
@@ -215,7 +263,6 @@ class CasinoLeaderboardView(discord.ui.View):
         self.btn_mode_total.style = discord.ButtonStyle.primary if self.mode == "total" else discord.ButtonStyle.secondary
 
     def build_embed(self, guild: discord.Guild) -> discord.Embed:
-        # Full data load for simplicity and correct pagination
         all_rows = casino_db.leaderboard(self.mode, self.stat_type, limit=1000)
         total_pages = max(1, (len(all_rows) + self.per_page - 1) // self.per_page)
         self.page = min(self.page, total_pages)
@@ -226,9 +273,17 @@ class CasinoLeaderboardView(discord.ui.View):
         self.btn_next.disabled = (self.page == total_pages)
         self.btn_last.disabled = (self.page == total_pages)
 
+        stat_key = (
+            "casino.top.stat.wins" if self.stat_type == "wins"
+            else "casino.top.stat.losses"
+        )
         embed = discord.Embed(
-            title=f"Казино — Топ по {'победам' if self.stat_type == 'wins' else 'проигрышам'} "
-                  f"({self._mode_name()})",
+            title=i18n.t(
+                "casino.top.title",
+                self.lang,
+                stat=i18n.t(stat_key, self.lang),
+                mode=self._mode_name(),
+            ),
             colour=discord.Colour.red() if self.stat_type == "losses" else discord.Colour.green(),
         )
         if guild and guild.icon:
@@ -243,37 +298,57 @@ class CasinoLeaderboardView(discord.ui.View):
             member = guild.get_member(row["user_id"])
             display = member.display_name if member else str(row["user_id"])
             mention = member.mention if member else display
-            
+
             icon = "⭐" if rank == 1 else "🌟" if rank == 2 else "✨" if rank == 3 else "▫️"
-            
+
             if self.mode == "total":
                 if self.stat_type == "wins":
                     total_val = row["slots_wins"] + row["bj_wins"]
-                    lines.append(f"{icon} **#{rank}.** {mention} — Всего: {total_val} 🏆 (🎰 {row['slots_wins']} | 🎴 {row['bj_wins']})")
+                    lines.append(i18n.t(
+                        "casino.top.line.total.wins",
+                        self.lang,
+                        icon=icon, rank=rank, mention=mention,
+                        total=total_val, slots=row["slots_wins"], bj=row["bj_wins"],
+                    ))
                 else:
                     total_val = row["slots_losses"] + row["bj_losses"]
-                    lines.append(f"{icon} **#{rank}.** {mention} — Всего: {total_val} ❌ (🎰 {row['slots_losses']} | 🎴 {row['bj_losses']})")
+                    lines.append(i18n.t(
+                        "casino.top.line.total.losses",
+                        self.lang,
+                        icon=icon, rank=rank, mention=mention,
+                        total=total_val, slots=row["slots_losses"], bj=row["bj_losses"],
+                    ))
             elif self.mode == "slots":
                 val = row["slots_wins"] if self.stat_type == "wins" else row["slots_losses"]
                 emoji = "🏆" if self.stat_type == "wins" else "❌"
-                lines.append(f"{icon} **#{rank}.** {mention} — 🎰 {val} {emoji}")
+                lines.append(i18n.t(
+                    "casino.top.line.slots",
+                    self.lang,
+                    icon=icon, rank=rank, mention=mention, val=val, emoji=emoji,
+                ))
             elif self.mode == "bj":
                 val = row["bj_wins"] if self.stat_type == "wins" else row["bj_losses"]
                 emoji = "🏆" if self.stat_type == "wins" else "❌"
-                lines.append(f"{icon} **#{rank}.** {mention} — 🎴 {val} {emoji}")
+                lines.append(i18n.t(
+                    "casino.top.line.bj",
+                    self.lang,
+                    icon=icon, rank=rank, mention=mention, val=val, emoji=emoji,
+                ))
 
         if not lines:
-            embed.description = "Таблица пуста."
+            embed.description = i18n.t("casino.top.empty", self.lang)
         else:
             embed.description = "\n".join(lines)
 
-        embed.set_footer(text=f"Страница {self.page} из {total_pages}")
+        embed.set_footer(text=i18n.t("casino.top.footer", self.lang, page=self.page, total=total_pages))
         return embed
 
     def _mode_name(self) -> str:
-        if self.mode == "slots": return "Слоты/Монетка"
-        if self.mode == "bj": return "Блэкджек"
-        return "Общий"
+        if self.mode == "slots":
+            return i18n.t("casino.top.mode.slots", self.lang)
+        if self.mode == "bj":
+            return i18n.t("casino.top.mode.bj", self.lang)
+        return i18n.t("casino.top.mode.total", self.lang)
 
     async def _update(self, interaction: discord.Interaction):
         self._update_buttons()
@@ -281,7 +356,9 @@ class CasinoLeaderboardView(discord.ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.original_user:
-            await interaction.response.send_message("Это не ваше меню.", ephemeral=True)
+            await interaction.response.send_message(
+                i18n.t("casino.top.not_your_menu", self.lang), ephemeral=True,
+            )
             return False
         return True
 
@@ -340,21 +417,28 @@ class CasinoLeaderboardView(discord.ui.View):
         await interaction.message.delete()
         self.stop()
 
+
 @app_commands.command(name="казино-топ", description="Таблица лидеров казино по победам и проигрышам")
 async def casino_top_command(interaction: discord.Interaction):
+    lang = i18n.lang_for(interaction.guild_id)
     settings = casino_core.get_settings(interaction.guild.id)
     if not settings["enabled"]:
-        return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+        return await interaction.response.send_message(
+            i18n.module_disabled(lang, "casino"), ephemeral=True,
+        )
     econ = economy_core.get_settings(interaction.guild.id)
     if not econ["enabled"]:
-        return await interaction.response.send_message(ECONOMY_DISABLED_TEXT, ephemeral=True)
+        return await interaction.response.send_message(
+            i18n.t("error.economy_disabled_casino", lang), ephemeral=True,
+        )
 
-    view = CasinoLeaderboardView(interaction.client, interaction)
+    view = CasinoLeaderboardView(interaction.client, interaction, lang)
     embed = view.build_embed(interaction.guild)
     await interaction.response.send_message(embed=embed, view=view)
 
 
 async def setup(bot: commands.Bot):
     cog = CasinoCog(bot)
+    slash_registry.register_casino(cog, casino_top_command)
     bot.tree.add_command(casino_top_command)
     await bot.add_cog(cog)

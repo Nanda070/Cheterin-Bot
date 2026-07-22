@@ -7,10 +7,11 @@ import logging
 
 import feedback_categories
 import feedback_core
+import feedback_panel_core
+import i18n
+import slash_registry
 
 logger = logging.getLogger("chetbot.feedback")
-
-PANEL_BANNER_URL = "https://i.imgur.com/vLAcc7q.png"
 
 
 def get_feedback_categories(guild_id: int):
@@ -54,27 +55,31 @@ class FeedbackMenu(commands.Cog):
                 if not message_id or not submitter_id or not category_key:
                     continue
                 self.bot.add_view(
-                    FeedbackDecisionView(self.bot, case_id, submitter_id, category_key),
+                    FeedbackDecisionView(
+                        self.bot, case_id, submitter_id, category_key, guild.id
+                    ),
                     message_id=message_id,
                 )
 
-        @feedback_panel_group.command(name="send", description="Опубликовать панель обратной связи")
-        @app_commands.describe(channel="Канал для публикации панели")
-        async def feedback_panel_send(
-            self,
-            interaction: discord.Interaction,
-            channel: Optional[discord.TextChannel] = None,
-        ):
-            target_channel = channel or interaction.channel
-            if not isinstance(target_channel, discord.TextChannel):
-                await interaction.response.send_message("Нужен обычный текстовый канал.", ephemeral=True)
-                return
+    @feedback_panel_group.command(name="send", description="Опубликовать панель обратной связи")
+    @app_commands.describe(channel="Канал для публикации панели")
+    async def feedback_panel_send(
+        self,
+        interaction: discord.Interaction,
+        channel: Optional[discord.TextChannel] = None,
+    ):
+        lang = i18n.lang_for(interaction.guild_id)
+        target_channel = channel or interaction.channel
+        if not isinstance(target_channel, discord.TextChannel):
+            await interaction.response.send_message(
+                i18n.t("feedback.need_text_channel", lang), ephemeral=True
+            )
+            return
 
-            # Сначала отвечаем на interaction, потом отправляем панель
-            await interaction.response.send_message("Панель опубликована.", ephemeral=True)
-            await feedback_core.publish_feedback_panel(
-                self.bot,
-                target_channel,
+        await interaction.response.send_message(i18n.t("feedback.panel_published", lang), ephemeral=True)
+        await feedback_core.publish_feedback_panel(
+            self.bot,
+            target_channel,
             published_by_id=interaction.user.id,
             published_by_mention=interaction.user.mention,
         )
@@ -124,6 +129,7 @@ class FeedbackModal(discord.ui.Modal):
             self.field_keys.append(field["key"])
 
     async def on_submit(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(self.guild_id)
         answers = {}
         for key, child in zip(self.field_keys, self.children):
             if isinstance(child, discord.ui.TextInput):
@@ -134,38 +140,51 @@ class FeedbackModal(discord.ui.Modal):
         except Exception as exc:
             logger.error("Ошибка при создании обращения: %s", exc, exc_info=True)
             embed = discord.Embed(
-                title="❌ Ошибка при создании обращения",
-                description=(
-                    f"**Категория:** {get_feedback_categories(self.guild_id)[self.category_key]['title']}\n"
-                    f"**Пользователь:** {interaction.user.mention} (`{interaction.user.id}`)\n"
-                    f"**Ошибка:** `{exc}`"
+                title=i18n.t("feedback.error_create_title", lang),
+                description=i18n.t(
+                    "feedback.error_create_body",
+                    lang,
+                    category=get_feedback_categories(self.guild_id)[self.category_key]["title"],
+                    mention=interaction.user.mention,
+                    user_id=interaction.user.id,
+                    error=exc,
                 ),
                 color=discord.Color.red(),
                 timestamp=self.bot.utcnow(),
             )
             await self.bot.send_log(interaction.guild.id, embed)
             if interaction.response.is_done():
-                await interaction.followup.send("Не удалось создать обращение.", ephemeral=True)
+                await interaction.followup.send(i18n.t("feedback.create_failed", lang), ephemeral=True)
             else:
-                await interaction.response.send_message("Не удалось создать обращение.", ephemeral=True)
+                await interaction.response.send_message(i18n.t("feedback.create_failed", lang), ephemeral=True)
 
 
 class FeedbackDecisionView(discord.ui.View):
-    def __init__(self, bot, case_id: str, submitter_id: int, category_key: str, disabled: bool = False):
+    def __init__(
+        self,
+        bot,
+        case_id: str,
+        submitter_id: int,
+        category_key: str,
+        guild_id: int,
+        disabled: bool = False,
+    ):
         super().__init__(timeout=None)
         self.bot = bot
         self.case_id = case_id
         self.submitter_id = submitter_id
         self.category_key = category_key
+        self.guild_id = guild_id
+        lang = i18n.lang_for(guild_id)
 
         approve_btn = discord.ui.Button(
-            label="Принять",
+            label=i18n.t("feedback.btn_approve", lang),
             style=discord.ButtonStyle.success,
             custom_id=f"feedback_accept:{case_id}",
             disabled=disabled,
         )
         reject_btn = discord.ui.Button(
-            label="Отклонить",
+            label=i18n.t("feedback.btn_reject", lang),
             style=discord.ButtonStyle.danger,
             custom_id=f"feedback_reject:{case_id}",
             disabled=disabled,
@@ -194,10 +213,10 @@ async def get_next_case_id(bot, guild_id: int, prefix: str) -> str:
     return f"{prefix}-{current:04d}"
 
 
-def build_mentions(config: dict) -> str:
+def build_mentions(config: dict, lang: str) -> str:
     parts = [f"<@&{r_id}>" for r_id in config["review_role_ids"]]
     parts.extend(f"<@{u_id}>" for u_id in config.get("review_user_ids", []))
-    return " ".join(parts).strip() or "Без упоминаний"
+    return " ".join(parts).strip() or i18n.t("feedback.no_mentions", lang)
 
 
 async def add_reviewers(thread: discord.Thread, guild: discord.Guild, config: dict):
@@ -225,27 +244,47 @@ async def add_reviewers(thread: discord.Thread, guild: discord.Guild, config: di
 
 
 async def create_feedback_case(interaction: discord.Interaction, bot, category_key: str, answers: dict):
+    lang = i18n.lang_for(interaction.guild.id)
     config = get_feedback_categories(interaction.guild.id)[category_key]
     if not interaction.response.is_done():
         await interaction.response.defer(ephemeral=True)
 
     parent_channel = bot.get_channel(int(config["channel_id"]))
     if not isinstance(parent_channel, discord.TextChannel):
-        await interaction.followup.send("Целевой канал не найден или не является текстовым.", ephemeral=True)
+        await interaction.followup.send(i18n.t("feedback.channel_not_found", lang), ephemeral=True)
         return
 
     case_id = await get_next_case_id(bot, interaction.guild.id, config["case_prefix"])
     summary_val = answers.get(config["mini_summary_key"], "—")
 
     mini_embed = discord.Embed(
-        title=f"📨 {config['case_title']} · {case_id}",
+        title=i18n.t(
+            "feedback.case_title_public",
+            lang,
+            case_title=config["case_title"],
+            case_id=case_id,
+        ),
         color=discord.Color.blurple(),
         timestamp=bot.utcnow(),
     )
-    mini_embed.add_field(name="Отправитель", value=interaction.user.mention, inline=True)
-    mini_embed.add_field(name="Статус", value="На рассмотрении", inline=True)
-    mini_embed.add_field(name="Кратко", value=summary_val[:1024], inline=False)
-    mini_embed.set_footer(text=f"ID пользователя: {interaction.user.id}")
+    mini_embed.add_field(
+        name=i18n.t("feedback.field.submitter", lang),
+        value=interaction.user.mention,
+        inline=True,
+    )
+    mini_embed.add_field(
+        name=i18n.t("feedback.field.status", lang),
+        value=i18n.t("feedback.status.pending", lang),
+        inline=True,
+    )
+    mini_embed.add_field(
+        name=i18n.t("feedback.field.summary", lang),
+        value=summary_val[:1024],
+        inline=False,
+    )
+    mini_embed.set_footer(
+        text=i18n.t("feedback.field.footer_user_id", lang, user_id=interaction.user.id)
+    )
 
     public_message = await parent_channel.send(embed=mini_embed)
 
@@ -254,11 +293,11 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
         type=discord.ChannelType.private_thread,
         invitable=False,
         auto_archive_duration=1440,
-        reason=f"Внутреннее обращение {case_id}",
+        reason=i18n.t("feedback.thread_reason", lang, case_id=case_id),
     )
     await add_reviewers(thread, interaction.guild, config)
 
-    mentions = build_mentions(config)
+    mentions = build_mentions(config, lang)
     try:
         await thread.send(
             content=mentions,
@@ -268,19 +307,33 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
         logger.warning("Не удалось отправить упоминания в тред %s: %s", thread.id, e)
 
     full_embed = discord.Embed(
-        title=f"🔒 Внутреннее обращение · {case_id}",
+        title=i18n.t("feedback.case_title_internal", lang, case_id=case_id),
         color=discord.Color.orange(),
         timestamp=bot.utcnow(),
     )
-    full_embed.add_field(name="Отправитель", value=f"{interaction.user.mention} (`{interaction.user.id}`)", inline=False)
-    full_embed.add_field(name="Публичное сообщение", value=f"[Открыть]({public_message.jump_url})", inline=False)
+    full_embed.add_field(
+        name=i18n.t("feedback.field.submitter", lang),
+        value=f"{interaction.user.mention} (`{interaction.user.id}`)",
+        inline=False,
+    )
+    full_embed.add_field(
+        name=i18n.t("feedback.field.public_message", lang),
+        value=f"[{i18n.t('feedback.link.open', lang)}]({public_message.jump_url})",
+        inline=False,
+    )
     for field in config["fields"]:
         val = answers.get(field["key"], "—")
         full_embed.add_field(name=field["label"], value=val[:1024] if val else "—", inline=False)
-    full_embed.add_field(name="Статус", value="Ожидает решения", inline=False)
-    full_embed.set_footer(text="Доступно только для staff")
+    full_embed.add_field(
+        name=i18n.t("feedback.field.status", lang),
+        value=i18n.t("feedback.status.awaiting_decision", lang),
+        inline=False,
+    )
+    full_embed.set_footer(text=i18n.t("feedback.field.footer_staff_only", lang))
 
-    decision_view = FeedbackDecisionView(bot, case_id, interaction.user.id, category_key)
+    decision_view = FeedbackDecisionView(
+        bot, case_id, interaction.user.id, category_key, interaction.guild.id
+    )
     decision_message = await thread.send(embed=full_embed, view=decision_view)
 
     cases = settings_db.get(interaction.guild.id, "feedback_cases", {})
@@ -299,13 +352,16 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
     settings_db.put(interaction.guild.id, "feedback_cases", cases)
 
     log_embed = discord.Embed(
-        title="📥 Создано новое обращение",
-        description=(
-            f"**Номер:** `{case_id}`\n"
-            f"**Отправитель:** {interaction.user.mention} (`{interaction.user.id}`)\n"
-            f"**Канал:** <#{parent_channel.id}>\n"
-            f"**Ветка:** <#{thread.id}>\n"
-            f"**Пинги:** {mentions}"
+        title=i18n.t("feedback.log.new_case", lang),
+        description=i18n.t(
+            "feedback.log.new_case_body",
+            lang,
+            case_id=case_id,
+            mention=interaction.user.mention,
+            user_id=interaction.user.id,
+            channel_id=parent_channel.id,
+            thread_id=thread.id,
+            mentions=mentions,
         ),
         color=discord.Color.blurple(),
         timestamp=bot.utcnow(),
@@ -313,12 +369,13 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
     await bot.send_log(interaction.guild.id, log_embed)
 
     await interaction.followup.send(
-        f"Обращение зарегистрировано. Номер: **{case_id}**.\nИтог рассмотрения придёт вам в личные сообщения.",
+        i18n.t("feedback.case_registered", lang, case_id=case_id),
         ephemeral=True,
     )
 
 
 async def close_case(interaction: discord.Interaction, bot, case_id: str, approved: bool):
+    lang = i18n.lang_for(interaction.guild_id)
     if not interaction.response.is_done():
         await interaction.response.defer(ephemeral=True)
 
@@ -333,17 +390,15 @@ async def close_case(interaction: discord.Interaction, bot, case_id: str, approv
         )
         if not result["ok"]:
             if result["error"] == "category_deleted":
-                await interaction.followup.send(
-                    "❌ Категория этого обращения была удалена. Обращение нельзя обработать.", ephemeral=True
-                )
+                await interaction.followup.send(i18n.t("feedback.category_deleted", lang), ephemeral=True)
             else:
-                await interaction.followup.send("Обращение не найдено или уже закрыто.", ephemeral=True)
+                await interaction.followup.send(i18n.t("feedback.case_not_found", lang), ephemeral=True)
     except Exception as e:
         logger.error("Ошибка при закрытии обращения %s: %s", case_id, e)
-        await interaction.followup.send(
-            "❌ Произошла ошибка при закрытии обращения. Администраторы уведомлены.", ephemeral=True
-        )
+        await interaction.followup.send(i18n.t("feedback.close_error", lang), ephemeral=True)
 
 
 async def setup(bot):
-    await bot.add_cog(FeedbackMenu(bot))
+    cog = FeedbackMenu(bot)
+    slash_registry.register_feedback(cog)
+    await bot.add_cog(cog)

@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { PublicMafiaActionPage } from './PublicMafiaAction'
 
 const baseState: client.MafiaPublicState = {
@@ -25,7 +26,7 @@ const baseState: client.MafiaPublicState = {
 }
 
 function renderAt(token: string) {
-  return render(
+  return renderWithLanguage(
     <MemoryRouter initialEntries={[`/mafia/${token}`]}>
       <Routes>
         <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
@@ -128,5 +129,13 @@ describe('PublicMafiaActionPage', () => {
 
     await screen.findByText('Отправлено.')
     expect(voteSpy).toHaveBeenCalledWith('my-token', '20')
+  })
+
+  it('switches UI language when API returns language', async () => {
+    vi.spyOn(client, 'fetchPublicMafia').mockResolvedValue({ ...baseState, language: 'en' })
+    renderAt('my-token')
+
+    expect(await screen.findByText('Doctor')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument()
   })
 })

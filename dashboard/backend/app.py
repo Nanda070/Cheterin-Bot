@@ -15,6 +15,7 @@ import warns_db
 from .auth import routes as auth_routes
 from .config import ConfigError, DashboardConfig, load_dashboard_config
 from .routes.brackets import routes as brackets_routes
+from .routes.language import routes as language_routes
 from .routes.lockdown import routes as lockdown_routes
 from .routes.moderation import routes as moderation_routes
 from .routes.reaction_roles import routes as reaction_roles_routes
@@ -24,6 +25,8 @@ from .routes.events import routes as events_routes
 from .routes.config import routes as config_routes
 from .routes.ctd import routes as ctd_routes
 from .routes.welcome import routes as welcome_routes
+from .routes.tempban_settings import routes as tempban_settings_routes
+from .routes.spam_settings import routes as spam_settings_routes
 from .routes.auto_roles import routes as auto_roles_routes
 from .routes.supply import routes as supply_routes
 from .routes.voice import routes as voice_routes
@@ -94,8 +97,11 @@ def create_app(
     app.add_routes(feedback_routes)
     app.add_routes(events_routes)
     app.add_routes(config_routes)
+    app.add_routes(language_routes)
     app.add_routes(ctd_routes)
     app.add_routes(welcome_routes)
+    app.add_routes(tempban_settings_routes)
+    app.add_routes(spam_settings_routes)
     app.add_routes(auto_roles_routes)
     app.add_routes(supply_routes)
     app.add_routes(voice_routes)

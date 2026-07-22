@@ -13,15 +13,17 @@ from discord.ext import commands
 
 import family_core
 import family_db
+import i18n
+import slash_registry
 
 logger = logging.getLogger("family.roster")
 
 
-def generate_roster_text(guild: discord.Guild) -> str:
+def generate_roster_text(guild: discord.Guild, lang: str) -> str:
     settings = family_core.get_settings(guild.id)
     target_roles = settings["roster"]["target_roles"]
     if not target_roles:
-        return "Роли ростера не настроены."
+        return i18n.t("family.roster.roles_not_configured", lang)
 
     lines = []
     for entry in target_roles:
@@ -33,9 +35,9 @@ def generate_roster_text(guild: discord.Guild) -> str:
             for member in role.members:
                 lines.append(f"- {member.mention}")
         else:
-            lines.append("- Отсутствуют")
+            lines.append(i18n.t("family.roster.no_members", lang))
         lines.append("")
-    return "\n".join(lines).strip() or "Данные о ролях не найдены."
+    return "\n".join(lines).strip() or i18n.t("family.roster.no_data", lang)
 
 
 class RosterCog(commands.Cog):
@@ -54,6 +56,7 @@ class RosterCog(commands.Cog):
             await self.execute_roster_update(guild)
 
     async def execute_roster_update(self, guild: discord.Guild):
+        lang = i18n.lang_for(guild.id)
         async with self._update_lock:
             data = family_db.get_roster_data(guild.id)
             if not data:
@@ -65,7 +68,7 @@ class RosterCog(commands.Cog):
 
             try:
                 msg = await channel.fetch_message(data["message_id"])
-                new_content = generate_roster_text(guild)
+                new_content = generate_roster_text(guild, lang)
                 if msg.content != new_content:
                     await msg.edit(content=new_content, allowed_mentions=discord.AllowedMentions.none())
             except discord.NotFound:
@@ -86,13 +89,14 @@ class RosterCog(commands.Cog):
 
     @app_commands.command(name="список", description="Создать live-сообщение со списком участников семьи")
     async def roster_list(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = family_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Модуль «Семья» отключён.", ephemeral=True)
+            return await interaction.response.send_message(i18n.module_disabled(lang, "family"), ephemeral=True)
 
         list_channel_id = settings["roster"]["list_channel_id"]
         if list_channel_id and str(interaction.channel_id) != list_channel_id:
-            return await interaction.response.send_message("Операция запрещена в текущем канале.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("family.roster.channel_forbidden", lang), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
@@ -107,10 +111,10 @@ class RosterCog(commands.Cog):
                 except discord.HTTPException:
                     pass
 
-        content = generate_roster_text(guild)
+        content = generate_roster_text(guild, lang)
         msg = await interaction.channel.send(content=content, allowed_mentions=discord.AllowedMentions.none())
         family_db.save_roster_data(guild.id, msg.channel.id, msg.id)
-        await interaction.followup.send("Live-список инициализирован.")
+        await interaction.followup.send(i18n.t("family.roster.initialized", lang), ephemeral=True)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -137,4 +141,6 @@ class RosterCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     family_db.init()
-    await bot.add_cog(RosterCog(bot))
+    cog = RosterCog(bot)
+    slash_registry.register_family_roster(cog)
+    await bot.add_cog(cog)

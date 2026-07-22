@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useT } from '../context/LanguageContext'
 import {
   createFeedbackCategory,
   deleteFeedbackCategory,
@@ -20,25 +21,53 @@ import { Modal } from '../components/ui/Modal'
 
 const EMPTY_FIELD: FeedbackCategoryFieldSpec = { key: '', label: '', style: 'short', required: true, max_length: 200 }
 
-const DEFAULT_TEMPLATE: FeedbackCategorySpec = {
-  key: 'players',
-  title: 'Жалоба на участника',
-  button_label: '            Жалоба на участника            ',
-  channel_id: '',
-  case_prefix: 'PR',
-  case_title: 'Жалоба на участника',
-  thread_name: 'player-report',
-  review_role_ids: [],
-  approved_text: 'Участник наказан.',
-  denied_text: 'Жалоба отклонена.',
-  modal_title: 'Жалоба на участника',
-  fields: [
-    { key: 'offender', label: 'Ник / ID участника', style: 'short', required: true, max_length: 120 },
-    { key: 'complaint', label: 'Суть жалобы', style: 'paragraph', required: true, max_length: 1000 },
-    { key: 'datetime', label: 'Дата и время ситуации', style: 'short', required: false, max_length: 120 },
-    { key: 'proof', label: 'Доказательства', style: 'paragraph', required: false, max_length: 1000 },
-  ],
-  mini_summary_key: 'offender',
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string
+
+function defaultTemplate(t: TranslateFn): FeedbackCategorySpec {
+  return {
+    key: 'players',
+    title: t('feedback.template.title'),
+    button_label: t('feedback.template.buttonLabel'),
+    channel_id: '',
+    case_prefix: 'PR',
+    case_title: t('feedback.template.caseTitle'),
+    thread_name: 'player-report',
+    review_role_ids: [],
+    approved_text: t('feedback.template.approvedText'),
+    denied_text: t('feedback.template.deniedText'),
+    modal_title: t('feedback.template.modalTitle'),
+    fields: [
+      {
+        key: 'offender',
+        label: t('feedback.template.fields.offender'),
+        style: 'short',
+        required: true,
+        max_length: 120,
+      },
+      {
+        key: 'complaint',
+        label: t('feedback.template.fields.complaint'),
+        style: 'paragraph',
+        required: true,
+        max_length: 1000,
+      },
+      {
+        key: 'datetime',
+        label: t('feedback.template.fields.datetime'),
+        style: 'short',
+        required: false,
+        max_length: 120,
+      },
+      {
+        key: 'proof',
+        label: t('feedback.template.fields.proof'),
+        style: 'paragraph',
+        required: false,
+        max_length: 1000,
+      },
+    ],
+    mini_summary_key: 'offender',
+  }
 }
 
 function emptySpec(): FeedbackCategorySpec {
@@ -60,6 +89,7 @@ function emptySpec(): FeedbackCategorySpec {
 }
 
 export function FeedbackCategoriesPage() {
+  const t = useT()
   const [categories, setCategories] = useState<FeedbackCategorySpec[]>([])
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -75,7 +105,7 @@ export function FeedbackCategoriesPage() {
   const [publishError, setPublishError] = useState('')
 
   const reload = () => {
-    fetchFeedbackCategories().then(setCategories).catch(() => setError('Не удалось загрузить категории'))
+    fetchFeedbackCategories().then(setCategories).catch(() => setError(t('feedback.categories.errorLoad')))
     fetchChannels().then(setChannels).catch(() => {})
     fetchRoles().then(setRoles).catch(() => {})
   }
@@ -93,7 +123,8 @@ export function FeedbackCategoriesPage() {
 
   const openDefaultTemplate = () => {
     setEditingKey(null)
-    setSpec({ ...DEFAULT_TEMPLATE, fields: DEFAULT_TEMPLATE.fields.map((f) => ({ ...f })) })
+    const template = defaultTemplate(t)
+    setSpec({ ...template, fields: template.fields.map((f) => ({ ...f })) })
     setError('')
     setFormOpen(true)
   }
@@ -106,7 +137,7 @@ export function FeedbackCategoriesPage() {
 
   const publish = async () => {
     if (!publishChannelId) {
-      setPublishError('Выберите канал')
+      setPublishError(t('feedback.categories.publish.errorChannel'))
       return
     }
     setPublishBusy(true)
@@ -115,7 +146,7 @@ export function FeedbackCategoriesPage() {
       await publishFeedbackPanel(publishChannelId)
       setPublishOpen(false)
     } catch {
-      setPublishError('Не удалось опубликовать панель')
+      setPublishError(t('feedback.categories.publish.error'))
     } finally {
       setPublishBusy(false)
     }
@@ -166,7 +197,7 @@ export function FeedbackCategoriesPage() {
       setFormOpen(false)
       reload()
     } catch {
-      setError('Не удалось сохранить категорию — проверьте ключ, префикс, канал и роли')
+      setError(t('feedback.categories.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -179,23 +210,23 @@ export function FeedbackCategoriesPage() {
       setPendingDelete(null)
       reload()
     } catch {
-      setError('Не удалось удалить категорию')
+      setError(t('feedback.categories.errorDelete'))
     }
   }
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Категории обращений</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t('feedback.categories.title')}</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={openDefaultTemplate}>
-            Дефолтный шаблон
+            {t('feedback.categories.defaultTemplate')}
           </Button>
           <Button variant="secondary" onClick={openPublish}>
-            Опубликовать
+            {t('common.publish')}
           </Button>
           <Button variant="primary" onClick={openCreate}>
-            Создать категорию
+            {t('feedback.categories.create')}
           </Button>
         </div>
       </div>
@@ -208,30 +239,34 @@ export function FeedbackCategoriesPage() {
             <div>
               <p className="text-sm text-foreground">{category.title}</p>
               <p className="text-xs text-muted">
-                {category.case_prefix} · {channelName(category.channel_id)} · полей: {category.fields.length}
+                {t('feedback.categories.fieldsCount', {
+                  prefix: category.case_prefix,
+                  channel: channelName(category.channel_id),
+                  count: category.fields.length,
+                })}
               </p>
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => openEdit(category)}>
-                Редактировать
+                {t('feedback.categories.edit')}
               </Button>
               <Button variant="danger" onClick={() => setPendingDelete(category.key)}>
-                Удалить
+                {t('common.delete')}
               </Button>
             </div>
           </Card>
         ))}
-        {categories.length === 0 && <p className="text-sm text-muted">Категорий пока нет.</p>}
+        {categories.length === 0 && <p className="text-sm text-muted">{t('feedback.categories.empty')}</p>}
       </div>
 
       <Modal
         open={formOpen}
-        title={editingKey ? 'Редактировать категорию' : 'Создать категорию'}
+        title={editingKey ? t('feedback.categories.modal.edit') : t('feedback.categories.modal.create')}
         onClose={() => setFormOpen(false)}
       >
         <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto">
           <label className="text-sm text-muted" htmlFor="fc-key">
-            Ключ
+            {t('feedback.categories.field.key')}
           </label>
           <input
             id="fc-key"
@@ -243,7 +278,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-title">
-            Название
+            {t('feedback.categories.field.title')}
           </label>
           <input
             id="fc-title"
@@ -253,7 +288,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-button-label">
-            Текст кнопки
+            {t('feedback.categories.field.buttonLabel')}
           </label>
           <input
             id="fc-button-label"
@@ -263,7 +298,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-case-title">
-            Заголовок дела
+            {t('feedback.categories.field.caseTitle')}
           </label>
           <input
             id="fc-case-title"
@@ -273,7 +308,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-modal-title">
-            Заголовок формы
+            {t('feedback.categories.field.modalTitle')}
           </label>
           <input
             id="fc-modal-title"
@@ -283,7 +318,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-thread-name">
-            Имя треда
+            {t('feedback.categories.field.threadName')}
           </label>
           <input
             id="fc-thread-name"
@@ -293,7 +328,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-case-prefix">
-            Префикс дела
+            {t('feedback.categories.field.casePrefix')}
           </label>
           <input
             id="fc-case-prefix"
@@ -304,18 +339,18 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-channel">
-            Канал
+            {t('common.channel')}
           </label>
           <Select
             id="fc-channel"
             value={spec.channel_id}
             onChange={(id) => setSpec((prev) => ({ ...prev, channel_id: id }))}
             options={channels}
-            placeholder="Выберите канал…"
+            placeholder={t('common.selectChannel')}
           />
 
           <div>
-            <p className="mb-1 text-sm text-muted">Роли-ревьюеры</p>
+            <p className="mb-1 text-sm text-muted">{t('feedback.categories.field.reviewRoles')}</p>
             <div className="flex flex-wrap gap-3">
               {roles.map((role) => (
                 <Checkbox
@@ -329,7 +364,7 @@ export function FeedbackCategoriesPage() {
           </div>
 
           <label className="text-sm text-muted" htmlFor="fc-approved-text">
-            Текст при принятии
+            {t('feedback.categories.field.approvedText')}
           </label>
           <input
             id="fc-approved-text"
@@ -339,7 +374,7 @@ export function FeedbackCategoriesPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="fc-denied-text">
-            Текст при отклонении
+            {t('feedback.categories.field.deniedText')}
           </label>
           <input
             id="fc-denied-text"
@@ -349,35 +384,35 @@ export function FeedbackCategoriesPage() {
           />
 
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted">Поля формы (до 5)</p>
+            <p className="text-sm text-muted">{t('feedback.categories.formFields')}</p>
             {spec.fields.map((field, index) => (
               <div key={index} className="flex flex-wrap items-center gap-2 rounded-control border border-border/60 p-2">
                 <input
                   value={field.key}
                   onChange={(e) => updateField(index, { key: e.target.value })}
-                  placeholder="Ключ поля"
+                  placeholder={t('feedback.categories.fieldKeyPlaceholder')}
                   className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
                 />
                 <input
                   value={field.label}
                   onChange={(e) => updateField(index, { label: e.target.value })}
-                  placeholder="Название поля"
+                  placeholder={t('feedback.categories.fieldLabelPlaceholder')}
                   className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
                 />
                 <Select
-                  ariaLabel="Тип поля"
+                  ariaLabel={t('feedback.categories.fieldType')}
                   value={field.style}
                   onChange={(id) => updateField(index, { style: id as 'short' | 'paragraph' })}
                   options={[
-                    { id: 'short', name: 'Короткий' },
-                    { id: 'paragraph', name: 'Многострочный' },
+                    { id: 'short', name: t('feedback.categories.fieldType.short') },
+                    { id: 'paragraph', name: t('feedback.categories.fieldType.paragraph') },
                   ]}
                   className="w-40"
                 />
                 <Checkbox
                   checked={field.required}
                   onChange={(v) => updateField(index, { required: v })}
-                  label="обязательное"
+                  label={t('common.required')}
                 />
                 <button
                   type="button"
@@ -394,67 +429,67 @@ export function FeedbackCategoriesPage() {
                 onClick={addField}
                 className="cursor-pointer self-start text-sm text-primary hover:text-primary-hover"
               >
-                + Добавить поле
+                {t('common.addField')}
               </button>
             )}
           </div>
 
           <label className="text-sm text-muted" htmlFor="fc-mini-summary">
-            Поле для краткого превью
+            {t('feedback.categories.miniSummary')}
           </label>
           <Select
             id="fc-mini-summary"
             value={spec.mini_summary_key}
             onChange={(id) => setSpec((prev) => ({ ...prev, mini_summary_key: id }))}
             options={spec.fields.filter((f) => f.key).map((f) => ({ id: f.key, name: f.label || f.key }))}
-            placeholder="Выберите поле…"
+            placeholder={t('common.selectField')}
           />
 
           {error && <p className="text-sm text-danger">{error}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setFormOpen(false)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={save} disabled={busy}>
-              {busy ? 'Сохраняем…' : 'Сохранить'}
+              {busy ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={pendingDelete !== null} title="Удалить категорию?" onClose={() => setPendingDelete(null)}>
+      <Modal open={pendingDelete !== null} title={t('feedback.categories.deleteConfirm')} onClose={() => setPendingDelete(null)}>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={() => setPendingDelete(null)}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Удалить категорию
+            {t('feedback.categories.deleteAction')}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={publishOpen} title="Опубликовать панель обращений" onClose={() => setPublishOpen(false)}>
+      <Modal open={publishOpen} title={t('feedback.categories.publishModal.title')} onClose={() => setPublishOpen(false)}>
         <div className="flex flex-col gap-3">
           <label className="text-sm text-muted" htmlFor="fc-publish-channel">
-            Канал
+            {t('common.channel')}
           </label>
           <Select
             id="fc-publish-channel"
             value={publishChannelId}
             onChange={(id) => setPublishChannelId(id)}
             options={channels}
-            placeholder="Выберите канал…"
+            placeholder={t('common.selectChannel')}
           />
 
           {publishError && <p className="text-sm text-danger">{publishError}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setPublishOpen(false)} disabled={publishBusy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={publish} disabled={publishBusy}>
-              {publishBusy ? 'Публикуем…' : 'Опубликовать'}
+              {publishBusy ? t('common.publishing') : t('common.publish')}
             </Button>
           </div>
         </div>

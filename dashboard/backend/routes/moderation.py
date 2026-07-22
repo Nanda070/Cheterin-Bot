@@ -4,6 +4,7 @@ import uuid
 import discord
 from aiohttp import web
 
+import i18n
 import moderation_log
 import settings_db
 from ..access_middleware import require_dashboard_access
@@ -129,15 +130,31 @@ def dashboard_reason(reason: str, moderator) -> str:
 
 
 async def _send_action_log(
-    bot, guild_id: int, title: str, target, moderator, reason: str, extra: str = "", event_type: str | None = None
+    bot,
+    guild_id: int,
+    title_key: str,
+    target,
+    moderator,
+    reason: str,
+    extra: str = "",
+    event_type: str | None = None,
 ):
-    embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=bot.utcnow())
-    embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
-    embed.add_field(name="Кого", value=f"{target.name} (`{target.id}`)", inline=False)
-    embed.add_field(name="Причина", value=reason, inline=False)
+    lang = i18n.lang_for(guild_id)
+    embed = discord.Embed(title=i18n.t(title_key, lang), color=discord.Color.red(), timestamp=bot.utcnow())
+    embed.add_field(
+        name=i18n.t("moderation.embed.who", lang),
+        value=f"{moderator.name} (`{moderator.id}`)",
+        inline=False,
+    )
+    embed.add_field(
+        name=i18n.t("moderation.embed.target", lang),
+        value=f"{target.name} (`{target.id}`)",
+        inline=False,
+    )
+    embed.add_field(name=i18n.t("moderation.embed.reason", lang), value=reason, inline=False)
     if extra:
-        embed.add_field(name="Дополнительно", value=extra, inline=False)
-    embed.set_footer(text="Dashboard · Moderation")
+        embed.add_field(name=i18n.t("moderation.embed.extra", lang), value=extra, inline=False)
+    embed.set_footer(text=i18n.t("moderation.dashboard.footer", lang))
     await bot.send_log(guild_id, embed)
     if event_type:
         moderation_log.append_event(
@@ -209,9 +226,16 @@ async def ban_member(request: web.Request) -> web.Response:
     except discord.HTTPException as exc:
         return _map_discord_error(exc)
 
+    lang = i18n.lang_for(request["guild_id"])
     await _send_action_log(
-        request.app["bot"], request["guild_id"], "🔨 Бан через дашборд", target, moderator, reason,
-        extra=f"Удаление сообщений: {days} дн.", event_type="manual_ban",
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.ban",
+        target,
+        moderator,
+        reason,
+        extra=i18n.t("moderation.dashboard.delete_messages_extra", lang, days=days),
+        event_type="manual_ban",
     )
     return web.json_response({"ok": True})
 
@@ -238,7 +262,13 @@ async def kick_member(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], request["guild_id"], "👢 Кик через дашборд", target, moderator, reason, event_type="manual_kick"
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.kick",
+        target,
+        moderator,
+        reason,
+        event_type="manual_kick",
     )
     return web.json_response({"ok": True})
 
@@ -310,7 +340,12 @@ async def grant_role(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], request["guild_id"], "🎖️ Роль выдана через дашборд", target, moderator, role.name
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.role_grant",
+        target,
+        moderator,
+        role.name,
     )
     return web.json_response({"ok": True})
 
@@ -332,7 +367,12 @@ async def revoke_role(request: web.Request) -> web.Response:
         return _map_discord_error(exc)
 
     await _send_action_log(
-        request.app["bot"], request["guild_id"], "🎖️ Роль снята через дашборд", target, moderator, role.name
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.role_revoke",
+        target,
+        moderator,
+        role.name,
     )
     return web.json_response({"ok": True})
 

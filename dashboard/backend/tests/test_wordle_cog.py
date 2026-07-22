@@ -283,5 +283,5 @@ async def test_announce_with_winner_crowns_best_and_streak():
 
 
 def test_build_board_embed_finished_loss_reveals_answer():
-    embed = build_board_embed("Вордл №1", ["школа"], ["bbbbb"], "канат", True, False)
+    embed = build_board_embed("Вордл №1", ["школа"], ["bbbbb"], "канат", True, False, "ru")
     assert "КАНАТ" in embed.fields[0].value

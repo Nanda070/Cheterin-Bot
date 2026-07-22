@@ -9,6 +9,7 @@ import {
   type ManageableGuild,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../context/LanguageContext'
 import { Card } from '../components/ui/Card'
 
 function guildIconUrl(guild: ManageableGuild): string | null {
@@ -18,6 +19,7 @@ function guildIconUrl(guild: ManageableGuild): string | null {
 
 export function ServerSelectPage() {
   const { refresh } = useAuth()
+  const t = useT()
   const navigate = useNavigate()
   const [guilds, setGuilds] = useState<ManageableGuild[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -30,12 +32,12 @@ export function ServerSelectPage() {
         if (!cancelled) setGuilds(data)
       })
       .catch(() => {
-        if (!cancelled) setError('Не удалось загрузить список серверов. Попробуйте позже.')
+        if (!cancelled) setError(t('servers.errorLoad'))
       })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   const handleSelect = async (guild: ManageableGuild) => {
     setPendingId(guild.id)
@@ -45,7 +47,7 @@ export function ServerSelectPage() {
       await refresh()
       navigate('/', { replace: true })
     } catch {
-      setError('Не удалось выбрать сервер — проверьте, что у вас есть право «Управление сервером».')
+      setError(t('servers.errorSelect'))
       setPendingId(null)
     }
   }
@@ -56,7 +58,7 @@ export function ServerSelectPage() {
       const url = await fetchInviteUrl(guild.id)
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch {
-      setError('Не удалось получить ссылку приглашения.')
+      setError(t('servers.errorInvite'))
     } finally {
       setPendingId(null)
     }
@@ -69,7 +71,7 @@ export function ServerSelectPage() {
       const url = await fetchInviteUrl()
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch {
-      setError('Не удалось получить ссылку приглашения.')
+      setError(t('servers.errorInvite'))
     } finally {
       setPendingId(null)
     }
@@ -94,15 +96,13 @@ export function ServerSelectPage() {
           className="flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
         >
           <SignOut size={16} />
-          Выйти
+          {t('nav.logout')}
         </button>
       </div>
 
       <div className="flex w-full max-w-2xl flex-col gap-2 text-center">
-        <h1 className="text-xl font-semibold text-foreground">Выберите сервер</h1>
-        <p className="text-sm text-muted">
-          Управлять можно серверами, где у вас есть право «Управление сервером».
-        </p>
+        <h1 className="text-xl font-semibold text-foreground">{t('servers.title')}</h1>
+        <p className="text-sm text-muted">{t('servers.subtitle')}</p>
       </div>
 
       {error && (
@@ -112,11 +112,9 @@ export function ServerSelectPage() {
       )}
 
       <div className="flex w-full max-w-2xl flex-col gap-3">
-        {guilds === null && !error && <p className="text-center text-sm text-muted">Загрузка серверов…</p>}
+        {guilds === null && !error && <p className="text-center text-sm text-muted">{t('servers.loading')}</p>}
         {guilds !== null && guilds.length === 0 && (
-          <Card className="text-center text-sm text-muted">
-            Нет серверов, которыми вы можете управлять.
-          </Card>
+          <Card className="text-center text-sm text-muted">{t('servers.empty')}</Card>
         )}
         {guilds?.map((guild) => (
           <Card key={guild.id} className="flex items-center justify-between gap-4">
@@ -137,7 +135,7 @@ export function ServerSelectPage() {
                 onClick={() => handleSelect(guild)}
                 className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
-                {pendingId === guild.id ? 'Открываем…' : 'Выбрать'}
+                {pendingId === guild.id ? t('servers.selecting') : t('servers.select')}
               </button>
             ) : (
               <button
@@ -147,7 +145,7 @@ export function ServerSelectPage() {
                 className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-hover disabled:opacity-60"
               >
                 <Plus size={16} />
-                Добавить бота
+                {t('servers.addBot')}
               </button>
             )}
           </Card>
@@ -161,14 +159,14 @@ export function ServerSelectPage() {
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-border px-4 py-3 text-sm font-medium text-muted transition-colors hover:border-primary hover:bg-surface-hover hover:text-foreground disabled:opacity-60"
           >
             <Plus size={18} weight="bold" />
-            {pendingId === 'new' ? 'Открываем Discord…' : 'Добавить бота на другой сервер'}
+            {pendingId === 'new' ? t('servers.addBotOpening') : t('servers.addBotOther')}
           </button>
         )}
       </div>
 
       <div className="flex items-center gap-1.5 text-xs text-muted">
         <DiscordLogo size={14} weight="fill" />
-        Вход выполнен через Discord
+        {t('servers.discordLogin')}
       </div>
     </div>
   )

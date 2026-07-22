@@ -1,5 +1,5 @@
 import { Gear, Plus, ShieldWarning, Trash } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   createEscalationRule,
   deleteEscalationRule,
@@ -20,22 +20,17 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { useT } from '../context/LanguageContext'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-const PUNISHMENT_LABELS: Record<AutomodPunishment, string> = {
-  none: 'Ничего',
-  warn: 'Выдать предупреждение',
-  mute: 'Мут (таймаут)',
-  kick: 'Кик',
-  ban: 'Бан',
+function automodFilterLabel(filterKey: string, t: ReturnType<typeof useT>): string {
+  return t(`automod.filters.${filterKey}.label`)
 }
 
-const ESCALATION_ACTION_LABELS: Record<EscalationAction, string> = {
-  mute: 'Мут (таймаут)',
-  kick: 'Кик',
-  ban: 'Бан',
+function automodFilterDescription(filterKey: string, t: ReturnType<typeof useT>): string {
+  return t(`automod.filters.${filterKey}.description`)
 }
 
 function minutesToParts(total: number) {
@@ -49,18 +44,23 @@ function partsToMinutes(days: number, hours: number, minutes: number) {
   return days * 1440 + hours * 60 + minutes
 }
 
-function formatDuration(minutes: number): string {
-  if (minutes <= 0) return 'бессрочно'
+function formatDuration(minutes: number, t: ReturnType<typeof useT>): string {
+  if (minutes <= 0) return t('automod.duration.permanent')
   const { days, hours, minutes: mins } = minutesToParts(minutes)
-  return [days && `${days}д`, hours && `${hours}ч`, mins && `${mins}м`].filter(Boolean).join(' ') || '0м'
+  return (
+    [days && t('automod.duration.days', { n: days }), hours && t('automod.duration.hours', { n: hours }), mins && t('automod.duration.minutes', { n: mins })]
+      .filter(Boolean)
+      .join(' ') || t('automod.duration.zero')
+  )
 }
 
 function DurationInputs({ minutes, onChange }: { minutes: number; onChange: (m: number) => void }) {
+  const t = useT()
   const parts = minutesToParts(minutes)
   return (
     <div className="flex gap-2">
       <div className="flex flex-1 flex-col gap-1">
-        <label className="text-xs text-muted">Дни</label>
+        <label className="text-xs text-muted">{t('automod.duration.daysLabel')}</label>
         <input
           type="number"
           min={0}
@@ -70,7 +70,7 @@ function DurationInputs({ minutes, onChange }: { minutes: number; onChange: (m: 
         />
       </div>
       <div className="flex flex-1 flex-col gap-1">
-        <label className="text-xs text-muted">Часы</label>
+        <label className="text-xs text-muted">{t('automod.duration.hoursLabel')}</label>
         <input
           type="number"
           min={0}
@@ -81,7 +81,7 @@ function DurationInputs({ minutes, onChange }: { minutes: number; onChange: (m: 
         />
       </div>
       <div className="flex flex-1 flex-col gap-1">
-        <label className="text-xs text-muted">Минуты</label>
+        <label className="text-xs text-muted">{t('automod.duration.minutesLabel')}</label>
         <input
           type="number"
           min={0}
@@ -104,6 +104,8 @@ function FilterExtraFields({
   draft: AutomodFilter
   setDraft: (patch: Partial<AutomodFilter>) => void
 }) {
+  const t = useT()
+
   const listInput = (value: string[] | undefined, key: 'whitelist_domains' | 'blocklist_keywords' | 'words', label: string) => (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-muted">{label}</label>
@@ -119,24 +121,24 @@ function FilterExtraFields({
 
   switch (filterKey) {
     case 'links':
-      return listInput(draft.whitelist_domains, 'whitelist_domains', 'Разрешённые домены (через запятую)')
+      return listInput(draft.whitelist_domains, 'whitelist_domains', t('automod.filter.whitelistDomains'))
     case 'invites':
       return (
         <Toggle
           checked={!!draft.allow_own_server}
           onChange={(v) => setDraft({ allow_own_server: v })}
-          label="Разрешить приглашение на свой сервер"
+          label={t('automod.filter.allowOwnServer')}
         />
       )
     case 'scam_links':
-      return listInput(draft.blocklist_keywords, 'blocklist_keywords', 'Стоп-слова/домены (через запятую)')
+      return listInput(draft.blocklist_keywords, 'blocklist_keywords', t('automod.filter.blocklistKeywords'))
     case 'bad_words':
-      return listInput(draft.words, 'words', 'Запрещённые слова (через запятую)')
+      return listInput(draft.words, 'words', t('automod.filter.badWords'))
     case 'repeated_text':
       return (
         <>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted">Количество одинаковых сообщений</label>
+            <label className="text-xs text-muted">{t('automod.filter.maxRepeats')}</label>
             <input
               type="number"
               min={1}
@@ -148,12 +150,12 @@ function FilterExtraFields({
           <Toggle
             checked={!!draft.consecutive_only}
             onChange={(v) => setDraft({ consecutive_only: v })}
-            label="Учитывать только последовательные сообщения"
+            label={t('automod.filter.consecutiveOnly')}
           />
           <Toggle
             checked={!!draft.reset_on_trigger}
             onChange={(v) => setDraft({ reset_on_trigger: v })}
-            label="Сбрасывать счётчик флуда при срабатывании"
+            label={t('automod.filter.resetOnTrigger')}
           />
         </>
       )
@@ -161,7 +163,7 @@ function FilterExtraFields({
       return (
         <div className="flex gap-2">
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-muted">Макс. % капса</label>
+            <label className="text-xs text-muted">{t('automod.filter.maxCapsPercent')}</label>
             <input
               type="number"
               min={1}
@@ -172,7 +174,7 @@ function FilterExtraFields({
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-muted">Мин. длина сообщения</label>
+            <label className="text-xs text-muted">{t('automod.filter.minLength')}</label>
             <input
               type="number"
               min={0}
@@ -187,7 +189,11 @@ function FilterExtraFields({
     case 'mentions':
     case 'zalgo': {
       const label =
-        filterKey === 'emoji_spam' ? 'Макс. число эмодзи' : filterKey === 'mentions' ? 'Макс. число упоминаний' : 'Макс. число zalgo-символов'
+        filterKey === 'emoji_spam'
+          ? t('automod.filter.maxEmoji')
+          : filterKey === 'mentions'
+            ? t('automod.filter.maxMentions')
+            : t('automod.filter.maxZalgo')
       return (
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted">{label}</label>
@@ -219,9 +225,19 @@ function FilterModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const t = useT()
   const [draft, setDraftState] = useState<AutomodFilter>(filter)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  const punishmentOptions = useMemo(
+    () =>
+      (['none', 'warn', 'mute', 'kick', 'ban'] as AutomodPunishment[]).map((id) => ({
+        id,
+        name: t(`automod.punishment.${id}`),
+      })),
+    [t],
+  )
 
   const setDraft = (patch: Partial<AutomodFilter>) => setDraftState((prev) => ({ ...prev, ...patch }))
 
@@ -233,30 +249,30 @@ function FilterModal({
       onSaved()
       onClose()
     } catch {
-      setError('Не удалось сохранить настройки фильтра')
+      setError(t('automod.errorSaveFilter'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <Modal open title={filter.label} onClose={onClose}>
+    <Modal open title={automodFilterLabel(filterKey, t)} onClose={onClose}>
       <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto pr-1">
-        <Toggle checked={draft.delete_message} onChange={(v) => setDraft({ delete_message: v })} label="Удалять сообщение с нарушением" />
+        <Toggle checked={draft.delete_message} onChange={(v) => setDraft({ delete_message: v })} label={t('automod.filter.deleteMessage')} />
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted">Мера пресечения</label>
+          <label className="text-xs text-muted">{t('automod.filter.punishment')}</label>
           <Select
             value={draft.punishment}
             onChange={(id) => setDraft({ punishment: id as AutomodPunishment })}
-            options={Object.entries(PUNISHMENT_LABELS).map(([id, name]) => ({ id, name }))}
+            options={punishmentOptions}
           />
         </div>
 
         {draft.punishment !== 'none' && draft.punishment !== 'kick' && (
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted">
-              {draft.punishment === 'warn' ? 'Срок действия предупреждения (0 = бессрочно)' : 'Длительность (0 = бессрочно, макс. для таймаута: 28 дней)'}
+              {draft.punishment === 'warn' ? t('automod.filter.warnDuration') : t('automod.filter.punishmentDuration')}
             </label>
             <DurationInputs minutes={draft.duration_minutes} onChange={(m) => setDraft({ duration_minutes: m })} />
           </div>
@@ -265,22 +281,22 @@ function FilterModal({
         <FilterExtraFields filterKey={filterKey} draft={draft} setDraft={setDraft} />
 
         <div className="border-t border-border pt-3">
-          <Toggle checked={draft.notify_member} onChange={(v) => setDraft({ notify_member: v })} label="Уведомлять участника о нарушении" />
+          <Toggle checked={draft.notify_member} onChange={(v) => setDraft({ notify_member: v })} label={t('automod.filter.notifyMember')} />
         </div>
 
         {draft.notify_member && (
           <>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">Канал для отправки (текущий, если не указан)</label>
+              <label className="text-xs text-muted">{t('automod.filter.notifyChannel')}</label>
               <Select
                 value={draft.notify_channel_id}
                 onChange={(id) => setDraft({ notify_channel_id: id })}
                 options={channels}
-                placeholder="Текущий канал"
+                placeholder={t('automod.filter.currentChannel')}
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">{'Шаблон сообщения ({{member}}, {{reason}})'}</label>
+              <label className="text-xs text-muted">{t('automod.filter.notifyTemplate')}</label>
               <textarea
                 rows={3}
                 value={draft.notify_template}
@@ -295,10 +311,10 @@ function FilterModal({
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="primary" onClick={save} disabled={busy}>
-            {busy ? 'Сохраняем…' : 'Сохранить'}
+            {busy ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </div>
@@ -307,27 +323,33 @@ function FilterModal({
 }
 
 function FilterCard({
+  filterKey,
   filter,
   onToggle,
   onOpenSettings,
 }: {
+  filterKey: string
   filter: AutomodFilter
   onToggle: (v: boolean) => void
   onOpenSettings: () => void
 }) {
+  const t = useT()
+  const label = automodFilterLabel(filterKey, t)
+  const description = automodFilterDescription(filterKey, t)
+
   return (
     <Card className="flex flex-col gap-2">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{filter.label}</p>
-          <p className="text-xs text-muted">{filter.description}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{label}</p>
+          <p className="text-xs text-muted">{description}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Toggle checked={filter.enabled} onChange={onToggle} />
           <button
             type="button"
             onClick={onOpenSettings}
-            aria-label={`Настройки фильтра ${filter.label}`}
+            aria-label={t('automod.filter.settingsAria', { label })}
             className="cursor-pointer text-muted transition-colors hover:text-foreground"
           >
             <Gear size={18} />
@@ -349,8 +371,18 @@ function EscalationSection({
   onCreate: (input: { count: number; action: EscalationAction; duration_minutes: number }) => Promise<unknown>
   onDelete: (id: string) => Promise<unknown>
 }) {
+  const t = useT()
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ count: '3', action: 'mute' as EscalationAction, duration_minutes: 1440 })
+
+  const escalationActionOptions = useMemo(
+    () =>
+      (['mute', 'kick', 'ban'] as EscalationAction[]).map((id) => ({
+        id,
+        name: t(`automod.punishment.${id}`),
+      })),
+    [t],
+  )
 
   const submit = async () => {
     await onCreate({ count: Number(form.count), action: form.action, duration_minutes: form.duration_minutes })
@@ -361,15 +393,15 @@ function EscalationSection({
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">Эскалация по количеству предупреждений</h2>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">{t('automod.escalation.title')}</h2>
         <Button variant="primary" onClick={() => setAdding(true)}>
           <Plus size={15} />
-          Добавить порог
+          {t('automod.escalation.addThreshold')}
         </Button>
       </div>
 
       {escalation.length === 0 && (
-        <p className="text-sm text-muted">Порогов не задано — накопление предупреждений ни к чему не приводит автоматически.</p>
+        <p className="text-sm text-muted">{t('automod.escalation.empty')}</p>
       )}
 
       {escalation
@@ -378,14 +410,18 @@ function EscalationSection({
         .map((rule) => (
           <div key={rule.id} className="flex items-center justify-between gap-3 border-b border-border pb-2 last:border-b-0">
             <p className="text-sm text-foreground">
-              {rule.count} предупрежд{rule.count === 1 ? 'ение' : 'ений'} → {ESCALATION_ACTION_LABELS[rule.action]} (
-              {formatDuration(rule.duration_minutes)})
+              {t('automod.escalation.rule', {
+                count: rule.count,
+                suffix: rule.count === 1 ? t('automod.escalation.suffixOne') : t('automod.escalation.suffixMany'),
+                action: t(`automod.punishment.${rule.action}`),
+                duration: formatDuration(rule.duration_minutes, t),
+              })}
             </p>
             <button
               type="button"
               onClick={() => onDelete(rule.id)}
               disabled={busy}
-              aria-label={`Удалить порог ${rule.count}`}
+              aria-label={t('automod.escalation.deleteAria', { count: rule.count })}
               className="cursor-pointer text-muted transition-colors hover:text-danger"
             >
               <Trash size={16} />
@@ -393,11 +429,11 @@ function EscalationSection({
           </div>
         ))}
 
-      <Modal open={adding} title="Новый порог эскалации" onClose={() => setAdding(false)}>
+      <Modal open={adding} title={t('automod.escalation.modalTitle')} onClose={() => setAdding(false)}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="escalation-count">
-              Количество активных предупреждений
+              {t('automod.escalation.warnCount')}
             </label>
             <input
               id="escalation-count"
@@ -409,23 +445,23 @@ function EscalationSection({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted">Действие</label>
+            <label className="text-sm text-muted">{t('automod.escalation.action')}</label>
             <Select
               value={form.action}
               onChange={(id) => setForm((f) => ({ ...f, action: id as EscalationAction }))}
-              options={Object.entries(ESCALATION_ACTION_LABELS).map(([id, name]) => ({ id, name }))}
+              options={escalationActionOptions}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted">Длительность (0 = бессрочно, макс. для таймаута: 28 дней)</label>
+            <label className="text-sm text-muted">{t('automod.escalation.duration')}</label>
             <DurationInputs minutes={form.duration_minutes} onChange={(m) => setForm((f) => ({ ...f, duration_minutes: m }))} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setAdding(false)}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={submit} disabled={!form.count}>
-              Добавить
+              {t('common.add')}
             </Button>
           </div>
         </div>
@@ -435,6 +471,7 @@ function EscalationSection({
 }
 
 export function AutoModPage() {
+  const t = useT()
   const [settings, setSettings] = useState<AutomodSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [error, setError] = useState('')
@@ -449,14 +486,14 @@ export function AutoModPage() {
         setManualWarnDuration(data.manual_warn_duration_minutes)
         setError('')
       })
-      .catch(() => setError('Не удалось загрузить настройки автомодерации'))
+      .catch(() => setError(t('automod.errorLoad')))
 
   useEffect(() => {
     reload()
     fetchChannels()
       .then(setChannels)
       .catch(() => setChannels([]))
-  }, [])
+  }, [t])
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -465,14 +502,14 @@ export function AutoModPage() {
       await fn()
       await reload()
     } catch {
-      setError('Операция не удалась')
+      setError(t('common.operationFailed'))
     } finally {
       setBusy(false)
     }
   }
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   return (
@@ -481,13 +518,11 @@ export function AutoModPage() {
         <div>
           <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
             <ShieldWarning size={22} className="text-primary" />
-            Автомодерация
+            {t('automod.title')}
           </h1>
-          <p className="mt-1 text-sm text-muted">
-            Фильтры сообщений с настраиваемыми наказаниями и эскалацией по предупреждениям. Выключена по умолчанию.
-          </p>
+          <p className="mt-1 text-sm text-muted">{t('automod.intro')}</p>
         </div>
-        <Toggle checked={settings.enabled} onChange={(v) => act(() => updateAutomodEnabled(v))} label="Автомодерация включена" disabled={busy} />
+        <Toggle checked={settings.enabled} onChange={(v) => act(() => updateAutomodEnabled(v))} label={t('automod.enabled')} disabled={busy} />
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -496,6 +531,7 @@ export function AutoModPage() {
         {Object.entries(settings.filters).map(([key, filter]) => (
           <FilterCard
             key={key}
+            filterKey={key}
             filter={filter}
             onToggle={(v) => act(() => updateAutomodFilter(key, { enabled: v }))}
             onOpenSettings={() => setEditingKey(key)}
@@ -511,15 +547,12 @@ export function AutoModPage() {
       />
 
       <Card className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">Срок ручных предупреждений</h2>
-        <p className="text-sm text-muted">
-          Действует для предупреждений, выданных вручную (/warn, дашборд) — у предупреждений от фильтров свой срок,
-          настраиваемый в каждом фильтре отдельно.
-        </p>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">{t('automod.manualWarn.title')}</h2>
+        <p className="text-sm text-muted">{t('automod.manualWarn.intro')}</p>
         <DurationInputs minutes={manualWarnDuration} onChange={setManualWarnDuration} />
         <div>
           <Button variant="primary" onClick={() => act(() => updateManualWarnDuration(manualWarnDuration))} disabled={busy}>
-            Сохранить
+            {t('common.save')}
           </Button>
         </div>
       </Card>

@@ -1,0 +1,62 @@
+MESSAGES: dict[str, str] = {
+    "economy.default_currency_name": "монеты",
+    "economy.item_label.role": "Роль",
+    "economy.item_label.frame_color": "Рамка",
+    "economy.item_label.title": "Титул",
+    "economy.item_label.default": "Товар",
+    "economy.daily.disabled": "Ежедневный бонус отключён.",
+    "economy.daily.already_claimed": "Бонус за сегодня уже получен. Стрик: **{streak}** 🔥 Возвращайся завтра!",
+    "economy.daily.streak_day_one": "день",
+    "economy.daily.streak_day_few": "дня",
+    "economy.daily.streak_day_many": "дней",
+    "economy.daily.claimed": (
+        "🎁 Ежедневный бонус: **{amount}**\n"
+        "Стрик: **{streak}** {day_word} 🔥 (баланс: {balance})."
+    ),
+    "economy.error.bot_no_wallet": "У ботов нет кошелька.",
+    "economy.balance.title": "{emoji} Баланс — {name}",
+    "economy.balance.rank": "\nМесто в топе: **#{rank}**",
+    "economy.grant.success": "✅ Баланс {mention}: {old_balance} → **{new_balance}**.",
+    "economy.transfer.disabled": "Переводы между участниками отключены.",
+    "economy.transfer.no_bots": "Ботам переводить нельзя.",
+    "economy.transfer.no_self": "Себе переводить нельзя.",
+    "economy.transfer.insufficient": (
+        "Недостаточно средств: нужно {needed} (с комиссией), на балансе {balance}."
+    ),
+    "economy.transfer.fee": " Комиссия: {fee}.",
+    "economy.transfer.success": "💸 {sender} перевёл(а) {amount} {recipient}.{fee_text}",
+    "economy.top.empty": "Пока ни у кого нет монет.",
+    "economy.top.title": "{emoji} Топ по {currency_name}",
+    "economy.shop.empty": "Магазин пока пуст — товары добавляются в дашборде.",
+    "economy.shop.title": "🛒 Магазин",
+    "economy.shop.balance": "\n\nВаш баланс: **{balance}**",
+    "economy.shop.item_line": "• **{name}** — {target}: {price}",
+    "economy.shop.role_not_found": "роль `{role_id}` (не найдена)",
+    "economy.shop.frame_target": "рамка карточки `{color_hex}`",
+    "economy.shop.frame_name": "Рамка {color_hex}",
+    "economy.shop.title_target": "титул «{title_text}»",
+    "economy.shop.title_name": "Титул «{title_text}»",
+    "economy.cosmetics.frame_placeholder": "Рамка карточки",
+    "economy.cosmetics.no_frame": "Без рамки",
+    "economy.cosmetics.title_placeholder": "Титул под именем",
+    "economy.cosmetics.no_title": "Без титула",
+    "economy.cosmetics.empty": "У вас пока нет купленной косметики — загляните в /магазин.",
+    "economy.cosmetics.prompt": "Выберите рамку и/или титул для карточки /ранг:",
+    "economy.purchase.item_removed": "Этот товар уже убрали из магазина.",
+    "economy.purchase.role_not_found": "Роль товара не найдена на сервере — сообщите админам.",
+    "economy.purchase.role_already_owned": "Роль {mention} у вас уже есть.",
+    "economy.purchase.insufficient": "Не хватает средств: цена {price}, на балансе {balance}.",
+    "economy.purchase.role_grant_failed": (
+        "Не удалось выдать роль (не хватает прав у бота?) — монеты возвращены."
+    ),
+    "economy.purchase.role_success": "✅ Куплено: {role} за {price}. Остаток: {balance}.",
+    "economy.purchase.cosmetic_already_owned": "У вас уже есть этот товар.",
+    "economy.purchase.cosmetic_success": (
+        "✅ Куплено: **{name}** за {price}. Остаток: {balance}. Наденьте через /косметика."
+    ),
+    "economy.equip.frame_removed": "Рамка снят(а).",
+    "economy.equip.title_removed": "Титул снят(а).",
+    "economy.equip.frame_applied": "Рамка применён(а)! Проверьте /ранг.",
+    "economy.equip.title_applied": "Титул применён(а)! Проверьте /ранг.",
+    "economy.equip.not_owned": "Вы не владеете этим товаром.",
+}

@@ -6,6 +6,7 @@ import {
   Trash,
   UsersThree,
 } from '@phosphor-icons/react'
+import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
 import {
   decideFamilyTicket,
@@ -39,24 +40,21 @@ import { Toggle } from '../components/ui/Toggle'
 
 type Tab = 'settings' | 'roster' | 'tickets' | 'birthdays'
 
-const TABS: { key: Tab; label: string; icon: typeof Gear }[] = [
-  { key: 'settings', label: 'Настройки', icon: Gear },
-  { key: 'roster', label: 'Ростер', icon: UsersThree },
-  { key: 'tickets', label: 'Заявки', icon: TicketIcon },
-  { key: 'birthdays', label: 'Дни рождения', icon: Cake },
-]
-
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-const STATUS_LABEL: Record<FamilyTicketStatus, string> = {
-  open: 'На рассмотрении',
-  approved: 'Принята',
-  denied: 'Отклонена',
-  closed: 'Закрыта',
+function ticketStatusLabel(status: FamilyTicketStatus, t: (k: string) => string) {
+  const m: Record<FamilyTicketStatus, string> = {
+    open: 'family.tickets.status.open',
+    approved: 'family.tickets.status.approved',
+    denied: 'family.tickets.status.denied',
+    closed: 'family.tickets.status.closed',
+  }
+  return t(m[status])
 }
 
 export function FamilyPage() {
+  const t = useT()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<FamilySettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -88,28 +86,28 @@ export function FamilyPage() {
         setRoles(rl)
         setEmojis(em)
       })
-      .catch(() => setError('Не удалось загрузить настройки модуля «Семья»'))
+      .catch(() => setError(t('family.errorLoad')))
   }, [])
 
   useEffect(() => {
     if (tab !== 'roster') return
     fetchFamilyRoster()
       .then((r) => setRoster(r.groups))
-      .catch(() => setError('Не удалось загрузить ростер'))
+      .catch(() => setError(t('family.errorLoadRoster')))
   }, [tab])
 
   useEffect(() => {
     if (tab !== 'tickets') return
     fetchFamilyTickets(ticketStatus, ticketPage)
       .then(setTickets)
-      .catch(() => setError('Не удалось загрузить заявки'))
+      .catch(() => setError(t('family.errorLoadTickets')))
   }, [tab, ticketStatus, ticketPage])
 
   useEffect(() => {
     if (tab !== 'birthdays') return
     fetchFamilyBirthdays()
       .then((b) => setBirthdays(b.entries))
-      .catch(() => setError('Не удалось загрузить дни рождения'))
+      .catch(() => setError(t('family.errorLoadBirthdays')))
   }, [tab])
 
   useEffect(() => {
@@ -126,7 +124,7 @@ export function FamilyPage() {
   }, [birthdaySearch])
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const patch = (updater: (prev: FamilySettings) => FamilySettings) => {
@@ -140,9 +138,9 @@ export function FamilyPage() {
     try {
       const updated = await updateFamilySettings(settings)
       setSettings(updated)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('family.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -155,7 +153,7 @@ export function FamilyPage() {
       await decideFamilyTicket(ticket.user_id, decision)
       setTickets(await fetchFamilyTickets(ticketStatus, ticketPage))
     } catch {
-      setError('Не удалось применить решение по заявке')
+      setError(t('family.errorDecide'))
     } finally {
       setBusy(false)
     }
@@ -171,7 +169,7 @@ export function FamilyPage() {
       setBirthdaySearch('')
       setBirthdayDate('')
     } catch {
-      setBirthdayError('Не удалось сохранить дату — проверьте формат (дд.мм, дд.мм.гггг или «1 января»)')
+      setBirthdayError(t('family.errorBirthdaySave'))
     }
   }
 
@@ -182,7 +180,7 @@ export function FamilyPage() {
       await deleteFamilyBirthday(userId)
       setBirthdays((await fetchFamilyBirthdays()).entries)
     } catch {
-      setError('Не удалось удалить запись')
+      setError(t('family.errorBirthdayDelete'))
     } finally {
       setBusy(false)
     }
@@ -193,23 +191,27 @@ export function FamilyPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <UsersThree size={22} className="text-primary" />
-          Семья
+          {t('family.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? 'Модуль включён' : 'Модуль выключен'}
+          label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
         />
       </div>
       <p className="text-sm text-muted">
-        Управление ростером участников по ролям, заявками на вступление через тикеты и днями рождения. 
-        Пока модуль выключен, команды и кнопки отвечают «Модуль отключён».
+{t('family.intro')}
       </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex gap-1 border-b border-border">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {[
+          { key: 'settings' as Tab, labelKey: 'common.settings', icon: Gear },
+          { key: 'roster' as Tab, labelKey: 'family.tab.roster', icon: UsersThree },
+          { key: 'tickets' as Tab, labelKey: 'family.tab.tickets', icon: TicketIcon },
+          { key: 'birthdays' as Tab, labelKey: 'family.tab.birthdays', icon: Cake },
+        ].map(({ key, labelKey, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -219,7 +221,7 @@ export function FamilyPage() {
             }`}
           >
             <Icon size={15} />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -227,21 +229,21 @@ export function FamilyPage() {
       {tab === 'settings' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Ростер</h2>
+            <h2 className="font-semibold text-foreground">{t('family.roster.title')}</h2>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="family-list-channel">
-                Канал команды /список
+                {t('family.roster.listChannel')}
               </label>
               <Select
                 id="family-list-channel"
                 value={settings.roster.list_channel_id}
                 onChange={(id) => patch((p) => ({ ...p, roster: { ...p.roster, list_channel_id: id } }))}
                 options={channels}
-                placeholder="Разрешено в любом канале"
+                placeholder={t('family.roster.anyChannel')}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted">Роли ростера (метка + роль)</p>
+              <p className="text-sm text-muted">{t('family.roster.roles')}</p>
               {settings.roster.target_roles.map((entry, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
@@ -257,7 +259,7 @@ export function FamilyPage() {
                         },
                       }))
                     }
-                    placeholder="Название группы"
+                    placeholder={t('family.roster.groupPlaceholder')}
                     className={`${inputClass} min-w-40 flex-1`}
                   />
                   <Select
@@ -274,7 +276,7 @@ export function FamilyPage() {
                       }))
                     }
                     options={roles}
-                    placeholder="Роль…"
+                    placeholder={t('family.roster.rolePlaceholder')}
                     className="min-w-40 flex-1"
                   />
                   <Button
@@ -303,17 +305,17 @@ export function FamilyPage() {
                 }
               >
                 <Plus size={16} />
-                Добавить роль
+                {t('family.roster.addRole')}
               </Button>
             </div>
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Заявки на вступление</h2>
+            <h2 className="font-semibold text-foreground">{t('family.applications.title')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-app-channel">
-                  Канал заявок
+                  {t('family.applications.channel')}
                 </label>
                 <Select
                   id="family-app-channel"
@@ -322,24 +324,24 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, application_channel_id: id } }))
                   }
                   options={channels}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-log-channel">
-                  Канал логов
+                  {t('family.applications.logChannel')}
                 </label>
                 <Select
                   id="family-log-channel"
                   value={settings.applications.log_channel_id}
                   onChange={(id) => patch((p) => ({ ...p, applications: { ...p.applications, log_channel_id: id } }))}
                   options={channels}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-ticket-manager-role">
-                  Роль тикет-менеджера
+                  {t('family.applications.ticketManagerRole')}
                 </label>
                 <Select
                   id="family-ticket-manager-role"
@@ -348,24 +350,24 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, ticket_manager_role_id: id } }))
                   }
                   options={roles}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-notify-role">
-                  Роль уведомлений
+                  {t('family.applications.notifyRole')}
                 </label>
                 <Select
                   id="family-notify-role"
                   value={settings.applications.notify_role_id}
                   onChange={(id) => patch((p) => ({ ...p, applications: { ...p.applications, notify_role_id: id } }))}
                   options={roles}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-active-role">
-                  Роль «заявка на рассмотрении»
+                  {t('family.applications.activeRole')}
                 </label>
                 <Select
                   id="family-active-role"
@@ -374,12 +376,12 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, ticket_active_role_id: id } }))
                   }
                   options={roles}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-archive-minutes">
-                  Автоархив треда (минут)
+                  {t('family.applications.archiveMinutes')}
                 </label>
                 <Select
                   id="family-archive-minutes"
@@ -388,46 +390,46 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, thread_archive_minutes: Number(id) } }))
                   }
                   options={[
-                    { id: '60', name: '1 час' },
-                    { id: '1440', name: '1 день' },
-                    { id: '4320', name: '3 дня' },
-                    { id: '10080', name: '7 дней' },
+                    { id: '60', name: t('family.applications.archive.1h') },
+                    { id: '1440', name: t('family.applications.archive.1d') },
+                    { id: '4320', name: t('family.applications.archive.3d') },
+                    { id: '10080', name: t('family.applications.archive.7d') },
                   ]}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-yes-emoji">
-                  Эмодзи «да»
+                  {t('family.applications.yesEmoji')}
                 </label>
                 <Select
                   id="family-yes-emoji"
                   value={settings.applications.yes_emoji_id}
                   onChange={(id) => patch((p) => ({ ...p, applications: { ...p.applications, yes_emoji_id: id } }))}
                   options={emojis}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-no-emoji">
-                  Эмодзи «нет»
+                  {t('family.applications.noEmoji')}
                 </label>
                 <Select
                   id="family-no-emoji"
                   value={settings.applications.no_emoji_id}
                   onChange={(id) => patch((p) => ({ ...p, applications: { ...p.applications, no_emoji_id: id } }))}
                   options={emojis}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
             </div>
             <ChipPicker
-              label="Роли staff (доступ к панели заявок и решениям)"
+              label={t('family.applications.staffRoles')}
               options={roles}
               selected={settings.applications.staff_role_ids}
               onChange={(ids) => patch((p) => ({ ...p, applications: { ...p.applications, staff_role_ids: ids } }))}
             />
             <ChipPicker
-              label="Роли, выдаваемые при одобрении"
+              label={t('family.applications.approveRoles')}
               options={roles}
               selected={settings.applications.approve_role_ids}
               onChange={(ids) => patch((p) => ({ ...p, applications: { ...p.applications, approve_role_ids: ids } }))}
@@ -435,30 +437,30 @@ export function FamilyPage() {
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Дни рождения</h2>
+            <h2 className="font-semibold text-foreground">{t('family.birthdays.title')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-bday-channel">
-                  Канал поздравлений
+                  {t('family.birthdays.channel')}
                 </label>
                 <Select
                   id="family-bday-channel"
                   value={settings.birthdays.channel_id}
                   onChange={(id) => patch((p) => ({ ...p, birthdays: { ...p.birthdays, channel_id: id } }))}
                   options={channels}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="family-bday-list-channel">
-                  Канал live-списка ДР
+                  {t('family.birthdays.listChannel')}
                 </label>
                 <Select
                   id="family-bday-list-channel"
                   value={settings.birthdays.list_channel_id}
                   onChange={(id) => patch((p) => ({ ...p, birthdays: { ...p.birthdays, list_channel_id: id } }))}
                   options={channels}
-                  placeholder="Не задано"
+                  placeholder={t('common.notSet')}
                 />
               </div>
             </div>
@@ -467,7 +469,7 @@ export function FamilyPage() {
           {saved && <p className="text-sm text-primary">{saved}</p>}
           <div>
             <Button variant="primary" onClick={save} disabled={busy}>
-              {busy ? 'Сохраняем…' : 'Сохранить'}
+              {busy ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>
@@ -475,19 +477,19 @@ export function FamilyPage() {
 
       {tab === 'roster' && (
         <div className="flex flex-col gap-3">
-          {!roster && <p className="text-sm text-muted">Загрузка…</p>}
+          {!roster && <p className="text-sm text-muted">{t('common.loading')}</p>}
           {roster && roster.length === 0 && (
-            <p className="text-sm text-muted">Роли ростера не настроены — добавьте их во вкладке «Настройки».</p>
+            <p className="text-sm text-muted">{t('family.roster.notConfigured')}</p>
           )}
           {roster?.map((group) => (
             <Card key={group.role_id || group.label} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-foreground">{group.label}</h2>
-                <span className="text-xs text-muted">{group.members.length} чел.</span>
+                <span className="text-xs text-muted">{t('family.roster.memberCount', { count: group.members.length })}</span>
               </div>
-              {!group.role_found && <p className="text-xs text-danger">Роль не найдена на сервере.</p>}
+              {!group.role_found && <p className="text-xs text-danger">{t('family.roster.roleNotFound')}</p>}
               {group.members.length === 0 ? (
-                <p className="text-sm text-muted">Отсутствуют.</p>
+                <p className="text-sm text-muted">{t('family.roster.absent')}</p>
               ) : (
                 <ul className="flex flex-col gap-0.5">
                   {group.members.map((m) => (
@@ -511,17 +513,17 @@ export function FamilyPage() {
               setTicketPage(1)
             }}
             options={[
-              { id: '', name: 'Все статусы' },
-              { id: 'open', name: 'На рассмотрении' },
-              { id: 'approved', name: 'Принятые' },
-              { id: 'denied', name: 'Отклонённые' },
-              { id: 'closed', name: 'Закрытые' },
+              { id: '', name: t('family.tickets.allStatuses') },
+              { id: 'open', name: t('family.tickets.status.open') },
+              { id: 'approved', name: t('family.tickets.status.approved') },
+              { id: 'denied', name: t('family.tickets.status.denied') },
+              { id: 'closed', name: t('family.tickets.status.closed') },
             ]}
             className="w-56"
           />
 
-          {!tickets && <p className="text-sm text-muted">Загрузка…</p>}
-          {tickets && tickets.entries.length === 0 && <p className="text-sm text-muted">Заявок нет.</p>}
+          {!tickets && <p className="text-sm text-muted">{t('common.loading')}</p>}
+          {tickets && tickets.entries.length === 0 && <p className="text-sm text-muted">{t('family.tickets.empty')}</p>}
           {tickets?.entries.map((ticket) => (
             <Card key={ticket.user_id} className="flex flex-col gap-2">
               <button
@@ -534,33 +536,33 @@ export function FamilyPage() {
                     {ticket.nickname} · {ticket.display}
                   </p>
                   <p className="text-xs text-muted">
-                    {STATUS_LABEL[ticket.status]} · {ticket.created_at}
+                    {ticketStatusLabel(ticket.status, t)} · {ticket.created_at}
                   </p>
                 </div>
                 {ticket.status === 'open' && (
                   <div className="flex shrink-0 gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <Button variant="secondary" onClick={() => decide(ticket, 'approve')} disabled={busy}>
-                      Принять
+                      {t('common.approve')}
                     </Button>
                     <Button variant="danger" onClick={() => decide(ticket, 'deny')} disabled={busy}>
-                      Отказать
+                      {t('family.tickets.reject')}
                     </Button>
                     <Button variant="ghost" onClick={() => decide(ticket, 'close')} disabled={busy}>
-                      Закрыть
+                      {t('common.close')}
                     </Button>
                   </div>
                 )}
               </button>
               {expandedTicket === ticket.user_id && (
                 <div className="grid gap-x-4 gap-y-1 border-t border-border pt-2 text-sm sm:grid-cols-2">
-                  <p><span className="text-muted">Игровой уровень:</span> {ticket.game_level}</p>
-                  <p><span className="text-muted">Фракции:</span> {ticket.faction_pref}</p>
-                  <p className="sm:col-span-2"><span className="text-muted">Онлайн/часовой пояс:</span> {ticket.online_timezone}</p>
-                  <p><span className="text-muted">Имя:</span> {ticket.real_name}</p>
-                  <p><span className="text-muted">Возраст:</span> {ticket.real_age}</p>
-                  <p className="sm:col-span-2"><span className="text-muted">О себе:</span> {ticket.about_text}</p>
-                  <p className="sm:col-span-2"><span className="text-muted">Почему хочет вступить:</span> {ticket.why_join}</p>
-                  <p className="sm:col-span-2"><span className="text-muted">Пригласивший:</span> {ticket.inviter_nickname || '—'}</p>
+                  <p><span className="text-muted">{t('family.tickets.gameLevel')}</span> {ticket.game_level}</p>
+                  <p><span className="text-muted">{t('family.tickets.factions')}</span> {ticket.faction_pref}</p>
+                  <p className="sm:col-span-2"><span className="text-muted">{t('family.tickets.onlineTimezone')}</span> {ticket.online_timezone}</p>
+                  <p><span className="text-muted">{t('family.tickets.name')}</span> {ticket.real_name}</p>
+                  <p><span className="text-muted">{t('family.tickets.age')}</span> {ticket.real_age}</p>
+                  <p className="sm:col-span-2"><span className="text-muted">{t('family.tickets.about')}</span> {ticket.about_text}</p>
+                  <p className="sm:col-span-2"><span className="text-muted">{t('family.tickets.whyJoin')}</span> {ticket.why_join}</p>
+                  <p className="sm:col-span-2"><span className="text-muted">{t('family.tickets.inviter')}</span> {ticket.inviter_nickname || '—'}</p>
                 </div>
               )}
             </Card>
@@ -569,17 +571,17 @@ export function FamilyPage() {
           {tickets && tickets.total > tickets.page_size && (
             <div className="flex items-center justify-center gap-3">
               <Button variant="ghost" disabled={ticketPage <= 1} onClick={() => setTicketPage((p) => p - 1)}>
-                ← Назад
+                {t('family.tickets.prev')}
               </Button>
               <span className="text-sm text-muted">
-                Стр. {tickets.page} из {Math.ceil(tickets.total / tickets.page_size)}
+                {t('family.tickets.page', { page: tickets.page, total: Math.ceil(tickets.total / tickets.page_size) })}
               </span>
               <Button
                 variant="ghost"
                 disabled={ticketPage >= Math.ceil(tickets.total / tickets.page_size)}
                 onClick={() => setTicketPage((p) => p + 1)}
               >
-                Вперёд →
+                {t('family.tickets.next')}
               </Button>
             </div>
           )}
@@ -589,7 +591,7 @@ export function FamilyPage() {
       {tab === 'birthdays' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Добавить дату</h2>
+            <h2 className="font-semibold text-foreground">{t('family.birthdays.addDate')}</h2>
             <div className="flex flex-wrap gap-2">
               <div className="relative min-w-48 flex-1">
                 <input
@@ -598,7 +600,7 @@ export function FamilyPage() {
                     setBirthdayTarget(null)
                     setBirthdaySearch(e.target.value)
                   }}
-                  placeholder="Поиск участника…"
+                  placeholder={t('family.birthdays.searchPlaceholder')}
                   className={inputClass + ' w-full'}
                 />
                 {!birthdayTarget && birthdayResults.length > 0 && (
@@ -622,19 +624,19 @@ export function FamilyPage() {
               <input
                 value={birthdayDate}
                 onChange={(e) => setBirthdayDate(e.target.value)}
-                placeholder="дд.мм или 1 января"
+                placeholder={t('family.birthdays.datePlaceholder')}
                 className={inputClass + ' w-44'}
               />
               <Button variant="primary" onClick={addBirthday} disabled={!birthdayTarget || !birthdayDate.trim()}>
-                Сохранить
+                {t('common.save')}
               </Button>
             </div>
             {birthdayError && <p className="text-sm text-danger">{birthdayError}</p>}
           </Card>
 
           <Card className="p-0">
-            {!birthdays && <p className="p-4 text-sm text-muted">Загрузка…</p>}
-            {birthdays && birthdays.length === 0 && <p className="p-4 text-sm text-muted">Дат пока нет.</p>}
+            {!birthdays && <p className="p-4 text-sm text-muted">{t('common.loading')}</p>}
+            {birthdays && birthdays.length === 0 && <p className="p-4 text-sm text-muted">{t('family.birthdays.empty')}</p>}
             {birthdays?.map((b) => (
               <div
                 key={b.user_id}

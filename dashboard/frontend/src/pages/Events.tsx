@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useT } from '../context/LanguageContext'
 import {
   createEvent,
   fetchChannels,
@@ -24,15 +25,14 @@ import { CalendarCheck, Gift } from '@phosphor-icons/react'
 type StatusFilter = 'open' | 'closed'
 type EventsTab = 'events' | 'giveaways'
 
-const EVENTS_TABS: { key: EventsTab; label: string; icon: typeof CalendarCheck }[] = [
-  { key: 'events', label: 'События и голосования', icon: CalendarCheck },
-  { key: 'giveaways', label: 'Гивевеи', icon: Gift },
-]
-
-function TabBar({ tab, setTab }: { tab: EventsTab; setTab: (t: EventsTab) => void }) {
+function TabBar({ tab, setTab, t }: { tab: EventsTab; setTab: (t: EventsTab) => void; t: (key: string) => string }) {
+  const tabs: { key: EventsTab; labelKey: string; icon: typeof CalendarCheck }[] = [
+    { key: 'events', labelKey: 'events.tab.events', icon: CalendarCheck },
+    { key: 'giveaways', labelKey: 'events.tab.giveaways', icon: Gift },
+  ]
   return (
     <div className="flex gap-1 border-b border-border">
-      {EVENTS_TABS.map(({ key, label, icon: Icon }) => (
+      {tabs.map(({ key, labelKey, icon: Icon }) => (
         <button
           key={key}
           type="button"
@@ -42,7 +42,7 @@ function TabBar({ tab, setTab }: { tab: EventsTab; setTab: (t: EventsTab) => voi
           }`}
         >
           <Icon size={15} />
-          {label}
+          {t(labelKey)}
         </button>
       ))}
     </div>
@@ -67,26 +67,26 @@ function emptyCreateSpec(): CreateEventSpec {
   }
 }
 
-const MODE_LABELS: Record<CreateEventSpec['mode'], string> = {
-  solo: 'Соло',
-  team_captain: 'Командный',
-  team_code: 'Командный (по коду)',
+function modeLabel(mode: CreateEventSpec['mode'], t: (key: string) => string): string {
+  if (mode === 'solo') return t('events.mode.solo')
+  if (mode === 'team_captain') return t('events.mode.teamCaptain')
+  return t('events.mode.teamCode')
 }
 
-function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string): EmbedSpec {
+function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string, t: (key: string) => string): EmbedSpec {
   const fields: EmbedFieldSpec[] =
     spec.type === 'tournament'
       ? [
-          { name: 'Формат', value: MODE_LABELS[spec.mode], inline: true },
+          { name: t('events.preview.format'), value: modeLabel(spec.mode, t), inline: true },
           spec.max_limit > 0
-            ? { name: 'Лимит', value: `0 / ${spec.max_limit}`, inline: true }
-            : { name: 'Участники', value: '0', inline: true },
+            ? { name: t('events.preview.limit'), value: `0 / ${spec.max_limit}`, inline: true }
+            : { name: t('events.preview.participants'), value: '0', inline: true },
         ]
       : optionsText
           .split('\n')
           .map((line) => line.trim())
           .filter(Boolean)
-          .map((opt) => ({ name: opt, value: '░░░░░░░░░░ 0% (0 гол.)', inline: false }))
+          .map((opt) => ({ name: opt, value: t('events.preview.votes'), inline: false }))
 
   return {
     title: spec.title,
@@ -94,7 +94,7 @@ function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string): Emb
     url: '',
     color: spec.type === 'tournament' ? '#ed4245' : '#5865f2',
     author: { name: '', url: '', icon_url: '' },
-    footer: { text: '🟢 Статус: Открыто', icon_url: '' },
+    footer: { text: t('events.preview.statusOpen'), icon_url: '' },
     image: { url: spec.banner_url },
     thumbnail: { url: '' },
     timestamp: null,
@@ -103,6 +103,7 @@ function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string): Emb
 }
 
 export function EventsPage() {
+  const t = useT()
   const [tab, setTab] = useState<EventsTab>('events')
   const [status, setStatus] = useState<StatusFilter>('open')
   const [events, setEvents] = useState<EventSummary[]>([])
@@ -119,7 +120,7 @@ export function EventsPage() {
   const reload = () => {
     fetchEvents(status)
       .then(setEvents)
-      .catch(() => setError('Не удалось загрузить события'))
+      .catch(() => setError(t('events.errorLoad')))
     fetchChannels().then(setChannels).catch(() => {})
     fetchRoles().then(setRoles).catch(() => {})
   }
@@ -148,7 +149,7 @@ export function EventsPage() {
       setCreateOpen(false)
       reload()
     } catch {
-      setCreateError('Не удалось создать событие — проверьте поля')
+      setCreateError(t('events.errorCreate'))
     } finally {
       setCreateBusy(false)
     }
@@ -157,7 +158,7 @@ export function EventsPage() {
   if (tab === 'giveaways') {
     return (
       <div className="flex flex-col gap-4">
-        <TabBar tab={tab} setTab={setTab} />
+        <TabBar tab={tab} setTab={setTab} t={t} />
         <GiveawaysPage />
       </div>
     )
@@ -165,24 +166,24 @@ export function EventsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TabBar tab={tab} setTab={setTab} />
+      <TabBar tab={tab} setTab={setTab} t={t} />
     <div className="flex gap-6">
       <div className="flex-1">
         <div className="mb-4 flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-foreground">События и голосования</h1>
+          <h1 className="text-lg font-semibold text-foreground">{t('events.title')}</h1>
           <Button variant="primary" onClick={openCreate} className="ml-auto">
-            Создать событие
+            {t('events.create')}
           </Button>
           <label className="text-sm text-muted" htmlFor="event-status">
-            Статус
+            {t('common.status')}
           </label>
           <Select
             id="event-status"
             value={status}
             onChange={(id) => setStatus(id as StatusFilter)}
             options={[
-              { id: 'open', name: 'Активные' },
-              { id: 'closed', name: 'Закрытые' },
+              { id: 'open', name: t('events.status.open') },
+              { id: 'closed', name: t('events.status.closed') },
             ]}
             className="w-40"
           />
@@ -197,13 +198,13 @@ export function EventsPage() {
                 <div>
                   <p className="text-sm text-foreground">{ev.title}</p>
                   <p className="text-xs text-muted">
-                    {ev.type === 'tournament' ? 'Турнир' : 'Опрос'} · {ev.count}
+                    {ev.type === 'tournament' ? t('events.type.tournament') : t('events.type.poll')} · {ev.count}
                   </p>
                 </div>
               </div>
             </Card>
           ))}
-          {events.length === 0 && <p className="text-sm text-muted">Событий нет.</p>}
+          {events.length === 0 && <p className="text-sm text-muted">{t('events.empty')}</p>}
         </div>
       </div>
 
@@ -220,29 +221,29 @@ export function EventsPage() {
         </div>
       )}
 
-      <Modal open={createOpen} title="Создать событие" onClose={() => setCreateOpen(false)}>
+      <Modal open={createOpen} title={t('events.modal.create')} onClose={() => setCreateOpen(false)}>
         <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto">
           <div className="flex gap-2">
             <Button
               variant={createSpec.type === 'tournament' ? 'primary' : 'secondary'}
               onClick={() => setCreateSpec((prev) => ({ ...prev, type: 'tournament' }))}
             >
-              Турнир
+              {t('events.type.tournament')}
             </Button>
             <Button
               variant={createSpec.type === 'poll' ? 'primary' : 'secondary'}
               onClick={() => setCreateSpec((prev) => ({ ...prev, type: 'poll' }))}
             >
-              Опрос
+              {t('events.type.poll')}
             </Button>
           </div>
 
           <div data-testid="event-embed-preview">
-            <EmbedPreview content="" embed={buildEventEmbedPreview(createSpec, optionsText)} />
+            <EmbedPreview content="" embed={buildEventEmbedPreview(createSpec, optionsText, t)} />
           </div>
 
           <label className="text-sm text-muted" htmlFor="event-title">
-            Название
+            {t('events.field.title')}
           </label>
           <input
             id="event-title"
@@ -252,7 +253,7 @@ export function EventsPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="event-description">
-            Описание
+            {t('events.field.description')}
           </label>
           <textarea
             id="event-description"
@@ -267,7 +268,7 @@ export function EventsPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="event-banner">
-            URL баннера (опционально)
+            {t('events.field.banner')}
           </label>
           <input
             id="event-banner"
@@ -277,54 +278,54 @@ export function EventsPage() {
           />
 
           <label className="text-sm text-muted" htmlFor="event-ping">
-            Пинг
+            {t('events.field.ping')}
           </label>
           <Select
             id="event-ping"
             value={createSpec.ping}
             onChange={(id) => setCreateSpec((prev) => ({ ...prev, ping: id as CreateEventSpec['ping'] }))}
             options={[
-              { id: 'none', name: 'Нет' },
+              { id: 'none', name: t('events.ping.none') },
               { id: 'everyone', name: '@everyone' },
               { id: 'here', name: '@here' },
             ]}
           />
 
           <label className="text-sm text-muted" htmlFor="event-channel">
-            Канал
+            {t('common.channel')}
           </label>
           <Select
             id="event-channel"
             value={createSpec.channel_id}
             onChange={(id) => setCreateSpec((prev) => ({ ...prev, channel_id: id }))}
             options={channels}
-            placeholder="Выберите канал…"
+            placeholder={t('common.selectChannel')}
           />
 
           {createSpec.type === 'tournament' ? (
             <>
               <label className="text-sm text-muted" htmlFor="event-mode">
-                Формат
+                {t('events.field.mode')}
               </label>
               <Select
                 id="event-mode"
                 value={createSpec.mode}
                 onChange={(id) => setCreateSpec((prev) => ({ ...prev, mode: id as CreateEventSpec['mode'] }))}
                 options={[
-                  { id: 'solo', name: 'Соло' },
-                  { id: 'team_captain', name: 'Командный (Капитан)' },
-                  { id: 'team_code', name: 'Командный (По коду)' },
+                  { id: 'solo', name: t('events.mode.solo') },
+                  { id: 'team_captain', name: t('events.mode.teamCaptain') },
+                  { id: 'team_code', name: t('events.mode.teamCode') },
                 ]}
               />
 
               <Toggle
                 checked={createSpec.require_info}
                 onChange={(v) => setCreateSpec((prev) => ({ ...prev, require_info: v }))}
-                label="Анкета (запрашивать игровой ник)"
+                label={t('events.field.requireInfo')}
               />
 
               <label className="text-sm text-muted" htmlFor="event-max-limit">
-                Макс. участников/команд (0 = безлимит)
+                {t('events.field.maxLimit')}
               </label>
               <input
                 id="event-max-limit"
@@ -338,7 +339,7 @@ export function EventsPage() {
               {createSpec.mode !== 'solo' && (
                 <>
                   <label className="text-sm text-muted" htmlFor="event-team-size">
-                    Размер команды
+                    {t('events.field.teamSize')}
                   </label>
                   <input
                     id="event-team-size"
@@ -352,20 +353,20 @@ export function EventsPage() {
               )}
 
               <label className="text-sm text-muted" htmlFor="event-role-reward">
-                Выдаваемая роль (опционально)
+                {t('events.field.roleReward')}
               </label>
               <Select
                 id="event-role-reward"
                 value={createSpec.role_reward ?? ''}
                 onChange={(id) => setCreateSpec((prev) => ({ ...prev, role_reward: id || null }))}
                 options={roles}
-                placeholder="Без роли"
+                placeholder={t('events.noRole')}
               />
             </>
           ) : (
             <>
               <label className="text-sm text-muted" htmlFor="event-options">
-                Варианты ответа (каждый с новой строки, 2–10)
+                {t('events.field.options')}
               </label>
               <textarea
                 id="event-options"
@@ -378,7 +379,7 @@ export function EventsPage() {
               <Toggle
                 checked={createSpec.multi_select}
                 onChange={(v) => setCreateSpec((prev) => ({ ...prev, multi_select: v }))}
-                label="Мульти-выбор"
+                label={t('events.field.multiSelect')}
               />
             </>
           )}
@@ -387,10 +388,10 @@ export function EventsPage() {
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setCreateOpen(false)} disabled={createBusy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={saveCreate} disabled={createBusy}>
-              {createBusy ? 'Создаём…' : 'Создать'}
+              {createBusy ? t('common.creating') : t('common.create')}
             </Button>
           </div>
         </div>

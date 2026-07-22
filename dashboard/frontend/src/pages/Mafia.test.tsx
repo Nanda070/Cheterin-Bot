@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { MafiaPage } from './Mafia'
@@ -23,7 +24,7 @@ describe('MafiaPage', () => {
 
   it('renders the module toggle and tabs', async () => {
     mockBaseFetches()
-    render(<MafiaPage />)
+    renderWithLanguage(<MafiaPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Настройки' })).toBeInTheDocument()
@@ -34,18 +35,18 @@ describe('MafiaPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateMafiaSettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
-    render(<MafiaPage />)
+    renderWithLanguage(<MafiaPage />)
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })))
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('updates a timer field before saving', async () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateMafiaSettings').mockResolvedValue(emptySettings)
-    render(<MafiaPage />)
+    renderWithLanguage(<MafiaPage />)
 
     const input = await screen.findByLabelText(/^Ночь/)
     fireEvent.change(input, { target: { value: '90' } })
@@ -72,7 +73,7 @@ describe('MafiaPage', () => {
       },
     ])
 
-    render(<MafiaPage />)
+    renderWithLanguage(<MafiaPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Активные игры' }))
 
     expect(await screen.findByText('Игра #1 · general')).toBeInTheDocument()

@@ -1,0 +1,62 @@
+MESSAGES: dict[str, str] = {
+    "economy.default_currency_name": "coins",
+    "economy.item_label.role": "Role",
+    "economy.item_label.frame_color": "Frame",
+    "economy.item_label.title": "Title",
+    "economy.item_label.default": "Item",
+    "economy.daily.disabled": "Daily bonus is disabled.",
+    "economy.daily.already_claimed": "Today's bonus was already claimed. Streak: **{streak}** 🔥 Come back tomorrow!",
+    "economy.daily.streak_day_one": "day",
+    "economy.daily.streak_day_few": "days",
+    "economy.daily.streak_day_many": "days",
+    "economy.daily.claimed": (
+        "🎁 Daily bonus: **{amount}**\n"
+        "Streak: **{streak}** {day_word} 🔥 (balance: {balance})."
+    ),
+    "economy.error.bot_no_wallet": "Bots don't have a wallet.",
+    "economy.balance.title": "{emoji} Balance — {name}",
+    "economy.balance.rank": "\nRank: **#{rank}**",
+    "economy.grant.success": "✅ {mention}'s balance: {old_balance} → **{new_balance}**.",
+    "economy.transfer.disabled": "Transfers between members are disabled.",
+    "economy.transfer.no_bots": "You can't transfer to bots.",
+    "economy.transfer.no_self": "You can't transfer to yourself.",
+    "economy.transfer.insufficient": (
+        "Insufficient funds: need {needed} (with fee), balance is {balance}."
+    ),
+    "economy.transfer.fee": " Fee: {fee}.",
+    "economy.transfer.success": "💸 {sender} transferred {amount} to {recipient}.{fee_text}",
+    "economy.top.empty": "Nobody has coins yet.",
+    "economy.top.title": "{emoji} Top by {currency_name}",
+    "economy.shop.empty": "The shop is empty — items are added in the dashboard.",
+    "economy.shop.title": "🛒 Shop",
+    "economy.shop.balance": "\n\nYour balance: **{balance}**",
+    "economy.shop.item_line": "• **{name}** — {target}: {price}",
+    "economy.shop.role_not_found": "role `{role_id}` (not found)",
+    "economy.shop.frame_target": "card frame `{color_hex}`",
+    "economy.shop.frame_name": "Frame {color_hex}",
+    "economy.shop.title_target": "title «{title_text}»",
+    "economy.shop.title_name": "Title «{title_text}»",
+    "economy.cosmetics.frame_placeholder": "Card frame",
+    "economy.cosmetics.no_frame": "No frame",
+    "economy.cosmetics.title_placeholder": "Title under name",
+    "economy.cosmetics.no_title": "No title",
+    "economy.cosmetics.empty": "You don't own any cosmetics yet — check /магазин.",
+    "economy.cosmetics.prompt": "Choose a frame and/or title for your /ранг card:",
+    "economy.purchase.item_removed": "This item was removed from the shop.",
+    "economy.purchase.role_not_found": "The item's role wasn't found on the server — tell the admins.",
+    "economy.purchase.role_already_owned": "You already have role {mention}.",
+    "economy.purchase.insufficient": "Not enough funds: price {price}, balance {balance}.",
+    "economy.purchase.role_grant_failed": (
+        "Couldn't assign the role (missing bot permissions?) — coins refunded."
+    ),
+    "economy.purchase.role_success": "✅ Purchased: {role} for {price}. Remaining: {balance}.",
+    "economy.purchase.cosmetic_already_owned": "You already own this item.",
+    "economy.purchase.cosmetic_success": (
+        "✅ Purchased: **{name}** for {price}. Remaining: {balance}. Equip via /косметика."
+    ),
+    "economy.equip.frame_removed": "Frame removed.",
+    "economy.equip.title_removed": "Title removed.",
+    "economy.equip.frame_applied": "Frame applied! Check /ранг.",
+    "economy.equip.title_applied": "Title applied! Check /ранг.",
+    "economy.equip.not_owned": "You don't own this item.",
+}

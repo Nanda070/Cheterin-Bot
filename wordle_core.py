@@ -10,6 +10,7 @@
 import random
 from datetime import date, datetime, timedelta, timezone
 
+import i18n
 import settings_db
 import wordle_data
 
@@ -65,14 +66,15 @@ def normalize(word: str) -> str:
     return word.strip().lower().replace("ё", "е")
 
 
-def guess_error(word: str) -> str | None:
+def guess_error(word: str, *, lang: str | None = None) -> str | None:
     """None — слово валидно, иначе текст ошибки для игрока."""
+    lang = lang or i18n.DEFAULT_LANGUAGE
     if len(word) != WORD_LEN:
-        return f"Слово должно быть ровно из {WORD_LEN} букв."
+        return i18n.t("wordle.error.word_len", lang, word_len=WORD_LEN)
     if not all("а" <= ch <= "я" for ch in word):
-        return "Используйте только русские буквы."
+        return i18n.t("wordle.error.cyrillic_only", lang)
     if word not in wordle_data.ALL_WORDS:
-        return f"Слова «{word.upper()}» нет в словаре игры."
+        return i18n.t("wordle.error.not_in_dict", lang, word=word.upper())
     return None
 
 

@@ -10,6 +10,7 @@ import re
 from datetime import date, datetime, timedelta, timezone
 
 import economy_db
+import i18n
 import settings_db
 
 COLOR_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -18,7 +19,9 @@ TITLE_TEXT_MAX = 30
 
 MODULE_NAME = "economy"
 
-DEFAULT_CURRENCY_NAME = "монеты"
+DEFAULT_CURRENCY_NAME_RU = "монеты"
+DEFAULT_CURRENCY_NAME_EN = "coins"
+DEFAULT_CURRENCY_NAME = DEFAULT_CURRENCY_NAME_RU
 DEFAULT_CURRENCY_EMOJI = "🪙"
 DEFAULT_TEXT_RATE_PERCENT = 50   # монет за XP: 50% => 10 XP -> 5 монет
 DEFAULT_VOICE_RATE_PERCENT = 50
@@ -62,12 +65,18 @@ def _normalize_shop_item(item: dict) -> dict:
     }
 
 
+def _default_currency_name(guild_id: int) -> str:
+    return i18n.t("economy.default_currency_name", i18n.lang_for(guild_id))
+
+
 def get_settings(guild_id: int) -> dict:
     """Настройки модуля сервера с дефолтами (выключен по умолчанию)."""
     data = settings_db.get(guild_id, MODULE_NAME)
+    stored_name = data.get("currency_name")
+    currency_name = str(stored_name) if stored_name else _default_currency_name(guild_id)
     return {
         "enabled": bool(data.get("enabled", False)),
-        "currency_name": str(data.get("currency_name", DEFAULT_CURRENCY_NAME)),
+        "currency_name": currency_name,
         "currency_emoji": str(data.get("currency_emoji", DEFAULT_CURRENCY_EMOJI)),
         "text_rate_percent": int(data.get("text_rate_percent", DEFAULT_TEXT_RATE_PERCENT)),
         "voice_rate_percent": int(data.get("voice_rate_percent", DEFAULT_VOICE_RATE_PERCENT)),
@@ -117,17 +126,18 @@ def transfer_fee(amount: int, fee_percent: int) -> int:
     return -(-amount * fee_percent // 100)
 
 
-def bet_error(bet: int, balance: int, settings: dict) -> str | None:
+def bet_error(bet: int, balance: int, settings: dict, *, lang: str | None = None) -> str | None:
     """None — ставка допустима, иначе текст ошибки для игрока."""
+    lang = lang or i18n.DEFAULT_LANGUAGE
     if not settings["roulette_bets_enabled"]:
-        return "Ставки в рулетке отключены."
+        return i18n.t("economy.bet_disabled", lang)
     if bet < 1:
-        return "Ставка должна быть не меньше 1."
+        return i18n.t("economy.bet_min", lang)
     max_bet = settings["roulette_max_bet"]
     if max_bet > 0 and bet > max_bet:
-        return f"Максимальная ставка — {format_amount(max_bet, settings)}."
+        return i18n.t("economy.bet_max", lang, max=format_amount(max_bet, settings))
     if bet > balance:
-        return f"Недостаточно средств: на балансе {format_amount(balance, settings)}."
+        return i18n.t("economy.bet_insufficient", lang, balance=format_amount(balance, settings))
     return None
 
 

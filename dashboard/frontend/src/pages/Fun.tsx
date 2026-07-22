@@ -11,11 +11,13 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
+import { useT } from '../context/LanguageContext'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
 export function FunPage() {
+  const t = useT()
   const [settings, setSettings] = useState<FunSettings | null>(null)
   const [wordle, setWordle] = useState<WordleSettings | null>(null)
   const [error, setError] = useState('')
@@ -25,14 +27,14 @@ export function FunPage() {
   useEffect(() => {
     fetchFunSettings()
       .then(setSettings)
-      .catch(() => setError('Не удалось загрузить настройки модуля «Развлечения»'))
+      .catch(() => setError(t('fun.errorLoad')))
     fetchWordleSettings()
       .then(setWordle)
-      .catch(() => setError('Не удалось загрузить настройки Вордла'))
-  }, [])
+      .catch(() => setError(t('fun.errorLoadWordle')))
+  }, [t])
 
   if (!settings || !wordle) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const save = async () => {
@@ -44,9 +46,9 @@ export function FunPage() {
       setSettings(updated)
       const updatedWordle = await updateWordleSettings(wordle)
       setWordle(updatedWordle)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('fun.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -57,30 +59,25 @@ export function FunPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Confetti size={22} className="text-primary" />
-          Развлечения
+          {t('fun.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? 'Модуль включён' : 'Модуль выключен'}
+          label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
         />
       </div>
-      <p className="text-sm text-muted">
-        Лёгкие фан-команды для чата. Пока модуль выключен, обе команды отвечают «Модуль отключён».
-      </p>
+      <p className="text-sm text-muted">{t('fun.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">🔫 Русская рулетка — /русская-рулетка</h2>
-        <p className="text-sm text-muted">
-          Игрок сам жмёт на курок: 1 шанс из 6 «погибнуть». Проигравший получает Discord-таймаут на заданное число
-          минут. Игрок рискует добровольно — команда действует только на того, кто её вызвал.
-        </p>
+        <h2 className="font-semibold text-foreground">{t('fun.roulette.title')}</h2>
+        <p className="text-sm text-muted">{t('fun.roulette.desc')}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-roulette-timeout">
-              Таймаут проигравшему, мин (0 — без наказания, максимум 1440)
+              {t('fun.roulette.timeout')}
             </label>
             <input
               id="fun-roulette-timeout"
@@ -94,7 +91,7 @@ export function FunPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-roulette-cooldown">
-              Кулдаун на игрока, сек (0 — без кулдауна, максимум 3600)
+              {t('fun.roulette.cooldown')}
             </label>
             <input
               id="fun-roulette-cooldown"
@@ -107,38 +104,28 @@ export function FunPage() {
             />
           </div>
         </div>
-        <p className="text-xs text-muted">
-          Для выдачи таймаута боту нужно право «Отправлять участников подумать» (Timeout Members). Администраторам
-          Discord таймаут выдать нельзя — в этом случае бот честно напишет, что игроку «повезло».
-        </p>
+        <p className="text-xs text-muted">{t('fun.roulette.hint')}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">🎰 Эмодзи-рулетка — /эмодзи-рулетка</h2>
-        <p className="text-sm text-muted">
-          Выдаёт случайное эмодзи из кастомных эмодзи сервера. Если своих эмодзи на сервере нет — используется
-          стандартный набор. Настроек не требует.
-        </p>
+        <h2 className="font-semibold text-foreground">{t('fun.emojiRoulette.title')}</h2>
+        <p className="text-sm text-muted">{t('fun.emojiRoulette.desc')}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">✨ Авто-Эмодзи</h2>
+          <h2 className="font-semibold text-foreground">{t('fun.autoEmoji.title')}</h2>
           <Toggle
             checked={settings.auto_emoji_enabled}
             onChange={(v) => setSettings({ ...settings, auto_emoji_enabled: v })}
-            label={settings.auto_emoji_enabled ? 'Включено' : 'Выключено'}
+            label={settings.auto_emoji_enabled ? t('fun.autoEmoji.on') : t('fun.autoEmoji.off')}
           />
         </div>
-        <p className="text-sm text-muted">
-          Бот изредка ставит случайное серверное эмодзи реакцией на сообщения участников (в любом канале, только на
-          сообщения людей). Частота управляется шансом и минимальным интервалом на канал, а чтобы
-          реакции «не висели долго», бот сам снимает свою реакцию через заданное время.
-        </p>
+        <p className="text-sm text-muted">{t('fun.autoEmoji.desc')}</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-ae-chance">
-              Шанс на сообщение, % (1–100)
+              {t('fun.autoEmoji.chance')}
             </label>
             <input
               id="fun-ae-chance"
@@ -152,7 +139,7 @@ export function FunPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-ae-interval">
-              Мин. интервал на канал, сек (0–86400)
+              {t('fun.autoEmoji.interval')}
             </label>
             <input
               id="fun-ae-interval"
@@ -166,7 +153,7 @@ export function FunPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-ae-remove">
-              Снять реакцию через, сек (0 — не снимать, до 3600)
+              {t('fun.autoEmoji.remove')}
             </label>
             <input
               id="fun-ae-remove"
@@ -183,29 +170,24 @@ export function FunPage() {
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">🟩 Вордл — /вордл</h2>
+          <h2 className="font-semibold text-foreground">{t('fun.wordle.title')}</h2>
           <Toggle
             checked={wordle.enabled}
             onChange={(v) => setWordle({ ...wordle, enabled: v })}
-            label={wordle.enabled ? 'Вордл включён' : 'Вордл выключен'}
+            label={wordle.enabled ? t('fun.wordle.enabled') : t('fun.wordle.disabled')}
           />
         </div>
-        <p className="text-sm text-muted">
-          Русский Wordle: каждый день одно общее слово из 5 букв на 6 попыток. Своя доска с буквами видна только
-          игроку (ввод через кнопку и модальное окно), а в канал бот публикует живую карточку «X играет» с цветами
-          без букв. Тренировка без статистики — /вордл-тренировка, личная статистика — /вордл-стата, топ сервера —
-          /вордл-топ. Раз в день бот подводит итоги: серия сервера, 👑 у лучшего результата и кнопка «Играть».
-        </p>
+        <p className="text-sm text-muted">{t('fun.wordle.desc')}</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="wordle-channel">
-              ID канала для анонсов и live-карточек (пусто — карточки в канале команды, без ежедневных анонсов)
+              {t('fun.wordle.channel')}
             </label>
             <input
               id="wordle-channel"
               type="text"
               inputMode="numeric"
-              placeholder="ID канала"
+              placeholder={t('fun.wordle.channelPlaceholder')}
               value={wordle.channel_id}
               onChange={(e) => setWordle({ ...wordle, channel_id: e.target.value.replace(/\D/g, '') })}
               className={inputClass}
@@ -213,7 +195,7 @@ export function FunPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="wordle-time">
-              Время ежедневного анонса, МСК (ЧЧ:ММ)
+              {t('fun.wordle.time')}
             </label>
             <input
               id="wordle-time"
@@ -225,16 +207,13 @@ export function FunPage() {
             />
           </div>
         </div>
-        <p className="text-xs text-muted">
-          Слово дня общее для всего сервера и меняется в полночь по МСК. Словарь — существительные из 5 букв,
-          буква «ё» считается как «е».
-        </p>
+        <p className="text-xs text-muted">{t('fun.wordle.hint')}</p>
       </Card>
 
       {saved && <p className="text-sm text-primary">{saved}</p>}
       <div>
         <Button variant="primary" onClick={save} disabled={busy}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+          {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </div>

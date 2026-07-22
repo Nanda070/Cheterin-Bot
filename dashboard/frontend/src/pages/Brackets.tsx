@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useT } from '../context/LanguageContext'
 import { useNavigate } from 'react-router-dom'
 import {
   createBracket,
@@ -10,10 +11,10 @@ import {
   type EventSummary,
 } from '../api/client'
 
-const FORMAT_LABEL: Record<BracketFormat, string> = {
-  single_elim: 'Single Elimination',
-  double_elim: 'Double Elimination',
-  round_robin: 'Round Robin',
+const FORMAT_KEYS: Record<BracketFormat, string> = {
+  single_elim: 'brackets.format.singleElim',
+  double_elim: 'brackets.format.doubleElim',
+  round_robin: 'brackets.format.roundRobin',
 }
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -32,6 +33,7 @@ function shuffle(items: string[]): string[] {
 }
 
 export function BracketsPage() {
+  const t = useT()
   const navigate = useNavigate()
   const [brackets, setBrackets] = useState<BracketSummary[]>([])
   const [events, setEvents] = useState<EventSummary[]>([])
@@ -51,7 +53,7 @@ export function BracketsPage() {
   const reload = () => {
     fetchBrackets()
       .then(setBrackets)
-      .catch(() => setError('Не удалось загрузить сетки'))
+      .catch(() => setError(t('brackets.errorLoad')))
   }
 
   useEffect(reload, [])
@@ -82,7 +84,7 @@ export function BracketsPage() {
       const loaded = await fetchEventEntries(eventId)
       setEntries(loaded)
     } catch {
-      setCreateError('Не удалось загрузить участников события')
+      setCreateError(t('brackets.errorEntries'))
     }
   }
 
@@ -115,7 +117,7 @@ export function BracketsPage() {
       setCreateOpen(false)
       reload()
     } catch {
-      setCreateError('Не удалось создать сетку')
+      setCreateError(t('brackets.errorCreate'))
     } finally {
       setCreateBusy(false)
     }
@@ -124,9 +126,9 @@ export function BracketsPage() {
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-foreground">Сетки</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t('brackets.title')}</h1>
         <Button variant="primary" onClick={openCreate} className="ml-auto">
-          Создать сетку
+          {t('brackets.create')}
         </Button>
       </div>
 
@@ -137,29 +139,29 @@ export function BracketsPage() {
           <Card key={b.id} interactive className="!p-3" onClick={() => navigate(`/brackets/${b.id}`)}>
             <p className="text-sm text-foreground">{b.title}</p>
             <p className="text-xs text-muted">
-              {b.entry_count} участников · {FORMAT_LABEL[b.format] ?? b.format}
+              {t('brackets.entryCount', { count: b.entry_count })} · {t(FORMAT_KEYS[b.format])}
             </p>
           </Card>
         ))}
-        {brackets.length === 0 && <p className="text-sm text-muted">Сеток пока нет.</p>}
+        {brackets.length === 0 && <p className="text-sm text-muted">{t('brackets.empty')}</p>}
       </div>
 
-      <Modal open={createOpen} title="Создать сетку" onClose={() => setCreateOpen(false)}>
+      <Modal open={createOpen} title={t('brackets.modal.create')} onClose={() => setCreateOpen(false)}>
         {step === 'source' ? (
           <div className="flex flex-col gap-3">
             <div className="flex gap-2">
               <Button variant={tab === 'event' ? 'primary' : 'secondary'} onClick={() => setTab('event')}>
-                Из ивента
+                {t('brackets.source.event')}
               </Button>
               <Button variant={tab === 'manual' ? 'primary' : 'secondary'} onClick={() => setTab('manual')}>
-                Вручную
+                {t('brackets.source.manual')}
               </Button>
             </div>
 
             {tab === 'event' ? (
               <>
                 <label className="text-sm text-muted" htmlFor="bracket-event">
-                  Событие
+                  {t('brackets.field.event')}
                 </label>
                 <Select
                   id="bracket-event"
@@ -168,16 +170,16 @@ export function BracketsPage() {
                   options={events
                     .filter((ev) => ev.type === 'tournament')
                     .map((ev) => ({ id: ev.message_id, name: ev.title }))}
-                  placeholder="Выберите событие…"
+                  placeholder={t('brackets.field.event')}
                 />
                 {entries.length > 0 && (
-                  <p className="text-xs text-muted">Загружено участников: {entries.length}</p>
+                  <p className="text-xs text-muted">{t('brackets.entriesLoaded', { count: entries.length })}</p>
                 )}
               </>
             ) : (
               <>
                 <label className="text-sm text-muted" htmlFor="bracket-manual-names">
-                  Имена (по одному на строку)
+                  {t('brackets.field.names')}
                 </label>
                 <textarea
                   id="bracket-manual-names"
@@ -190,7 +192,7 @@ export function BracketsPage() {
             )}
 
             <label className="text-sm text-muted" htmlFor="bracket-title">
-              Название
+              {t('brackets.field.title')}
             </label>
             <input
               id="bracket-title"
@@ -200,37 +202,37 @@ export function BracketsPage() {
             />
 
             <label className="text-sm text-muted" htmlFor="bracket-format">
-              Формат
+              {t('brackets.field.format')}
             </label>
             <Select
               id="bracket-format"
               value={format}
               onChange={(id) => setFormat(id as BracketFormat)}
-              options={(Object.keys(FORMAT_LABEL) as BracketFormat[]).map((f) => ({ id: f, name: FORMAT_LABEL[f] }))}
+              options={(Object.keys(FORMAT_KEYS) as BracketFormat[]).map((f) => ({ id: f, name: t(FORMAT_KEYS[f]) }))}
             />
             <p className="text-xs text-muted">
-              {format === 'single_elim' && 'Классическая сетка на вылет: одно поражение — выбывание.'}
-              {format === 'double_elim' && 'Верхняя и нижняя сетки: выбывание после двух поражений, гранд-финал.'}
-              {format === 'round_robin' && 'Круговая система: каждый играет с каждым, таблица очков (победа 3, ничья 1). До 20 участников.'}
+              {format === 'single_elim' && t('brackets.format.singleElimHint')}
+              {format === 'double_elim' && t('brackets.format.doubleElimHint')}
+              {format === 'round_robin' && t('brackets.format.roundRobinHint')}
             </p>
 
             {createError && <p className="text-sm text-danger">{createError}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setCreateOpen(false)}>
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" onClick={goToSeedStep}>
-                Далее
+                {t('common.next')}
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted">Порядок посева</p>
+              <p className="text-sm text-muted">{t('brackets.seedOrder')}</p>
               <Button variant="secondary" onClick={() => setEntries((prev) => shuffle(prev))}>
-                Перемешать
+                {t('brackets.shuffle')}
               </Button>
             </div>
 
@@ -244,7 +246,7 @@ export function BracketsPage() {
                   <span className="flex gap-1">
                     <button
                       type="button"
-                      aria-label="Переместить вверх"
+                      aria-label={t('brackets.moveUp')}
                       onClick={() => moveEntry(index, -1)}
                       className="cursor-pointer text-muted hover:text-foreground"
                     >
@@ -252,7 +254,7 @@ export function BracketsPage() {
                     </button>
                     <button
                       type="button"
-                      aria-label="Переместить вниз"
+                      aria-label={t('brackets.moveDown')}
                       onClick={() => moveEntry(index, 1)}
                       className="cursor-pointer text-muted hover:text-foreground"
                     >
@@ -267,10 +269,10 @@ export function BracketsPage() {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setStep('source')} disabled={createBusy}>
-                Назад
+                {t('common.back')}
               </Button>
               <Button variant="primary" onClick={save} disabled={createBusy || entries.length < 2}>
-                {createBusy ? 'Создаём…' : 'Сгенерировать'}
+                {createBusy ? t('common.creating') : t('common.generate')}
               </Button>
             </div>
           </div>

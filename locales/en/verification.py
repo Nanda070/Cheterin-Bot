@@ -1,0 +1,15 @@
+MESSAGES: dict[str, str] = {
+    "verification.button": "I'm not a bot",
+    "verification.panel_welcome": "Click the button below to verify you're not a bot and get access to the server.",
+    "verification.role_reason_unverified": "Verification: role until confirmed",
+    "verification.not_configured": "Verification is not configured — contact support.",
+    "verification.role_not_found": "Verification role not found on this server — contact admins.",
+    "verification.already_verified": "You are already verified.",
+    "verification.bot_forbidden": "The bot lacks permission to assign the role — contact admins.",
+    "verification.log_reason": "Verified via button",
+    "verification.success": "✅ Welcome! Access granted.",
+    "verification.setup_configure_first": "Set the verification role in the dashboard first (Verification section).",
+    "verification.panel_installed": "Panel posted.",
+    "verification.role_reason_verified": "Verification: confirmed via button",
+    "verification.role_reason_remove_unverified": "Verification complete",
+}

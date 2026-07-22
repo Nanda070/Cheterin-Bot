@@ -3,6 +3,9 @@ import logging
 
 import discord
 
+import feedback_panel_core
+import i18n
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +20,7 @@ def upsert_embed_field(embed: discord.Embed, field_name: str, value: str, inline
 async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: int, decided_by_mention: str) -> dict:
     from feedback_menu import FeedbackDecisionView, get_feedback_categories
 
+    lang = i18n.lang_for(guild.id if guild else None)
     cases = settings_db.get(guild.id, "feedback_cases", {})
     case_data = cases.get(case_id)
     if not case_data:
@@ -28,8 +32,14 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
     config = get_feedback_categories(guild.id).get(category_key)
     if config is None:
         return {"ok": False, "error": "category_deleted"}
-    status_text = "Принято" if approved else "Отклонено"
-    reviewed_status = f"Рассмотрено · {status_text}"
+    status_text = (
+        i18n.t("feedback.status.approved", lang)
+        if approved
+        else i18n.t("feedback.status.denied", lang)
+    )
+    reviewed_status = i18n.t("feedback.status.reviewed_with", lang, status=status_text)
+    status_field = i18n.t("feedback.field.status", lang)
+    reviewer_field = i18n.t("feedback.field.reviewer", lang)
 
     case_data["status"] = "approved" if approved else "denied"
     case_data["status_label"] = reviewed_status
@@ -46,8 +56,8 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
             if public_message.embeds:
                 emb = public_message.embeds[0].copy()
                 emb.color = color
-                upsert_embed_field(emb, "Статус", reviewed_status, inline=True)
-                upsert_embed_field(emb, "Рассмотрел", decided_by_mention, inline=False)
+                upsert_embed_field(emb, status_field, reviewed_status, inline=True)
+                upsert_embed_field(emb, reviewer_field, decided_by_mention, inline=False)
                 await public_message.edit(embed=emb)
         except Exception as e:
             logger.warning("Не удалось обновить публичное сообщение для %s: %s", case_id, e)
@@ -59,11 +69,18 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
             if decision_message.embeds:
                 emb = decision_message.embeds[0].copy()
                 emb.color = color
-                upsert_embed_field(emb, "Статус", reviewed_status, inline=False)
-                upsert_embed_field(emb, "Рассмотрел", f"{decided_by_mention} (`{decided_by_id}`)", inline=False)
+                upsert_embed_field(emb, status_field, reviewed_status, inline=False)
+                upsert_embed_field(
+                    emb,
+                    reviewer_field,
+                    f"{decided_by_mention} (`{decided_by_id}`)",
+                    inline=False,
+                )
                 await decision_message.edit(
                     embed=emb,
-                    view=FeedbackDecisionView(bot, case_id, case_data["submitter_id"], category_key, disabled=True),
+                    view=FeedbackDecisionView(
+                        bot, case_id, case_data["submitter_id"], category_key, guild.id, disabled=True
+                    ),
                 )
         except Exception as e:
             logger.warning("Не удалось обновить сообщение решения для %s: %s", case_id, e)
@@ -78,31 +95,40 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
     dm_ok = False
     if user:
         dm_emb = discord.Embed(
-            title=f"Результат по обращению №{case_id}",
-            description="Ваше обращение было рассмотрено.",
+            title=i18n.t("feedback.dm.title", lang, case_id=case_id),
+            description=i18n.t("feedback.dm.description", lang),
             color=color,
             timestamp=bot.utcnow(),
         )
-        dm_emb.add_field(name="Статус", value="Рассмотрено", inline=False)
+        dm_emb.add_field(name=status_field, value=i18n.t("feedback.status.reviewed", lang), inline=False)
         dm_emb.add_field(
-            name="Итог", value=config["approved_text"] if approved else config["denied_text"], inline=False
+            name=i18n.t("feedback.dm.field.outcome", lang),
+            value=config["approved_text"] if approved else config["denied_text"],
+            inline=False,
         )
-        dm_emb.add_field(name="Рассмотрел", value=f"{decided_by_mention} (`{decided_by_id}`)", inline=False)
-        dm_emb.set_footer(text=f"Номер обращения: {case_id}")
+        dm_emb.add_field(
+            name=reviewer_field,
+            value=f"{decided_by_mention} (`{decided_by_id}`)",
+            inline=False,
+        )
+        dm_emb.set_footer(text=i18n.t("feedback.dm.footer", lang, case_id=case_id))
         try:
             await user.send(embed=dm_emb)
             dm_ok = True
         except Exception as e:
             logger.debug("Не удалось отправить DM пользователю %s: %s", user.id, e)
 
+    dm_status = i18n.t("feedback.log.dm_ok", lang) if dm_ok else i18n.t("feedback.log.dm_fail", lang)
     log_emb = discord.Embed(
-        title="📌 Решение по обращению",
-        description=(
-            f"**Номер:** `{case_id}`\n"
-            f"**Статус:** Рассмотрено\n"
-            f"**Решение:** {status_text}\n"
-            f"**Рассмотрел:** {decided_by_mention} (`{decided_by_id}`)\n"
-            f"**DM:** {'Успешно' if dm_ok else 'Не удалось отправить'}"
+        title=i18n.t("feedback.log.decision", lang),
+        description=i18n.t(
+            "feedback.log.decision_body",
+            lang,
+            case_id=case_id,
+            decision=status_text,
+            mention=decided_by_mention,
+            user_id=decided_by_id,
+            dm_status=dm_status,
         ),
         color=color,
         timestamp=bot.utcnow(),
@@ -111,12 +137,16 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
 
     if thread is not None:
         dec_emb = discord.Embed(
-            title=f"Решение по обращению {case_id}",
+            title=i18n.t("feedback.thread.decision_title", lang, case_id=case_id),
             color=color,
             timestamp=bot.utcnow(),
         )
-        dec_emb.add_field(name="Статус", value=status_text, inline=False)
-        dec_emb.add_field(name="Рассмотрел", value=f"{decided_by_mention} (`{decided_by_id}`)", inline=False)
+        dec_emb.add_field(name=status_field, value=status_text, inline=False)
+        dec_emb.add_field(
+            name=reviewer_field,
+            value=f"{decided_by_mention} (`{decided_by_id}`)",
+            inline=False,
+        )
         try:
             await thread.send(embed=dec_emb)
             await thread.edit(archived=True, locked=True)
@@ -127,28 +157,21 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
 
 
 async def publish_feedback_panel(bot, channel, published_by_id: int, published_by_mention: str) -> discord.Message:
-    from feedback_menu import FeedbackView, PANEL_BANNER_URL
+    from feedback_menu import FeedbackView
 
-    embed = discord.Embed(
-        description=(
-            "### <:IconModeration:1356540597770518538>・Выберите тип связи со стаффом.\n\n"
-            "```\n"
-            "В создавшемся обращении, как можно точнее опишите его суть "
-            "и по возможности прикрепите фото и/или видео для дальнейшего ознакомления.\n"
-            "```"
-        ),
-        color=discord.Color.from_rgb(44, 47, 51),
-    )
-    embed.set_image(url=PANEL_BANNER_URL)
-
-    message = await channel.send(embed=embed, view=FeedbackView(bot, channel.guild.id))
+    lang = i18n.lang_for(channel.guild.id)
+    payload = feedback_panel_core.build_panel_payload(channel.guild.id, lang)
+    message = await channel.send(**{k: v for k, v in payload.items() if v is not None}, view=FeedbackView(bot, channel.guild.id))
 
     log_embed = discord.Embed(
-        title="🧩 Панель feedback опубликована",
-        description=(
-            f"**Кто:** {published_by_mention} (`{published_by_id}`)\n"
-            f"**Канал:** {channel.mention}\n"
-            f"**Сообщение:** [Открыть]({message.jump_url})"
+        title=i18n.t("feedback.log.panel_published", lang),
+        description=i18n.t(
+            "feedback.log.panel_published_body",
+            lang,
+            mention=published_by_mention,
+            user_id=published_by_id,
+            channel_mention=channel.mention,
+            jump_url=message.jump_url,
         ),
         color=discord.Color.blurple(),
         timestamp=bot.utcnow(),

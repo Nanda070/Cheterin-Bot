@@ -12,6 +12,7 @@
 
 import re
 
+import i18n
 import settings_db
 
 MODULE_NAME = "family"
@@ -101,13 +102,15 @@ def status_color(status: str) -> int:
     return {"open": 0x5865F2, "approved": 0x57F287, "denied": 0xED4245, "closed": 0xFEE75C}.get(status, 0x2B2D31)
 
 
-def status_label(status: str) -> str:
-    return {"open": "На рассмотрении", "approved": "Принята", "denied": "Отклонена", "closed": "Закрыта"}.get(status, status)
+def status_label(status: str, lang: str = i18n.DEFAULT_LANGUAGE) -> str:
+    key = f"family.status.{status}"
+    text = i18n.t(key, lang)
+    return text if text != key else status
 
 
 # ────────────────────────── Дни рождения ──────────────────────────
 
-def parse_birthday_date(value: str) -> tuple[int, int, str]:
+def parse_birthday_date(value: str, lang: str = i18n.DEFAULT_LANGUAGE) -> tuple[int, int, str]:
     cleaned = " ".join(value.strip().lower().replace(",", " ").split())
     numeric = re.fullmatch(r"(\d{1,2})[./\- ](\d{1,2})(?:[./\- ](\d{2,4}))?", cleaned)
     if numeric:
@@ -117,17 +120,17 @@ def parse_birthday_date(value: str) -> tuple[int, int, str]:
     else:
         textual = re.fullmatch(r"(\d{1,2})\s+([а-яё]+)(?:\s+(\d{2,4}))?", cleaned)
         if not textual or textual.group(2) not in MONTH_ALIASES:
-            raise ValueError("Используйте формат `дд.мм`, `дд.мм.гггг` или `1 января`.")
+            raise ValueError(i18n.t("family.birthdays.format_error", lang))
         day = int(textual.group(1))
         month = MONTH_ALIASES[textual.group(2)]
         year = textual.group(3)
 
     if not 1 <= month <= 12:
-        raise ValueError("Месяц должен быть от 1 до 12.")
+        raise ValueError(i18n.t("family.birthdays.month_range", lang))
 
     max_day = 29 if month == 2 else 30 if month in {4, 6, 9, 11} else 31
     if not 1 <= day <= max_day:
-        raise ValueError("Такой даты не существует.")
+        raise ValueError(i18n.t("family.birthdays.invalid_date", lang))
 
     display = f"{day:02d}.{month:02d}"
     if year:
@@ -137,14 +140,15 @@ def parse_birthday_date(value: str) -> tuple[int, int, str]:
     return day, month, display
 
 
-def build_birthday_text(rows: list[dict], guild) -> str:
+def build_birthday_text(rows: list[dict], guild, lang: str = i18n.DEFAULT_LANGUAGE) -> str:
     grouped: dict[int, list[dict]] = {month: [] for month in MONTHS}
     for row in rows:
         grouped[row["month"]].append(row)
 
-    lines = ["**🎂 Дни рождения 🎂**", ""]
-    for month, name in MONTHS.items():
-        lines.append(f"> **{month} {name}:**")
+    lines = [i18n.t("family.birthdays.list_header", lang), ""]
+    for month, _ in MONTHS.items():
+        name = i18n.t(f"family.month.{month}", lang)
+        lines.append(i18n.t("family.birthdays.list_month_line", lang, month=month, name=name))
         for row in grouped[month]:
             member = guild.get_member(row["user_id"])
             mention = member.mention if member else f"<@{row['user_id']}>"

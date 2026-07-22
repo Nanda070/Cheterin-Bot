@@ -1,5 +1,5 @@
 import { Trash, Warning, X } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   banMember,
   createMemberWarn,
@@ -19,6 +19,7 @@ import { Card } from '../components/ui/Card'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
+import { useLanguage, useT } from '../context/LanguageContext'
 
 type PendingAction = 'ban' | 'kick' | 'warn' | null
 
@@ -29,6 +30,9 @@ interface Props {
 }
 
 export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
+  const t = useT()
+  const { lang } = useLanguage()
+  const dateLocale = lang === 'ru' ? 'ru-RU' : 'en-US'
   const [detail, setDetail] = useState<MemberDetail | null>(null)
   const [assignable, setAssignable] = useState<RoleInfo[]>([])
   const [pending, setPending] = useState<PendingAction>(null)
@@ -41,8 +45,17 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
   const [activeWarnCount, setActiveWarnCount] = useState(0)
   const [warnBusy, setWarnBusy] = useState(false)
 
+  const deleteMessageOptions = useMemo(
+    () => [
+      { id: '0', name: t('members.detail.deleteNone') },
+      { id: '1', name: t('members.detail.delete1Day') },
+      { id: '7', name: t('members.detail.delete7Days') },
+    ],
+    [t],
+  )
+
   const reload = () => {
-    fetchMemberDetail(memberId).then(setDetail).catch(() => setError('Не удалось загрузить участника'))
+    fetchMemberDetail(memberId).then(setDetail).catch(() => setError(t('members.detail.errorLoad')))
     fetchRoles().then(setAssignable).catch(() => {})
     reloadWarns()
   }
@@ -56,11 +69,11 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       .catch(() => {})
   }
 
-  useEffect(reload, [memberId])
+  useEffect(reload, [memberId, t])
 
   const confirmAction = async () => {
     if (!reason.trim()) {
-      setError('Укажите причину')
+      setError(t('members.detail.reasonRequired'))
       return
     }
     setBusy(true)
@@ -77,7 +90,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       onActionDone()
       if (pending !== 'warn') onClose()
     } catch {
-      setError('Discord отклонил действие (не хватает прав?)')
+      setError(t('members.detail.discordRejected'))
     } finally {
       setBusy(false)
     }
@@ -89,7 +102,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       await deleteWarn(warnId)
       reloadWarns()
     } catch {
-      setError('Не удалось снять предупреждение')
+      setError(t('members.detail.warnRemoveFailed'))
     } finally {
       setWarnBusy(false)
     }
@@ -103,7 +116,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       else await grantRole(memberId, roleId)
       reload()
     } catch {
-      setError('Discord отклонил изменение роли')
+      setError(t('members.detail.roleChangeFailed'))
     } finally {
       setBusy(false)
     }
@@ -112,12 +125,19 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
   if (!detail) {
     return (
       <Card className="animate-fade-in-up">
-        <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+        <p className="text-sm text-muted">{error || t('common.loading')}</p>
       </Card>
     )
   }
 
   const memberRoleIds = new Set(detail.roles.map((r) => r.id))
+
+  const modalTitle =
+    pending === 'ban'
+      ? t('members.detail.banTitle', { name: detail.display_name })
+      : pending === 'kick'
+        ? t('members.detail.kickTitle', { name: detail.display_name })
+        : t('members.detail.warnTitle', { name: detail.display_name })
 
   return (
     <Card className="animate-fade-in-up flex flex-col gap-4">
@@ -135,27 +155,31 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       </div>
 
       <dl className="grid grid-cols-2 gap-2 text-sm">
-        <dt className="text-muted">Вошёл на сервер</dt>
-        <dd>{detail.joined_at ? new Date(detail.joined_at).toLocaleDateString('ru-RU') : '—'}</dd>
-        <dt className="text-muted">Аккаунт создан</dt>
-        <dd>{new Date(detail.created_at).toLocaleDateString('ru-RU')}</dd>
-        <dt className="text-muted">Приглашения</dt>
+        <dt className="text-muted">{t('members.detail.joinedAt')}</dt>
+        <dd>{detail.joined_at ? new Date(detail.joined_at).toLocaleDateString(dateLocale) : t('common.none')}</dd>
+        <dt className="text-muted">{t('members.detail.accountCreated')}</dt>
+        <dd>{new Date(detail.created_at).toLocaleDateString(dateLocale)}</dd>
+        <dt className="text-muted">{t('members.detail.invites')}</dt>
         <dd>
-          {detail.invite_stats.invites} (зашло {detail.invite_stats.joins}, ушло {detail.invite_stats.leaves})
+          {t('members.detail.inviteStats', {
+            invites: detail.invite_stats.invites,
+            joins: detail.invite_stats.joins,
+            leaves: detail.invite_stats.leaves,
+          })}
         </dd>
-        <dt className="text-muted">Обращений/жалоб</dt>
+        <dt className="text-muted">{t('members.detail.feedbackCases')}</dt>
         <dd>{detail.feedback_case_count}</dd>
       </dl>
 
       <div>
-        <h3 className="mb-2 text-sm font-medium text-muted">Роли</h3>
+        <h3 className="mb-2 text-sm font-medium text-muted">{t('members.detail.roles')}</h3>
         <div className="flex flex-wrap gap-1.5">
           {detail.roles.map((role) => (
             <button
               key={role.id}
               onClick={() => toggleRole(role.id, true)}
               disabled={busy}
-              title="Нажмите, чтобы снять роль"
+              title={t('members.detail.removeRoleTitle')}
               className="cursor-pointer rounded-full border border-border px-2.5 py-0.5 text-xs transition-colors hover:border-danger hover:text-danger"
               style={{ color: role.color !== '#000000' ? role.color : undefined }}
             >
@@ -166,7 +190,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
             align="left"
             trigger={
               <span className="rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted hover:text-foreground">
-                + добавить роль
+                {t('members.detail.addRole')}
               </span>
             }
           >
@@ -185,10 +209,10 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
         <div>
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-muted">
             <Warning size={14} />
-            Предупреждения ({activeWarnCount})
+            {t('members.detail.warns', { count: activeWarnCount })}
           </h3>
           {warns.length === 0 ? (
-            <p className="text-sm text-muted">Предупреждений нет.</p>
+            <p className="text-sm text-muted">{t('members.detail.noWarns')}</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {warns.map((w) => {
@@ -197,13 +221,13 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
                   <li key={w.id} className="flex items-start justify-between gap-2 text-xs">
                     <span className={isActive ? 'text-foreground' : 'text-muted line-through'}>
                       #{w.id} — {w.reason}
-                      <span className="ml-1 text-muted">({new Date(w.created_at).toLocaleDateString('ru-RU')})</span>
+                      <span className="ml-1 text-muted">({new Date(w.created_at).toLocaleDateString(dateLocale)})</span>
                     </span>
                     {isActive && (
                       <button
                         onClick={() => removeWarn(w.id)}
                         disabled={warnBusy}
-                        title="Снять предупреждение"
+                        title={t('members.detail.removeWarnTitle')}
                         className="shrink-0 cursor-pointer text-muted hover:text-danger"
                       >
                         <Trash size={14} />
@@ -222,63 +246,49 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       {!detail.is_bot && (
         <div className="flex gap-2 border-t border-border pt-4">
           <Button variant="danger" onClick={() => setPending('ban')} disabled={busy}>
-            Забанить
+            {t('members.detail.ban')}
           </Button>
           <Button variant="secondary" onClick={() => setPending('kick')} disabled={busy}>
-            Кикнуть
+            {t('members.detail.kick')}
           </Button>
           <Button variant="secondary" onClick={() => setPending('warn')} disabled={busy}>
-            Выдать предупреждение
+            {t('members.detail.warn')}
           </Button>
         </div>
       )}
 
-      <Modal
-        open={pending !== null}
-        title={
-          pending === 'ban'
-            ? `Забанить ${detail.display_name}?`
-            : pending === 'kick'
-              ? `Кикнуть ${detail.display_name}?`
-              : `Выдать предупреждение ${detail.display_name}?`
-        }
-        onClose={() => setPending(null)}
-      >
+      <Modal open={pending !== null} title={modalTitle} onClose={() => setPending(null)}>
         <div className="flex flex-col gap-3">
           <label className="text-sm text-muted" htmlFor="mod-reason">
-            Причина (обязательно)
+            {t('members.detail.reasonLabel')}
           </label>
           <input
             id="mod-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-            placeholder="Например: спам в общем чате"
+            placeholder={t('members.detail.reasonPlaceholder')}
           />
           {pending === 'ban' && (
             <>
               <label className="text-sm text-muted" htmlFor="mod-days">
-                Удалить сообщения за
+                {t('members.detail.deleteMessages')}
               </label>
               <Select
                 id="mod-days"
                 value={String(deleteDays)}
                 onChange={(id) => setDeleteDays(Number(id) as 0 | 1 | 7)}
-                options={[
-                  { id: '0', name: 'Не удалять' },
-                  { id: '1', name: '1 день' },
-                  { id: '7', name: '7 дней' },
-                ]}
+                options={deleteMessageOptions}
               />
             </>
           )}
           {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setPending(null)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant={pending === 'warn' ? 'primary' : 'danger'} onClick={confirmAction} disabled={busy}>
-              {busy ? 'Выполняем…' : 'Подтвердить'}
+              {busy ? t('common.confirming') : t('common.confirm')}
             </Button>
           </div>
         </div>

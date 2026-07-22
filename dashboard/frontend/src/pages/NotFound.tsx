@@ -1,8 +1,11 @@
 import { Compass } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
+import { useT } from '../context/LanguageContext'
 
 export function NotFoundPage() {
+  const t = useT()
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4">
       <Card className="animate-fade-in-up flex w-full max-w-sm flex-col items-center gap-4 text-center">
@@ -11,17 +14,15 @@ export function NotFoundPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold text-foreground">Страница не найдена</h1>
-          <p className="text-sm text-muted">
-            Такого адреса не существует — возможно, ссылка устарела или в ней опечатка.
-          </p>
+          <h1 className="text-xl font-semibold text-foreground">{t('notFound.title')}</h1>
+          <p className="text-sm text-muted">{t('notFound.body')}</p>
         </div>
 
         <Link
           to="/"
           className="text-sm font-medium text-primary transition-colors duration-200 ease-out hover:text-primary-hover"
         >
-          Вернуться на главную
+          {t('notFound.back')}
         </Link>
       </Card>
     </div>

@@ -5,6 +5,8 @@ from discord.ext import commands
 
 import settings_db
 
+import i18n
+
 logger = logging.getLogger(__name__)
 
 MODULE_NAME = "reaction_roles"
@@ -46,8 +48,8 @@ async def resolve_reacting_member(guild, user_id: int):
         return None
 
 
-def build_reason(action: str, message_id) -> str:
-    return f"Reaction role: {action} — by reaction on message {message_id}"
+def build_reason(action: str, message_id, lang: str) -> str:
+    return i18n.t("reaction_roles.audit_reason", lang, action=action, message_id=message_id)
 
 
 async def handle_reaction_change(bot, payload, action: str) -> None:
@@ -77,7 +79,7 @@ async def handle_reaction_change(bot, payload, action: str) -> None:
     if member is None:
         return
 
-    reason = build_reason(action, payload.message_id)
+    reason = build_reason(action, payload.message_id, i18n.lang_for(payload.guild_id))
     try:
         if action == "add":
             await member.add_roles(role, reason=reason)

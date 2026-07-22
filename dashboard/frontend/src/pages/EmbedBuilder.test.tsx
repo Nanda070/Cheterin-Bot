@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { EmbedBuilderPage } from './EmbedBuilder'
@@ -15,7 +16,7 @@ describe('EmbedBuilderPage', () => {
       .spyOn(client, 'createEmbedMessage')
       .mockResolvedValue({ message_id: '999', channel_id: '500' })
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -37,7 +38,7 @@ describe('EmbedBuilderPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     const createSpy = vi.spyOn(client, 'createEmbedMessage')
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -52,7 +53,7 @@ describe('EmbedBuilderPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     fireEvent.click(await screen.findByText(/\+ Добавить поле/))
     expect(screen.getByPlaceholderText('Название поля')).toBeInTheDocument()
@@ -81,7 +82,7 @@ describe('EmbedBuilderPage', () => {
       role_ids: [],
     })
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     fireEvent.click(await screen.findByText('Редактировать существующее'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -97,7 +98,7 @@ describe('EmbedBuilderPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     fireEvent.change(await screen.findByLabelText(/^Title/), { target: { value: 'Preview Title' } })
     await waitFor(() => expect(screen.getByText('Preview Title')).toBeInTheDocument())
@@ -108,7 +109,7 @@ describe('EmbedBuilderPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     const createSpy = vi.spyOn(client, 'createEmbedMessage')
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -128,7 +129,7 @@ describe('EmbedBuilderPage', () => {
       .spyOn(client, 'createEmbedMessage')
       .mockResolvedValue({ message_id: '999', channel_id: '500' })
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -146,7 +147,7 @@ describe('EmbedBuilderPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     const createSpy = vi.spyOn(client, 'createEmbedMessage')
 
-    render(<EmbedBuilderPage />)
+    renderWithLanguage(<EmbedBuilderPage />)
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))

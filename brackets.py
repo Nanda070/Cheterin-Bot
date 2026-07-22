@@ -8,6 +8,8 @@ BRACKETS_FILE = "brackets_data.json"
 
 import settings_db
 
+import i18n
+
 def load_brackets(guild_id: int) -> dict:
     return settings_db.get(guild_id, "brackets", {})
 
@@ -18,7 +20,10 @@ def save_brackets(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, "brackets", data)
 
 
-def extract_entries_from_event(ev: dict, guild) -> list[str]:
+def extract_entries_from_event(ev: dict, guild, lang: str | None = None) -> list[str]:
+    if lang is None:
+        guild_id = getattr(guild, "id", None) if guild is not None else None
+        lang = i18n.lang_for(guild_id)
     mode = ev.get("mode", "solo")
     participants = ev.get("participants", [])
 
@@ -30,7 +35,9 @@ def extract_entries_from_event(ev: dict, guild) -> list[str]:
                 entries.append(ign)
                 continue
             member = guild.get_member(p["user_id"]) if guild else None
-            entries.append(member.display_name if member else f"User {p['user_id']}")
+            entries.append(
+                member.display_name if member else i18n.t("brackets.fallback_user", lang, user_id=p["user_id"])
+            )
         return entries
 
     if mode == "team_captain":

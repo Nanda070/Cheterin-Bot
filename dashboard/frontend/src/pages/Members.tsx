@@ -4,9 +4,11 @@ import { fetchMembers, type MembersPage as MembersPageData } from '../api/client
 import { MassAssignModal } from '../components/MassAssignModal'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { useT } from '../context/LanguageContext'
 import { MemberDetailPanel } from './MemberDetailPanel'
 
 export function MembersPage() {
+  const t = useT()
   const [search, setSearch] = useState('')
   const [debounced, setDebounced] = useState('')
   const [page, setPage] = useState(1)
@@ -32,12 +34,12 @@ export function MembersPage() {
         setError('')
       })
       .catch(() => {
-        if (!cancelled) setError('Не удалось загрузить участников')
+        if (!cancelled) setError(t('members.errorLoad'))
       })
     return () => {
       cancelled = true
     }
-  }, [debounced, page])
+  }, [debounced, page, t])
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
 
@@ -50,12 +52,12 @@ export function MembersPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск по имени или нику…"
+              placeholder={t('members.searchPlaceholder')}
               className="w-full rounded-control border border-border bg-surface py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary"
             />
           </div>
           <Button variant="secondary" onClick={() => setMassAssignOpen(true)}>
-            Массовая выдача роли
+            {t('members.massAssign')}
           </Button>
         </div>
 
@@ -89,31 +91,31 @@ export function MembersPage() {
                   <p className="text-sm text-foreground">{member.username}</p>
                   <p className="text-xs text-muted">
                     {member.display_name}
-                    {member.is_bot && ' · бот'} · ролей: {member.role_count}
+                    {member.is_bot && ` · ${t('members.bot')}`} · {t('members.rolesCount', { count: member.role_count })}
                   </p>
                 </div>
               </div>
             </Card>
           ))}
           {data && data.members.length === 0 && (
-            <p className="text-sm text-muted">Никого не найдено.</p>
+            <p className="text-sm text-muted">{t('members.empty')}</p>
           )}
         </div>
 
         {data && totalPages > 1 && (
           <div className="mt-4 flex items-center gap-3">
             <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Назад
+              {t('common.back')}
             </Button>
             <span className="text-sm text-muted">
-              {page} / {totalPages}
+              {t('members.page', { page, total: totalPages })}
             </span>
             <Button
               variant="secondary"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Вперёд
+              {t('common.forward')}
             </Button>
           </div>
         )}

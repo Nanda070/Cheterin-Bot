@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react'
-import {
-  closeEvent,
-  deleteEvent,
-  fetchEventDetail,
-  notifyEventParticipants,
-  type EventDetail,
-  type EventParticipantTeamCode,
-} from '../api/client'
+import { deleteEvent, fetchEventDetail, notifyEventParticipants, closeEvent, type EventDetail, type EventParticipantTeamCode } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
+import { useT } from '../context/LanguageContext'
 
 interface Props {
   messageId: string
@@ -18,6 +12,7 @@ interface Props {
 }
 
 export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
+  const t = useT()
   const [detail, setDetail] = useState<EventDetail | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -29,8 +24,8 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
   useEffect(() => {
     fetchEventDetail(messageId)
       .then(setDetail)
-      .catch(() => setError('Не удалось загрузить событие'))
-  }, [messageId])
+      .catch(() => setError(t('events.detail.errorLoad')))
+  }, [messageId, t])
 
   const close = async () => {
     setBusy(true)
@@ -39,7 +34,7 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
       await closeEvent(messageId)
       onChanged()
     } catch {
-      setError('Не удалось закрыть событие')
+      setError(t('events.detail.errorClose'))
     } finally {
       setBusy(false)
     }
@@ -53,7 +48,7 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
       setPendingDelete(false)
       onChanged()
     } catch {
-      setError('Не удалось удалить событие')
+      setError(t('events.detail.errorDelete'))
       setPendingDelete(false)
     } finally {
       setBusy(false)
@@ -62,7 +57,7 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
 
   const sendNotify = async () => {
     if (!notifyText.trim()) {
-      setNotifyError('Введите текст сообщения')
+      setNotifyError(t('events.detail.notify.empty'))
       return
     }
     setBusy(true)
@@ -72,7 +67,7 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
       setNotifyOpen(false)
       setNotifyText('')
     } catch {
-      setNotifyError('Не удалось отправить рассылку')
+      setNotifyError(t('events.detail.notify.error'))
     } finally {
       setBusy(false)
     }
@@ -81,10 +76,12 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
   if (!detail) {
     return (
       <Card className="animate-fade-in-up">
-        <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+        <p className="text-sm text-muted">{error || t('common.loading')}</p>
       </Card>
     )
   }
+
+  const typeLabel = detail.type === 'tournament' ? t('events.type.tournament') : t('events.type.poll')
 
   return (
     <Card className="animate-fade-in-up flex flex-col gap-4">
@@ -92,7 +89,7 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
         <div>
           <h2 className="font-semibold text-foreground">{detail.title}</h2>
           <p className="text-xs text-muted">
-            {detail.type === 'tournament' ? 'Турнир' : 'Опрос'} · {detail.status}
+            {typeLabel} · {detail.status}
           </p>
         </div>
         <button onClick={onClose} className="cursor-pointer text-muted hover:text-foreground">
@@ -158,33 +155,33 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
 
       <div className="flex gap-2 border-t border-border pt-4">
         <Button variant="secondary" onClick={close} disabled={busy}>
-          Закрыть
+          {t('common.close')}
         </Button>
         {detail.type === 'tournament' && (
           <Button variant="secondary" onClick={() => setNotifyOpen(true)} disabled={busy}>
-            Рассылка
+            {t('events.detail.notify')}
           </Button>
         )}
         <Button variant="danger" onClick={() => setPendingDelete(true)} disabled={busy}>
-          Удалить
+          {t('common.delete')}
         </Button>
       </div>
 
-      <Modal open={pendingDelete} title="Удалить событие?" onClose={() => setPendingDelete(false)}>
+      <Modal open={pendingDelete} title={t('events.detail.deleteConfirm')} onClose={() => setPendingDelete(false)}>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={() => setPendingDelete(false)}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Удалить событие
+            {t('events.detail.deleteAction')}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={notifyOpen} title="Рассылка участникам" onClose={() => setNotifyOpen(false)}>
+      <Modal open={notifyOpen} title={t('events.detail.notifyModal.title')} onClose={() => setNotifyOpen(false)}>
         <div className="flex flex-col gap-3">
           <label className="text-sm text-muted" htmlFor="event-notify-text">
-            Текст сообщения
+            {t('events.detail.notifyModal.text')}
           </label>
           <textarea
             id="event-notify-text"
@@ -196,10 +193,10 @@ export function EventDetailPanel({ messageId, onClose, onChanged }: Props) {
           {notifyError && <p className="text-sm text-danger">{notifyError}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setNotifyOpen(false)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={sendNotify} disabled={busy}>
-              Отправить
+              {t('common.send')}
             </Button>
           </div>
         </div>

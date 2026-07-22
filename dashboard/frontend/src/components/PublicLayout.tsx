@@ -1,14 +1,18 @@
 import { Sparkle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-
-const NAV_LINKS = [
-  { to: '/docs', label: 'Документация' },
-  { to: '/terms', label: 'Условия' },
-  { to: '/privacy', label: 'Приватность' },
-]
+import { LanguageToggle } from './LanguageToggle'
+import { useT } from '../context/LanguageContext'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
+  const t = useT()
+
+  const navLinks = [
+    { to: '/docs', labelKey: 'nav.docs' },
+    { to: '/terms', labelKey: 'nav.terms' },
+    { to: '/privacy', labelKey: 'nav.privacy' },
+  ] as const
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
@@ -18,27 +22,30 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <span className="font-semibold">Cheterin</span>
           </Link>
 
-          <nav className="flex items-center gap-1 sm:gap-2">
-            {NAV_LINKS.map(({ to, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `rounded-control px-2.5 py-1.5 text-sm transition-colors sm:px-3 ${
-                    isActive ? 'bg-primary-muted text-foreground' : 'text-muted hover:bg-surface-hover hover:text-foreground'
-                  }`
-                }
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageToggle />
+            <nav className="flex items-center gap-1 sm:gap-2">
+              {navLinks.map(({ to, labelKey }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `rounded-control px-2.5 py-1.5 text-sm transition-colors sm:px-3 ${
+                      isActive ? 'bg-primary-muted text-foreground' : 'text-muted hover:bg-surface-hover hover:text-foreground'
+                    }`
+                  }
+                >
+                  {t(labelKey)}
+                </NavLink>
+              ))}
+              <Link
+                to="/"
+                className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
               >
-                {label}
-              </NavLink>
-            ))}
-            <Link
-              to="/"
-              className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-            >
-              Дашборд
-            </Link>
-          </nav>
+                {t('nav.dashboard')}
+              </Link>
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -48,17 +55,17 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:px-6">
           <p className="flex items-center gap-2">
             <Sparkle size={16} weight="fill" className="text-primary" />
-            Cheterin — Discord-бот и панель управления
+            {t('public.footer')}
           </p>
           <nav className="flex gap-4">
             <Link to="/docs" className="hover:text-foreground">
-              Документация
+              {t('nav.docs')}
             </Link>
             <Link to="/terms" className="hover:text-foreground">
-              Условия пользования
+              {t('public.footer.terms')}
             </Link>
             <Link to="/privacy" className="hover:text-foreground">
-              Приватность
+              {t('public.footer.privacy')}
             </Link>
           </nav>
         </div>

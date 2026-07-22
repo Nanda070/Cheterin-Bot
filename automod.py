@@ -14,6 +14,8 @@ from discord.ext import commands, tasks
 
 import automod_core
 import bot_config
+import i18n
+import slash_registry
 import moderation_log
 import warns_core
 import warns_db
@@ -42,7 +44,6 @@ class AutoMod(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # {user_id: [{"signature": str, "time": datetime}, ...]} — для фильтра "Повторяемый текст"
         self._repeat_cache: dict[int, list[dict]] = {}
         self._cleanup_repeat_cache.start()
 
@@ -51,7 +52,6 @@ class AutoMod(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def _cleanup_repeat_cache(self):
-        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
             now = discord.utils.utcnow()
             stale_users = []
@@ -72,8 +72,6 @@ class AutoMod(commands.Cog):
     @_cleanup_repeat_cache.before_loop
     async def _before_cleanup(self):
         await self.bot.wait_until_ready()
-
-    # ────────────────── Обнаружение нарушений ──────────────────
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -143,12 +141,11 @@ class AutoMod(commands.Cog):
 
         return triggered
 
-    # ────────────────── Применение наказания ──────────────────
-
     async def _handle_violation(self, message: discord.Message, key: str, cfg: dict):
         member = message.author
         guild = message.guild
-        reason = f"Автомодерация: {automod_core.FILTER_LABELS[key]}"
+        lang = i18n.lang_for(guild.id)
+        reason = i18n.t("automod.reason", lang, filter=automod_core.FILTER_LABELS[key])
 
         if cfg["delete_message"]:
             try:
@@ -157,7 +154,7 @@ class AutoMod(commands.Cog):
                 pass
 
         duration = min(cfg["duration_minutes"], automod_core.MAX_DURATION_MINUTES) if cfg["duration_minutes"] > 0 else 0
-        await self._apply_punishment(guild, member, cfg["punishment"], duration, reason, source=key)
+        await self._apply_punishment(guild, member, cfg["punishment"], duration, reason, source=key, lang=lang)
 
         if cfg["notify_member"]:
             await self._notify(message, cfg, reason)
@@ -167,7 +164,7 @@ class AutoMod(commands.Cog):
             member.id,
             member.name,
             reason,
-            extra=f"Наказание: {cfg['punishment']}",
+            extra=i18n.t("automod.punishment_extra", lang, punishment=cfg["punishment"]),
         )
 
     async def _apply_punishment(
@@ -178,10 +175,12 @@ class AutoMod(commands.Cog):
         duration_minutes: int,
         reason: str,
         source: str,
+        lang: str | None = None,
     ):
+        lang = lang or i18n.lang_for(guild.id)
         if punishment == "warn":
             warns_core.add_warn(guild.id, member.id, reason, None, source=source, duration_minutes=duration_minutes)
-            await self.apply_escalation_if_needed(guild, member)
+            await self.apply_escalation_if_needed(guild, member, lang=lang)
         elif punishment == "mute":
             until = discord.utils.utcnow() + timedelta(minutes=duration_minutes or 1440)
             try:
@@ -200,29 +199,29 @@ class AutoMod(commands.Cog):
                 logger.warning("Нет прав для бана %s", member.id)
             else:
                 if duration_minutes > 0:
-                    asyncio.create_task(self._scheduled_unban(guild, member.id, duration_minutes))
-        # punishment == "none" — без дополнительного действия
+                    asyncio.create_task(self._scheduled_unban(guild, member.id, duration_minutes, lang))
 
-    async def apply_escalation_if_needed(self, guild: discord.Guild, member: discord.Member):
+    async def apply_escalation_if_needed(self, guild: discord.Guild, member: discord.Member, lang: str | None = None):
+        lang = lang or i18n.lang_for(guild.id)
         count = warns_core.get_active_warn_count(guild.id, member.id)
         rule = automod_core.find_escalation_rule(guild.id, count)
         if rule is None:
             return
-        reason = f"Автоматическая эскалация: {count} активных предупреждений"
+        reason = i18n.t("automod.escalation_reason", lang, count=count)
         duration = min(rule["duration_minutes"], automod_core.MAX_DURATION_MINUTES) if rule["duration_minutes"] > 0 else 0
-        await self._apply_punishment(guild, member, rule["action"], duration, reason, source="escalation")
+        await self._apply_punishment(guild, member, rule["action"], duration, reason, source="escalation", lang=lang)
         moderation_log.append_event(
             "warn_escalation",
             member.id,
             member.name,
             reason,
-            extra=f"Действие: {rule['action']}",
+            extra=i18n.t("automod.escalation_extra", lang, action=rule["action"]),
         )
 
-    async def _scheduled_unban(self, guild: discord.Guild, user_id: int, duration_minutes: int):
+    async def _scheduled_unban(self, guild: discord.Guild, user_id: int, duration_minutes: int, lang: str):
         try:
             await asyncio.sleep(duration_minutes * 60)
-            await guild.unban(discord.Object(id=user_id), reason="Автомодерация: истёк срок временного наказания")
+            await guild.unban(discord.Object(id=user_id), reason=i18n.t("automod.unban_reason", lang))
         except discord.HTTPException:
             pass
         except asyncio.CancelledError:
@@ -242,13 +241,12 @@ class AutoMod(commands.Cog):
         except discord.HTTPException:
             pass
 
-    # ────────────────── Команды /warn ──────────────────
-
     @warn_group.command(name="add", description="Выдать предупреждение участнику")
     @app_commands.describe(участник="Кому выдать предупреждение", причина="За что выдано предупреждение")
     async def warn_add(self, interaction: discord.Interaction, участник: discord.Member, причина: str):
+        lang = i18n.lang_for(interaction.guild_id)
         if not interaction.guild:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("automod.guild_only", lang), ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
         settings = automod_core.get_settings(interaction.guild.id)
@@ -260,7 +258,7 @@ class AutoMod(commands.Cog):
             source="manual",
             duration_minutes=settings["manual_warn_duration_minutes"],
         )
-        await self.apply_escalation_if_needed(interaction.guild, участник)
+        await self.apply_escalation_if_needed(interaction.guild, участник, lang=lang)
         moderation_log.append_event(
             "warn_manual",
             участник.id,
@@ -272,45 +270,60 @@ class AutoMod(commands.Cog):
 
         active = warns_core.get_active_warn_count(interaction.guild.id, участник.id)
         await interaction.followup.send(
-            f"⚠️ {участник.mention} получил предупреждение. Активных предупреждений: **{active}**.", ephemeral=True
+            i18n.t("automod.warn.add_success", lang, mention=участник.mention, count=active),
+            ephemeral=True,
         )
 
     @warn_group.command(name="list", description="Показать предупреждения участника")
     @app_commands.describe(участник="Чьи предупреждения показать")
     async def warn_list(self, interaction: discord.Interaction, участник: discord.Member):
+        lang = i18n.lang_for(interaction.guild_id)
         if not interaction.guild:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("automod.guild_only", lang), ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
         warns = warns_core.get_warns(interaction.guild.id, участник.id)
         if not warns:
-            return await interaction.followup.send(f"У {участник.mention} нет предупреждений.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("automod.warn.no_warns", lang, mention=участник.mention), ephemeral=True,
+            )
 
         now = datetime.now(timezone.utc).isoformat()
         lines = []
         for w in warns[:20]:
             active = not w["removed"] and (not w["expires_at"] or w["expires_at"] > now)
-            status = "🟢 активно" if active else ("❌ снято" if w["removed"] else "⏱️ истекло")
-            lines.append(f"`#{w['id']}` {status} — {w['reason']}")
+            if active:
+                status = i18n.t("automod.warn.status_active", lang)
+            elif w["removed"]:
+                status = i18n.t("automod.warn.status_removed", lang)
+            else:
+                status = i18n.t("automod.warn.status_expired", lang)
+            lines.append(i18n.t("automod.warn.list_entry", lang, id=w["id"], status=status, reason=w["reason"]))
 
         embed = discord.Embed(
-            title=f"Предупреждения: {участник.display_name}",
+            title=i18n.t("automod.warn.list_title", lang, name=участник.display_name),
             description="\n".join(lines),
             color=discord.Color.orange(),
         )
-        embed.set_footer(text=f"Активных: {warns_core.get_active_warn_count(interaction.guild.id, участник.id)}")
+        embed.set_footer(text=i18n.t(
+            "automod.warn.list_footer", lang,
+            count=warns_core.get_active_warn_count(interaction.guild.id, участник.id),
+        ))
         await interaction.followup.send(embed=embed, ephemeral=True)
 
     @warn_group.command(name="remove", description="Снять предупреждение по ID")
     @app_commands.describe(warn_id="ID предупреждения (из /warn list)")
     async def warn_remove(self, interaction: discord.Interaction, warn_id: int):
+        lang = i18n.lang_for(interaction.guild_id)
         await interaction.response.defer(ephemeral=True)
         ok = warns_core.remove_warn(warn_id, interaction.user.id)
         if not ok:
-            return await interaction.followup.send("Предупреждение не найдено или уже снято.", ephemeral=True)
-        await interaction.followup.send(f"✅ Предупреждение `#{warn_id}` снято.", ephemeral=True)
+            return await interaction.followup.send(i18n.t("automod.warn.remove_not_found", lang), ephemeral=True)
+        await interaction.followup.send(i18n.t("automod.warn.remove_success", lang, id=warn_id), ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
     warns_db.db_init()
-    await bot.add_cog(AutoMod(bot))
+    cog = AutoMod(bot)
+    slash_registry.register_automod(cog)
+    await bot.add_cog(cog)

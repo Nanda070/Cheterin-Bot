@@ -22,6 +22,9 @@ from discord.ext import commands
 
 import bunker_core
 import bunker_db
+import bunker_localize
+import i18n
+import slash_registry
 
 logger = logging.getLogger("bunker")
 
@@ -50,181 +53,265 @@ def _display_name(guild: discord.Guild | None, user_id: int) -> str:
 
 # ────────────────────────── Эмбеды ──────────────────────────
 
-def build_lobby_embed(game: dict, players: list[dict]) -> discord.Embed:
+def build_lobby_embed(game: dict, players: list[dict], lang: str) -> discord.Embed:
     embed = discord.Embed(
-        title="🚪 Лобби «Бункер»",
-        description="Нажмите «Присоединиться», чтобы принять участие.",
+        title=i18n.t("bunker.lobby.title", lang),
+        description=i18n.t("bunker.lobby.description", lang),
         color=0x5865F2,
     )
-    embed.add_field(name="Инициатор", value=f"<@{game['created_by']}>", inline=True)
-    embed.add_field(name="Игроков нужно", value=f"{game['min_players']}–{game['max_players']}", inline=True)
+    embed.add_field(name=i18n.t("bunker.lobby.initiator", lang), value=f"<@{game['created_by']}>", inline=True)
     embed.add_field(
-        name="Таймеры",
-        value=f"💬 {game['discussion_timer_sec']}с · 🗳️ {game['vote_timer_sec']}с",
+        name=i18n.t("bunker.lobby.players_needed", lang),
+        value=f"{game['min_players']}–{game['max_players']}",
+        inline=True,
+    )
+    embed.add_field(
+        name=i18n.t("bunker.lobby.timers", lang),
+        value=i18n.t(
+            "bunker.lobby.timers_value",
+            lang,
+            discussion=game["discussion_timer_sec"],
+            vote=game["vote_timer_sec"],
+        ),
         inline=True,
     )
     if game["bunker_capacity"]:
-        embed.add_field(name="Вместимость бункера", value=str(game["bunker_capacity"]), inline=True)
-    embed.add_field(
-        name="Карточки",
-        value="Без повторов" if game["unique_cards"] else "С повторами",
-        inline=True,
-    )
+        embed.add_field(
+            name=i18n.t("bunker.lobby.capacity", lang),
+            value=str(game["bunker_capacity"]),
+            inline=True,
+        )
+    cards_key = "bunker.lobby.cards_unique" if game["unique_cards"] else "bunker.lobby.cards_repeat"
+    embed.add_field(name=i18n.t("bunker.lobby.cards", lang), value=i18n.t(cards_key, lang), inline=True)
     mentions = "\n".join(f"`{i + 1}.` <@{p['user_id']}>" for i, p in enumerate(players)) or "—"
-    embed.add_field(name=f"Участники [{len(players)}/{game['max_players']}]", value=mentions, inline=False)
-    return embed
-
-
-def build_lobby_cancelled_embed(_game: dict) -> discord.Embed:
-    return discord.Embed(title="🚫 Лобби отменено", color=0x2B2D31)
-
-
-def build_game_started_embed(game: dict, players: list[dict], voice_channel_id: int | None) -> discord.Embed:
-    embed = discord.Embed(
-        title="🚪 Игра «Бункер» началась!",
-        description=(
-            "Карточки персонажей розданы в личные сообщения. Каждый игрок получил персональную ссылку "
-            "на дашборд — там вся игра: карточка, раскрытие характеристик, спец. возможности и "
-            "голосование за исключение."
-        ),
-        color=0x5865F2,
-    )
-    embed.add_field(name="Игроков", value=str(len(players)), inline=True)
-    embed.add_field(name="Вместимость бункера", value=str(game["bunker_capacity"]), inline=True)
-    if voice_channel_id:
-        embed.add_field(name="Голосовой канал", value=f"<#{voice_channel_id}>", inline=True)
-    embed.add_field(name="Катаклизм", value=f"**{game['catastrophe_name']}**\n{game['catastrophe_description']}", inline=False)
     embed.add_field(
-        name="Условия бункера",
-        value=f"**{game['bunker_conditions_name']}**\n{game['bunker_conditions_description']}",
+        name=i18n.t(
+            "bunker.lobby.participants",
+            lang,
+            count=len(players),
+            max=game["max_players"],
+        ),
+        value=mentions,
         inline=False,
     )
-    embed.add_field(name="Раунд 1", value=f"💬 Обсуждение — {game['discussion_timer_sec']} сек", inline=False)
     return embed
 
 
-def build_vote_embed(game: dict, members: list[dict], votes: list[dict]) -> discord.Embed:
+def build_lobby_cancelled_embed(_game: dict, lang: str) -> discord.Embed:
+    return discord.Embed(title=i18n.t("bunker.lobby.cancelled", lang), color=0x2B2D31)
+
+
+def build_game_started_embed(
+    game: dict, players: list[dict], voice_channel_id: int | None, lang: str
+) -> discord.Embed:
+    cat_name, cat_desc, cond_name, cond_desc = bunker_localize.localize_game_scenario(game, lang)
     embed = discord.Embed(
-        title="🗳️ Голосование за исключение",
-        description=(
-            f"Голосование проходит на персональной ссылке каждого игрока. "
-            f"Голосование открытое. Время: {game['vote_timer_sec']} сек."
+        title=i18n.t("bunker.started.title", lang),
+        description=i18n.t("bunker.started.description", lang),
+        color=0x5865F2,
+    )
+    embed.add_field(name=i18n.t("bunker.started.players", lang), value=str(len(players)), inline=True)
+    embed.add_field(
+        name=i18n.t("bunker.started.capacity", lang),
+        value=str(game["bunker_capacity"]),
+        inline=True,
+    )
+    if voice_channel_id:
+        embed.add_field(
+            name=i18n.t("bunker.started.voice_channel", lang),
+            value=f"<#{voice_channel_id}>",
+            inline=True,
+        )
+    embed.add_field(
+        name=i18n.t("bunker.started.catastrophe", lang),
+        value=f"**{cat_name}**\n{cat_desc}",
+        inline=False,
+    )
+    embed.add_field(
+        name=i18n.t("bunker.started.conditions", lang),
+        value=f"**{cond_name}**\n{cond_desc}",
+        inline=False,
+    )
+    embed.add_field(
+        name="\u200b",
+        value=i18n.t(
+            "bunker.started.round_discussion",
+            lang,
+            round=1,
+            seconds=game["discussion_timer_sec"],
         ),
+        inline=False,
+    )
+    return embed
+
+
+def build_vote_embed(game: dict, members: list[dict], votes: list[dict], lang: str) -> discord.Embed:
+    embed = discord.Embed(
+        title=i18n.t("bunker.vote.title", lang),
+        description=i18n.t("bunker.vote.description", lang, seconds=game["vote_timer_sec"]),
         color=0xFEE75C,
     )
     if not votes:
-        embed.add_field(name="Голоса", value="Пока никто не проголосовал.", inline=False)
+        embed.add_field(
+            name=i18n.t("bunker.vote.votes", lang),
+            value=i18n.t("bunker.vote.no_votes", lang),
+            inline=False,
+        )
     else:
         tally: dict[str, int] = {}
         for vote in votes:
-            key = f"<@{vote['target_user_id']}>" if vote["target_user_id"] else "Пропустить"
+            key = (
+                f"<@{vote['target_user_id']}>"
+                if vote["target_user_id"]
+                else i18n.t("bunker.vote.skip", lang)
+            )
             tally[key] = tally.get(key, 0) + 1
         lines = [f"{name}: {count}" for name, count in sorted(tally.items(), key=lambda kv: -kv[1])]
-        embed.add_field(name="Голоса", value="\n".join(lines), inline=False)
-    embed.set_footer(text=f"Живых игроков: {len(members)}")
+        embed.add_field(name=i18n.t("bunker.vote.votes", lang), value="\n".join(lines), inline=False)
+    embed.set_footer(text=i18n.t("bunker.vote.alive_footer", lang, count=len(members)))
     return embed
 
 
-def build_expulsion_result_embed(expelled_id: int | None) -> discord.Embed:
+def build_expulsion_result_embed(expelled_id: int | None, lang: str) -> discord.Embed:
     if expelled_id is None:
         return discord.Embed(
-            title="⚖️ Итоги голосования", description="Большинства не набралось — никто не покинул бункер.", color=0x2B2D31
+            title=i18n.t("bunker.expulsion.title", lang),
+            description=i18n.t("bunker.expulsion.no_majority", lang),
+            color=0x2B2D31,
         )
-    return discord.Embed(title="⚖️ Итоги голосования", description=f"Бункер покидает <@{expelled_id}>.", color=0xED4245)
+    return discord.Embed(
+        title=i18n.t("bunker.expulsion.title", lang),
+        description=i18n.t("bunker.expulsion.expelled", lang, user_id=expelled_id),
+        color=0xED4245,
+    )
 
 
-def _character_summary(character: dict) -> str:
+def _character_summary(character: dict, lang: str) -> str:
     if not character:
         return "—"
+    character = bunker_localize.localize_character(character, lang) or character
     return (
         f"{character['profession']['name']} ({character['profession']['experience_level']}), "
         f"{character['age']['label']}, {character['gender']}"
     )
 
 
-def build_result_embed(players: list[dict], stopped: bool = False) -> discord.Embed:
+def build_result_embed(players: list[dict], lang: str, stopped: bool = False) -> discord.Embed:
     if stopped:
-        title, desc, color = "🚫 Игра остановлена", "Игра остановлена модератором досрочно.", 0x2B2D31
+        title = i18n.t("bunker.result.stopped_title", lang)
+        desc = i18n.t("bunker.result.stopped_desc", lang)
+        color = 0x2B2D31
     else:
-        title, desc, color = "🏆 Бункер укомплектован!", "Голосования завершены — состав выживших определён.", 0x57F287
+        title = i18n.t("bunker.result.finished_title", lang)
+        desc = i18n.t("bunker.result.finished_desc", lang)
+        color = 0x57F287
 
     embed = discord.Embed(title=title, description=desc, color=color)
     survivors = [p for p in players if p["alive"]]
     eliminated = [p for p in players if not p["alive"]]
     if survivors:
-        lines = [f"<@{p['user_id']}> — {_character_summary(p['character'])}" for p in survivors]
-        embed.add_field(name="✅ В бункере", value="\n".join(lines), inline=False)
+        lines = [f"<@{p['user_id']}> — {_character_summary(p['character'], lang)}" for p in survivors]
+        embed.add_field(name=i18n.t("bunker.result.survivors", lang), value="\n".join(lines), inline=False)
     if eliminated:
-        lines = [f"<@{p['user_id']}> — {_character_summary(p['character'])}" for p in eliminated]
-        embed.add_field(name="❌ Не прошли", value="\n".join(lines), inline=False)
+        lines = [f"<@{p['user_id']}> — {_character_summary(p['character'], lang)}" for p in eliminated]
+        embed.add_field(name=i18n.t("bunker.result.eliminated", lang), value="\n".join(lines), inline=False)
     return embed
 
 
 # ────────────────────────── Лобби ──────────────────────────
 
 class BunkerLobbyView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, lang: str | None = None):
         super().__init__(timeout=None)
+        self._default_lang = lang or i18n.DEFAULT_LANGUAGE
+        self._add_button("bunker_lobby_join", "bunker.lobby.btn.join", discord.ButtonStyle.success, self._join)
+        self._add_button("bunker_lobby_leave", "bunker.lobby.btn.leave", discord.ButtonStyle.secondary, self._leave)
+        self._add_button(
+            "bunker_lobby_force_start", "bunker.lobby.btn.force_start", discord.ButtonStyle.primary, self._force_start
+        )
+        self._add_button("bunker_lobby_cancel", "bunker.lobby.btn.cancel", discord.ButtonStyle.danger, self._cancel)
+
+    def _add_button(self, custom_id: str, label_key: str, style: discord.ButtonStyle, callback):
+        button = discord.ui.Button(
+            label=i18n.t(label_key, self._default_lang),
+            style=style,
+            custom_id=custom_id,
+        )
+        button.callback = callback
+        self.add_item(button)
 
     def _get_game(self, interaction: discord.Interaction) -> dict | None:
         if interaction.message is None:
             return None
         return bunker_db.get_game_by_lobby_message(interaction.message.id)
 
-    @discord.ui.button(label="Присоединиться", style=discord.ButtonStyle.success, custom_id="bunker_lobby_join")
-    async def join_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
+    async def _join(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         game = self._get_game(interaction)
         if game is None or game["status"] != "lobby":
-            return await interaction.response.send_message("Лобби недоступно.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.unavailable", lang), ephemeral=True
+            )
         if bunker_db.count_players(game["id"]) >= game["max_players"]:
-            return await interaction.response.send_message("Лобби заполнено.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("bunker.lobby.full", lang), ephemeral=True)
         if not bunker_db.add_player(game["id"], interaction.user.id):
-            return await interaction.response.send_message("Ты уже в лобби.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.already_joined", lang), ephemeral=True
+            )
 
         players = bunker_db.list_players(game["id"])
-        await interaction.response.edit_message(embed=build_lobby_embed(game, players))
+        await interaction.response.edit_message(embed=build_lobby_embed(game, players, lang))
 
         if len(players) >= game["max_players"]:
             cog = interaction.client.get_cog("BunkerCog")
             if cog:
                 await cog.start_game(game["id"])
 
-    @discord.ui.button(label="Покинуть", style=discord.ButtonStyle.secondary, custom_id="bunker_lobby_leave")
-    async def leave_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
+    async def _leave(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         game = self._get_game(interaction)
         if game is None or game["status"] != "lobby":
-            return await interaction.response.send_message("Лобби недоступно.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.unavailable", lang), ephemeral=True
+            )
         if not bunker_db.remove_player(game["id"], interaction.user.id):
-            return await interaction.response.send_message("Тебя нет в лобби.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.not_in_lobby", lang), ephemeral=True
+            )
         players = bunker_db.list_players(game["id"])
-        await interaction.response.edit_message(embed=build_lobby_embed(game, players))
+        await interaction.response.edit_message(embed=build_lobby_embed(game, players, lang))
 
-    @discord.ui.button(label="Начать сейчас", style=discord.ButtonStyle.primary, custom_id="bunker_lobby_force_start")
-    async def force_start_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
+    async def _force_start(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         game = self._get_game(interaction)
         if game is None or game["status"] != "lobby":
-            return await interaction.response.send_message("Лобби недоступно.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.unavailable", lang), ephemeral=True
+            )
         if not bunker_core.has_moderator_access(interaction.user):
-            return await interaction.response.send_message("Нет доступа.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("bunker.lobby.no_access", lang), ephemeral=True)
         count = bunker_db.count_players(game["id"])
         if count < game["min_players"]:
             return await interaction.response.send_message(
-                f"Нужно минимум {game['min_players']} игроков (сейчас {count}).", ephemeral=True
+                i18n.t("bunker.lobby.min_players", lang, min=game["min_players"], count=count),
+                ephemeral=True,
             )
         await interaction.response.defer()
         cog = interaction.client.get_cog("BunkerCog")
         if cog:
             await cog.start_game(game["id"])
 
-    @discord.ui.button(label="Отменить", style=discord.ButtonStyle.danger, custom_id="bunker_lobby_cancel")
-    async def cancel_btn(self, interaction: discord.Interaction, _button: discord.ui.Button):
+    async def _cancel(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         game = self._get_game(interaction)
         if game is None or game["status"] != "lobby":
-            return await interaction.response.send_message("Лобби недоступно.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.unavailable", lang), ephemeral=True
+            )
         if not bunker_core.has_moderator_access(interaction.user):
-            return await interaction.response.send_message("Нет доступа.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("bunker.lobby.no_access", lang), ephemeral=True)
         bunker_db.update_game(game["id"], status="cancelled", ended_at=_now_iso())
-        await interaction.response.edit_message(embed=build_lobby_cancelled_embed(game), view=None)
+        await interaction.response.edit_message(embed=build_lobby_cancelled_embed(game, lang), view=None)
 
 
 # ────────────────────────── Ког ──────────────────────────
@@ -280,20 +367,27 @@ class BunkerCog(commands.Cog):
         таймер_голосования: app_commands.Range[int, 10, 3600] = None,
         уникальные_карты: bool = None,
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = bunker_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Модуль «Бункер» отключён.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "bunker"), ephemeral=True
+            )
 
         if bunker_db.get_active_game_in_channel(interaction.channel.id) is not None:
-            return await interaction.response.send_message("В этом канале уже есть активное лобби/игра.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.error.channel_busy", lang), ephemeral=True
+            )
 
         min_players = мин_игроков if мин_игроков is not None else settings["default_min_players"]
         max_players = макс_игроков if макс_игроков is not None else settings["default_max_players"]
         if min_players > max_players:
-            return await interaction.response.send_message("Минимум игроков не может быть больше максимума.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.error.min_gt_max", lang), ephemeral=True
+            )
         if вместимость_бункера is not None and вместимость_бункера >= max_players:
             return await interaction.response.send_message(
-                "Вместимость бункера должна быть меньше максимума игроков.", ephemeral=True
+                i18n.t("bunker.error.capacity_too_high", lang), ephemeral=True
             )
 
         discussion_timer = таймер_обсуждения if таймер_обсуждения is not None else settings["default_discussion_timer_sec"]
@@ -309,32 +403,38 @@ class BunkerCog(commands.Cog):
         bunker_db.add_player(game["id"], interaction.user.id)
         players = bunker_db.list_players(game["id"])
 
-        await interaction.response.send_message(embed=build_lobby_embed(game, players), view=self.lobby_view)
+        await interaction.response.send_message(
+            embed=build_lobby_embed(game, players, lang), view=BunkerLobbyView(lang)
+        )
         message = await interaction.original_response()
         bunker_db.update_game(game["id"], lobby_message_id=message.id)
 
     @app_commands.command(name="бункер-стоп", description="Остановить лобби/игру «Бункер» в этом канале")
     @app_commands.default_permissions(manage_guild=True)
     async def stop_game(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         game = bunker_db.get_active_game_in_channel(interaction.channel.id)
         if game is None:
-            return await interaction.response.send_message("В этом канале нет активной игры.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("bunker.error.no_active_game", lang), ephemeral=True
+            )
         if not bunker_core.has_moderator_access(interaction.user):
-            return await interaction.response.send_message("Нет доступа.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("bunker.lobby.no_access", lang), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
+        guild_lang = i18n.lang_for(game["guild_id"])
         if game["status"] == "lobby":
             bunker_db.update_game(game["id"], status="cancelled", ended_at=_now_iso())
             channel = self.bot.get_channel(game["channel_id"])
             if channel is not None and game["lobby_message_id"]:
                 try:
                     message = await channel.fetch_message(game["lobby_message_id"])
-                    await message.edit(embed=build_lobby_cancelled_embed(game), view=None)
+                    await message.edit(embed=build_lobby_cancelled_embed(game, guild_lang), view=None)
                 except discord.HTTPException:
                     pass
         else:
             await self.end_game(game["id"], stopped=True)
-        await interaction.followup.send("Остановлено.", ephemeral=True)
+        await interaction.followup.send(i18n.t("bunker.stopped", lang), ephemeral=True)
 
     # ────────────────────────── Игровой цикл ──────────────────────────
 
@@ -347,6 +447,7 @@ class BunkerCog(commands.Cog):
         if guild is None or channel is None:
             return
 
+        lang = i18n.lang_for(game["guild_id"])
         players = bunker_db.list_players(game_id)
         player_ids = [p["user_id"] for p in players]
         display_names = {uid: _display_name(guild, uid) for uid in player_ids}
@@ -368,7 +469,9 @@ class BunkerCog(commands.Cog):
             category = channel.category if isinstance(channel, discord.TextChannel) else None
             overwrites = {guild.default_role: discord.PermissionOverwrite(view_channel=True, connect=True, speak=True)}
             voice_channel = await guild.create_voice_channel(
-                name=f"Бункер • Игра #{game_id}", overwrites=overwrites, category=category,
+                name=i18n.t("bunker.voice_channel", lang, game_id=game_id),
+                overwrites=overwrites,
+                category=category,
             )
             voice_channel_id = voice_channel.id
         except discord.HTTPException:
@@ -380,12 +483,16 @@ class BunkerCog(commands.Cog):
             phase_deadline_ts=now_ts + game["discussion_timer_sec"],
             bunker_capacity=bunker_capacity, voice_channel_id=voice_channel_id,
             catastrophe_name=catastrophe["name"], catastrophe_description=catastrophe["description"],
+            catastrophe_key=catastrophe["key"],
             bunker_conditions_name=conditions["name"], bunker_conditions_description=conditions["description"],
+            bunker_conditions_key=conditions["key"],
             started_at=_now_iso(),
         )
 
         frontend = _frontend_url()
-        voice_note = f" В <#{voice_channel_id}>." if voice_channel_id else ""
+        voice_note = (
+            i18n.t("bunker.dm.voice", lang, channel_id=voice_channel_id) if voice_channel_id else ""
+        )
         for user_id in player_ids:
             member = guild.get_member(user_id)
             if member is None:
@@ -394,22 +501,20 @@ class BunkerCog(commands.Cog):
             link = f"{frontend}/bunker/{player['token']}"
             try:
                 await member.send(
-                    content=(
-                        "Игра «Бункер» началась. Твоя личная карточка персонажа (профессия, здоровье, рюкзак, "
-                        "спец. возможности и т.д.) — на персональной ссылке (действует всю игру): "
-                        f"{link}\nТам же: раскрытие характеристик, заявка на спец. возможность и голосование "
-                        f"за исключение.{voice_note}"
-                    )
+                    content=i18n.t("bunker.dm.started", lang, link=link, voice=voice_note)
                 )
             except discord.Forbidden:
                 pass
 
         try:
-            await channel.send(embed=build_game_started_embed(game, players, voice_channel_id))
+            await channel.send(embed=build_game_started_embed(game, players, voice_channel_id, lang))
         except discord.HTTPException:
             pass
 
-        self._add_event(game_id, 1, "game_started", f"Игроков: {len(players)}. Вместимость: {bunker_capacity}.")
+        self._add_event(
+            game_id, 1, "game_started",
+            i18n.t("bunker.event.game_started", lang, count=len(players), capacity=bunker_capacity),
+        )
         self.schedule_phase_timer(game_id)
 
     def schedule_phase_timer(self, game_id: int):
@@ -474,11 +579,12 @@ class BunkerCog(commands.Cog):
         if channel is None:
             return
         guild = self.bot.get_guild(game["guild_id"])
+        lang = i18n.lang_for(game["guild_id"])
         members = _resolve_alive_members(guild, game_id)
         votes = bunker_db.get_votes(game_id, game["round_number"])
         try:
             message = await channel.fetch_message(game["vote_message_id"])
-            await message.edit(embed=build_vote_embed(game, members, votes))
+            await message.edit(embed=build_vote_embed(game, members, votes, lang))
         except discord.HTTPException:
             pass
 
@@ -492,17 +598,29 @@ class BunkerCog(commands.Cog):
         if channel is None:
             return
         guild = self.bot.get_guild(game["guild_id"])
+        lang = i18n.lang_for(game["guild_id"])
         player_name = _display_name(guild, announcement["player_user_id"])
         target_part = ""
         if announcement["target_user_id"] is not None:
-            target_part = f" Цель: {_display_name(guild, announcement['target_user_id'])}."
-        note_part = f" Комментарий: {announcement['note']}" if announcement["note"] else ""
+            target_part = i18n.t(
+                "bunker.ability.target",
+                lang,
+                target=_display_name(guild, announcement["target_user_id"]),
+            )
+        note_part = (
+            i18n.t("bunker.ability.note", lang, note=announcement["note"])
+            if announcement["note"]
+            else ""
+        )
         try:
             await channel.send(
-                content=(
-                    f"🃏 Стоп игра! Игрок **{player_name}** хочет использовать спец. возможность "
-                    f"«{announcement['card_name']}».{target_part}{note_part}\nВедущий применяет эффект вручную "
-                    "через панель модуля «Бункер» в дашборде."
+                content=i18n.t(
+                    "bunker.ability.announce",
+                    lang,
+                    player=player_name,
+                    card_name=announcement["card_name"],
+                    target=target_part,
+                    note=note_part,
                 )
             )
         except discord.HTTPException:
@@ -513,6 +631,7 @@ class BunkerCog(commands.Cog):
         if game is None or game["status"] != "active" or game["phase"] != "discussion":
             return
         self._cancel_timer(game_id)
+        lang = i18n.lang_for(game["guild_id"])
 
         guild = self.bot.get_guild(game["guild_id"])
         channel = self.bot.get_channel(game["channel_id"])
@@ -524,8 +643,8 @@ class BunkerCog(commands.Cog):
         message = None
         if channel is not None:
             try:
-                await channel.send(content="🗳️ Голосование за исключение открыто — голосуйте на своей персональной ссылке.")
-                message = await channel.send(embed=build_vote_embed(game, members, []))
+                await channel.send(content=i18n.t("bunker.phase.vote_open", lang))
+                message = await channel.send(embed=build_vote_embed(game, members, [], lang))
             except discord.HTTPException:
                 pass
         if message is not None:
@@ -538,6 +657,7 @@ class BunkerCog(commands.Cog):
         if game is None or game["status"] != "active" or game["phase"] != "vote":
             return
         self._cancel_timer(game_id)
+        lang = i18n.lang_for(game["guild_id"])
 
         round_number = game["round_number"]
         votes = {v["voter_user_id"]: v["target_user_id"] for v in bunker_db.get_votes(game_id, round_number)}
@@ -547,13 +667,19 @@ class BunkerCog(commands.Cog):
 
         if expelled is not None:
             bunker_db.eliminate_player(game_id, expelled, round_number)
-            self._add_event(game_id, round_number, "expelled", f"Исключён: {expelled}")
+            self._add_event(
+                game_id, round_number, "expelled",
+                i18n.t("bunker.event.expelled", lang, user_id=expelled),
+            )
         else:
-            self._add_event(game_id, round_number, "no_expulsion", "Никто не исключён (нет большинства).")
+            self._add_event(
+                game_id, round_number, "no_expulsion",
+                i18n.t("bunker.event.no_expulsion", lang),
+            )
 
         if channel is not None:
             try:
-                await channel.send(embed=build_expulsion_result_embed(expelled))
+                await channel.send(embed=build_expulsion_result_embed(expelled, lang))
             except discord.HTTPException:
                 pass
 
@@ -568,9 +694,11 @@ class BunkerCog(commands.Cog):
         if channel is not None:
             try:
                 await channel.send(
-                    content=(
-                        f"💬 Раунд {game['round_number']}: обсуждение и раскрытие характеристик — "
-                        f"{game['discussion_timer_sec']} сек. Ссылки уже на руках."
+                    content=i18n.t(
+                        "bunker.phase.discussion",
+                        lang,
+                        round=game["round_number"],
+                        seconds=game["discussion_timer_sec"],
                     )
                 )
             except discord.HTTPException:
@@ -582,6 +710,7 @@ class BunkerCog(commands.Cog):
         if game is None:
             return
         self._cancel_timer(game_id)
+        lang = i18n.lang_for(game["guild_id"])
 
         guild = self.bot.get_guild(game["guild_id"])
         channel = self.bot.get_channel(game["channel_id"])
@@ -591,7 +720,7 @@ class BunkerCog(commands.Cog):
 
         if channel is not None:
             try:
-                await channel.send(embed=build_result_embed(players, stopped=stopped))
+                await channel.send(embed=build_result_embed(players, lang, stopped=stopped))
             except discord.HTTPException:
                 pass
 
@@ -599,14 +728,15 @@ class BunkerCog(commands.Cog):
             voice_channel = guild.get_channel(game["voice_channel_id"])
             if voice_channel is not None:
                 try:
-                    await voice_channel.delete(reason="Игра «Бункер» завершена")
+                    await voice_channel.delete(reason=i18n.t("bunker.voice_delete_reason", lang))
                 except discord.HTTPException:
                     pass
 
-        self._add_event(game_id, game["round_number"], "game_ended", "Остановлено" if stopped else "Бункер укомплектован")
-        await self._send_log(game, players, stopped)
+        ended_key = "bunker.event.game_ended_stopped" if stopped else "bunker.event.game_ended_finished"
+        self._add_event(game_id, game["round_number"], "game_ended", i18n.t(ended_key, lang))
+        await self._send_log(game, players, stopped, lang)
 
-    async def _send_log(self, game: dict, players: list[dict], stopped: bool):
+    async def _send_log(self, game: dict, players: list[dict], stopped: bool, lang: str):
         log_channel_id = bunker_core.get_settings(game["guild_id"])["log_channel_id"]
         if not log_channel_id:
             return
@@ -614,9 +744,21 @@ class BunkerCog(commands.Cog):
         if channel is None:
             return
         survivors = sum(1 for p in players if p["alive"])
-        text = (
-            f"Игра «Бункер» #{game['id']} в <#{game['channel_id']}> завершена. "
-            f"{'Остановлено досрочно.' if stopped else f'Выжило: {survivors}/{len(players)}.'}"
+        if stopped:
+            outcome = i18n.t("bunker.log.stopped", lang)
+        else:
+            outcome = i18n.t(
+                "bunker.log.survivors",
+                lang,
+                survivors=survivors,
+                total=len(players),
+            )
+        text = i18n.t(
+            "bunker.log.finished",
+            lang,
+            game_id=game["id"],
+            channel_id=game["channel_id"],
+            outcome=outcome,
         )
         try:
             await channel.send(content=text)
@@ -626,4 +768,6 @@ class BunkerCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     bunker_db.init()
-    await bot.add_cog(BunkerCog(bot))
+    cog = BunkerCog(bot)
+    slash_registry.register_bunker(cog)
+    await bot.add_cog(cog)

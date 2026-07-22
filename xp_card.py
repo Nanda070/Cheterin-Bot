@@ -9,6 +9,7 @@ import os
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+import i18n
 import xp_core
 
 CARD_W, CARD_H = 900, 260
@@ -82,6 +83,7 @@ def render_rank_card(
     voice_time_text: str,
     frame_color: str | None = None,
     title_text: str | None = None,
+    lang: str = "ru",
 ) -> bytes:
     card = _background(guild_id).convert("RGBA")
     draw = ImageDraw.Draw(card)
@@ -124,12 +126,15 @@ def render_rank_card(
 
     # Уровень и место
     rank_text = f"#{rank}" if rank else "—"
-    draw.text((text_x, 104), f"Уровень {level}", font=font_level, fill=(88, 101, 242))
-    level_w = draw.textlength(f"Уровень {level}", font=font_level)
-    draw.text((text_x + level_w + 28, 110), f"Ранг {rank_text} из {total_members}", font=font_small, fill=(139, 147, 167))
+    level_label = i18n.t("xp.card.level", lang, level=level)
+    rank_label = i18n.t("xp.card.rank", lang, rank=rank_text, total=total_members)
+    voice_label = i18n.t("xp.card.voice", lang, time=voice_time_text)
+    draw.text((text_x, 104), level_label, font=font_level, fill=(88, 101, 242))
+    level_w = draw.textlength(level_label, font=font_level)
+    draw.text((text_x + level_w + 28, 110), rank_label, font=font_small, fill=(139, 147, 167))
 
     # Войс-время
-    draw.text((text_x, 148), f"🔊 В войсе: {voice_time_text}", font=font_small, fill=(139, 147, 167))
+    draw.text((text_x, 148), voice_label, font=font_small, fill=(139, 147, 167))
 
     # Прогресс-бар
     bar_x0, bar_y0 = text_x, 196

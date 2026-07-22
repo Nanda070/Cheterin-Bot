@@ -10,17 +10,18 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
+import { useT } from '../context/LanguageContext'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
 export function CasinoPage() {
+  const t = useT()
   const [settings, setSettings] = useState<CasinoSettings | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
 
-  // Leaderboard state
   const [lbMode, setLbMode] = useState<'slots' | 'bj' | 'total'>('total')
   const [lbType, setLbType] = useState<'wins' | 'losses'>('losses')
   const [lbPage, setLbPage] = useState(1)
@@ -33,8 +34,8 @@ export function CasinoPage() {
         if (!res.loss_roles) res.loss_roles = []
         setSettings(res)
       })
-      .catch(() => setError('Не удалось загрузить настройки казино'))
-  }, [])
+      .catch(() => setError(t('casino.errorLoad')))
+  }, [t])
 
   useEffect(() => {
     fetchCasinoLeaderboard(lbMode, lbType, lbPage)
@@ -49,7 +50,7 @@ export function CasinoPage() {
   }, [lbMode, lbType, lbPage])
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const save = async () => {
@@ -60,9 +61,9 @@ export function CasinoPage() {
       const updated = await updateCasinoSettings(settings)
       if (!updated.loss_roles) updated.loss_roles = []
       setSettings(updated)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('casino.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -73,32 +74,56 @@ export function CasinoPage() {
     setSettings({ ...settings, loss_roles: roles })
   }
 
+  const formatStats = (entry: CasinoLeaderboardEntry): string => {
+    if (lbMode === 'total') {
+      if (lbType === 'wins') {
+        return t('casino.leaderboard.totalWins', {
+          total: entry.slots_wins + entry.bj_wins,
+          slots: entry.slots_wins,
+          bj: entry.bj_wins,
+        })
+      }
+      return t('casino.leaderboard.totalLosses', {
+        total: entry.slots_losses + entry.bj_losses,
+        slots: entry.slots_losses,
+        bj: entry.bj_losses,
+      })
+    }
+    if (lbMode === 'slots') {
+      const count = lbType === 'wins' ? entry.slots_wins : entry.slots_losses
+      return lbType === 'wins'
+        ? t('casino.leaderboard.slotsWins', { count })
+        : t('casino.leaderboard.slotsLosses', { count })
+    }
+    const count = lbType === 'wins' ? entry.bj_wins : entry.bj_losses
+    return lbType === 'wins'
+      ? t('casino.leaderboard.bjWins', { count })
+      : t('casino.leaderboard.bjLosses', { count })
+  }
+
   return (
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <DiceThree size={22} className="text-primary" />
-          Казино
+          {t('casino.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? 'Включено' : 'Выключено'}
+          label={settings.enabled ? t('casino.enabled') : t('casino.disabled')}
         />
       </div>
-      <p className="text-sm text-muted">
-        Слоты (3 барабана), монетка (орёл/решка) и блэкджек. Обе команды делят один кулдаун на игрока.
-        Для работы казино необходим включённый модуль «Экономика».
-      </p>
+      <p className="text-sm text-muted">{t('casino.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">Настройки игры</h2>
+        <h2 className="font-semibold text-foreground">{t('casino.gameSettings')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="casino-edge">
-              Преимущество казино, % (0–50; срезает выигрыш на этот процент)
+              {t('casino.houseEdge')}
             </label>
             <input
               id="casino-edge"
@@ -112,7 +137,7 @@ export function CasinoPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="casino-cooldown">
-              Кулдаун на игрока, сек (0–300, общий)
+              {t('casino.cooldown')}
             </label>
             <input
               id="casino-cooldown"
@@ -126,7 +151,7 @@ export function CasinoPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="casino-min-bet">
-              Минимальная ставка
+              {t('casino.minBet')}
             </label>
             <input
               id="casino-min-bet"
@@ -139,7 +164,7 @@ export function CasinoPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="casino-max-bet">
-              Максимальная ставка (0 — без лимита)
+              {t('casino.maxBet')}
             </label>
             <input
               id="casino-max-bet"
@@ -154,24 +179,21 @@ export function CasinoPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">🏅 Выдача ролей за проигрыши</h2>
-        <p className="text-sm text-muted">
-          Бот будет автоматически выдавать указанную роль, если участник достиг порога проигрышей.
-          Роль выдаётся один раз.
-        </p>
+        <h2 className="font-semibold text-foreground">{t('casino.lossRoles')}</h2>
+        <p className="text-sm text-muted">{t('casino.lossRolesHint')}</p>
         {settings.loss_roles.map((item, index) => (
           <div key={index} className="flex flex-col gap-2 rounded-control border border-border p-3 sm:flex-row sm:items-center">
             <select
               value={item.game}
-              onChange={(e) => updateRole(index, { game: e.target.value as any })}
+              onChange={(e) => updateRole(index, { game: e.target.value as CasinoSettings['loss_roles'][number]['game'] })}
               className={inputClass}
             >
-              <option value="slots">Слоты/Монетка</option>
-              <option value="bj">Блэкджек</option>
-              <option value="total">Суммарно (Слоты+БЖ)</option>
+              <option value="slots">{t('casino.game.slots')}</option>
+              <option value="bj">{t('casino.game.bj')}</option>
+              <option value="total">{t('casino.game.total')}</option>
             </select>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted">Порог:</span>
+              <span className="text-sm text-muted">{t('casino.threshold')}</span>
               <input
                 type="number"
                 min={1}
@@ -182,7 +204,7 @@ export function CasinoPage() {
             </div>
             <input
               type="text"
-              placeholder="ID роли"
+              placeholder={t('casino.roleIdPlaceholder')}
               value={item.role_id}
               onChange={(e) => updateRole(index, { role_id: e.target.value.replace(/\D/g, '') })}
               className={`${inputClass} flex-1`}
@@ -205,7 +227,7 @@ export function CasinoPage() {
               })
             }
           >
-            <Plus size={16} /> Добавить роль
+            <Plus size={16} /> {t('casino.addRole')}
           </Button>
         </div>
       </Card>
@@ -213,51 +235,38 @@ export function CasinoPage() {
       {saved && <p className="text-sm text-primary">{saved}</p>}
       <div>
         <Button variant="primary" onClick={save} disabled={busy}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+          {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">🏆 Лидерборд (всего записей: {lbTotal})</h2>
+        <h2 className="font-semibold text-foreground">{t('casino.leaderboard', { total: lbTotal })}</h2>
         <div className="flex flex-wrap gap-2">
           <Button variant={lbType === 'losses' ? 'primary' : 'secondary'} onClick={() => setLbType('losses')}>
-            ❌ Проигрыши
+            {t('casino.losses')}
           </Button>
           <Button variant={lbType === 'wins' ? 'primary' : 'secondary'} onClick={() => setLbType('wins')}>
-            🏆 Победы
+            {t('casino.wins')}
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant={lbMode === 'total' ? 'primary' : 'secondary'} onClick={() => setLbMode('total')}>
-            📊 Общий
+            {t('casino.mode.total')}
           </Button>
           <Button variant={lbMode === 'slots' ? 'primary' : 'secondary'} onClick={() => setLbMode('slots')}>
-            🎰 Слоты/Монетка
+            {t('casino.mode.slots')}
           </Button>
           <Button variant={lbMode === 'bj' ? 'primary' : 'secondary'} onClick={() => setLbMode('bj')}>
-            🎴 Блэкджек
+            {t('casino.mode.bj')}
           </Button>
         </div>
 
         {lbEntries.length === 0 ? (
-          <p className="text-sm text-muted">Таблица пуста.</p>
+          <p className="text-sm text-muted">{t('casino.leaderboardEmpty')}</p>
         ) : (
-          <div className="flex flex-col gap-2 mt-2">
+          <div className="mt-2 flex flex-col gap-2">
             {lbEntries.map((entry, i) => {
               const rank = (lbPage - 1) * 50 + i + 1
-              let statsStr = ''
-              if (lbMode === 'total') {
-                if (lbType === 'wins') {
-                  statsStr = `Всего: ${entry.slots_wins + entry.bj_wins} 🏆 (🎰 ${entry.slots_wins} | 🎴 ${entry.bj_wins})`
-                } else {
-                  statsStr = `Всего: ${entry.slots_losses + entry.bj_losses} ❌ (🎰 ${entry.slots_losses} | 🎴 ${entry.bj_losses})`
-                }
-              } else if (lbMode === 'slots') {
-                statsStr = `🎰 ${lbType === 'wins' ? entry.slots_wins + ' 🏆' : entry.slots_losses + ' ❌'}`
-              } else {
-                statsStr = `🎴 ${lbType === 'wins' ? entry.bj_wins + ' 🏆' : entry.bj_losses + ' ❌'}`
-              }
-
               return (
                 <div key={entry.user_id} className="flex items-center gap-3 rounded border border-border p-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center font-bold text-muted">#{rank}</div>
@@ -270,7 +279,7 @@ export function CasinoPage() {
                   )}
                   <div className="flex flex-1 flex-col truncate">
                     <span className="truncate text-sm font-medium text-foreground">{entry.username}</span>
-                    <span className="text-xs text-muted">{statsStr}</span>
+                    <span className="text-xs text-muted">{formatStats(entry)}</span>
                   </div>
                 </div>
               )
@@ -278,23 +287,13 @@ export function CasinoPage() {
           </div>
         )}
 
-        <div className="flex items-center gap-2 mt-2">
-          <Button
-            variant="secondary"
-            disabled={lbPage === 1}
-            onClick={() => setLbPage(Math.max(1, lbPage - 1))}
-          >
-            Назад
+        <div className="mt-2 flex items-center gap-2">
+          <Button variant="secondary" disabled={lbPage === 1} onClick={() => setLbPage(Math.max(1, lbPage - 1))}>
+            {t('casino.prevPage')}
           </Button>
-          <span className="text-sm text-muted">
-            Страница {lbPage}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={lbEntries.length < 50}
-            onClick={() => setLbPage(lbPage + 1)}
-          >
-            Вперёд
+          <span className="text-sm text-muted">{t('casino.page', { page: lbPage })}</span>
+          <Button variant="secondary" disabled={lbEntries.length < 50} onClick={() => setLbPage(lbPage + 1)}>
+            {t('casino.nextPage')}
           </Button>
         </div>
       </Card>

@@ -4,6 +4,9 @@ from aiohttp import web
 import feedback_categories
 import feedback_core
 import feedback_menu
+import feedback_panel_core
+import embed_builder
+from message_template_core import normalize_embed_spec
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()
@@ -288,3 +291,37 @@ async def publish_feedback_panel_route(request: web.Request) -> web.Response:
         bot, channel, published_by_id=moderator.id, published_by_mention=f"<@{moderator.id}>"
     )
     return web.json_response({"ok": True, "message_id": str(message.id)})
+
+
+@routes.get("/api/feedback-panel-settings")
+@require_dashboard_access
+async def get_feedback_panel_settings(request: web.Request) -> web.Response:
+    return web.json_response(feedback_panel_core.get_settings(request["guild_id"]))
+
+
+@routes.put("/api/feedback-panel-settings")
+@require_dashboard_access
+async def update_feedback_panel_settings(request: web.Request) -> web.Response:
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    embed = normalize_embed_spec(body.get("embed"))
+    content = str(body.get("content") or "")
+    err = embed_builder.validate_embed_spec(embed, content)
+    if err:
+        return web.json_response({"error": err}, status=400)
+
+    guild_id = request["guild_id"]
+    feedback_panel_core.save_settings(
+        guild_id,
+        {
+            "content": content,
+            "embed": embed,
+            "banner_url": str(body.get("banner_url") or ""),
+        },
+    )
+    return web.json_response(feedback_panel_core.get_settings(guild_id))

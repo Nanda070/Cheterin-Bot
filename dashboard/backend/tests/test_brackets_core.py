@@ -51,7 +51,7 @@ def test_extract_entries_solo_mode_falls_back_to_member_display_name():
 
 def test_extract_entries_solo_mode_falls_back_to_user_id_when_no_member():
     ev = {"type": "tournament", "mode": "solo", "participants": [{"user_id": 99, "ign": None}]}
-    assert brackets.extract_entries_from_event(ev, guild=None) == ["User 99"]
+    assert brackets.extract_entries_from_event(ev, guild=None, lang="en") == ["User 99"]
 
 
 def test_extract_entries_team_captain_mode():

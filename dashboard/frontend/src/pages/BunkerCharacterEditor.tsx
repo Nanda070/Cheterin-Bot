@@ -1,5 +1,12 @@
 import { useState } from 'react'
+import { useT } from '../context/LanguageContext'
 import type { BunkerCardPools, BunkerCharacter, BunkerPlayerRef } from '../api/client'
+import {
+  isBunkerHealthy,
+  isBunkerHealthySeverity,
+  isBunkerRelationshipCategory,
+  substituteBunkerRelationshipPlayer,
+} from '../config/bunkerMarkers'
 import { Button } from '../components/ui/Button'
 import { Select, type SelectOption } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
@@ -27,6 +34,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function BunkerCharacterEditor({ character, pools, roster, currentUserId, onSave, onCancel, busy }: Props) {
+  const t = useT()
   const [draft, setDraft] = useState<BunkerCharacter>(() => JSON.parse(JSON.stringify(character)))
 
   const professionOptions: SelectOption[] = pools.professions.map((p) => ({
@@ -58,13 +66,13 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
     .filter((p) => p.user_id !== currentUserId)
     .map((p) => ({ id: p.user_id, name: p.display_name }))
 
-  const isRelationshipCard = draft.additional_info?.category === 'Активные (Отношения)'
+  const isRelationshipCard = isBunkerRelationshipCategory(draft.additional_info?.category)
 
   const patch = (updater: (prev: BunkerCharacter) => BunkerCharacter) => setDraft(updater)
 
   return (
     <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
-      <Field label="Профессия">
+      <Field label={t('bunker.editor.profession')}>
         <Select
           value={draft.profession ? String(pools.professions.find((p) => p.name === draft.profession!.name)?.id ?? '') : ''}
           onChange={(id) => {
@@ -88,11 +96,11 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
             patch((prev) => (prev.profession ? { ...prev, profession: { ...prev.profession, experience_level: level, has_ability: picked?.has_ability ?? false } } : prev))
           }}
           options={professionLevelOptions}
-          placeholder="Стаж"
+          placeholder={t('bunker.editor.experience')}
         />
       </Field>
 
-      <Field label="Возраст">
+      <Field label={t('bunker.editor.age')}>
         <Select
           value={draft.age?.key ?? ''}
           onChange={(key) => {
@@ -103,11 +111,11 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Пол">
+      <Field label={t('bunker.editor.gender')}>
         <Select value={draft.gender ?? ''} onChange={(g) => patch((prev) => ({ ...prev, gender: g }))} options={genderOptions} />
       </Field>
 
-      <Field label="Телосложение">
+      <Field label={t('bunker.editor.bodyType')}>
         <Select
           value={draft.body_type?.key ?? ''}
           onChange={(key) => {
@@ -118,18 +126,20 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Здоровье">
+      <Field label={t('bunker.editor.health')}>
         <Select
           value={draft.health?.severity ?? ''}
           onChange={(severity) =>
             patch((prev) => ({
               ...prev,
-              health: severity === 'Здоров' ? { severity, disease_name: null, category: null } : { severity, disease_name: prev.health?.disease_name ?? null, category: prev.health?.category ?? null },
+              health: isBunkerHealthySeverity(severity)
+                ? { severity, disease_name: null, category: null }
+                : { severity, disease_name: prev.health?.disease_name ?? null, category: prev.health?.category ?? null },
             }))
           }
           options={healthSeverityOptions}
         />
-        {draft.health && draft.health.severity !== 'Здоров' && (
+        {draft.health && !isBunkerHealthySeverity(draft.health.severity) && (
           <Select
             value={draft.health.disease_name ? String(pools.health_diseases.find((d) => d.name === draft.health!.disease_name)?.id ?? '') : ''}
             onChange={(id) => {
@@ -137,12 +147,12 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
               if (picked) patch((prev) => (prev.health ? { ...prev, health: { ...prev.health, disease_name: picked.name, category: picked.category } } : prev))
             }}
             options={diseaseOptions}
-            placeholder="Диагноз"
+            placeholder={t('bunker.editor.diagnosis')}
           />
         )}
       </Field>
 
-      <Field label="Хобби">
+      <Field label={t('bunker.editor.hobby')}>
         <Select
           value={draft.hobby ? String(pools.hobbies.find((h) => h.name === draft.hobby!.name)?.id ?? '') : ''}
           onChange={(id) => {
@@ -159,11 +169,11 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
           value={draft.hobby?.experience_level ?? ''}
           onChange={(level) => patch((prev) => (prev.hobby ? { ...prev, hobby: { ...prev.hobby, experience_level: level } } : prev))}
           options={hobbyLevelOptions}
-          placeholder="Уровень"
+          placeholder={t('bunker.editor.level')}
         />
       </Field>
 
-      <Field label="Фобия / страх">
+      <Field label={t('bunker.editor.phobia')}>
         <Select
           value={draft.phobia ? String(pools.phobias.find((p) => p.name === draft.phobia!.name)?.id ?? '') : ''}
           onChange={(id) => {
@@ -174,7 +184,7 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Рюкзак">
+      <Field label={t('bunker.editor.backpack')}>
         <Select
           value={draft.backpack_item ? String(pools.backpack_items.find((i) => i.name === draft.backpack_item!.name)?.id ?? '') : ''}
           onChange={(id) => {
@@ -185,7 +195,7 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Крупный инвентарь">
+      <Field label={t('bunker.editor.largeItem')}>
         <Select
           value={draft.large_item ? String(pools.large_items.find((i) => i.name === draft.large_item!.name)?.id ?? '') : ''}
           onChange={(id) => {
@@ -196,7 +206,7 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Характер">
+      <Field label={t('bunker.editor.trait')}>
         <Select
           value={draft.trait?.trait ?? ''}
           onChange={(traitName) => {
@@ -207,20 +217,18 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
         />
       </Field>
 
-      <Field label="Доп. сведения">
+      <Field label={t('bunker.editor.additionalInfo')}>
         {draft.additional_info && <p className="text-sm text-foreground">{draft.additional_info.name}</p>}
         <Select
           value={draft.additional_info ? String(pools.additional_info.find((a) => a.name === draft.additional_info!.name)?.id ?? '') : ''}
           onChange={(id) => {
             const picked = pools.additional_info.find((a) => String(a.id) === id)
             if (!picked) return
-            if (picked.category === 'Активные (Отношения)') {
+            if (isBunkerRelationshipCategory(picked.category)) {
               // Свежий шаблон карты «Отношения» — сразу подставляем первого доступного игрока-цель,
-              // чтобы плейсхолдер «Игрок №X» никогда не попадал в сохранённую карточку.
+              // чтобы плейсхолдер «Игрок №X» / «Player #X» никогда не попадал в сохранённую карточку.
               const firstTarget = targetOptions[0]
-              const name = firstTarget
-                ? picked.name.replace('Игрок №X', firstTarget.name).replace('игрока №X', firstTarget.name)
-                : picked.name
+              const name = firstTarget ? substituteBunkerRelationshipPlayer(picked.name, firstTarget.name) : picked.name
               patch((prev) => ({
                 ...prev,
                 additional_info: { name, category: picked.category, linked_user_id: firstTarget ? firstTarget.id : null },
@@ -230,7 +238,7 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
             }
           }}
           options={additionalInfoOptions}
-          placeholder="Выбрать новую карту…"
+          placeholder={t('bunker.editor.selectNewCard')}
         />
         {isRelationshipCard && (
           <Select
@@ -248,13 +256,13 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
               })
             }}
             options={targetOptions}
-            placeholder="Игрок-цель"
+            placeholder={t('bunker.editor.targetPlayer')}
           />
         )}
       </Field>
 
       <div className="flex flex-col gap-2 border-t border-border pt-3">
-        <p className="text-xs font-medium text-foreground">Спец. возможности</p>
+        <p className="text-xs font-medium text-foreground">{t('bunker.editor.specialAbilities')}</p>
         {[0, 1].map((index) => {
           const card = draft.special_abilities?.[index]
           return (
@@ -282,7 +290,7 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
                     return { ...prev, special_abilities: abilities }
                   })
                 }
-                label="Использована"
+                label={t('bunker.editor.used')}
               />
             </div>
           )
@@ -291,10 +299,10 @@ export function BunkerCharacterEditor({ character, pools, roster, currentUserId,
 
       <div className="flex justify-end gap-2 border-t border-border pt-3">
         <Button variant="secondary" onClick={onCancel}>
-          Отмена
+          {t('common.cancel')}
         </Button>
         <Button variant="primary" onClick={() => onSave(draft)} disabled={busy}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+          {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </div>

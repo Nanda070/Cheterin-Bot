@@ -21,14 +21,19 @@ from discord.ext import commands, tasks
 
 import settings_db
 
+import i18n
+
 logger = logging.getLogger("streams")
 
 MODULE_NAME = "streams"
 
 POLL_SECONDS = 120
 
-DEFAULT_TEMPLATE_TWITCH = "🔴 **{{channel}}** запустил трансляцию: **{{stream}}**\nИграем в {{game}} — заходите! {{channel.url}}"
-DEFAULT_TEMPLATE_YOUTUBE = "▶️ Новое видео от **{{channel}}**: **{{stream}}**\n{{channel.url}}"
+
+def default_template(platform: str, lang: str) -> str:
+    if platform == "youtube":
+        return i18n.t("streams.default_template_youtube", lang)
+    return i18n.t("streams.default_template_twitch", lang)
 
 
 def _normalized(data: dict) -> dict:
@@ -96,11 +101,11 @@ def keywords_match(title: str, keywords: list[str], mode: str) -> bool:
     return bool(hits) if mode == "any" else len(hits) == len(keywords)
 
 
-def render_template(template: str, channel_name: str, stream_title: str, game: str, url: str) -> str:
+def render_template(template: str, channel_name: str, stream_title: str, game: str, url: str, lang: str) -> str:
     replacements = {
         "{{channel}}": channel_name,
         "{{stream}}": stream_title,
-        "{{game}}": game or "—",
+        "{{game}}": game or i18n.t("streams.game_unknown", lang),
         "{{channel.url}}": url,
     }
     text = template
@@ -283,6 +288,7 @@ class Streams(commands.Cog):
         await self.bot.wait_until_ready()
 
     async def _poll_twitch(self, guild_id: int, subs: list[dict]):
+        lang = i18n.lang_for(guild_id)
         logins = list({s["identifier"] for s in subs})
         body = await self._twitch_api("streams", [("user_login", l) for l in logins[:100]])
         if body is None:
@@ -305,20 +311,38 @@ class Streams(commands.Cog):
                 continue
 
             url = f"https://www.twitch.tv/{sub['identifier']}"
-            template = sub["template"] or DEFAULT_TEMPLATE_TWITCH
-            content = render_template(template, stream.get("user_name") or sub["display_name"], stream.get("title", ""), stream.get("game_name", ""), url)
+            template = sub["template"] or default_template("twitch", lang)
+            content = render_template(
+                template,
+                stream.get("user_name") or sub["display_name"],
+                stream.get("title", ""),
+                stream.get("game_name", ""),
+                url,
+                lang,
+            )
 
             embed = discord.Embed(
-                title=stream.get("title", "Стрим"),
+                title=stream.get("title") or i18n.t("streams.embed.stream_title", lang),
                 url=url,
                 color=discord.Color.purple(),
                 timestamp=discord.utils.utcnow(),
             )
-            embed.set_author(name=f"{stream.get('user_name', sub['display_name'])} — Twitch", icon_url=sub["avatar_url"] or None)
+            embed.set_author(
+                name=i18n.t(
+                    "streams.embed.author_twitch",
+                    lang,
+                    name=stream.get("user_name", sub["display_name"]),
+                ),
+                icon_url=sub["avatar_url"] or None,
+            )
             if stream.get("game_name"):
-                embed.add_field(name="Игра", value=stream["game_name"], inline=True)
+                embed.add_field(name=i18n.t("streams.embed.game", lang), value=stream["game_name"], inline=True)
             if stream.get("viewer_count") is not None:
-                embed.add_field(name="Зрителей", value=str(stream["viewer_count"]), inline=True)
+                embed.add_field(
+                    name=i18n.t("streams.embed.viewers", lang),
+                    value=str(stream["viewer_count"]),
+                    inline=True,
+                )
             thumb = (stream.get("thumbnail_url") or "").replace("{width}", "640").replace("{height}", "360")
             if thumb:
                 embed.set_image(url=f"{thumb}?t={int(time.time())}")
@@ -327,6 +351,7 @@ class Streams(commands.Cog):
             update_subscription(guild_id, sub["id"], last_stream_id=stream_id, last_notified_ts=now)
 
     async def _poll_youtube_one(self, guild_id: int, sub: dict):
+        lang = i18n.lang_for(guild_id)
         feed = await self._youtube_feed(sub["identifier"])
         if feed is None or not feed["entries"]:
             return
@@ -346,12 +371,12 @@ class Streams(commands.Cog):
             return
 
         url = f"https://www.youtube.com/watch?v={latest['video_id']}"
-        template = sub["template"] or DEFAULT_TEMPLATE_YOUTUBE
+        template = sub["template"] or default_template("youtube", lang)
         channel_name = feed["channel_name"] or sub["display_name"]
-        content = render_template(template, channel_name, latest["title"], "", url)
+        content = render_template(template, channel_name, latest["title"], "", url, lang)
 
         embed = discord.Embed(title=latest["title"], url=url, color=discord.Color.red(), timestamp=discord.utils.utcnow())
-        embed.set_author(name=f"{channel_name} — YouTube")
+        embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=channel_name))
         embed.set_image(url=f"https://i.ytimg.com/vi/{latest['video_id']}/hqdefault.jpg")
 
         await self._announce(sub, content, embed)

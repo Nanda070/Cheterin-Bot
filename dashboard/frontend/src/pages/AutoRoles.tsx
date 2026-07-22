@@ -3,8 +3,10 @@ import { fetchAutoRoles, fetchRoles, updateAutoRoles, type RoleInfo } from '../a
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Checkbox } from '../components/ui/Checkbox'
+import { useT } from '../context/LanguageContext'
 
-export function AutoRolesPage() {
+export function AutoRolesPage({ embedded = false }: { embedded?: boolean }) {
+  const t = useT()
   const [roles, setRoles] = useState<RoleInfo[]>([])
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([])
   const [error, setError] = useState('')
@@ -18,9 +20,9 @@ export function AutoRolesPage() {
         setRoles(roleList)
         setSelectedRoleIds(settings.role_ids)
       })
-      .catch(() => setError('Не удалось загрузить роли'))
+      .catch(() => setError(t('autoRoles.errorLoad')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   const toggleRole = (roleId: string) => {
     setSelectedRoleIds((prev) =>
@@ -35,24 +37,25 @@ export function AutoRolesPage() {
     try {
       const updated = await updateAutoRoles(selectedRoleIds)
       setSelectedRoleIds(updated.role_ids)
-      setSavedMessage('Сохранено.')
+      setSavedMessage(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить — проверьте, что роли ниже роли бота')
+      setError(t('autoRoles.errorSave'))
     } finally {
       setBusy(false)
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-muted">Загрузка…</p>
+    return <p className="text-sm text-muted">{t('common.loading')}</p>
   }
 
   return (
     <div className="flex max-w-xl flex-col gap-4">
-      <h1 className="text-lg font-semibold text-foreground">Авто-роли</h1>
+      {!embedded && <h1 className="text-lg font-semibold text-foreground">{t('autoRoles.title')}</h1>}
+      {embedded && <h2 className="font-semibold text-foreground">{t('autoRoles.title')}</h2>}
 
       <Card className="flex flex-col gap-3">
-        <p className="text-sm text-muted">Роли, которые автоматически выдаются при входе на сервер</p>
+        <p className="text-sm text-muted">{t('autoRoles.intro')}</p>
         <div className="flex flex-wrap gap-3">
           {roles.map((r) => (
             <Checkbox
@@ -70,7 +73,7 @@ export function AutoRolesPage() {
 
       <div>
         <Button variant="primary" onClick={save} disabled={busy}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+          {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </div>

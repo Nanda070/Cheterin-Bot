@@ -4,6 +4,7 @@ import pytest
 
 import economy_core
 import economy_db
+import language_core
 import settings_db
 
 GUILD_ID = 404
@@ -26,6 +27,17 @@ def test_settings_defaults():
     assert settings["transfer_enabled"] is True
     assert settings["roulette_bets_enabled"] is True
     assert settings["shop_items"] == []
+
+
+def test_settings_defaults_respect_guild_language():
+    language_core.set_language(GUILD_ID, "en")
+    settings = economy_core.get_settings(GUILD_ID)
+    assert settings["currency_name"] == "coins"
+
+
+def test_settings_custom_currency_name_preserved():
+    economy_core.save_config(GUILD_ID, {"currency_name": "кредиты"})
+    assert economy_core.get_settings(GUILD_ID)["currency_name"] == "кредиты"
 
 
 def test_coins_from_xp():

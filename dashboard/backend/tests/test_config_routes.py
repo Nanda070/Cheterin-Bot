@@ -67,6 +67,7 @@ def _full_config(**overrides):
         "LOG_CHANNEL_ID": "",
         "SPAM_EXCEPTION_CHANNELS": [],
         "TEMPBAN_CHANNEL_ID": "",
+        "TEMPBAN_LOG_CHANNEL_ID": "",
         "SPAM_LOG_CHANNEL_ID": "",
         "SPAM_LOG_ROLE_ID": "",
         "WELCOME_CHANNEL_ID": "",
@@ -79,6 +80,8 @@ def _full_config(**overrides):
         "CTD_CHANNEL_ID": "",
         "BUTTON_CREATE_ALLOWED_ROLES": [],
         "BUTTON_WEBHOOK_URL": "",
+        "BUTTON_WEBHOOK_USERNAME": "",
+        "BUTTON_WEBHOOK_AVATAR_URL": "",
         "SERVER_INVITE_LINK": "",
     }
     cfg.update(overrides)

@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithI18n } from '../test/renderWithI18n'
 import { AutoModPage } from './AutoMod'
 
 function makeFilter(overrides: Partial<client.AutomodFilter> = {}): client.AutomodFilter {
@@ -20,6 +21,18 @@ function makeFilter(overrides: Partial<client.AutomodFilter> = {}): client.Autom
 }
 
 const FILTER_KEYS = ['links', 'invites', 'scam_links', 'bad_words', 'repeated_text', 'caps_lock', 'emoji_spam', 'mentions', 'zalgo']
+
+const FILTER_LABELS_RU: Record<string, string> = {
+  links: 'Ссылки',
+  invites: 'Приглашения',
+  scam_links: 'Скам и фишинг ссылки',
+  bad_words: 'Плохие слова',
+  repeated_text: 'Повторяемый текст',
+  caps_lock: 'Caps Lock',
+  emoji_spam: 'Эмоции',
+  mentions: 'Упоминания',
+  zalgo: 'Zalgo',
+}
 
 function baseSettings(overrides: Partial<client.AutomodSettings> = {}): client.AutomodSettings {
   const filters: Record<string, client.AutomodFilter> = {}
@@ -45,11 +58,11 @@ describe('AutoModPage', () => {
 
   it('renders all 9 filter cards, disabled by default', async () => {
     mockBaseFetches()
-    render(<AutoModPage />)
+    renderWithI18n(<AutoModPage />)
 
     expect(await screen.findByText('Автомодерация')).toBeInTheDocument()
     for (const key of FILTER_KEYS) {
-      expect(screen.getByText(key)).toBeInTheDocument()
+      expect(screen.getByText(FILTER_LABELS_RU[key])).toBeInTheDocument()
     }
     const moduleToggle = screen.getAllByRole('switch')[0]
     expect(moduleToggle).toHaveAttribute('aria-checked', 'false')
@@ -59,7 +72,7 @@ describe('AutoModPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateAutomodEnabled').mockResolvedValue(baseSettings({ enabled: true }))
 
-    render(<AutoModPage />)
+    renderWithI18n(<AutoModPage />)
     await screen.findByText('Автомодерация')
 
     fireEvent.click(screen.getAllByRole('switch')[0])
@@ -70,8 +83,8 @@ describe('AutoModPage', () => {
     mockBaseFetches()
     const updateFilterSpy = vi.spyOn(client, 'updateAutomodFilter').mockResolvedValue(makeFilter({ enabled: true }))
 
-    render(<AutoModPage />)
-    await screen.findByText('links')
+    renderWithI18n(<AutoModPage />)
+    await screen.findByText('Ссылки')
 
     // switches[0] = module toggle, switches[1] = first filter card (links)
     fireEvent.click(screen.getAllByRole('switch')[1])
@@ -82,10 +95,10 @@ describe('AutoModPage', () => {
     mockBaseFetches()
     const updateFilterSpy = vi.spyOn(client, 'updateAutomodFilter').mockResolvedValue(makeFilter())
 
-    render(<AutoModPage />)
-    await screen.findByText('links')
+    renderWithI18n(<AutoModPage />)
+    await screen.findByText('Ссылки')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Настройки фильтра links' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Настройки фильтра Ссылки' }))
     expect(await screen.findByText('Удалять сообщение с нарушением')).toBeInTheDocument()
 
     const saveButtons = screen.getAllByRole('button', { name: 'Сохранить' })
@@ -102,7 +115,7 @@ describe('AutoModPage', () => {
       duration_minutes: 1440,
     })
 
-    render(<AutoModPage />)
+    renderWithI18n(<AutoModPage />)
     await screen.findByText('Эскалация по количеству предупреждений')
 
     fireEvent.click(screen.getByRole('button', { name: /Добавить порог/ }))
@@ -117,7 +130,7 @@ describe('AutoModPage', () => {
     mockBaseFetches(baseSettings({ escalation: [{ id: '9', count: 5, action: 'kick', duration_minutes: 0 }] }))
     const deleteSpy = vi.spyOn(client, 'deleteEscalationRule').mockResolvedValue()
 
-    render(<AutoModPage />)
+    renderWithI18n(<AutoModPage />)
     expect(await screen.findByText(/5 предупреждений → Кик/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить порог 5' }))
@@ -128,7 +141,7 @@ describe('AutoModPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateManualWarnDuration').mockResolvedValue(baseSettings())
 
-    render(<AutoModPage />)
+    renderWithI18n(<AutoModPage />)
     await screen.findByText('Срок ручных предупреждений')
 
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))

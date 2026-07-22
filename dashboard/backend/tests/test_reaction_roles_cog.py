@@ -42,7 +42,8 @@ async def test_handle_reaction_change_add_grants_role_using_payload_member():
     action, kwargs = reactor.action_calls[0]
     assert action == "add_roles"
     assert kwargs["role"].id == 7
-    assert "Reaction role: add" in kwargs["reason"]
+    assert "add" in kwargs["reason"]
+    assert "реакции" in kwargs["reason"]
 
 
 @pytest.mark.asyncio

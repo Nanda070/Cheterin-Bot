@@ -26,6 +26,16 @@ def test_get_returns_stored_value():
     bot_config.save_config(1, {"LOG_CHANNEL_ID": "456"})
     assert bot_config.get(1, "LOG_CHANNEL_ID") == "456"
 
+
+def test_resolve_server_invite_link_returns_trimmed_value():
+    bot_config.save_config(1, {"SERVER_INVITE_LINK": " https://discord.gg/test "})
+    assert bot_config.resolve_server_invite_link(1) == "https://discord.gg/test"
+
+
+def test_resolve_server_invite_link_empty_when_unset():
+    bot_config.save_config(1, {})
+    assert bot_config.resolve_server_invite_link(1) == ""
+
 def test_migrate_from_env_if_needed_creates_from_env(monkeypatch):
     monkeypatch.setenv("LOG_CHANNEL_ID", "100")
     monkeypatch.setenv("WELCOME_CHANNEL_ID", "200")

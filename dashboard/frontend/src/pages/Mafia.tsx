@@ -1,5 +1,5 @@
 import { Gear, ListChecks, MaskHappy } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   fetchChannels,
   fetchMafiaGames,
@@ -13,34 +13,42 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { useT } from '../context/LanguageContext'
 
 type Tab = 'settings' | 'games'
-
-const TABS: { key: Tab; label: string; icon: typeof Gear }[] = [
-  { key: 'settings', label: 'Настройки', icon: Gear },
-  { key: 'games', label: 'Активные игры', icon: ListChecks },
-]
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-const PHASE_LABEL: Record<string, string> = {
-  lobby: 'Лобби',
-  night: 'Ночь',
-  day_discussion: 'Обсуждение',
-  day_vote: 'Голосование',
-  ended: 'Завершена',
-}
-
 export function MafiaPage() {
+  const t = useT()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<MafiaSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
-
   const [games, setGames] = useState<MafiaGameSummary[] | null>(null)
+
+  const tabs = useMemo(
+    () =>
+      [
+        { key: 'settings' as const, label: t('common.settings'), icon: Gear },
+        { key: 'games' as const, label: t('common.activeGames'), icon: ListChecks },
+      ] as const,
+    [t],
+  )
+
+  const phaseLabel = (phase: string) => {
+    const map: Record<string, string> = {
+      lobby: t('mafia.phase.lobby'),
+      night: t('mafia.phase.night'),
+      day_discussion: t('mafia.phase.dayDiscussion'),
+      day_vote: t('mafia.phase.dayVote'),
+      ended: t('mafia.phase.ended'),
+    }
+    return map[phase] ?? phase
+  }
 
   useEffect(() => {
     Promise.all([fetchMafiaSettings(), fetchChannels()])
@@ -48,18 +56,18 @@ export function MafiaPage() {
         setSettings(s)
         setChannels(ch)
       })
-      .catch(() => setError('Не удалось загрузить настройки модуля «Мафия»'))
-  }, [])
+      .catch(() => setError(t('mafia.errorLoadSettings')))
+  }, [t])
 
   useEffect(() => {
     if (tab !== 'games') return
     fetchMafiaGames()
       .then(setGames)
-      .catch(() => setError('Не удалось загрузить список игр'))
-  }, [tab])
+      .catch(() => setError(t('mafia.errorLoadGames')))
+  }, [tab, t])
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const patch = (updater: (prev: MafiaSettings) => MafiaSettings) => {
@@ -73,9 +81,9 @@ export function MafiaPage() {
     try {
       const updated = await updateMafiaSettings(settings)
       setSettings(updated)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('mafia.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -86,24 +94,20 @@ export function MafiaPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <MaskHappy size={22} className="text-primary" />
-          Мафия
+          {t('mafia.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? 'Модуль включён' : 'Модуль выключен'}
+          label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
         />
       </div>
-      <p className="text-sm text-muted">
-        Игра «Мафия»: лобби и старт через команду /мафия-игра, а весь матч — роль, список игроков, таймер, ночные
-        действия и дневное голосование за казнь — на персональной ссылке каждого игрока на дашборде. Пока модуль
-        выключен, команда /мафия-игра отвечает «Модуль отключён».
-      </p>
+      <p className="text-sm text-muted">{t('mafia.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex gap-1 border-b border-border">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -121,11 +125,11 @@ export function MafiaPage() {
       {tab === 'settings' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Игроки по умолчанию</h2>
+            <h2 className="font-semibold text-foreground">{t('mafia.playersDefault')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-min-players">
-                  Минимум игроков (5–99)
+                  {t('mafia.minPlayers')}
                 </label>
                 <input
                   id="mafia-min-players"
@@ -139,7 +143,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-max-players">
-                  Максимум игроков (5–99)
+                  {t('mafia.maxPlayers')}
                 </label>
                 <input
                   id="mafia-max-players"
@@ -155,11 +159,11 @@ export function MafiaPage() {
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Таймеры по умолчанию (сек)</h2>
+            <h2 className="font-semibold text-foreground">{t('mafia.timersDefault')}</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-night-timer">
-                  Ночь (10–3600)
+                  {t('mafia.timer.night')}
                 </label>
                 <input
                   id="mafia-night-timer"
@@ -173,7 +177,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-discussion-timer">
-                  Обсуждение (10–3600)
+                  {t('mafia.timer.discussion')}
                 </label>
                 <input
                   id="mafia-discussion-timer"
@@ -187,7 +191,7 @@ export function MafiaPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="mafia-vote-timer">
-                  Голосование (10–3600)
+                  {t('mafia.timer.vote')}
                 </label>
                 <input
                   id="mafia-vote-timer"
@@ -203,17 +207,17 @@ export function MafiaPage() {
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Логи</h2>
+            <h2 className="font-semibold text-foreground">{t('mafia.logs')}</h2>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="mafia-log-channel">
-                Канал логов результатов игр
+                {t('mafia.logChannel')}
               </label>
               <Select
                 id="mafia-log-channel"
                 value={settings.log_channel_id}
                 onChange={(id) => patch((p) => ({ ...p, log_channel_id: id }))}
                 options={channels}
-                placeholder="Не задано"
+                placeholder={t('common.notSet')}
               />
             </div>
           </Card>
@@ -221,7 +225,7 @@ export function MafiaPage() {
           {saved && <p className="text-sm text-primary">{saved}</p>}
           <div>
             <Button variant="primary" onClick={save} disabled={busy}>
-              {busy ? 'Сохраняем…' : 'Сохранить'}
+              {busy ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>
@@ -229,17 +233,21 @@ export function MafiaPage() {
 
       {tab === 'games' && (
         <div className="flex flex-col gap-3">
-          {!games && <p className="text-sm text-muted">Загрузка…</p>}
-          {games && games.length === 0 && <p className="text-sm text-muted">Активных игр нет.</p>}
+          {!games && <p className="text-sm text-muted">{t('common.loading')}</p>}
+          {games && games.length === 0 && <p className="text-sm text-muted">{t('common.noActiveGames')}</p>}
           {games?.map((game) => (
             <Card key={game.id} className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Игра #{game.id} · {game.channel_name}
+                  {t('mafia.game', { id: game.id, channel: game.channel_name })}
                 </p>
                 <p className="text-xs text-muted">
-                  {PHASE_LABEL[game.phase] ?? game.phase} · раунд {game.round_number} · {game.alive_count}/
-                  {game.player_count} живы
+                  {phaseLabel(game.phase)} ·{' '}
+                  {t('game.roundAlive', {
+                    round: game.round_number,
+                    alive: game.alive_count,
+                    total: game.player_count,
+                  })}
                 </p>
               </div>
             </Card>

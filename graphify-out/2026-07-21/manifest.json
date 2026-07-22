@@ -760,13 +760,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.test.tsx": {
-    "mtime": 1784647608.9728749,
-    "ast_hash": "f9561cac1dd1d25131f8650a4913dfa2",
+    "mtime": 1784651578.8215988,
+    "ast_hash": "2bc1cc9db6f0456eb5ad1c153553b185",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.tsx": {
-    "mtime": 1784647608.9288943,
-    "ast_hash": "a0e3120d2c0c56cb6524dffe67a15a53",
+    "mtime": 1784651339.8726206,
+    "ast_hash": "e8c961d13fb029df313e19d1debbac7e",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.test.tsx": {
@@ -1900,13 +1900,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ServerSelect.test.tsx": {
-    "mtime": 1784639840.29759,
-    "ast_hash": "5bb39190c12da455a03bc4b33ada12da",
+    "mtime": 1784651618.8293188,
+    "ast_hash": "fc132964432e9056d439a84dc7602cfd",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ServerSelect.tsx": {
-    "mtime": 1784639722.6656597,
-    "ast_hash": "ed712941b2d6591daf12ef22a2905369",
+    "mtime": 1784651561.0262427,
+    "ast_hash": "e2b5f61c33ae26b19f89bf68fc08d148",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_welcome_cog.py": {

@@ -19,6 +19,8 @@ from discord import app_commands
 from discord.ext import commands
 
 import ban_db
+import i18n
+import slash_registry
 import moderation_commands_core
 import moderation_log
 
@@ -64,8 +66,12 @@ class ModerationCommandsCog(commands.Cog):
 
             guild = self.bot.get_guild(guild_id)
             if guild is not None:
+                lang = i18n.lang_for(guild_id)
                 try:
-                    await guild.unban(discord.Object(id=user_id), reason="Истёк срок временного бана (/ban)")
+                    await guild.unban(
+                        discord.Object(id=user_id),
+                        reason=i18n.t("moderation.auto_unban_reason", lang),
+                    )
                 except discord.HTTPException:
                     pass
             ban_db.remove(row_id)
@@ -89,15 +95,24 @@ class ModerationCommandsCog(commands.Cog):
 
     async def _log_action(
         self, guild_id: int, title: str, target_id: int, target_name: str, moderator: discord.abc.User,
-        reason: str, extra: str = "", event_type: str = "",
+        reason: str, extra: str = "", event_type: str = "", lang: str | None = None,
     ):
+        lang = lang or i18n.lang_for(guild_id)
         embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=discord.utils.utcnow())
-        embed.add_field(name="Кто", value=f"{moderator.name} (`{moderator.id}`)", inline=False)
-        embed.add_field(name="Кого", value=f"{target_name} (`{target_id}`)", inline=False)
-        embed.add_field(name="Причина", value=reason, inline=False)
+        embed.add_field(
+            name=i18n.t("moderation.embed.who", lang),
+            value=f"{moderator.name} (`{moderator.id}`)",
+            inline=False,
+        )
+        embed.add_field(
+            name=i18n.t("moderation.embed.target", lang),
+            value=f"{target_name} (`{target_id}`)",
+            inline=False,
+        )
+        embed.add_field(name=i18n.t("moderation.embed.reason", lang), value=reason, inline=False)
         if extra:
-            embed.add_field(name="Дополнительно", value=extra, inline=False)
-        embed.set_footer(text="Модерация · Команда")
+            embed.add_field(name=i18n.t("moderation.embed.extra", lang), value=extra, inline=False)
+        embed.set_footer(text=i18n.t("moderation.embed.footer", lang))
         await self.bot.send_log(guild_id, embed)
         if event_type:
             moderation_log.append_event(
@@ -119,40 +134,49 @@ class ModerationCommandsCog(commands.Cog):
         self, interaction: discord.Interaction, user: discord.User,
         reason: str | None = None, time_str: str | None = None,
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
 
         duration_seconds = None
         if time_str:
             try:
-                duration_seconds = moderation_commands_core.parse_duration(time_str)
+                duration_seconds = moderation_commands_core.parse_duration(time_str, lang)
             except ValueError as exc:
                 return await interaction.response.send_message(str(exc), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason)
-        full_reason = moderation_commands_core.command_reason(reason_text, interaction.user.name, interaction.user.id)
+        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        full_reason = moderation_commands_core.command_reason(
+            reason_text, interaction.user.name, interaction.user.id, lang,
+        )
 
         try:
             await interaction.guild.ban(user, reason=full_reason)
         except discord.Forbidden:
-            return await interaction.followup.send("Недостаточно прав, чтобы забанить этого пользователя.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.ban_forbidden", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось забанить: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.ban_failed", lang, error=exc), ephemeral=True,
+            )
 
-        duration_display = "навсегда"
+        duration_display = i18n.t("moderation.duration.forever", lang)
         if duration_seconds:
             unban_at_ts = int(time.time()) + duration_seconds
             row_id = ban_db.add(interaction.guild.id, user.id, unban_at_ts)
             self._schedule_unban(row_id, interaction.guild.id, user.id, unban_at_ts)
-            duration_display = moderation_commands_core.format_duration(time_str)
+            duration_display = moderation_commands_core.format_duration(time_str, lang)
 
         await self._log_action(
-            interaction.guild.id, "🔨 Бан (команда)", user.id, user.name, interaction.user, reason_text,
-            extra=f"Срок: {duration_display}", event_type="command_ban",
+            interaction.guild.id, i18n.t("moderation.log.ban", lang), user.id, user.name, interaction.user, reason_text,
+            extra=i18n.t("moderation.embed.duration_extra", lang, duration=duration_display),
+            event_type="command_ban", lang=lang,
         )
         await interaction.followup.send(
-            f"✅ {user.mention} забанен. Срок: **{duration_display}**. Причина: {reason_text}", ephemeral=True
+            i18n.t("moderation.success.ban", lang, mention=user.mention, duration=duration_display, reason=reason_text),
+            ephemeral=True,
         )
 
     # ────────────────────────── /kick ──────────────────────────
@@ -161,24 +185,34 @@ class ModerationCommandsCog(commands.Cog):
     @app_commands.describe(user="Участник для кика", reason="Причина кика (необязательно)")
     @app_commands.default_permissions(kick_members=True)
     async def kick_command(self, interaction: discord.Interaction, user: discord.Member, reason: str | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason)
-        full_reason = moderation_commands_core.command_reason(reason_text, interaction.user.name, interaction.user.id)
+        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        full_reason = moderation_commands_core.command_reason(
+            reason_text, interaction.user.name, interaction.user.id, lang,
+        )
 
         try:
             await user.kick(reason=full_reason)
         except discord.Forbidden:
-            return await interaction.followup.send("Недостаточно прав, чтобы кикнуть этого участника.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.kick_forbidden", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось кикнуть: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.kick_failed", lang, error=exc), ephemeral=True,
+            )
 
         await self._log_action(
-            interaction.guild.id, "👢 Кик (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_kick"
+            interaction.guild.id, i18n.t("moderation.log.kick", lang), user.id, user.name, interaction.user, reason_text,
+            event_type="command_kick", lang=lang,
         )
-        await interaction.followup.send(f"✅ {user.mention} кикнут. Причина: {reason_text}", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("moderation.success.kick", lang, mention=user.mention, reason=reason_text), ephemeral=True,
+        )
 
     # ────────────────────────── /mute ──────────────────────────
 
@@ -193,32 +227,41 @@ class ModerationCommandsCog(commands.Cog):
     async def mute_command(
         self, interaction: discord.Interaction, user: discord.Member, time_str: str, reason: str | None = None,
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
 
         try:
-            duration_seconds = moderation_commands_core.parse_mute_duration(time_str)
+            duration_seconds = moderation_commands_core.parse_mute_duration(time_str, lang)
         except ValueError as exc:
             return await interaction.response.send_message(str(exc), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason)
-        full_reason = moderation_commands_core.command_reason(reason_text, interaction.user.name, interaction.user.id)
+        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        full_reason = moderation_commands_core.command_reason(
+            reason_text, interaction.user.name, interaction.user.id, lang,
+        )
 
         try:
             await user.timeout(discord.utils.utcnow() + timedelta(seconds=duration_seconds), reason=full_reason)
         except discord.Forbidden:
-            return await interaction.followup.send("Недостаточно прав, чтобы выдать таймаут этому участнику.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.mute_forbidden", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось выдать таймаут: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.mute_failed", lang, error=exc), ephemeral=True,
+            )
 
-        duration_display = moderation_commands_core.format_duration(time_str)
+        duration_display = moderation_commands_core.format_duration(time_str, lang)
         await self._log_action(
-            interaction.guild.id, "🔇 Таймаут (команда)", user.id, user.name, interaction.user, reason_text,
-            extra=f"Срок: {duration_display}", event_type="command_mute",
+            interaction.guild.id, i18n.t("moderation.log.mute", lang), user.id, user.name, interaction.user, reason_text,
+            extra=i18n.t("moderation.embed.duration_extra", lang, duration=duration_display),
+            event_type="command_mute", lang=lang,
         )
         await interaction.followup.send(
-            f"✅ {user.mention} получил(а) таймаут на **{duration_display}**. Причина: {reason_text}", ephemeral=True
+            i18n.t("moderation.success.mute", lang, mention=user.mention, duration=duration_display, reason=reason_text),
+            ephemeral=True,
         )
 
     # ────────────────────────── /unmute ──────────────────────────
@@ -227,26 +270,38 @@ class ModerationCommandsCog(commands.Cog):
     @app_commands.describe(user="Участник, с которого снять таймаут", reason="Причина снятия (необязательно)")
     @app_commands.default_permissions(moderate_members=True)
     async def unmute_command(self, interaction: discord.Interaction, user: discord.Member, reason: str | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
         if not user.is_timed_out():
-            return await interaction.response.send_message(f"{user.mention} сейчас не под таймаутом.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("moderation.error.unmute_not_timed_out", lang, mention=user.mention), ephemeral=True,
+            )
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason)
-        full_reason = moderation_commands_core.command_reason(reason_text, interaction.user.name, interaction.user.id)
+        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        full_reason = moderation_commands_core.command_reason(
+            reason_text, interaction.user.name, interaction.user.id, lang,
+        )
 
         try:
             await user.timeout(None, reason=full_reason)
         except discord.Forbidden:
-            return await interaction.followup.send("Недостаточно прав, чтобы снять таймаут с этого участника.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.unmute_forbidden", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось снять таймаут: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.unmute_failed", lang, error=exc), ephemeral=True,
+            )
 
         await self._log_action(
-            interaction.guild.id, "🔊 Снятие таймаута (команда)", user.id, user.name, interaction.user, reason_text, event_type="command_unmute"
+            interaction.guild.id, i18n.t("moderation.log.unmute", lang), user.id, user.name, interaction.user, reason_text,
+            event_type="command_unmute", lang=lang,
         )
-        await interaction.followup.send(f"✅ Таймаут с {user.mention} снят. Причина: {reason_text}", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("moderation.success.unmute", lang, mention=user.mention, reason=reason_text), ephemeral=True,
+        )
 
     # ────────────────────────── /unban ──────────────────────────
 
@@ -254,34 +309,49 @@ class ModerationCommandsCog(commands.Cog):
     @app_commands.describe(userid="ID пользователя для разбана", reason="Причина разбана (необязательно)")
     @app_commands.default_permissions(ban_members=True)
     async def unban_command(self, interaction: discord.Interaction, userid: str, reason: str | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
         if not userid.isdigit():
-            return await interaction.response.send_message("ID пользователя должен быть числом.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("moderation.error.invalid_user_id", lang), ephemeral=True,
+            )
         user_id = int(userid)
 
         await interaction.response.defer(ephemeral=True)
         try:
             ban_entry = await interaction.guild.fetch_ban(discord.Object(id=user_id))
         except discord.NotFound:
-            return await interaction.followup.send("Этот пользователь не забанен.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.unban_not_banned", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось получить информацию о бане: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.unban_fetch_failed", lang, error=exc), ephemeral=True,
+            )
 
         target = ban_entry.user
-        reason_text = moderation_commands_core.normalize_reason(reason)
-        full_reason = moderation_commands_core.command_reason(reason_text, interaction.user.name, interaction.user.id)
+        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        full_reason = moderation_commands_core.command_reason(
+            reason_text, interaction.user.name, interaction.user.id, lang,
+        )
         try:
             await interaction.guild.unban(target, reason=full_reason)
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось разбанить: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.unban_failed", lang, error=exc), ephemeral=True,
+            )
 
         self._cancel_scheduled_unban(interaction.guild.id, user_id)
 
         await self._log_action(
-            interaction.guild.id, "🔓 Разбан (команда)", target.id, target.name, interaction.user, reason_text, event_type="command_unban"
+            interaction.guild.id, i18n.t("moderation.log.unban", lang), target.id, target.name, interaction.user, reason_text,
+            event_type="command_unban", lang=lang,
         )
-        await interaction.followup.send(f"✅ {target} (`{target.id}`) разбанен. Причина: {reason_text}", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("moderation.success.unban", lang, user=target, user_id=target.id, reason=reason_text),
+            ephemeral=True,
+        )
 
     # ────────────────────────── /clear ──────────────────────────
 
@@ -292,27 +362,40 @@ class ModerationCommandsCog(commands.Cog):
         self, interaction: discord.Interaction,
         number: app_commands.Range[int, moderation_commands_core.CLEAR_MIN, moderation_commands_core.CLEAR_MAX],
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None:
-            return await interaction.response.send_message("Команда доступна только на сервере.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
         channel = interaction.channel
         if not hasattr(channel, "purge"):
-            return await interaction.response.send_message("В этом типе канала очистка недоступна.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("moderation.error.clear_unsupported", lang), ephemeral=True,
+            )
 
         await interaction.response.defer(ephemeral=True)
         try:
             deleted = await channel.purge(limit=number)
         except discord.Forbidden:
-            return await interaction.followup.send("Недостаточно прав для удаления сообщений в этом канале.", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.clear_forbidden", lang), ephemeral=True,
+            )
         except discord.HTTPException as exc:
-            return await interaction.followup.send(f"Не удалось удалить сообщения: {exc}", ephemeral=True)
+            return await interaction.followup.send(
+                i18n.t("moderation.error.clear_failed", lang, error=exc), ephemeral=True,
+            )
 
         await self._log_action(
-            interaction.guild.id, "🧹 Очистка чата (команда)", interaction.user.id, interaction.user.name, interaction.user,
-            f"Удалено сообщений: {len(deleted)}", extra=f"Канал: {channel.mention}", event_type="command_clear",
+            interaction.guild.id, i18n.t("moderation.log.clear", lang), interaction.user.id, interaction.user.name, interaction.user,
+            i18n.t("moderation.log.clear_reason", lang, count=len(deleted)),
+            extra=i18n.t("moderation.log.clear_channel", lang, channel=channel.mention),
+            event_type="command_clear", lang=lang,
         )
-        await interaction.followup.send(f"✅ Удалено сообщений: **{len(deleted)}**.", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("moderation.success.clear", lang, count=len(deleted)), ephemeral=True,
+        )
 
 
 async def setup(bot: commands.Bot):
     ban_db.init()
-    await bot.add_cog(ModerationCommandsCog(bot))
+    cog = ModerationCommandsCog(bot)
+    slash_registry.register_moderation(cog)
+    await bot.add_cog(cog)

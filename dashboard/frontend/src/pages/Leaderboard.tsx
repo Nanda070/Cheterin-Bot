@@ -2,10 +2,12 @@ import { Trophy } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchPublicLeaderboard, type PublicLeaderboardEntry } from '../api/client'
 import { PublicLayout } from '../components/PublicLayout'
+import { useT } from '../context/LanguageContext'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
 export function LeaderboardPage() {
+  const t = useT()
   const [entries, setEntries] = useState<PublicLeaderboardEntry[] | null>(null)
   const [guildName, setGuildName] = useState('')
   const [error, setError] = useState('')
@@ -16,24 +18,25 @@ export function LeaderboardPage() {
         setEntries(data.entries)
         setGuildName(data.guild_name)
       })
-      .catch(() => setError('Рейтинг недоступен: система уровней или публичная страница отключены.'))
-  }, [])
+      .catch(() => setError(t('leaderboard.error')))
+  }, [t])
 
   return (
     <PublicLayout>
       <div className="mx-auto max-w-2xl">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Trophy size={22} weight="fill" className="text-warning" />
-          Рейтинг участников{guildName ? ` — ${guildName}` : ''}
+          {t('leaderboard.title')}
+          {guildName ? t('leaderboard.guildSuffix', { name: guildName }) : ''}
         </h1>
-        <p className="mt-1 text-sm text-muted">Топ-100 по опыту: активность в чатах и голосовых каналах.</p>
+        <p className="mt-1 text-sm text-muted">{t('leaderboard.subtitle')}</p>
 
         {error && <p className="mt-6 text-sm text-muted">{error}</p>}
-        {!entries && !error && <p className="mt-6 text-sm text-muted">Загрузка…</p>}
+        {!entries && !error && <p className="mt-6 text-sm text-muted">{t('leaderboard.loading')}</p>}
 
         {entries && (
           <div className="animate-fade-in-up mt-6 overflow-hidden rounded-card border border-border bg-surface">
-            {entries.length === 0 && <p className="p-4 text-sm text-muted">Рейтинг пока пуст.</p>}
+            {entries.length === 0 && <p className="p-4 text-sm text-muted">{t('leaderboard.empty')}</p>}
             {entries.map((entry) => (
               <div
                 key={entry.rank}
@@ -54,8 +57,10 @@ export function LeaderboardPage() {
                   <p className="text-xs text-muted">🔊 {entry.voice_time_text}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-primary">Ур. {entry.level}</p>
-                  <p className="text-xs text-muted">{entry.xp.toLocaleString()} XP</p>
+                  <p className="text-sm font-semibold text-primary">
+                    {t('leaderboard.levelShort', { level: entry.level })}
+                  </p>
+                  <p className="text-xs text-muted">{t('leaderboard.xp', { xp: entry.xp.toLocaleString() })}</p>
                 </div>
               </div>
             ))}

@@ -51,6 +51,18 @@ export async function fetchInviteUrl(guildId?: string): Promise<string> {
   return data.url
 }
 
+export interface ServerLanguage {
+  code: 'ru' | 'en'
+}
+
+export async function fetchLanguage(): Promise<ServerLanguage> {
+  return apiFetch<ServerLanguage>('/api/language')
+}
+
+export async function updateLanguage(code: ServerLanguage['code']): Promise<ServerLanguage> {
+  return apiFetch<ServerLanguage>('/api/language', jsonInit('PUT', { code }))
+}
+
 export class ApiError extends Error {
   status: number
 
@@ -506,6 +518,7 @@ export interface BotConfig {
   LOG_CHANNEL_ID: string
   SPAM_EXCEPTION_CHANNELS: string[]
   TEMPBAN_CHANNEL_ID: string
+  TEMPBAN_LOG_CHANNEL_ID: string
   SPAM_LOG_CHANNEL_ID: string
   SPAM_LOG_ROLE_ID: string
   WELCOME_CHANNEL_ID: string
@@ -516,6 +529,8 @@ export interface BotConfig {
   SEARCH_PLAYERS_CHANNEL_ID: string
   BUTTON_CREATE_ALLOWED_ROLES: string[]
   BUTTON_WEBHOOK_URL: string
+  BUTTON_WEBHOOK_USERNAME: string
+  BUTTON_WEBHOOK_AVATAR_URL: string
   SERVER_INVITE_LINK: string
   VOICE_LOBBY_CHANNEL_ID: string
   VOICE_PANEL_CHANNEL_ID: string
@@ -745,9 +760,55 @@ export function fetchPublicBracket(token: string): Promise<BracketDetail> {
   return apiFetch(`/api/public/brackets/${token}`)
 }
 
+export interface WelcomeMessageSettings {
+  channel_mode: 'text' | 'embed'
+  channel_text: string
+  channel_embed: EmbedSpec
+  dm_content: string
+  dm_embed: EmbedSpec
+  dm_thumbnail_url: string
+  dm_fallback_thumbnail_url: string
+  dm_footer_text: string
+  dm_use_guild_icon: boolean
+  goodbye_text: string
+}
+
 export interface WelcomeSettings {
   channel_enabled: boolean
   dm_enabled: boolean
+  goodbye_channel_enabled: boolean
+  goodbye_channel_id: string
+  messages: WelcomeMessageSettings
+}
+
+export interface TempbanSettings {
+  dm_enabled: boolean
+  dm_message: string
+  log_enabled: boolean
+  log_embed: EmbedSpec
+  unban_reason: string
+}
+
+export interface FeedbackPanelSettings {
+  content: string
+  embed: EmbedSpec
+  banner_url: string
+}
+
+export function fetchTempbanSettings(): Promise<TempbanSettings> {
+  return apiFetch('/api/tempban-settings')
+}
+
+export function updateTempbanSettings(settings: TempbanSettings): Promise<TempbanSettings> {
+  return apiFetch('/api/tempban-settings', jsonInit('PUT', settings))
+}
+
+export function fetchFeedbackPanelSettings(): Promise<FeedbackPanelSettings> {
+  return apiFetch('/api/feedback-panel-settings')
+}
+
+export function updateFeedbackPanelSettings(settings: FeedbackPanelSettings): Promise<FeedbackPanelSettings> {
+  return apiFetch('/api/feedback-panel-settings', jsonInit('PUT', settings))
 }
 
 export function fetchWelcomeSettings(): Promise<WelcomeSettings> {
@@ -1203,6 +1264,7 @@ export interface MafiaPublicState {
   teammates?: MafiaPlayerRef[]
   mafia_votes?: { actor: string; target: string | null }[]
   vote_tally?: MafiaVoteTallyEntry[]
+  language?: 'ru' | 'en'
 }
 
 export function fetchPublicMafia(token: string): Promise<MafiaPublicState> {
@@ -1232,7 +1294,7 @@ export async function fetchSuperAdminGuilds(): Promise<SuperAdminGuild[]> {
   return body.guilds
 }
 
-// ────────────────────────── Гивевеи ──────────────────────────
+// ────────────────────────── Розыгрыши (Giveaways) ──────────────────────────
 
 export interface GiveawayEntrant {
   id: string
@@ -1664,6 +1726,7 @@ export interface BunkerPublicState {
   alive_players: BunkerPlayerRef[]
   roster: BunkerRosterEntry[]
   vote_tally?: BunkerVoteTallyEntry[]
+  language?: 'ru' | 'en'
 }
 
 export function fetchPublicBunker(token: string): Promise<BunkerPublicState> {
@@ -1841,6 +1904,20 @@ export function fetchAntiRaidSettings(): Promise<AntiRaidSettings> {
 
 export function updateAntiRaidSettings(settings: AntiRaidSettings): Promise<AntiRaidSettings> {
   return apiFetch('/api/antiraid', jsonInit('PUT', settings))
+}
+
+export interface SpamSettings {
+  limit_with_attachments: number
+  limit_without_attachments: number
+  time_window_sec: number
+}
+
+export function fetchSpamSettings(): Promise<SpamSettings> {
+  return apiFetch('/api/spam-settings')
+}
+
+export function updateSpamSettings(settings: SpamSettings): Promise<SpamSettings> {
+  return apiFetch('/api/spam-settings', jsonInit('PUT', settings))
 }
 
 // ────────────────────────── Верификация ──────────────────────────

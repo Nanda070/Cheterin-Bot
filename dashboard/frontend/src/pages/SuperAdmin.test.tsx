@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithI18n } from '../test/renderWithI18n'
 import { SuperAdminPage } from './SuperAdmin'
 
 describe('SuperAdminPage', () => {
@@ -12,7 +13,7 @@ describe('SuperAdminPage', () => {
       { id: '2', name: 'Другой сервер', icon: null, member_count: 7, owner_id: null },
     ])
 
-    render(<SuperAdminPage />)
+    renderWithI18n(<SuperAdminPage />)
 
     expect(await screen.findByText('Основной сервер')).toBeInTheDocument()
     expect(screen.getByText('Другой сервер')).toBeInTheDocument()
@@ -21,13 +22,13 @@ describe('SuperAdminPage', () => {
 
   it('shows an empty state when the bot is in no guilds', async () => {
     vi.spyOn(client, 'fetchSuperAdminGuilds').mockResolvedValue([])
-    render(<SuperAdminPage />)
+    renderWithI18n(<SuperAdminPage />)
     expect(await screen.findByText('Бот пока не состоит ни на одном сервере.')).toBeInTheDocument()
   })
 
   it('shows an error state when access is denied', async () => {
     vi.spyOn(client, 'fetchSuperAdminGuilds').mockRejectedValue(new Error('forbidden'))
-    render(<SuperAdminPage />)
+    renderWithI18n(<SuperAdminPage />)
     expect(await screen.findByText('Не удалось загрузить список серверов — недостаточно прав.')).toBeInTheDocument()
   })
 })

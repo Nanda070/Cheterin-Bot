@@ -14,6 +14,8 @@ from discord.ext import commands
 
 import economy_core
 import economy_db
+import i18n
+import slash_registry
 import stats_db
 import xp_card
 import xp_core
@@ -50,12 +52,13 @@ def _fmt_voice(seconds: int) -> str:
 class LeaderboardView(discord.ui.View):
     """Интерактивный лидерборд: сортировка по Опыту / Голосу + пагинация."""
 
-    def __init__(self, rows_xp: list, rows_voice: list, guild: discord.Guild | None, total: int):
+    def __init__(self, rows_xp: list, rows_voice: list, guild: discord.Guild | None, total: int, lang: str):
         super().__init__(timeout=120)
         self.rows_xp = rows_xp
         self.rows_voice = rows_voice
         self.guild = guild
         self.total = total
+        self.lang = lang
         self.page = 0
         self.mode = "xp"  # "xp" | "voice"
         self._sync_buttons()
@@ -72,6 +75,7 @@ class LeaderboardView(discord.ui.View):
         rows = self._rows()
         start = self.page * PER_PAGE
         page_rows = rows[start:start + PER_PAGE]
+        lang = self.lang
 
         lines: list[str] = []
         for i, row in enumerate(page_rows, start=start + 1):
@@ -80,23 +84,40 @@ class LeaderboardView(discord.ui.View):
             mention = member.mention if member else str(row["user_id"])
             level, _, _ = xp_core.level_progress(row["xp"])
             voice_str = _fmt_voice(row["voice_seconds"])
-            prefix = f"\u2B50 #{i}." if i <= 3 else f"#{i}."
+            if i <= 3:
+                prefix = i18n.t("xp.leaderboard.prefix_top", lang, rank=i)
+            else:
+                prefix = i18n.t("xp.leaderboard.prefix", lang, rank=i)
             lines.append(
-                f"**{prefix} {mention} ({display})**\n"
-                f"Уровень: {level} | Опыт: {row['xp']} | \U0001f5e3\ufe0f {voice_str}"
+                i18n.t(
+                    "xp.leaderboard.row",
+                    lang,
+                    prefix=prefix,
+                    mention=mention,
+                    display=display,
+                    level=level,
+                    xp=row["xp"],
+                    voice=voice_str,
+                )
             )
 
-        mode_label = "опыту \U0001f3c6" if self.mode == "xp" else "голосу \U0001f5e3\ufe0f"
+        if self.mode == "xp":
+            mode_label = i18n.t("xp.leaderboard.sort_xp", lang)
+        else:
+            mode_label = i18n.t("xp.leaderboard.sort_voice", lang)
         embed = discord.Embed(
-            title="Топ рейтинга участников",
-            description="\n\n".join(lines) if lines else "Нет данных.",
+            title=i18n.t("xp.leaderboard.title", lang),
+            description="\n\n".join(lines) if lines else i18n.t("xp.leaderboard.no_data", lang),
             color=discord.Color.gold(),
         )
         embed.set_footer(
-            text=(
-                f"Отсортировано по {mode_label} \u2022 "
-                f"Страница {self.page + 1} из {self._max_pages()} \u2014 "
-                f"Всего участников: {self.total}"
+            text=i18n.t(
+                "xp.leaderboard.footer",
+                lang,
+                mode_label=mode_label,
+                page=self.page + 1,
+                max_pages=self._max_pages(),
+                total=self.total,
             )
         )
         if self.guild and self.guild.icon:
@@ -112,6 +133,8 @@ class LeaderboardView(discord.ui.View):
         self.btn_prev.disabled = at_start
         self.btn_next.disabled = at_end
         self.btn_last.disabled = at_end
+        self.btn_xp.label = i18n.t("xp.leaderboard.btn_xp", self.lang)
+        self.btn_voice.label = i18n.t("xp.leaderboard.btn_voice", self.lang)
         self.btn_xp.style = (
             discord.ButtonStyle.primary if self.mode == "xp" else discord.ButtonStyle.secondary
         )
@@ -121,14 +144,14 @@ class LeaderboardView(discord.ui.View):
 
     # ── кнопки сортировки (row=0) ──
 
-    @discord.ui.button(label="\U0001f3c6 Опыт", style=discord.ButtonStyle.primary, row=0)
+    @discord.ui.button(label="\U0001f3c6", style=discord.ButtonStyle.primary, row=0)
     async def btn_xp(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.mode = "xp"
         self.page = 0
         self._sync_buttons()
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="\U0001f5e3\ufe0f Голос", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="\U0001f5e3\ufe0f", style=discord.ButtonStyle.secondary, row=0)
     async def btn_voice(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.mode = "voice"
         self.page = 0
@@ -243,6 +266,7 @@ class XPCog(commands.Cog):
 
     async def sync_reward_roles(self, member: discord.Member, settings: dict, level: int, voice_seconds: int) -> tuple[list[str], list[str]]:
         """Приводит роли-награды участника в соответствие с его прогрессом."""
+        lang = i18n.lang_for(member.guild.id)
         deserved = xp_core.deserved_level_roles(settings, level) | xp_core.deserved_voice_roles(settings, voice_seconds)
         all_rewards = xp_core.all_reward_role_ids(settings)
 
@@ -256,7 +280,7 @@ class XPCog(commands.Cog):
             if role is None:
                 continue
             try:
-                await member.add_roles(role, reason="Награда за уровень/войс-активность")
+                await member.add_roles(role, reason=i18n.t("xp.reward.add_reason", lang))
                 added_names.append(role.name)
             except discord.HTTPException as exc:
                 logger.warning("Не удалось выдать награду %s участнику %s: %s", rid, member.id, exc)
@@ -266,7 +290,7 @@ class XPCog(commands.Cog):
             if role is None:
                 continue
             try:
-                await member.remove_roles(role, reason="Награда снята: недостаточный уровень/время")
+                await member.remove_roles(role, reason=i18n.t("xp.reward.remove_reason", lang))
                 removed_names.append(role.name)
             except discord.HTTPException as exc:
                 logger.warning("Не удалось снять награду %s у участника %s: %s", rid, member.id, exc)
@@ -299,13 +323,16 @@ class XPCog(commands.Cog):
             return
 
         guild = member.guild
+        lang = i18n.lang_for(guild.id)
         guild_name = f'" {guild.name} "' if guild else ""
 
         embed = discord.Embed(
-            description=(
-                f"Поздравляю {member.mention}\U0001f929!\n"
-                f"Вы достигли **{level}** уровня. "
-                f"Спасибо за вашу активность на сервере {guild_name}"
+            description=i18n.t(
+                "xp.level_up.description",
+                lang,
+                mention=member.mention,
+                level=level,
+                guild_name=guild_name,
             ),
             color=discord.Color.gold(),
         )
@@ -339,13 +366,14 @@ class XPCog(commands.Cog):
     @app_commands.command(name="ранг", description="Показать карточку ранга участника")
     @app_commands.describe(участник="Чей ранг показать (по умолчанию — свой)")
     async def rank_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
 
         target = участник or interaction.user
         if target.bot:
-            return await interaction.response.send_message("У ботов нет ранга.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.rank.no_bot_rank", lang), ephemeral=True)
 
         await interaction.response.defer()
 
@@ -375,9 +403,10 @@ class XPCog(commands.Cog):
             step,
             rank,
             total,
-            xp_core.format_voice_time(voice_seconds),
+            xp_core.format_voice_time(voice_seconds, lang),
             frame_color=frame["value"] if frame else None,
             title_text=title["value"] if title else None,
+            lang=lang,
         )
         file = discord.File(fp=io.BytesIO(png), filename="rank.png")
         await interaction.followup.send(file=file)
@@ -387,11 +416,12 @@ class XPCog(commands.Cog):
     @xp_group.command(name="add", description="Добавить (или отнять) опыт участнику")
     @app_commands.describe(участник="Кому изменить опыт", количество="Сколько XP добавить (можно отрицательное число)")
     async def xp_add(self, interaction: discord.Interaction, участник: discord.Member, количество: int):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
         if участник.bot:
-            return await interaction.response.send_message("У ботов нет опыта.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.no_bot_xp", lang), ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
         row = stats_db.xp_get_member(interaction.guild.id, участник.id)
@@ -399,7 +429,10 @@ class XPCog(commands.Cog):
         new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, current + количество))
         await self.set_member_xp(участник, new_xp)
 
-        await interaction.followup.send(f"✅ Опыт {участник.mention}: {current} → **{new_xp}**.", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("xp.add.success", lang, mention=участник.mention, current=current, new_xp=new_xp),
+            ephemeral=True,
+        )
 
     @xp_group.command(name="set", description="Установить точное количество опыта участнику")
     @app_commands.describe(участник="Кому установить опыт", количество="Новое значение XP")
@@ -407,46 +440,57 @@ class XPCog(commands.Cog):
         self, interaction: discord.Interaction, участник: discord.Member,
         количество: app_commands.Range[int, xp_core.XP_ADMIN_MIN, xp_core.XP_ADMIN_MAX],
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
         if участник.bot:
-            return await interaction.response.send_message("У ботов нет опыта.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.no_bot_xp", lang), ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
         await self.set_member_xp(участник, количество)
-        await interaction.followup.send(f"✅ Опыт {участник.mention} установлен: **{количество}**.", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("xp.set.success", lang, mention=участник.mention, amount=количество),
+            ephemeral=True,
+        )
 
     @xp_group.command(name="clear", description="Обнулить опыт участника")
     @app_commands.describe(участник="Кому обнулить опыт")
     async def xp_clear(self, interaction: discord.Interaction, участник: discord.Member):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
         await interaction.response.defer(ephemeral=True)
 
         await self.reset_member(участник)
-        await interaction.followup.send(f"✅ Опыт {участник.mention} обнулён.", ephemeral=True)
+        await interaction.followup.send(
+            i18n.t("xp.clear.success", lang, mention=участник.mention),
+            ephemeral=True,
+        )
 
     # ────────────────── Команда /leaders ──────────────────
 
     @app_commands.command(name="leaders", description="Показать таблицу лидеров")
     async def leaders_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Система уровней отключена.", ephemeral=True)
+            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
         await interaction.response.defer()
 
         rows_xp = stats_db.xp_leaderboard(interaction.guild.id, limit=1000)
         rows_voice = stats_db.voice_leaderboard(interaction.guild.id, limit=1000)
         if not rows_xp and not rows_voice:
-            return await interaction.followup.send("Пока никто не заработал опыт.")
+            return await interaction.followup.send(i18n.t("xp.leaders.empty", lang))
 
         total = stats_db.xp_member_count(interaction.guild.id)
-        view = LeaderboardView(rows_xp, rows_voice, interaction.guild, total)
+        view = LeaderboardView(rows_xp, rows_voice, interaction.guild, total, lang)
         await interaction.followup.send(embed=view.build_embed(), view=view)
 
 
 async def setup(bot: commands.Bot):
     stats_db.init()
-    await bot.add_cog(XPCog(bot))
+    cog = XPCog(bot)
+    slash_registry.register_xp(cog)
+    await bot.add_cog(cog)

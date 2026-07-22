@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithI18n } from '../test/renderWithI18n'
 import { LockdownPage } from './Lockdown'
 
 describe('LockdownPage', () => {
@@ -8,7 +9,7 @@ describe('LockdownPage', () => {
 
   it('shows inactive status', async () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
     await waitFor(() => expect(screen.getByText(/выключен/i)).toBeInTheDocument())
     expect(screen.getByText('Включить антиспам')).toBeInTheDocument()
   })
@@ -20,7 +21,7 @@ describe('LockdownPage', () => {
       .mockResolvedValueOnce({ active: true, role_count: 3 })
     const activateSpy = vi.spyOn(client, 'activateLockdown').mockResolvedValue()
 
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
     await waitFor(() => screen.getByText('Включить антиспам'))
     fireEvent.click(screen.getByText('Включить антиспам'))
     fireEvent.click(screen.getByText('Подтвердить'))
@@ -55,7 +56,7 @@ describe('LockdownPage', () => {
       },
     ])
 
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
 
     expect(await screen.findByText('rulebreaker')).toBeInTheDocument()
     expect(screen.getByText('mod')).toBeInTheDocument()
@@ -67,7 +68,7 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
 
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
 
     expect(await screen.findByText('Активности пока нет.')).toBeInTheDocument()
   })
@@ -84,8 +85,31 @@ describe('LockdownPage', () => {
       action_slowmode_sec: 0,
       cooldown_minutes: 30,
     })
+    vi.spyOn(client, 'fetchSpamSettings').mockResolvedValue({
+      limit_with_attachments: 3,
+      limit_without_attachments: 5,
+      time_window_sec: 60,
+    })
+    vi.spyOn(client, 'fetchTempbanSettings').mockResolvedValue({
+      dm_enabled: true,
+      dm_message: '',
+      log_enabled: true,
+      log_embed: {
+        title: '',
+        description: '',
+        url: '',
+        color: '#5865F2',
+        author: { name: '', url: '', icon_url: '' },
+        footer: { text: '', icon_url: '' },
+        image: { url: '' },
+        thumbnail: { url: '' },
+        timestamp: null,
+        fields: [],
+      },
+      unban_reason: '',
+    })
 
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
     fireEvent.click(await screen.findByText('Антирейд'))
 
     expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()
@@ -101,7 +125,7 @@ describe('LockdownPage', () => {
       welcome_text: 'Нажмите кнопку ниже.',
     })
 
-    render(<LockdownPage />)
+    renderWithI18n(<LockdownPage />)
     fireEvent.click(await screen.findByText('Верификация'))
 
     expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()

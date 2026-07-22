@@ -14,23 +14,41 @@ from discord.ext import commands
 
 import economy_core
 import economy_db
+import i18n
+import slash_registry
 
 logger = logging.getLogger("economy")
 
-DISABLED_TEXT = "Модуль «Экономика» отключён."
+
+DEFAULT_ITEM_LABEL = {
+    "role": "economy.item_label.role",
+    "frame_color": "economy.item_label.frame_color",
+    "title": "economy.item_label.title",
+}
 
 
-DEFAULT_ITEM_LABEL = {"role": "Роль", "frame_color": "Рамка", "title": "Титул"}
+def _item_label(item_type: str, lang: str) -> str:
+    key = DEFAULT_ITEM_LABEL.get(item_type, "economy.item_label.default")
+    return i18n.t(key, lang)
+
+
+def _streak_day_word(streak: int, lang: str) -> str:
+    if streak == 1:
+        return i18n.t("economy.daily.streak_day_one", lang)
+    if lang == "ru" and streak in (2, 3, 4):
+        return i18n.t("economy.daily.streak_day_few", lang)
+    return i18n.t("economy.daily.streak_day_many", lang)
 
 
 class ShopView(discord.ui.View):
     """Кнопки покупки по товарам магазина (эфемерное сообщение)."""
 
-    def __init__(self, cog: "EconomyCog", items: list[dict]):
+    def __init__(self, cog: "EconomyCog", items: list[dict], lang: str):
         super().__init__(timeout=600)
         self.cog = cog
+        self.lang = lang
         for item in items[:economy_core.SHOP_ITEMS_MAX]:
-            label = item["name"] or DEFAULT_ITEM_LABEL.get(item["type"], "Товар")
+            label = item["name"] or _item_label(item["type"], lang)
             button = discord.ui.Button(
                 label=f"{label} — {item['price']}",
                 style=discord.ButtonStyle.primary,
@@ -42,21 +60,39 @@ class ShopView(discord.ui.View):
     def _make_callback(self, item_id: str):
         async def callback(interaction: discord.Interaction):
             await self.cog.handle_purchase(interaction, item_id)
+
         return callback
 
 
 class CosmeticsView(discord.ui.View):
     """Селекторы «Рамка» / «Титул» из уже купленных предметов (эфемерное сообщение)."""
 
-    def __init__(self, cog: "EconomyCog", frames: list[dict], titles: list[dict]):
+    def __init__(self, cog: "EconomyCog", frames: list[dict], titles: list[dict], lang: str):
         super().__init__(timeout=180)
         self.cog = cog
+        self.lang = lang
         if frames:
-            self.add_item(self._build_select("frame_color", "Рамка карточки", "Без рамки", frames))
+            self.add_item(
+                self._build_select(
+                    "frame_color",
+                    i18n.t("economy.cosmetics.frame_placeholder", lang),
+                    i18n.t("economy.cosmetics.no_frame", lang),
+                    frames,
+                )
+            )
         if titles:
-            self.add_item(self._build_select("title", "Титул под именем", "Без титула", titles))
+            self.add_item(
+                self._build_select(
+                    "title",
+                    i18n.t("economy.cosmetics.title_placeholder", lang),
+                    i18n.t("economy.cosmetics.no_title", lang),
+                    titles,
+                )
+            )
 
-    def _build_select(self, kind: str, placeholder: str, none_label: str, owned: list[dict]) -> discord.ui.Select:
+    def _build_select(
+        self, kind: str, placeholder: str, none_label: str, owned: list[dict]
+    ) -> discord.ui.Select:
         options = [discord.SelectOption(label=none_label, value="__none__")]
         options += [discord.SelectOption(label=item["name"][:100], value=item["item_id"]) for item in owned[:24]]
         select = discord.ui.Select(placeholder=placeholder, options=options, custom_id=f"economy:equip:{kind}")
@@ -77,24 +113,38 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="daily", description="Забрать ежедневный бонус монет — растёт со стриком дней подряд")
     async def daily_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
         if not settings["daily_bonus_enabled"]:
-            return await interaction.response.send_message("Ежедневный бонус отключён.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.daily.disabled", lang), ephemeral=True
+            )
 
         result = economy_core.claim_daily_bonus(interaction.guild.id, interaction.user.id)
         if result["already_claimed"]:
             return await interaction.response.send_message(
-                f"Бонус за сегодня уже получен. Стрик: **{result['streak']}** 🔥 Возвращайся завтра!",
+                i18n.t(
+                    "economy.daily.already_claimed",
+                    lang,
+                    streak=result["streak"],
+                ),
                 ephemeral=True,
             )
 
         streak = result["streak"]
-        day_word = "день" if streak == 1 else "дня" if streak in (2, 3, 4) else "дней"
         await interaction.response.send_message(
-            f"🎁 Ежедневный бонус: **{economy_core.format_amount(result['amount'], settings)}**\n"
-            f"Стрик: **{streak}** {day_word} 🔥 (баланс: {economy_core.format_amount(result['balance'], settings)}).",
+            i18n.t(
+                "economy.daily.claimed",
+                lang,
+                amount=economy_core.format_amount(result["amount"], settings),
+                streak=streak,
+                day_word=_streak_day_word(streak, lang),
+                balance=economy_core.format_amount(result["balance"], settings),
+            ),
             ephemeral=True,
         )
 
@@ -103,20 +153,30 @@ class EconomyCog(commands.Cog):
     @app_commands.command(name="баланс", description="Показать баланс монет (свой или другого участника)")
     @app_commands.describe(участник="Чей баланс показать (по умолчанию — свой)")
     async def balance_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
 
         target = участник or interaction.user
         if target.bot:
-            return await interaction.response.send_message("У ботов нет кошелька.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.error.bot_no_wallet", lang), ephemeral=True
+            )
 
         balance = economy_db.get_balance(target.id)
         rank = economy_db.rank_of(target.id)
         embed = discord.Embed(
-            title=f"{settings['currency_emoji']} Баланс — {target.display_name}",
+            title=i18n.t(
+                "economy.balance.title",
+                lang,
+                emoji=settings["currency_emoji"],
+                name=target.display_name,
+            ),
             description=f"**{economy_core.format_amount(balance, settings)}**"
-            + (f"\nМесто в топе: **#{rank}**" if rank else ""),
+            + (i18n.t("economy.balance.rank", lang, rank=rank) if rank else ""),
             color=discord.Color.gold(),
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -130,22 +190,34 @@ class EconomyCog(commands.Cog):
     )
     @app_commands.default_permissions(manage_guild=True)
     async def grant_balance_command(
-        self, interaction: discord.Interaction, участник: discord.Member,
+        self,
+        interaction: discord.Interaction,
+        участник: discord.Member,
         количество: app_commands.Range[int, -economy_core.BALANCE_ADMIN_MAX, economy_core.BALANCE_ADMIN_MAX],
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
         if участник.bot:
-            return await interaction.response.send_message("У ботов нет кошелька.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.error.bot_no_wallet", lang), ephemeral=True
+            )
 
         current = economy_db.get_balance(участник.id)
         new_balance = min(economy_core.BALANCE_ADMIN_MAX, max(0, current + количество))
         economy_db.set_balance(участник.id, new_balance, "admin_grant")
 
         await interaction.response.send_message(
-            f"✅ Баланс {участник.mention}: {economy_core.format_amount(current, settings)} → "
-            f"**{economy_core.format_amount(new_balance, settings)}**.",
+            i18n.t(
+                "economy.grant.success",
+                lang,
+                mention=участник.mention,
+                old_balance=economy_core.format_amount(current, settings),
+                new_balance=economy_core.format_amount(new_balance, settings),
+            ),
             ephemeral=True,
         )
 
@@ -154,45 +226,75 @@ class EconomyCog(commands.Cog):
     @app_commands.command(name="перевести", description="Перевести монеты другому участнику")
     @app_commands.describe(участник="Получатель перевода", количество="Сколько монет перевести")
     async def transfer_command(
-        self, interaction: discord.Interaction, участник: discord.Member,
+        self,
+        interaction: discord.Interaction,
+        участник: discord.Member,
         количество: app_commands.Range[int, 1, economy_core.BALANCE_ADMIN_MAX],
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
         if not settings["transfer_enabled"]:
-            return await interaction.response.send_message("Переводы между участниками отключены.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.transfer.disabled", lang), ephemeral=True
+            )
         if участник.bot:
-            return await interaction.response.send_message("Ботам переводить нельзя.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.transfer.no_bots", lang), ephemeral=True
+            )
         if участник.id == interaction.user.id:
-            return await interaction.response.send_message("Себе переводить нельзя.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.transfer.no_self", lang), ephemeral=True
+            )
 
         fee = economy_core.transfer_fee(количество, settings["transfer_fee_percent"])
         if not economy_db.transfer(interaction.user.id, участник.id, количество, fee):
             balance = economy_db.get_balance(interaction.user.id)
             return await interaction.response.send_message(
-                f"Недостаточно средств: нужно {economy_core.format_amount(количество + fee, settings)} "
-                f"(с комиссией), на балансе {economy_core.format_amount(balance, settings)}.",
+                i18n.t(
+                    "economy.transfer.insufficient",
+                    lang,
+                    needed=economy_core.format_amount(количество + fee, settings),
+                    balance=economy_core.format_amount(balance, settings),
+                ),
                 ephemeral=True,
             )
 
-        fee_text = f" Комиссия: {economy_core.format_amount(fee, settings)}." if fee else ""
+        fee_text = (
+            i18n.t("economy.transfer.fee", lang, fee=economy_core.format_amount(fee, settings))
+            if fee
+            else ""
+        )
         await interaction.response.send_message(
-            f"💸 {interaction.user.mention} перевёл(а) {economy_core.format_amount(количество, settings)} "
-            f"{участник.mention}.{fee_text}"
+            i18n.t(
+                "economy.transfer.success",
+                lang,
+                sender=interaction.user.mention,
+                amount=economy_core.format_amount(количество, settings),
+                recipient=участник.mention,
+                fee_text=fee_text,
+            )
         )
 
     # ────────────────────────── /монеты-топ ──────────────────────────
 
     @app_commands.command(name="монеты-топ", description="Топ участников по количеству монет")
     async def top_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
 
         top = economy_db.top(10)
         if not top:
-            return await interaction.response.send_message("Пока ни у кого нет монет.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.top.empty", lang), ephemeral=True
+            )
 
         guild = interaction.guild
         medals = {1: "🥇", 2: "🥈", 3: "🥉"}
@@ -204,7 +306,12 @@ class EconomyCog(commands.Cog):
             lines.append(f"{prefix} **{name}** — {economy_core.format_amount(row['balance'], settings)}")
 
         embed = discord.Embed(
-            title=f"{settings['currency_emoji']} Топ по {settings['currency_name']}",
+            title=i18n.t(
+                "economy.top.title",
+                lang,
+                emoji=settings["currency_emoji"],
+                currency_name=settings["currency_name"],
+            ),
             description="\n".join(lines),
             color=discord.Color.gold(),
         )
@@ -214,68 +321,102 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="магазин", description="Магазин ролей за монеты")
     async def shop_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
 
         items = settings["shop_items"]
         if not items:
-            return await interaction.response.send_message("Магазин пока пуст — товары добавляются в дашборде.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.shop.empty", lang), ephemeral=True
+            )
 
         balance = economy_db.get_balance(interaction.user.id)
-        lines = [self._shop_item_line(item, interaction.guild, settings) for item in items]
+        lines = [self._shop_item_line(item, interaction.guild, settings, lang) for item in items]
 
         embed = discord.Embed(
-            title="🛒 Магазин",
-            description="\n".join(lines) + f"\n\nВаш баланс: **{economy_core.format_amount(balance, settings)}**",
+            title=i18n.t("economy.shop.title", lang),
+            description="\n".join(lines)
+            + i18n.t(
+                "economy.shop.balance",
+                lang,
+                balance=economy_core.format_amount(balance, settings),
+            ),
             color=discord.Color.gold(),
         )
-        await interaction.response.send_message(embed=embed, view=ShopView(self, items), ephemeral=True)
+        await interaction.response.send_message(
+            embed=embed, view=ShopView(self, items, lang), ephemeral=True
+        )
 
-    def _shop_item_line(self, item: dict, guild: discord.Guild | None, settings: dict) -> str:
+    def _shop_item_line(
+        self, item: dict, guild: discord.Guild | None, settings: dict, lang: str
+    ) -> str:
         """Строка товара в /магазин — раньше пыталась резолвить role_id для
         ЛЮБОГО товара (включая косметику без роли вообще), из-за чего рамки и
         титулы всегда показывали «не найдена». Теперь ветвится по типу."""
         price_text = economy_core.format_amount(item["price"], settings)
         if item["type"] == "role":
             role = guild.get_role(int(item["role_id"])) if guild and item["role_id"] else None
-            target = role.mention if role else f"роль `{item['role_id']}` (не найдена)"
-            name = item["name"] or (role.name if role else "Товар")
+            target = (
+                role.mention
+                if role
+                else i18n.t("economy.shop.role_not_found", lang, role_id=item["role_id"])
+            )
+            name = item["name"] or (role.name if role else i18n.t("economy.item_label.default", lang))
         elif item["type"] == "frame_color":
-            target = f"рамка карточки `{item['color_hex']}`"
-            name = item["name"] or f"Рамка {item['color_hex']}"
+            target = i18n.t("economy.shop.frame_target", lang, color_hex=item["color_hex"])
+            name = item["name"] or i18n.t("economy.shop.frame_name", lang, color_hex=item["color_hex"])
         else:  # title
-            target = f"титул «{item['title_text']}»"
-            name = item["name"] or f"Титул «{item['title_text']}»"
-        return f"• **{name}** — {target}: {price_text}"
+            target = i18n.t("economy.shop.title_target", lang, title_text=item["title_text"])
+            name = item["name"] or i18n.t("economy.shop.title_name", lang, title_text=item["title_text"])
+        return i18n.t("economy.shop.item_line", lang, name=name, target=target, price=price_text)
 
     async def handle_purchase(self, interaction: discord.Interaction, item_id: str):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
 
         item = economy_core.find_shop_item(settings, item_id)
         if item is None:
-            return await interaction.response.send_message("Этот товар уже убрали из магазина.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.purchase.item_removed", lang), ephemeral=True
+            )
 
         if item["type"] == "role":
-            await self._purchase_role(interaction, item, settings)
+            await self._purchase_role(interaction, item, settings, lang)
         else:
-            await self._purchase_cosmetic(interaction, item, settings)
+            await self._purchase_cosmetic(interaction, item, settings, lang)
 
-    async def _purchase_role(self, interaction: discord.Interaction, item: dict, settings: dict):
+    async def _purchase_role(
+        self, interaction: discord.Interaction, item: dict, settings: dict, lang: str
+    ):
         guild = interaction.guild
         role = guild.get_role(int(item["role_id"])) if guild and item["role_id"] else None
         if role is None:
-            return await interaction.response.send_message("Роль товара не найдена на сервере — сообщите админам.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.purchase.role_not_found", lang), ephemeral=True
+            )
         if any(r.id == role.id for r in interaction.user.roles):
-            return await interaction.response.send_message(f"Роль {role.mention} у вас уже есть.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.purchase.role_already_owned", lang, mention=role.mention),
+                ephemeral=True,
+            )
 
         if not economy_db.try_spend(interaction.user.id, item["price"], f"shop_{item['id']}"):
             balance = economy_db.get_balance(interaction.user.id)
             return await interaction.response.send_message(
-                f"Не хватает средств: цена {economy_core.format_amount(item['price'], settings)}, "
-                f"на балансе {economy_core.format_amount(balance, settings)}.",
+                i18n.t(
+                    "economy.purchase.insufficient",
+                    lang,
+                    price=economy_core.format_amount(item["price"], settings),
+                    balance=economy_core.format_amount(balance, settings),
+                ),
                 ephemeral=True,
             )
 
@@ -285,36 +426,54 @@ class EconomyCog(commands.Cog):
             economy_db.add(interaction.user.id, item["price"], f"shop_refund_{item['id']}")
             logger.warning("Не удалось выдать роль %s покупателю %s — монеты возвращены", role.id, interaction.user.id)
             return await interaction.response.send_message(
-                "Не удалось выдать роль (не хватает прав у бота?) — монеты возвращены.", ephemeral=True
+                i18n.t("economy.purchase.role_grant_failed", lang), ephemeral=True
             )
 
         balance = economy_db.get_balance(interaction.user.id)
         await interaction.response.send_message(
-            f"✅ Куплено: {role.mention} за {economy_core.format_amount(item['price'], settings)}. "
-            f"Остаток: {economy_core.format_amount(balance, settings)}.",
+            i18n.t(
+                "economy.purchase.role_success",
+                lang,
+                role=role.mention,
+                price=economy_core.format_amount(item["price"], settings),
+                balance=economy_core.format_amount(balance, settings),
+            ),
             ephemeral=True,
         )
 
-    async def _purchase_cosmetic(self, interaction: discord.Interaction, item: dict, settings: dict):
+    async def _purchase_cosmetic(
+        self, interaction: discord.Interaction, item: dict, settings: dict, lang: str
+    ):
         if economy_db.owns_cosmetic(interaction.user.id, item["id"]):
-            return await interaction.response.send_message("У вас уже есть этот товар.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.purchase.cosmetic_already_owned", lang), ephemeral=True
+            )
 
         if not economy_db.try_spend(interaction.user.id, item["price"], f"shop_{item['id']}"):
             balance = economy_db.get_balance(interaction.user.id)
             return await interaction.response.send_message(
-                f"Не хватает средств: цена {economy_core.format_amount(item['price'], settings)}, "
-                f"на балансе {economy_core.format_amount(balance, settings)}.",
+                i18n.t(
+                    "economy.purchase.insufficient",
+                    lang,
+                    price=economy_core.format_amount(item["price"], settings),
+                    balance=economy_core.format_amount(balance, settings),
+                ),
                 ephemeral=True,
             )
 
         value = item["color_hex"] if item["type"] == "frame_color" else item["title_text"]
-        display_name = item["name"] or (DEFAULT_ITEM_LABEL[item["type"]] + f" «{value}»")
+        display_name = item["name"] or (_item_label(item["type"], lang) + f" «{value}»")
         economy_db.grant_cosmetic(interaction.user.id, item["id"], item["type"], value, display_name)
 
         balance = economy_db.get_balance(interaction.user.id)
         await interaction.response.send_message(
-            f"✅ Куплено: **{display_name}** за {economy_core.format_amount(item['price'], settings)}. "
-            f"Остаток: {economy_core.format_amount(balance, settings)}. Наденьте через /косметика.",
+            i18n.t(
+                "economy.purchase.cosmetic_success",
+                lang,
+                name=display_name,
+                price=economy_core.format_amount(item["price"], settings),
+                balance=economy_core.format_amount(balance, settings),
+            ),
             ephemeral=True,
         )
 
@@ -322,36 +481,45 @@ class EconomyCog(commands.Cog):
 
     @app_commands.command(name="косметика", description="Выбрать рамку карточки ранга и титул из купленного в магазине")
     async def cosmetics_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = economy_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message(DISABLED_TEXT, ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
 
         frames = economy_db.list_owned_cosmetics(interaction.user.id, "frame_color")
         titles = economy_db.list_owned_cosmetics(interaction.user.id, "title")
         if not frames and not titles:
             return await interaction.response.send_message(
-                "У вас пока нет купленной косметики — загляните в /магазин.", ephemeral=True
+                i18n.t("economy.cosmetics.empty", lang), ephemeral=True
             )
 
         await interaction.response.send_message(
-            "Выберите рамку и/или титул для карточки /ранг:",
-            view=CosmeticsView(self, frames, titles),
+            i18n.t("economy.cosmetics.prompt", lang),
+            view=CosmeticsView(self, frames, titles, lang),
             ephemeral=True,
         )
 
     async def handle_equip(self, interaction: discord.Interaction, kind: str, item_id: str | None):
-        label = "Рамка" if kind == "frame_color" else "Титул"
+        lang = i18n.lang_for(interaction.guild_id)
         if item_id is None:
             economy_db.clear_equipped(interaction.user.id, kind)
-            return await interaction.response.send_message(f"{label} снят(а).", ephemeral=True)
+            key = "economy.equip.frame_removed" if kind == "frame_color" else "economy.equip.title_removed"
+            return await interaction.response.send_message(i18n.t(key, lang), ephemeral=True)
 
         if not economy_db.owns_cosmetic(interaction.user.id, item_id):
-            return await interaction.response.send_message("Вы не владеете этим товаром.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.t("economy.equip.not_owned", lang), ephemeral=True
+            )
 
         economy_db.set_equipped(interaction.user.id, kind, item_id)
-        await interaction.response.send_message(f"{label} применён(а)! Проверьте /ранг.", ephemeral=True)
+        key = "economy.equip.frame_applied" if kind == "frame_color" else "economy.equip.title_applied"
+        await interaction.response.send_message(i18n.t(key, lang), ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
     economy_db.init()
-    await bot.add_cog(EconomyCog(bot))
+    cog = EconomyCog(bot)
+    slash_registry.register_economy(cog)
+    await bot.add_cog(cog)

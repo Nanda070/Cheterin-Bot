@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { GiveawaysPage } from './Giveaways'
@@ -15,7 +16,7 @@ describe('GiveawaysPage', () => {
 
   it('renders the page with no active giveaways', async () => {
     mockBaseFetches()
-    render(<GiveawaysPage />)
+    renderWithLanguage(<GiveawaysPage />)
 
     expect(await screen.findByText('Активных розыгрышей нет.')).toBeInTheDocument()
     expect(screen.getByText('Истории пока нет.')).toBeInTheDocument()
@@ -44,7 +45,7 @@ describe('GiveawaysPage', () => {
     })
     const endSpy = vi.spyOn(client, 'endGiveaway').mockResolvedValue()
 
-    render(<GiveawaysPage />)
+    renderWithLanguage(<GiveawaysPage />)
 
     expect(await screen.findByText(/Discord Nitro/)).toBeInTheDocument()
     expect(screen.getByText(/Alice/)).toBeInTheDocument()
@@ -76,7 +77,7 @@ describe('GiveawaysPage', () => {
     })
     const rerollSpy = vi.spyOn(client, 'rerollGiveaway').mockResolvedValue({ winners: ['200'] })
 
-    render(<GiveawaysPage />)
+    renderWithLanguage(<GiveawaysPage />)
 
     expect(await screen.findByText(/Steam-ключ/)).toBeInTheDocument()
     expect(screen.getByText('🏆 Alice')).toBeInTheDocument()
@@ -103,10 +104,10 @@ describe('GiveawaysPage', () => {
       closed_at: null,
     })
 
-    render(<GiveawaysPage />)
+    renderWithLanguage(<GiveawaysPage />)
     await screen.findByText('Активных розыгрышей нет.')
 
-    fireEvent.click(screen.getByRole('button', { name: /Новый гивевей/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Новый розыгрыш/ }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Канал публикации' }))
     fireEvent.click(await screen.findByRole('option', { name: 'general' }))

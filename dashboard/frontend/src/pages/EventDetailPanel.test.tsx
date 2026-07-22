@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { EventDetailPanel } from './EventDetailPanel'
@@ -42,7 +43,7 @@ describe('EventDetailPanel', () => {
   it('renders tournament participants', async () => {
     vi.spyOn(client, 'fetchEventDetail').mockResolvedValue(tournamentDetail)
 
-    render(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={() => {}} />)
+    renderWithLanguage(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={() => {}} />)
 
     expect(await screen.findByText('Летний турнир')).toBeInTheDocument()
     expect(screen.getByText('PlayerOne')).toBeInTheDocument()
@@ -51,7 +52,7 @@ describe('EventDetailPanel', () => {
   it('renders poll vote percentages', async () => {
     vi.spyOn(client, 'fetchEventDetail').mockResolvedValue(pollDetail)
 
-    render(<EventDetailPanel messageId="901" onClose={() => {}} onChanged={() => {}} />)
+    renderWithLanguage(<EventDetailPanel messageId="901" onClose={() => {}} onChanged={() => {}} />)
 
     expect(await screen.findByText('Опрос дня')).toBeInTheDocument()
     expect(screen.getByText('Да')).toBeInTheDocument()
@@ -63,7 +64,7 @@ describe('EventDetailPanel', () => {
     const closeSpy = vi.spyOn(client, 'closeEvent').mockResolvedValue(undefined)
     const onChanged = vi.fn()
 
-    render(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={onChanged} />)
+    renderWithLanguage(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={onChanged} />)
 
     await waitFor(() => screen.getByText('Закрыть'))
     fireEvent.click(screen.getByText('Закрыть'))
@@ -77,7 +78,7 @@ describe('EventDetailPanel', () => {
     const deleteSpy = vi.spyOn(client, 'deleteEvent').mockResolvedValue(undefined)
     const onChanged = vi.fn()
 
-    render(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={onChanged} />)
+    renderWithLanguage(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={onChanged} />)
 
     await waitFor(() => screen.getByText('Удалить'))
     fireEvent.click(screen.getByText('Удалить'))
@@ -92,7 +93,7 @@ describe('EventDetailPanel', () => {
     vi.spyOn(client, 'fetchEventDetail').mockResolvedValue(tournamentDetail)
     const notifySpy = vi.spyOn(client, 'notifyEventParticipants').mockResolvedValue({ success: 1, failed: 0 })
 
-    render(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={() => {}} />)
+    renderWithLanguage(<EventDetailPanel messageId="900" onClose={() => {}} onChanged={() => {}} />)
 
     await waitFor(() => screen.getByText('Рассылка'))
     fireEvent.click(screen.getByText('Рассылка'))

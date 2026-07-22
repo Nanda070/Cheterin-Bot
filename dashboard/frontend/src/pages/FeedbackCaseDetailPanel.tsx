@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { decideFeedbackCase, fetchFeedbackCaseDetail, type FeedbackCaseDetail } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { useT } from '../context/LanguageContext'
 
 interface Props {
   caseId: string
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
+  const t = useT()
   const [detail, setDetail] = useState<FeedbackCaseDetail | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -17,8 +19,8 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
   useEffect(() => {
     fetchFeedbackCaseDetail(caseId)
       .then(setDetail)
-      .catch(() => setError('Не удалось загрузить обращение'))
-  }, [caseId])
+      .catch(() => setError(t('feedback.cases.detail.errorLoad')))
+  }, [caseId, t])
 
   const decide = async (approved: boolean) => {
     setBusy(true)
@@ -27,7 +29,7 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
       await decideFeedbackCase(caseId, approved)
       onDecided()
     } catch {
-      setError('Не удалось принять решение')
+      setError(t('feedback.cases.detail.errorDecide'))
     } finally {
       setBusy(false)
     }
@@ -36,7 +38,7 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
   if (!detail) {
     return (
       <Card className="animate-fade-in-up">
-        <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+        <p className="text-sm text-muted">{error || t('common.loading')}</p>
       </Card>
     )
   }
@@ -51,7 +53,7 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
             {detail.category_title} · {detail.case_id}
           </h2>
           <p className="text-xs text-muted">
-            От {detail.submitter_display} · {detail.status}
+            {t('feedback.cases.detail.from', { name: detail.submitter_display })} · {detail.status}
           </p>
         </div>
         <button onClick={onClose} className="cursor-pointer text-muted hover:text-foreground">
@@ -72,10 +74,10 @@ export function FeedbackCaseDetailPanel({ caseId, onClose, onDecided }: Props) {
 
       <div className="flex gap-2 border-t border-border pt-4">
         <Button variant="primary" onClick={() => decide(true)} disabled={busy || decided}>
-          Принять
+          {t('common.approve')}
         </Button>
         <Button variant="danger" onClick={() => decide(false)} disabled={busy || decided}>
-          Отклонить
+          {t('common.deny')}
         </Button>
       </div>
     </Card>

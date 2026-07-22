@@ -14,25 +14,32 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
-
-const STATUS_LABEL: Record<Giveaway['status'], string> = {
-  active: 'Активен',
-  finished: 'Завершён',
-  cancelled: 'Отменён',
-}
+import { useT } from '../context/LanguageContext'
 
 function GiveawayCard({
   giveaway,
   onEnd,
   onReroll,
   busy,
+  t,
 }: {
   giveaway: Giveaway
   onEnd?: () => void
   onReroll?: () => void
   busy?: boolean
+  t: (key: string, params?: Record<string, string | number>) => string
 }) {
   const isActive = giveaway.status === 'active'
+  const statusLabel = {
+    active: t('giveaways.status.active'),
+    finished: t('giveaways.status.finished'),
+    cancelled: t('giveaways.status.cancelled'),
+  }[giveaway.status]
+  const winnersLabel =
+    giveaway.winners_count === 1
+      ? t('giveaways.card.winners.one', { count: giveaway.winners_count })
+      : t('giveaways.card.winners.other', { count: giveaway.winners_count })
+
   return (
     <Card className="animate-fade-in-up">
       <div className="flex items-start justify-between gap-3">
@@ -41,20 +48,19 @@ function GiveawayCard({
             №{giveaway.id} · {giveaway.prize}
           </p>
           <p className="text-sm text-muted">
-            {giveaway.winners_count} победител{giveaway.winners_count === 1 ? 'ь' : 'ей'} · инициатор{' '}
-            {giveaway.initiator_display} ·{' '}
-            <span className={isActive ? 'text-success' : 'text-muted'}>{STATUS_LABEL[giveaway.status]}</span>
+            {winnersLabel} · {t('giveaways.card.initiator', { name: giveaway.initiator_display })} ·{' '}
+            <span className={isActive ? 'text-success' : 'text-muted'}>{statusLabel}</span>
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
           {isActive && (
             <Button variant="danger" onClick={onEnd} disabled={busy}>
-              Завершить
+              {t('giveaways.card.end')}
             </Button>
           )}
           {giveaway.status === 'finished' && (
             <Button variant="secondary" onClick={onReroll} disabled={busy}>
-              Реролл
+              {t('giveaways.card.reroll')}
             </Button>
           )}
         </div>
@@ -63,10 +69,10 @@ function GiveawayCard({
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted">
-            Участники [{giveaway.entrants.length}]
+            {t('giveaways.card.participants', { count: giveaway.entrants.length })}
           </p>
           {giveaway.entrants.length === 0 ? (
-            <p className="mt-1 text-sm text-muted">—</p>
+            <p className="mt-1 text-sm text-muted">{t('common.none')}</p>
           ) : (
             <ul className="mt-1 flex flex-col gap-0.5">
               {giveaway.entrants.map((p, i) => (
@@ -78,9 +84,11 @@ function GiveawayCard({
           )}
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">Победители [{giveaway.winners.length}]</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">
+            {t('giveaways.card.winnersLabel', { count: giveaway.winners.length })}
+          </p>
           {giveaway.winners.length === 0 ? (
-            <p className="mt-1 text-sm text-muted">—</p>
+            <p className="mt-1 text-sm text-muted">{t('common.none')}</p>
           ) : (
             <ul className="mt-1 flex flex-col gap-0.5">
               {giveaway.winners.map((p) => (
@@ -97,6 +105,7 @@ function GiveawayCard({
 }
 
 export function GiveawaysPage() {
+  const t = useT()
   const [overview, setOverview] = useState<GiveawayOverview | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [error, setError] = useState('')
@@ -110,7 +119,7 @@ export function GiveawaysPage() {
         setOverview(data)
         setError('')
       })
-      .catch(() => setError('Не удалось загрузить данные о розыгрышах'))
+      .catch(() => setError(t('giveaways.errorLoad')))
   }
 
   useEffect(() => {
@@ -118,7 +127,7 @@ export function GiveawaysPage() {
     fetchChannels()
       .then(setChannels)
       .catch(() => setChannels([]))
-  }, [])
+  }, [t])
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -127,7 +136,7 @@ export function GiveawaysPage() {
       await fn()
       reload()
     } catch {
-      setError('Операция не удалась')
+      setError(t('common.operationFailed'))
     } finally {
       setBusy(false)
     }
@@ -146,7 +155,7 @@ export function GiveawaysPage() {
     })
 
   if (!overview) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   return (
@@ -154,24 +163,25 @@ export function GiveawaysPage() {
       <div className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Gift size={22} className="text-primary" />
-          Гивевеи
+          {t('giveaways.title')}
         </h1>
         <Button variant="primary" onClick={() => setCreating(true)}>
           <Plus size={16} />
-          Новый гивевей
+          {t('giveaways.new')}
         </Button>
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">Активные</h2>
-        {overview.active.length === 0 && <p className="text-sm text-muted">Активных розыгрышей нет.</p>}
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">{t('giveaways.section.active')}</h2>
+        {overview.active.length === 0 && <p className="text-sm text-muted">{t('giveaways.active.empty')}</p>}
         {overview.active.map((giveaway) => (
           <GiveawayCard
             key={giveaway.id}
             giveaway={giveaway}
             busy={busy}
+            t={t}
             onEnd={() => act(() => endGiveaway(giveaway.id))}
           />
         ))}
@@ -180,36 +190,37 @@ export function GiveawaysPage() {
       <section className="flex flex-col gap-3">
         <h2 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted">
           <XCircle size={16} />
-          История
+          {t('giveaways.section.history')}
         </h2>
-        {overview.history.length === 0 && <p className="text-sm text-muted">Истории пока нет.</p>}
+        {overview.history.length === 0 && <p className="text-sm text-muted">{t('giveaways.history.empty')}</p>}
         {overview.history.map((giveaway) => (
           <GiveawayCard
             key={giveaway.id}
             giveaway={giveaway}
             busy={busy}
+            t={t}
             onReroll={() => act(() => rerollGiveaway(giveaway.id))}
           />
         ))}
       </section>
 
-      <Modal open={creating} title="Новый гивевей" onClose={() => setCreating(false)}>
+      <Modal open={creating} title={t('giveaways.modal.title')} onClose={() => setCreating(false)}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="giveaway-channel">
-              Канал публикации
+              {t('giveaways.field.channel')}
             </label>
             <Select
               id="giveaway-channel"
               value={form.channel_id}
               onChange={(id) => setForm((f) => ({ ...f, channel_id: id }))}
               options={channels}
-              placeholder="Выберите канал"
+              placeholder={t('common.selectChannel')}
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="giveaway-prize">
-              Приз
+              {t('giveaways.field.prize')}
             </label>
             <input
               id="giveaway-prize"
@@ -221,7 +232,7 @@ export function GiveawaysPage() {
           <div className="flex gap-3">
             <div className="flex flex-1 flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="giveaway-duration">
-                Длительность
+                {t('giveaways.field.duration')}
               </label>
               <input
                 id="giveaway-duration"
@@ -233,7 +244,7 @@ export function GiveawaysPage() {
             </div>
             <div className="flex flex-1 flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="giveaway-winners">
-                Победителей
+                {t('giveaways.field.winnersCount')}
               </label>
               <input
                 id="giveaway-winners"
@@ -248,14 +259,14 @@ export function GiveawaysPage() {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setCreating(false)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button
               variant="primary"
               onClick={submitCreate}
               disabled={busy || !form.channel_id || !form.prize.trim() || !form.duration_str.trim()}
             >
-              {busy ? 'Создаём…' : 'Создать'}
+              {busy ? t('common.creating') : t('common.create')}
             </Button>
           </div>
         </div>

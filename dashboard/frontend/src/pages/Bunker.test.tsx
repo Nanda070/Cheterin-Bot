@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { BunkerPage } from './Bunker'
@@ -67,7 +68,7 @@ describe('BunkerPage', () => {
 
   it('renders the module toggle and tabs', async () => {
     mockBaseFetches()
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Настройки' })).toBeInTheDocument()
@@ -78,18 +79,18 @@ describe('BunkerPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateBunkerSettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })))
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('updates a timer field before saving', async () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateBunkerSettings').mockResolvedValue(emptySettings)
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
 
     const input = await screen.findByLabelText(/^Голосование за исключение/)
     fireEvent.change(input, { target: { value: '120' } })
@@ -104,7 +105,7 @@ describe('BunkerPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateBunkerSettings').mockResolvedValue({ ...emptySettings, default_unique_cards: false })
 
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
     fireEvent.click(await screen.findByLabelText('Без повторов (колодой)'))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
@@ -115,9 +116,10 @@ describe('BunkerPage', () => {
 
   it('lists active games with unique-cards status', async () => {
     mockBaseFetches()
+    vi.spyOn(client, 'fetchBunkerCardPools').mockResolvedValue(mockPools)
     vi.spyOn(client, 'fetchBunkerGames').mockResolvedValue([{ ...baseGameSummary, round_number: 2, player_count: 8, alive_count: 6 }])
 
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Активные игры' }))
 
     expect(await screen.findByText('Игра #1 · general')).toBeInTheDocument()
@@ -159,7 +161,7 @@ describe('BunkerPage', () => {
     })
     const applySpy = vi.spyOn(client, 'applyBunkerAbility').mockResolvedValue()
 
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Активные игры' }))
     fireEvent.click(await screen.findByText('Игра #1 · general'))
 
@@ -189,10 +191,10 @@ describe('BunkerPage', () => {
     })
     const patchSpy = vi.spyOn(client, 'patchBunkerPlayerCharacter').mockResolvedValue({ character: {} })
 
-    render(<BunkerPage />)
+    renderWithLanguage(<BunkerPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Активные игры' }))
     fireEvent.click(await screen.findByText('Игра #1 · general'))
-    fireEvent.click(await screen.findByRole('button', { name: 'Редактировать' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Изменить' }))
 
     fireEvent.click(await screen.findByRole('button', { name: 'Пожарный' }))
     fireEvent.click(await screen.findByRole('option', { name: 'Врач' }))

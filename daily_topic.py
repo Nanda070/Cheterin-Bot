@@ -10,12 +10,13 @@ import discord
 from discord.ext import commands, tasks
 
 import daily_topic_core
+import i18n
 
 logger = logging.getLogger("daily_topic")
 
 
-def build_topic_message(text: str) -> str:
-    return f"💬 **Тема дня**\n{text}"
+def build_topic_message(text: str, lang: str) -> str:
+    return i18n.t("daily_topic.message", lang, text=text)
 
 
 class DailyTopicCog(commands.Cog):
@@ -43,8 +44,9 @@ class DailyTopicCog(commands.Cog):
         if topic is None:
             return None
 
+        lang = i18n.lang_for(guild_id)
         try:
-            await channel.send(content=build_topic_message(topic["text"]))
+            await channel.send(content=build_topic_message(topic["text"], lang))
         except discord.HTTPException:
             logger.warning("Не удалось опубликовать тему дня в канал %s", channel_id)
             return None

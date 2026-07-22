@@ -27,7 +27,12 @@ async def test_get_welcome_settings_defaults_to_enabled_when_file_missing(aiohtt
 
     resp = await client.get("/api/welcome-settings")
     assert resp.status == 200
-    assert (await resp.json()) == {"channel_enabled": True, "dm_enabled": True}
+    data = await resp.json()
+    assert data["channel_enabled"] is True
+    assert data["dm_enabled"] is True
+    assert data["goodbye_channel_enabled"] is False
+    assert data["goodbye_channel_id"] == ""
+    assert data["messages"]["channel_mode"] == "text"
 
 
 @pytest.mark.asyncio
@@ -38,7 +43,10 @@ async def test_get_welcome_settings_returns_stored_values(aiohttp_client):
     await force_login(client, 10)
 
     resp = await client.get("/api/welcome-settings")
-    assert (await resp.json()) == {"channel_enabled": False, "dm_enabled": True}
+    data = await resp.json()
+    assert data["channel_enabled"] is False
+    assert data["dm_enabled"] is True
+    assert data["goodbye_channel_enabled"] is False
 
 
 @pytest.mark.asyncio
@@ -56,12 +64,22 @@ async def test_update_welcome_settings_persists(aiohttp_client):
     await force_login(client, 10)
 
     resp = await client.put(
-        "/api/welcome-settings", json={"channel_enabled": False, "dm_enabled": False}
+        "/api/welcome-settings",
+        json={
+            "channel_enabled": False,
+            "dm_enabled": False,
+            "goodbye_channel_enabled": True,
+            "goodbye_channel_id": "",
+        },
     )
     assert resp.status == 200
-    assert (await resp.json()) == {"channel_enabled": False, "dm_enabled": False}
+    data = await resp.json()
+    assert data["channel_enabled"] is False
+    assert data["dm_enabled"] is False
+    assert data["goodbye_channel_enabled"] is True
     assert bot_config.load_config(1)["WELCOME_CHANNEL_ENABLED"] is False
     assert bot_config.load_config(1)["WELCOME_DM_ENABLED"] is False
+    assert bot_config.load_config(1)["GOODBYE_CHANNEL_ENABLED"] is True
 
 
 @pytest.mark.asyncio
@@ -71,7 +89,13 @@ async def test_update_welcome_settings_rejects_non_boolean(aiohttp_client):
     await force_login(client, 10)
 
     resp = await client.put(
-        "/api/welcome-settings", json={"channel_enabled": "yes", "dm_enabled": True}
+        "/api/welcome-settings",
+        json={
+            "channel_enabled": "yes",
+            "dm_enabled": True,
+            "goodbye_channel_enabled": False,
+            "goodbye_channel_id": "",
+        },
     )
     assert resp.status == 400
     assert (await resp.json())["error"] == "invalid_request"
@@ -92,7 +116,15 @@ async def test_update_welcome_settings_rejects_non_dict_body(aiohttp_client):
 async def test_update_welcome_settings_requires_auth(aiohttp_client):
     _, app = build()
     client = await aiohttp_client(app)
-    resp = await client.put("/api/welcome-settings", json={"channel_enabled": True, "dm_enabled": True})
+    resp = await client.put(
+        "/api/welcome-settings",
+        json={
+            "channel_enabled": True,
+            "dm_enabled": True,
+            "goodbye_channel_enabled": False,
+            "goodbye_channel_id": "",
+        },
+    )
     assert resp.status == 401
 
 

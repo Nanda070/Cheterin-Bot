@@ -80,6 +80,7 @@ async def test_public_state_basic_fields_and_flavor_text(aiohttp_client):
     assert resp.status == 200
     body = await resp.json()
 
+    assert body["language"] == "ru"
     assert body["phase"] == "discussion"
     assert body["round_number"] == 1
     assert body["bunker_capacity"] == 2

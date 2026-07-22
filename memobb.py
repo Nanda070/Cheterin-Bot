@@ -5,6 +5,8 @@ import os
 import logging
 
 import bot_config
+import i18n
+import slash_registry
 
 logger = logging.getLogger("chetbot.memobb")
 
@@ -18,22 +20,30 @@ def _is_main_guild(interaction: discord.Interaction) -> bool:
 
 
 class CTDCloseView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, lang: str | None = None):
         super().__init__(timeout=None)
+        self.lang = lang or i18n.lang_for(MAIN_GUILD_ID)
+        button = discord.ui.Button(
+            label=i18n.t("ctd.btn_close", self.lang),
+            style=discord.ButtonStyle.danger,
+            custom_id="ctd_close_ticket",
+        )
+        button.callback = self.close_ticket
+        self.add_item(button)
 
-    @discord.ui.button(label="Закрыть Тикет", style=discord.ButtonStyle.danger, custom_id="ctd_close_ticket")
-    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def close_ticket(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         if not _is_main_guild(interaction):
-            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.main_guild_only", lang), ephemeral=True)
             return
         raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
         if not raw_role_id:
-            await interaction.response.send_message("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.role_id_missing", lang), ephemeral=True)
             return
         role_id = int(raw_role_id)
         role = interaction.guild.get_role(role_id)
         if role not in interaction.user.roles:
-            await interaction.response.send_message("У вас нет прав для закрытия тикета.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.no_close_permission", lang), ephemeral=True)
             return
 
         await interaction.response.defer()
@@ -42,28 +52,41 @@ class CTDCloseView(discord.ui.View):
         await thread.edit(name=new_name, archived=True, locked=True)
 
         embed = discord.Embed(
-            title="🔒 Тикет закрыт",
-            description=f"Ветка: {thread.name}\nЗакрыл: {interaction.user.mention}",
+            title=i18n.t("ctd.ticket_closed_title", lang),
+            description=i18n.t(
+                "ctd.ticket_closed_body",
+                lang,
+                thread_name=thread.name,
+                mention=interaction.user.mention,
+            ),
             color=discord.Color.red(),
-            timestamp=interaction.client.utcnow()
+            timestamp=interaction.client.utcnow(),
         )
         await interaction.client.send_log(interaction.guild.id, embed)
 
 
 class CTDView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, lang: str | None = None):
         super().__init__(timeout=None)
+        self.lang = lang or i18n.lang_for(MAIN_GUILD_ID)
+        button = discord.ui.Button(
+            label=i18n.t("ctd.btn_create", self.lang),
+            style=discord.ButtonStyle.primary,
+            custom_id="ctd_create_ticket",
+        )
+        button.callback = self.create_ticket
+        self.add_item(button)
 
-    @discord.ui.button(label="Создать Тикет", style=discord.ButtonStyle.primary, custom_id="ctd_create_ticket")
     async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        lang = i18n.lang_for(interaction.guild_id)
         if not _is_main_guild(interaction):
-            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.main_guild_only", lang), ephemeral=True)
             return
         await interaction.response.defer(ephemeral=True)
         channel = interaction.channel
         raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
         if not raw_role_id:
-            await interaction.followup.send("CTD_ROLE_ID не задан в переменных окружения.", ephemeral=True)
+            await interaction.followup.send(i18n.t("ctd.role_id_missing", lang), ephemeral=True)
             return
         role_id = int(raw_role_id)
 
@@ -77,7 +100,8 @@ class CTDView(discord.ui.View):
         for thread in active_threads:
             if thread.parent_id == channel.id and thread.name.startswith("new-ticket-") and thread.name.endswith(f"-{interaction.user.id}"):
                 await interaction.followup.send(
-                    f"❌ У вас уже есть открытый тикет: <#{thread.id}>", ephemeral=True
+                    i18n.t("ctd.open_ticket_exists", lang, thread_id=thread.id),
+                    ephemeral=True,
                 )
                 return
 
@@ -99,18 +123,23 @@ class CTDView(discord.ui.View):
                         pass
 
         msg = await thread.send(
-            content=f"{interaction.user.mention} Пожалуйста, опишите ваше обращение и ожидайте ответа администрации.",
-            view=CTDCloseView()
+            content=i18n.t("ctd.ticket_prompt", lang, mention=interaction.user.mention),
+            view=CTDCloseView(lang),
         )
         await msg.pin()
 
-        await interaction.followup.send("Тикет успешно создан.", ephemeral=True)
+        await interaction.followup.send(i18n.t("ctd.ticket_created_user", lang), ephemeral=True)
 
         embed = discord.Embed(
-            title="🎫 Создан новый тикет",
-            description=f"Ветка: <#{thread.id}>\nПользователь: {interaction.user.mention}",
+            title=i18n.t("ctd.ticket_created_log", lang),
+            description=i18n.t(
+                "ctd.ticket_created_log_body",
+                lang,
+                thread_id=thread.id,
+                mention=interaction.user.mention,
+            ),
             color=discord.Color.green(),
-            timestamp=interaction.client.utcnow()
+            timestamp=interaction.client.utcnow(),
         )
         await interaction.client.send_log(interaction.guild.id, embed)
 
@@ -126,8 +155,9 @@ class CTD(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         if not getattr(self.bot, "_ctd_views_loaded", False):
-            self.bot.add_view(CTDView())
-            self.bot.add_view(CTDCloseView())
+            lang = i18n.lang_for(MAIN_GUILD_ID)
+            self.bot.add_view(CTDView(lang))
+            self.bot.add_view(CTDCloseView(lang))
             self.bot._ctd_views_loaded = True
 
     from discord.ext import tasks
@@ -137,6 +167,7 @@ class CTD(commands.Cog):
         try:
             guild = self.bot.get_guild(MAIN_GUILD_ID)
             if not guild: return
+            lang = i18n.lang_for(MAIN_GUILD_ID)
 
             try:
                 threads = await guild.active_threads()
@@ -144,6 +175,7 @@ class CTD(commands.Cog):
                 logger.error("Auto-close error fetching threads: %s", e)
                 return
 
+            inactive_marker = i18n.t("ctd.inactive_warning", lang)[:20]
             for thread in threads:
                 if thread.name.startswith("new-ticket-"):
                     if thread.last_message_id:
@@ -151,11 +183,11 @@ class CTD(commands.Cog):
                             msg = await thread.fetch_message(thread.last_message_id)
                             diff = discord.utils.utcnow() - msg.created_at
                             if diff.total_seconds() > 48 * 3600 and msg.author != self.bot.user:
-                                await thread.send("⏳ Тикет неактивен более 48 часов и будет автоматически закрыт через 24 часа.")
-                            elif diff.total_seconds() > 24 * 3600 and msg.author == self.bot.user and "неактивен" in msg.content:
+                                await thread.send(i18n.t("ctd.inactive_warning", lang))
+                            elif diff.total_seconds() > 24 * 3600 and msg.author == self.bot.user and inactive_marker in msg.content:
                                 new_name = thread.name.replace("new-ticket-", "closed-ticket-", 1)
                                 await thread.edit(name=new_name, archived=True, locked=True)
-                                await thread.send("🔒 Тикет автоматически закрыт по неактивности.")
+                                await thread.send(i18n.t("ctd.auto_closed", lang))
                         except discord.NotFound:
                             pass
                         except Exception as e:
@@ -176,27 +208,30 @@ class CTD(commands.Cog):
     @app_commands.guilds(discord.Object(id=MAIN_GUILD_ID))
     @app_commands.default_permissions(manage_guild=True)
     async def ctd_setup(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         if not _is_main_guild(interaction):
-            await interaction.response.send_message("CTD доступен только на основном сервере.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.main_guild_only", lang), ephemeral=True)
             return
         raw_channel_id = bot_config.get(interaction.guild.id, "CTD_CHANNEL_ID")
         if not raw_channel_id:
-            await interaction.response.send_message("CTD_CHANNEL_ID не задан в переменных окружения.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("ctd.channel_id_missing", lang), ephemeral=True)
             return
         channel_id = int(raw_channel_id)
         if interaction.channel_id != channel_id:
-            await interaction.response.send_message(f"Команду нужно использовать в канале <#{channel_id}>", ephemeral=True)
+            await interaction.response.send_message(
+                i18n.t("ctd.wrong_channel", lang, channel_id=channel_id),
+                ephemeral=True,
+            )
             return
 
-        view = CTDView()
-        content = (
-            "**Используйте форму обратной связи, чтобы сообщить о проблеме, предложить улучшение или получить помощь.**\n"
-            "> Нажмите кнопку ниже, чтобы создать обращение. После нажатия автоматически откроется отдельная ветка, где можно подробно описать ситуацию."
-        )
+        view = CTDView(lang)
+        content = i18n.t("ctd.panel_content", lang)
         # Сначала отвечаем на interaction, потом отправляем панель
-        await interaction.response.send_message("Панель установлена.", ephemeral=True)
+        await interaction.response.send_message(i18n.t("ctd.panel_installed", lang), ephemeral=True)
         await interaction.channel.send(content=content, view=view)
 
 
 async def setup(bot):
-    await bot.add_cog(CTD(bot))
+    cog = CTD(bot)
+    slash_registry.register_ctd(cog)
+    await bot.add_cog(cog)

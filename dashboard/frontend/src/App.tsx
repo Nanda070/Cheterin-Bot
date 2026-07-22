@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { LanguageProvider } from './context/LanguageContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/Login'
 import { ServerSelectPage } from './pages/ServerSelect'
@@ -11,8 +12,6 @@ import { LockdownPage } from './pages/Lockdown'
 import { MessageBuilderPage } from './pages/MessageBuilder'
 import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
-import { ConfigPage } from './pages/Config'
-import { CtdPage } from './pages/Ctd'
 import { BracketsPage } from './pages/Brackets'
 import { BracketDetailPage } from './pages/BracketDetail'
 import { PublicBracketPage } from './pages/PublicBracket'
@@ -39,12 +38,15 @@ import { CasinoPage } from './pages/Casino'
 import { EconomyPage } from './pages/Economy'
 import { SuperAdminPage } from './pages/SuperAdmin'
 import { DailyTopicPage } from './pages/DailyTopic'
+import { ServerSettingsPage } from './pages/ServerSettings'
 import { AutoModPage } from './pages/AutoMod'
+import { ServerEntryPage } from './pages/ServerEntry'
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -88,6 +90,7 @@ function App() {
             <Route path="giveaways" element={<Navigate to="/events" replace />} />
             <Route path="daily-topic" element={<DailyTopicPage />} />
             <Route path="automod" element={<AutoModPage />} />
+            <Route path="server-entry" element={<ServerEntryPage />} />
             <Route path="antiraid" element={<Navigate to="/lockdown" replace />} />
             <Route path="verification" element={<Navigate to="/lockdown" replace />} />
             <Route path="voice-rooms" element={<VoiceRoomsPage />} />
@@ -99,15 +102,17 @@ function App() {
             <Route path="serverlog" element={<ServerLogPage />} />
             <Route path="voice-stats" element={<VoiceStatsPage />} />
             <Route path="audit" element={<AuditPage />} />
-            <Route path="welcome" element={<Navigate to="/lockdown" replace />} />
-            <Route path="auto-roles" element={<Navigate to="/lockdown" replace />} />
-            <Route path="config" element={<ConfigPage />} />
+            <Route path="welcome" element={<Navigate to="/server-entry" replace />} />
+            <Route path="auto-roles" element={<Navigate to="/server-entry" replace />} />
+            <Route path="config" element={<Navigate to="/lockdown" replace />} />
+            <Route path="settings" element={<ServerSettingsPage />} />
             <Route path="ctd" element={<CtdPage />} />
             <Route path="superadmin" element={<SuperAdminPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FeedbackPage } from './Feedback'
@@ -14,7 +15,7 @@ describe('FeedbackPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<FeedbackPage />)
+    renderWithLanguage(<FeedbackPage />)
 
     await waitFor(() => screen.getByRole('button', { name: 'Обращения' }))
     expect(screen.getByText('Обращений нет.')).toBeInTheDocument()

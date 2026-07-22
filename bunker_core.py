@@ -7,6 +7,8 @@
 import random
 
 import bunker_data
+import bunker_data_en
+import bunker_localize
 import settings_db
 
 MODULE_NAME = "bunker"
@@ -90,75 +92,65 @@ class _Deck:
 
 def _pick_profession(deck: _Deck) -> dict:
     profession = deck.draw()
-    level = random.choice(bunker_data.PROFESSION_EXPERIENCE_LEVELS)
-    return {
-        "name": profession["name"],
-        "category": profession["category"],
-        "experience_level": level["level"],
-        "has_ability": level["has_ability"],
-    }
+    level_idx = random.randrange(len(bunker_data.PROFESSION_EXPERIENCE_LEVELS))
+    return bunker_localize.merge_profession(profession, level_idx)
 
 
 def _pick_hobby(deck: _Deck) -> dict:
     hobby = deck.draw()
-    level = random.choice(bunker_data.HOBBY_EXPERIENCE_LEVELS)
-    return {
-        "name": hobby["name"],
-        "category": hobby["category"],
-        "experience_level": level["level"],
-    }
+    level_idx = random.randrange(len(bunker_data.HOBBY_EXPERIENCE_LEVELS))
+    return bunker_localize.merge_hobby(hobby, level_idx)
 
 
 def _pick_health(disease_deck: _Deck) -> dict:
-    severity = random.choice(bunker_data.HEALTH_SEVERITIES)
-    if severity == "Здоров":
-        return {"severity": severity, "disease_name": None, "category": None}
+    severity_idx = random.randrange(len(bunker_data.HEALTH_SEVERITIES))
+    if bunker_data.HEALTH_SEVERITIES[severity_idx] == bunker_localize.HEALTHY_RU:
+        return bunker_localize.merge_health(severity_idx, None)
     disease = disease_deck.draw()
-    return {"severity": severity, "disease_name": disease["name"], "category": disease["category"]}
+    return bunker_localize.merge_health(severity_idx, disease)
 
 
 def _pick_phobia(deck: _Deck) -> dict:
-    phobia = deck.draw()
-    return {"name": phobia["name"], "type": phobia["type"]}
+    return bunker_localize.merge_phobia(deck.draw())
 
 
 def _pick_age() -> dict:
-    age = random.choice(bunker_data.AGE_CATEGORIES)
-    return {"key": age["key"], "label": age["label"]}
+    return bunker_localize.merge_age(random.choice(bunker_data.AGE_CATEGORIES))
 
 
 def _pick_body_type() -> dict:
-    return dict(random.choice(bunker_data.BODY_TYPES))
+    return bunker_localize.merge_body_type(random.choice(bunker_data.BODY_TYPES))
 
 
 def _pick_backpack_item(deck: _Deck) -> dict:
-    item = deck.draw()
-    return {"name": item["name"], "category": item["category"]}
+    return bunker_localize.merge_inventory_item("backpack_items", deck.draw())
 
 
 def _pick_large_item(deck: _Deck) -> dict:
-    item = deck.draw()
-    return {"name": item["name"], "category": item["category"]}
+    return bunker_localize.merge_inventory_item("large_items", deck.draw())
 
 
 def _pick_trait(deck: _Deck) -> dict:
-    return dict(deck.draw())
+    return bunker_localize.merge_trait(deck.draw())
 
 
 def _pick_additional_info(deck: _Deck, other_player_ids: list[int], display_names: dict[int, str]) -> dict:
     info = deck.draw()
+    en_info = bunker_localize.additional_info_en_template(info)
     name = info["name"]
+    name_en = en_info
     linked_user_id = None
-    if info["category"] == "Активные (Отношения)" and other_player_ids:
+    if info["category"] == bunker_localize.RELATIONSHIP_CATEGORY and other_player_ids:
         linked_user_id = random.choice(other_player_ids)
         target_name = display_names.get(linked_user_id, str(linked_user_id))
-        name = name.replace("Игрок №X", target_name).replace("игрока №X", target_name)
-    return {"name": name, "category": info["category"], "linked_user_id": linked_user_id}
+        name = name.replace(bunker_localize.RELATIONSHIP_MARKER_RU, target_name).replace("игрока №X", target_name)
+        name_en = name_en.replace(bunker_localize.RELATIONSHIP_MARKER_EN, target_name)
+    return bunker_localize.merge_additional_info(info, name, name_en, linked_user_id)
 
 
 def _pick_special_abilities(deck: _Deck) -> list[dict]:
     cards = deck.draw_many(2)
-    return [{"name": c["name"], "category": c["category"], "effect": c["effect"], "used": False} for c in cards]
+    return [bunker_localize.merge_special_ability({**c, "used": False}) for c in cards]
 
 
 def generate_characters(
@@ -189,7 +181,8 @@ def generate_characters(
         characters[user_id] = {
             "profession": _pick_profession(profession_deck),
             "age": _pick_age(),
-            "gender": random.choice(bunker_data.GENDERS),
+            "gender": (gender := random.choice(bunker_data.GENDERS)),
+            "gender_en": bunker_data_en.GENDERS[bunker_data.GENDERS.index(gender)],
             "body_type": _pick_body_type(),
             "health": _pick_health(disease_deck),
             "hobby": _pick_hobby(hobby_deck),
@@ -204,11 +197,11 @@ def generate_characters(
 
 
 def pick_catastrophe() -> dict:
-    return random.choice(bunker_data.CATASTROPHES)
+    return bunker_localize.merge_catastrophe(random.choice(bunker_data.CATASTROPHES))
 
 
 def pick_bunker_conditions() -> dict:
-    return random.choice(bunker_data.BUNKER_CONDITIONS)
+    return bunker_localize.merge_bunker_conditions(random.choice(bunker_data.BUNKER_CONDITIONS))
 
 
 # ────────────────────────── Голосование и конец игры ──────────────────────────

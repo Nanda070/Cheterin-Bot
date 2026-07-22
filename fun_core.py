@@ -10,7 +10,8 @@ import settings_db
 
 MODULE_NAME = "fun"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
 
-ROULETTE_CHAMBERS = 6  # барабан револьвера: 6 камор, 1 патрон
+ROULETTE_CHAMBERS = 6  # барабан револьвера: 6 камор, обычно 1 патрон
+EMPTY_CYLINDER_CHANCE = 0.15  # 15% — барабан вообще без патрона (можно пройти 6/6)
 DEFAULT_ROULETTE_TIMEOUT_MINUTES = 1
 DEFAULT_ROULETTE_COOLDOWN_SEC = 30
 TIMEOUT_MINUTES_MAX = 1440  # 24 часа — развлекательный кап, далеко до лимита Discord (28 дней)
@@ -53,13 +54,23 @@ def auto_emoji_roll(chance_percent: int) -> bool:
     return random.random() * 100 < chance_percent
 
 
-def spin_trigger(consecutive_clicks: int = 0) -> bool:
+def roll_empty_cylinder() -> bool:
+    """При зарядке нового барабана: True — патронов нет вообще (15%)."""
+    return random.random() < EMPTY_CYLINDER_CHANCE
+
+
+def spin_trigger(consecutive_clicks: int = 0, empty_cylinder: bool = False) -> bool:
     """Один спуск курка: True — выстрел.
 
     Барабан НЕ прокручивается заново после осечки: с каждым «щёлк» камор
     остаётся меньше, шанс растёт 1/6 → 1/5 → … → 1/1. На шестом нажатии
-    выстрел гарантирован — длинных «сухих» серий не бывает.
+    при обычной зарядке выстрел гарантирован.
+
+    empty_cylinder=True (15% при зарядке): патрона нет — все 6 камор пустые,
+    после 6/6 барабан перезаряжается заново.
     """
+    if empty_cylinder:
+        return False
     chambers_left = max(1, ROULETTE_CHAMBERS - consecutive_clicks)
     return random.randrange(chambers_left) == 0
 

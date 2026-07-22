@@ -1,4 +1,4 @@
-"""Ядро модуля «Гивевеи».
+"""Ядро модуля «Розыгрыши» (giveaways).
 
 Розыгрыши хранятся per-guild в settings_db (Фаза 2.2б MULTIGUILD_PLAN.md), чтобы
 переживать перезапуск бота и быть изолированными между серверами — тот же паттерн,
@@ -9,6 +9,7 @@ import random
 import re
 from datetime import datetime, timezone
 
+import i18n
 import settings_db
 
 MODULE_NAME = "giveaways"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
@@ -19,10 +20,10 @@ DURATION_UNITS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 HISTORY_LIMIT = 100
 
 
-def parse_duration(value: str) -> int:
+def parse_duration(value: str, lang: str = i18n.DEFAULT_LANGUAGE) -> int:
     match = DURATION_RE.match(value.strip().lower())
     if not match:
-        raise ValueError("Используйте формат: число + единица (s/m/h/d), например 10m, 2h, 1d.")
+        raise ValueError(i18n.t("giveaways.duration_error", lang))
     amount, unit = match.groups()
     return int(amount) * DURATION_UNITS[unit]
 
@@ -155,7 +156,7 @@ def draw_winners(guild_id: int, giveaway_id: str, exclude_past: bool = True) -> 
 
 
 def close_giveaway(guild_id: int, giveaway_id: str, status: str = "finished") -> dict | None:
-    """Закрывает гивевей (finished/cancelled); при finished сразу выбирает победителей."""
+    """Закрывает розыгрыш (finished/cancelled); при finished сразу выбирает победителей."""
     data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None or giveaway["status"] != "active":
@@ -173,7 +174,7 @@ def close_giveaway(guild_id: int, giveaway_id: str, status: str = "finished") ->
 
 
 def reroll_giveaway(guild_id: int, giveaway_id: str) -> list[str] | None:
-    """Перевыбирает победителей, исключая тех, кто уже выигрывал в этом гивевее ранее."""
+    """Перевыбирает победителей, исключая тех, кто уже выигрывал в этом розыгрыше ранее."""
     data = load_data(guild_id)
     giveaway = data["giveaways"].get(str(giveaway_id))
     if giveaway is None or giveaway["status"] != "finished":

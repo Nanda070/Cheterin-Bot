@@ -12,8 +12,10 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { ReactionRoleForm } from '../components/ReactionRoleForm'
+import { useT } from '../context/LanguageContext'
 
 export function ReactionRolesPage() {
+  const t = useT()
   const [entries, setEntries] = useState<ReactionRoleEntry[]>([])
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -25,12 +27,12 @@ export function ReactionRolesPage() {
   const reload = () => {
     fetchReactionRoles()
       .then(setEntries)
-      .catch(() => setError('Не удалось загрузить reaction roles'))
+      .catch(() => setError(t('reactionRoles.errorLoad')))
     fetchChannels().then(setChannels).catch(() => {})
     fetchRoles().then(setRoles).catch(() => {})
   }
 
-  useEffect(reload, [])
+  useEffect(reload, [t])
 
   const channelName = (id: string) => channels.find((c) => c.id === id)?.name ?? id
   const roleNames = (pairIds: string[]) =>
@@ -43,14 +45,14 @@ export function ReactionRolesPage() {
       setPendingDelete(null)
       reload()
     } catch {
-      setError('Не удалось удалить')
+      setError(t('reactionRoles.errorDelete'))
     }
   }
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Reaction Roles</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t('reactionRoles.title')}</h1>
         <Button
           variant="primary"
           onClick={() => {
@@ -58,7 +60,7 @@ export function ReactionRolesPage() {
             setFormOpen(true)
           }}
         >
-          Создать reaction role
+          {t('reactionRoles.create')}
         </Button>
       </div>
 
@@ -79,15 +81,15 @@ export function ReactionRolesPage() {
                   setFormOpen(true)
                 }}
               >
-                Edit
+                {t('common.edit')}
               </Button>
               <Button variant="danger" onClick={() => setPendingDelete(entry.message_id)}>
-                Delete
+                {t('common.delete')}
               </Button>
             </div>
           </Card>
         ))}
-        {entries.length === 0 && <p className="text-sm text-muted">Пока ничего не настроено.</p>}
+        {entries.length === 0 && <p className="text-sm text-muted">{t('reactionRoles.empty')}</p>}
       </div>
 
       <ReactionRoleForm
@@ -97,13 +99,13 @@ export function ReactionRolesPage() {
         onSaved={reload}
       />
 
-      <Modal open={pendingDelete !== null} title="Удалить reaction role?" onClose={() => setPendingDelete(null)}>
+      <Modal open={pendingDelete !== null} title={t('reactionRoles.deleteConfirm')} onClose={() => setPendingDelete(null)}>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={() => setPendingDelete(null)}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Удалить
+            {t('common.delete')}
           </Button>
         </div>
       </Modal>

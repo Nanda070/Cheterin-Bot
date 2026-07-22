@@ -20,7 +20,15 @@ def test_settings_disabled_by_default():
     assert settings["enabled"] is False
     assert settings["unverified_role_id"] == ""
     assert settings["verified_role_id"] == ""
-    assert settings["welcome_text"] == verification_core.DEFAULT_WELCOME_TEXT
+    assert settings["welcome_text"] == verification_core.resolve_welcome_text(GUILD_ID, "")
+
+
+def test_welcome_text_follows_guild_language():
+    import language_core
+
+    language_core.set_language(GUILD_ID, "en")
+    settings = verification_core.get_settings(GUILD_ID)
+    assert "Click the button" in settings["welcome_text"]
 
 
 def test_settings_roundtrip():

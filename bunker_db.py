@@ -112,6 +112,8 @@ def init():
             ("voice_channel_id", "voice_channel_id INTEGER"),
             ("vote_message_id", "vote_message_id INTEGER"),
             ("unique_cards", "unique_cards INTEGER NOT NULL DEFAULT 1"),
+            ("catastrophe_key", "catastrophe_key TEXT"),
+            ("bunker_conditions_key", "bunker_conditions_key TEXT"),
         ):
             if column not in existing:
                 conn.execute(f"ALTER TABLE games ADD COLUMN {ddl}")

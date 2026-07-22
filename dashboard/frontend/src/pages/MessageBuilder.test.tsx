@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { MessageBuilderPage } from './MessageBuilder'
@@ -14,7 +15,7 @@ describe('MessageBuilderPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     vi.spyOn(client, 'fetchEmojis').mockResolvedValue([])
 
-    render(<MessageBuilderPage />)
+    renderWithLanguage(<MessageBuilderPage />)
 
     await waitFor(() => screen.getByRole('button', { name: 'Reaction Roles' }))
     expect(screen.getByText('Пока ничего не настроено.')).toBeInTheDocument()

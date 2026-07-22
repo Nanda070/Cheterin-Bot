@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FeedbackCasesPage } from './FeedbackCases'
@@ -21,7 +22,7 @@ describe('FeedbackCasesPage', () => {
       },
     ])
 
-    render(<FeedbackCasesPage />)
+    renderWithLanguage(<FeedbackCasesPage />)
 
     await waitFor(() => expect(client.fetchFeedbackCases).toHaveBeenCalledWith('pending'))
     expect(
@@ -32,7 +33,7 @@ describe('FeedbackCasesPage', () => {
   it('reloads with the selected status filter', async () => {
     const fetchSpy = vi.spyOn(client, 'fetchFeedbackCases').mockResolvedValue([])
 
-    render(<FeedbackCasesPage />)
+    renderWithLanguage(<FeedbackCasesPage />)
 
     await waitFor(() => screen.getByLabelText('Статус'))
     fireEvent.click(screen.getByLabelText('Статус'))
@@ -44,7 +45,7 @@ describe('FeedbackCasesPage', () => {
   it('shows empty state when there are no cases', async () => {
     vi.spyOn(client, 'fetchFeedbackCases').mockResolvedValue([])
 
-    render(<FeedbackCasesPage />)
+    renderWithLanguage(<FeedbackCasesPage />)
 
     expect(await screen.findByText('Обращений нет.')).toBeInTheDocument()
   })

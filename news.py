@@ -6,6 +6,8 @@ from discord.ext import commands
 
 import settings_db
 
+import i18n
+
 logger = logging.getLogger("news-relay")
 
 MODULE_NAME = "news"
@@ -84,6 +86,7 @@ class NewsRelay(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         try:
+            lang = i18n.lang_for(_main_guild_id())
             settings = get_settings(_main_guild_id())
             if not settings["enabled"]:
                 return
@@ -108,10 +111,23 @@ class NewsRelay(commands.Cog):
             target_channel_id = channel_map[message.channel.id]
             target_channel = self.bot.get_channel(target_channel_id)
             if not target_channel:
-                await self.send_log("ERROR", f"Не найден целевой канал с ID {target_channel_id}.", 0xED4245)
+                await self.send_log(
+                    "ERROR",
+                    i18n.t("news.log.target_missing", lang, channel_id=target_channel_id),
+                    0xED4245,
+                )
                 return
 
-            await self.send_log("DEBUG", f"Пересылаем сообщение из {message.channel.id} в {target_channel_id}", 0x5865F2)
+            await self.send_log(
+                "DEBUG",
+                i18n.t(
+                    "news.log.debug_relay",
+                    lang,
+                    source=message.channel.id,
+                    target=target_channel_id,
+                ),
+                0x5865F2,
+            )
 
             # Собираем вложения, если они есть
             files = []
@@ -120,7 +136,16 @@ class NewsRelay(commands.Cog):
                     file_data = await attachment.read()
                     files.append(discord.File(fp=file_data, filename=attachment.filename))
                 except Exception as e:
-                    await self.send_log("ERROR", f"Ошибка при обработке вложения {attachment.filename}: {e}", 0xED4245)
+                    await self.send_log(
+                        "ERROR",
+                        i18n.t(
+                            "news.log.attachment_error",
+                            lang,
+                            filename=attachment.filename,
+                            error=e,
+                        ),
+                        0xED4245,
+                    )
 
             # Пересылаем текст и вложения
             try:
@@ -130,14 +155,22 @@ class NewsRelay(commands.Cog):
                         files=files if files else None
                     )
             except Exception as e:
-                await self.send_log("ERROR", f"Ошибка при отправке в канал {target_channel_id}: {e}", 0xED4245)
+                await self.send_log(
+                    "ERROR",
+                    i18n.t("news.log.send_error", lang, channel_id=target_channel_id, error=e),
+                    0xED4245,
+                )
 
             # Пересылаем embeds (каждый отдельно)
             for emb in message.embeds:
                 try:
                     await target_channel.send(embed=emb)
                 except Exception as e:
-                    await self.send_log("ERROR", f"Ошибка при отправке embed в канал {target_channel_id}: {e}", 0xED4245)
+                    await self.send_log(
+                        "ERROR",
+                        i18n.t("news.log.embed_error", lang, channel_id=target_channel_id, error=e),
+                        0xED4245,
+                    )
 
         except Exception:
             logger.exception("Исключение в NewsRelay.on_message")

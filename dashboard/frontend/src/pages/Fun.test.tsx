@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FunPage } from './Fun'
@@ -29,7 +30,7 @@ describe('FunPage', () => {
   it('renders the module toggle and both roulette cards', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
     mockWordle()
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByText(/Русская рулетка/)).toBeInTheDocument()
@@ -42,12 +43,12 @@ describe('FunPage', () => {
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })))
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('updates timeout and cooldown fields before saving', async () => {
@@ -55,7 +56,7 @@ describe('FunPage', () => {
     mockWordle()
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
 
     fireEvent.change(await screen.findByLabelText(/Таймаут проигравшему/), { target: { value: '10' } })
     fireEvent.change(screen.getByLabelText(/Кулдаун на игрока/), { target: { value: '120' } })
@@ -73,7 +74,7 @@ describe('FunPage', () => {
     mockWordle()
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
 
     expect(await screen.findByText('✨ Авто-Эмодзи')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Выключено'))
@@ -94,7 +95,7 @@ describe('FunPage', () => {
     const wordleSpy = vi
       .spyOn(client, 'updateWordleSettings')
       .mockResolvedValue({ enabled: true, channel_id: '555', announce_time: '18:30' })
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
 
     expect(await screen.findByText(/Вордл — \/вордл/)).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Вордл выключен'))
@@ -112,7 +113,7 @@ describe('FunPage', () => {
   it('shows an error when loading fails', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockRejectedValue(new Error('fail'))
     mockWordle()
-    render(<FunPage />)
+    renderWithLanguage(<FunPage />)
     expect(await screen.findByText('Не удалось загрузить настройки модуля «Развлечения»')).toBeInTheDocument()
   })
 })

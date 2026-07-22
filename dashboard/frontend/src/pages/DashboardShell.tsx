@@ -12,7 +12,8 @@ import {
   Crown,
   DiceThree,
   FilmSlate,
-  GearSix,
+  DoorOpen,
+  GlobeHemisphereWest,
   Headset,
   House,
   Lightbulb,
@@ -37,18 +38,20 @@ import {
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { logout } from '../api/client'
-import { useAuth } from '../context/AuthContext'
+import { LanguageToggle } from '../components/LanguageToggle'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
+import { useAuth } from '../context/AuthContext'
+import { useT } from '../context/LanguageContext'
 
 interface Section {
-  label: string
+  labelKey: string
   icon: Icon
   to: string
   mainGuildOnly?: boolean
 }
 
 interface NavGroup {
-  title: string
+  titleKey: string
   icon: Icon
   items: Section[]
   superAdminOnly?: boolean
@@ -56,71 +59,73 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    title: 'Активность',
+    titleKey: 'nav.group.activity',
     icon: TrendUp,
     items: [
-      { label: 'Рейтинг участников', icon: ChartBar, to: '/levels' },
-      { label: 'Экономика', icon: Coins, to: '/economy' },
-      { label: 'Казино', icon: DiceThree, to: '/casino' },
-      { label: 'Статистика войса', icon: ChartLine, to: '/voice-stats' },
+      { labelKey: 'nav.levels', icon: ChartBar, to: '/levels' },
+      { labelKey: 'nav.economy', icon: Coins, to: '/economy' },
+      { labelKey: 'nav.casino', icon: DiceThree, to: '/casino' },
+      { labelKey: 'nav.voiceStats', icon: ChartLine, to: '/voice-stats' },
     ],
   },
   {
-    title: 'GTA5RP',
+    titleKey: 'nav.group.gta5rp',
     icon: Car,
     items: [
-      { label: 'Семья', icon: House, to: '/family' },
-      { label: 'Поставки', icon: Package, to: '/supply' },
+      { labelKey: 'nav.family', icon: House, to: '/family' },
+      { labelKey: 'nav.supply', icon: Package, to: '/supply' },
     ],
   },
   {
-    title: 'Сообщество',
+    titleKey: 'nav.group.community',
     icon: Users,
     items: [
-      { label: 'Feedback и тикеты', icon: ChatCircleText, to: '/feedback' },
-      { label: 'События и голосования', icon: CalendarCheck, to: '/events' },
-      { label: 'Сетки', icon: Trophy, to: '/brackets' },
-      { label: 'Мафия', icon: Skull, to: '/mafia' },
-      { label: 'Бункер', icon: Vault, to: '/bunker' },
-      { label: 'Развлечения', icon: Confetti, to: '/fun' },
-      { label: 'Приватные комнаты', icon: Headset, to: '/voice-rooms' },
+      { labelKey: 'nav.feedback', icon: ChatCircleText, to: '/feedback' },
+      { labelKey: 'nav.events', icon: CalendarCheck, to: '/events' },
+      { labelKey: 'nav.brackets', icon: Trophy, to: '/brackets' },
+      { labelKey: 'nav.mafia', icon: Skull, to: '/mafia' },
+      { labelKey: 'nav.bunker', icon: Vault, to: '/bunker' },
+      { labelKey: 'nav.voiceRooms', icon: Headset, to: '/voice-rooms' },
     ],
   },
   {
-    title: 'Контент',
+    titleKey: 'nav.group.content',
     icon: FilmSlate,
     items: [
-      { label: 'Кнопки и эмбеды', icon: Stack, to: '/reaction-roles' },
-      { label: 'Публикации и подписки', icon: Broadcast, to: '/streams' },
-      { label: 'Ежедневная рубрика', icon: Lightbulb, to: '/daily-topic' },
+      { labelKey: 'nav.fun', icon: Confetti, to: '/fun' },
+      { labelKey: 'nav.reactionRoles', icon: Stack, to: '/reaction-roles' },
+      { labelKey: 'nav.streams', icon: Broadcast, to: '/streams' },
+      { labelKey: 'nav.dailyTopic', icon: Lightbulb, to: '/daily-topic' },
     ],
   },
   {
-    title: 'Администрирование',
+    titleKey: 'nav.group.admin',
     icon: Wrench,
     items: [
-      { label: 'Логирование', icon: ListMagnifyingGlass, to: '/serverlog' },
-      { label: 'Модерация', icon: ShieldWarning, to: '/lockdown' },
-      { label: 'Автомодерация', icon: Shield, to: '/automod' },
-      { label: 'Участники и роли', icon: UsersThree, to: '/members' },
-      { label: 'Аудит дашборда', icon: ClipboardText, to: '/audit' },
-      { label: 'Конфигурация', icon: GearSix, to: '/config' },
-      { label: 'Тикеты CTD', icon: Ticket, to: '/ctd', mainGuildOnly: true },
+      { labelKey: 'nav.serverlog', icon: ListMagnifyingGlass, to: '/serverlog' },
+      { labelKey: 'nav.lockdown', icon: ShieldWarning, to: '/lockdown' },
+      { labelKey: 'nav.automod', icon: Shield, to: '/automod' },
+      { labelKey: 'nav.serverEntry', icon: DoorOpen, to: '/server-entry' },
+      { labelKey: 'nav.members', icon: UsersThree, to: '/members' },
+      { labelKey: 'nav.audit', icon: ClipboardText, to: '/audit' },
+      { labelKey: 'nav.settings', icon: GlobeHemisphereWest, to: '/settings' },
     ],
   },
   {
-    title: 'Супер-админ',
+    titleKey: 'nav.group.superadmin',
     icon: Crown,
     superAdminOnly: true,
     items: [
-      { label: 'Серверы бота', icon: Crown, to: '/superadmin' },
-      { label: 'Ретрансляция новостей', icon: Megaphone, to: '/news' },
+      { labelKey: 'nav.superadminServers', icon: Crown, to: '/superadmin' },
+      { labelKey: 'nav.news', icon: Megaphone, to: '/news' },
+      { labelKey: 'nav.ctd', icon: Ticket, to: '/ctd', mainGuildOnly: true },
     ],
   },
 ]
 
 export function DashboardShell() {
   const { user, refresh } = useAuth()
+  const t = useT()
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -149,42 +154,45 @@ export function DashboardShell() {
           </Link>
           <nav className="hidden items-center gap-3 text-sm text-muted sm:flex">
             <Link to="/docs" className="transition-colors hover:text-foreground">
-              Документация
+              {t('nav.docs')}
             </Link>
             <Link to="/terms" className="transition-colors hover:text-foreground">
-              Условия
+              {t('nav.terms')}
             </Link>
             <Link to="/privacy" className="transition-colors hover:text-foreground">
-              Приватность
+              {t('nav.privacy')}
             </Link>
           </nav>
         </div>
 
-        <Dropdown
-          trigger={
-            <span className="flex items-center gap-2 rounded-control px-2 py-1.5 hover:bg-surface-hover">
-              {user?.avatar ? (
-                <img src={user.avatar} alt="" className="h-7 w-7 rounded-full" />
-              ) : (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
-                  {user?.username?.slice(0, 1).toUpperCase()}
+        <div className="flex items-center gap-3">
+          <LanguageToggle />
+          <Dropdown
+            trigger={
+              <span className="flex items-center gap-2 rounded-control px-2 py-1.5 hover:bg-surface-hover">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="" className="h-7 w-7 rounded-full" />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
+                    {user?.username?.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="max-w-[10rem] truncate text-sm text-foreground">
+                  {user?.username}
                 </span>
-              )}
-              <span className="max-w-[10rem] truncate text-sm text-foreground">
-                {user?.username}
               </span>
-            </span>
-          }
-        >
-          <DropdownItem onClick={() => navigate('/servers')}>
-            <ArrowsLeftRight size={16} />
-            Сменить сервер
-          </DropdownItem>
-          <DropdownItem onClick={handleLogout} danger>
-            <SignOut size={16} />
-            {isLoggingOut ? 'Выходим…' : 'Выйти'}
-          </DropdownItem>
-        </Dropdown>
+            }
+          >
+            <DropdownItem onClick={() => navigate('/servers')}>
+              <ArrowsLeftRight size={16} />
+              {t('nav.switchServer')}
+            </DropdownItem>
+            <DropdownItem onClick={handleLogout} danger>
+              <SignOut size={16} />
+              {isLoggingOut ? t('nav.loggingOut') : t('nav.logout')}
+            </DropdownItem>
+          </Dropdown>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -202,27 +210,27 @@ export function DashboardShell() {
             )}
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-foreground">
-                {user?.active_guild_name ?? 'Выбрать сервер'}
+                {user?.active_guild_name ?? t('nav.selectServer')}
               </span>
               <span className="flex items-center gap-1 text-[11px] text-muted">
                 <ArrowsLeftRight size={11} />
-                Сменить сервер
+                {t('nav.switchServer')}
               </span>
             </div>
           </Link>
           <nav className="flex flex-col gap-5">
             {NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).map((group, groupIndex) => (
-              <div key={group.title} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
+              <div key={group.titleKey} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
                 <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
                   <group.icon size={13} weight="bold" className="shrink-0" />
-                  {group.title}
+                  {t(group.titleKey)}
                 </p>
                 <div className="flex flex-col gap-0.5">
                   {group.items
                     .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
-                    .map(({ label, icon: SectionIcon, to }) => (
+                    .map(({ labelKey, icon: SectionIcon, to }) => (
                     <NavLink
-                      key={label}
+                      key={labelKey}
                       to={to}
                       className={({ isActive }) =>
                         `${itemBase} cursor-pointer ${
@@ -235,7 +243,7 @@ export function DashboardShell() {
                       {({ isActive }) => (
                         <>
                           <SectionIcon size={17} weight={isActive ? 'fill' : 'regular'} className={`shrink-0 ${isActive ? 'text-primary' : ''}`} />
-                          {label}
+                          {t(labelKey)}
                         </>
                       )}
                     </NavLink>

@@ -2,28 +2,30 @@ import { Crown } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { fetchSuperAdminGuilds, type SuperAdminGuild } from '../api/client'
 import { Card } from '../components/ui/Card'
+import { useT } from '../context/LanguageContext'
 
 export function SuperAdminPage() {
+  const t = useT()
   const [guilds, setGuilds] = useState<SuperAdminGuild[] | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
     fetchSuperAdminGuilds()
       .then(setGuilds)
-      .catch(() => setError('Не удалось загрузить список серверов — недостаточно прав.'))
-  }, [])
+      .catch(() => setError(t('superadmin.errorLoad')))
+  }, [t])
 
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
         <Crown size={22} className="text-primary" />
-        Серверы бота
+        {t('superadmin.title')}
       </h1>
-      <p className="text-sm text-muted">Список всех серверов, на которых сейчас присутствует бот.</p>
+      <p className="text-sm text-muted">{t('superadmin.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      {!error && !guilds && <p className="text-sm text-muted">Загрузка…</p>}
-      {guilds && guilds.length === 0 && <p className="text-sm text-muted">Бот пока не состоит ни на одном сервере.</p>}
+      {!error && !guilds && <p className="text-sm text-muted">{t('common.loading')}</p>}
+      {guilds && guilds.length === 0 && <p className="text-sm text-muted">{t('superadmin.empty')}</p>}
 
       <div className="flex flex-col gap-3">
         {guilds?.map((guild) => (
@@ -38,8 +40,8 @@ export function SuperAdminPage() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{guild.name}</p>
               <p className="text-xs text-muted">
-                ID: {guild.id} · {guild.member_count} участников
-                {guild.owner_id && <> · Владелец: {guild.owner_id}</>}
+                {t('superadmin.guildInfo', { id: guild.id, count: guild.member_count })}
+                {guild.owner_id && t('superadmin.owner', { ownerId: guild.owner_id })}
               </p>
             </div>
           </Card>

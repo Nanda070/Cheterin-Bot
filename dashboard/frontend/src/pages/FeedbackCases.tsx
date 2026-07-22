@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { fetchFeedbackCases, type FeedbackCaseSummary } from '../api/client'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
+import { useT } from '../context/LanguageContext'
 import { FeedbackCaseDetailPanel } from './FeedbackCaseDetailPanel'
 
 type StatusFilter = 'pending' | 'approved' | 'denied' | 'all'
 
 export function FeedbackCasesPage() {
+  const t = useT()
   const [status, setStatus] = useState<StatusFilter>('pending')
   const [cases, setCases] = useState<FeedbackCaseSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -15,28 +17,28 @@ export function FeedbackCasesPage() {
   const reload = () => {
     fetchFeedbackCases(status === 'all' ? undefined : status)
       .then(setCases)
-      .catch(() => setError('Не удалось загрузить обращения'))
+      .catch(() => setError(t('feedback.cases.errorLoad')))
   }
 
-  useEffect(reload, [status])
+  useEffect(reload, [status, t])
 
   return (
     <div className="flex gap-6">
       <div className="flex-1">
         <div className="mb-4 flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-foreground">Обращения</h1>
+          <h1 className="text-lg font-semibold text-foreground">{t('feedback.cases.title')}</h1>
           <label className="ml-auto text-sm text-muted" htmlFor="feedback-status">
-            Статус
+            {t('common.status')}
           </label>
           <Select
             id="feedback-status"
             value={status}
             onChange={(id) => setStatus(id as StatusFilter)}
             options={[
-              { id: 'pending', name: 'На рассмотрении' },
-              { id: 'approved', name: 'Принято' },
-              { id: 'denied', name: 'Отклонено' },
-              { id: 'all', name: 'Все' },
+              { id: 'pending', name: t('feedback.cases.status.pending') },
+              { id: 'approved', name: t('feedback.cases.status.approved') },
+              { id: 'denied', name: t('feedback.cases.status.denied') },
+              { id: 'all', name: t('common.all') },
             ]}
             className="w-52"
           />
@@ -59,7 +61,7 @@ export function FeedbackCasesPage() {
               </div>
             </Card>
           ))}
-          {cases.length === 0 && <p className="text-sm text-muted">Обращений нет.</p>}
+          {cases.length === 0 && <p className="text-sm text-muted">{t('feedback.cases.empty')}</p>}
         </div>
       </div>
 

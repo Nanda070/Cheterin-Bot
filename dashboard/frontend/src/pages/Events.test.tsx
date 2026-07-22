@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { EventsPage } from './Events'
@@ -20,7 +21,7 @@ describe('EventsPage', () => {
   it('lists events for the default open filter', async () => {
     const fetchSpy = vi.spyOn(client, 'fetchEvents').mockResolvedValue([summary])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     expect(await screen.findByText('Летний турнир')).toBeInTheDocument()
     expect(fetchSpy).toHaveBeenCalledWith('open')
@@ -29,7 +30,7 @@ describe('EventsPage', () => {
   it('reloads with the closed filter when changed', async () => {
     const fetchSpy = vi.spyOn(client, 'fetchEvents').mockResolvedValue([])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('open'))
 
     fireEvent.click(screen.getByLabelText('Статус'))
@@ -59,7 +60,7 @@ describe('EventsPage create flow', () => {
       role_reward: null,
     })
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -94,7 +95,7 @@ describe('EventsPage create flow', () => {
       role_reward: null,
     })
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -122,7 +123,7 @@ describe('EventsPage create flow', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -142,7 +143,7 @@ describe('EventsPage create flow', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     vi.spyOn(client, 'createEvent').mockRejectedValue(new Error('boom'))
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -163,7 +164,7 @@ describe('EventsPage create flow', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'tourneys' }])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -189,7 +190,7 @@ describe('EventsPage create flow', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))
@@ -212,7 +213,7 @@ describe('EventsPage create flow', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<EventsPage />)
+    renderWithLanguage(<EventsPage />)
 
     await waitFor(() => screen.getByText('Создать событие'))
     fireEvent.click(screen.getByText('Создать событие'))

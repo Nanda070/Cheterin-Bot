@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { AuthProvider } from '../context/AuthContext'
+import { LanguageProvider } from '../context/LanguageContext'
 import { HomePage } from './Home'
 
 function renderPage() {
@@ -14,15 +15,17 @@ function renderPage() {
 
   return render(
     <MemoryRouter initialEntries={['/']}>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/feedback" element={<div>Feedback Page Marker</div>} />
-          <Route path="/events" element={<div>Events Page Marker</div>} />
-          <Route path="/lockdown" element={<div>Lockdown Page Marker</div>} />
-          <Route path="/members" element={<div>Members Page Marker</div>} />
-        </Routes>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/feedback" element={<div>Feedback Page Marker</div>} />
+            <Route path="/events" element={<div>Events Page Marker</div>} />
+            <Route path="/lockdown" element={<div>Lockdown Page Marker</div>} />
+            <Route path="/members" element={<div>Members Page Marker</div>} />
+          </Routes>
+        </AuthProvider>
+      </LanguageProvider>
     </MemoryRouter>,
   )
 }

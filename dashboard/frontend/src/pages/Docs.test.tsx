@@ -1,15 +1,18 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { LanguageProvider } from '../context/LanguageContext'
 import { DocsPage } from './Docs'
 
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/docs" element={<DocsPage />} />
-        <Route path="/docs/:sectionId" element={<DocsPage />} />
-      </Routes>
+      <LanguageProvider>
+        <Routes>
+          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/docs/:sectionId" element={<DocsPage />} />
+        </Routes>
+      </LanguageProvider>
     </MemoryRouter>,
   )
 }
@@ -57,5 +60,18 @@ describe('DocsPage', () => {
     fireEvent.click(within(pager).getByRole('link', { name: /Начало работы/ }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Начало работы' })).toBeInTheDocument()
+  })
+
+  it('switches docs content to English when language is en', async () => {
+    renderAt('/docs')
+    await screen.findByRole('heading', { level: 1, name: 'Введение' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'EN' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Introduction' })).toBeInTheDocument()
+    expect(screen.getByText('General')).toBeInTheDocument()
+    expect(screen.getByText('Modules')).toBeInTheDocument()
+    expect(screen.getByText('Reference')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copy page' })).toBeInTheDocument()
   })
 })

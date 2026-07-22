@@ -1,4 +1,5 @@
 import { Gear, ListChecks, Vault } from '@phosphor-icons/react'
+import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
 import {
   applyBunkerAbility,
@@ -16,6 +17,7 @@ import {
   type BunkerSettings,
   type ChannelInfo,
 } from '../api/client'
+import { isBunkerHealthy } from '../config/bunkerMarkers'
 import { BunkerCharacterEditor } from './BunkerCharacterEditor'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -25,32 +27,33 @@ import { Toggle } from '../components/ui/Toggle'
 
 type Tab = 'settings' | 'games'
 
-const TABS: { key: Tab; label: string; icon: typeof Gear }[] = [
-  { key: 'settings', label: 'Настройки', icon: Gear },
-  { key: 'games', label: 'Активные игры', icon: ListChecks },
-]
-
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-const PHASE_LABEL: Record<string, string> = {
-  lobby: 'Лобби',
-  discussion: 'Обсуждение',
-  vote: 'Голосование',
-  ended: 'Завершена',
+function bunkerPhaseLabel(phase: string, t: (k: string) => string) {
+  const m: Record<string, string> = {
+    lobby: 'bunker.phase.lobby',
+    discussion: 'bunker.phase.discussion',
+    vote: 'bunker.phase.vote',
+    ended: 'bunker.phase.ended',
+  }
+  return m[phase] ? t(m[phase]) : phase
 }
 
-function characterSummary(character: BunkerCharacter | null): string {
+function characterSummary(character: BunkerCharacter | null, t: (k: string) => string): string {
   if (!character) return '—'
   const parts: string[] = []
   if (character.profession) parts.push(`${character.profession.name} (${character.profession.experience_level})`)
   if (character.age) parts.push(character.age.label)
   if (character.gender) parts.push(character.gender)
-  if (character.health) parts.push(character.health.severity === 'Здоров' ? 'здоров' : character.health.disease_name ?? character.health.severity)
+  if (character.health) {
+    parts.push(isBunkerHealthy(character.health) ? t('bunker.healthHealthy') : character.health.disease_name ?? character.health.severity)
+  }
   return parts.join(', ') || '—'
 }
 
 export function BunkerPage() {
+  const t = useT()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<BunkerSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -71,25 +74,25 @@ export function BunkerPage() {
         setSettings(s)
         setChannels(ch)
       })
-      .catch(() => setError('Не удалось загрузить настройки модуля «Бункер»'))
+      .catch(() => setError(t('bunker.errorLoadSettings')))
   }, [])
 
   useEffect(() => {
     if (tab !== 'games') return
     fetchBunkerGames()
       .then(setGames)
-      .catch(() => setError('Не удалось загрузить список игр'))
+      .catch(() => setError(t('bunker.errorLoadGames')))
     if (!cardPools) {
       fetchBunkerCardPools()
         .then(setCardPools)
-        .catch(() => setError('Не удалось загрузить справочник карточек'))
+        .catch(() => setError(t('bunker.errorLoadPools')))
     }
-  }, [tab, cardPools])
+  }, [tab, cardPools, t])
 
   const openDetail = (id: number) => {
     fetchBunkerGameDetail(id)
       .then(setDetail)
-      .catch(() => setError('Не удалось загрузить игру'))
+      .catch(() => setError(t('bunker.errorLoadGame')))
   }
 
   const closeDetail = () => setDetail(null)
@@ -99,7 +102,7 @@ export function BunkerPage() {
   }
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const patch = (updater: (prev: BunkerSettings) => BunkerSettings) => {
@@ -113,9 +116,9 @@ export function BunkerPage() {
     try {
       const updated = await updateBunkerSettings(settings)
       setSettings(updated)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('bunker.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -135,7 +138,7 @@ export function BunkerPage() {
       setEditingUserId(null)
       refreshDetail()
     } catch {
-      setEditError('Не удалось сохранить карточку.')
+      setEditError(t('bunker.errorSaveCard'))
     } finally {
       setEditBusy(false)
     }
@@ -147,7 +150,7 @@ export function BunkerPage() {
       await applyBunkerAbility(detail.game.id, announcementId)
       refreshDetail()
     } catch {
-      setError('Не удалось отметить заявку применённой')
+      setError(t('bunker.errorApply'))
     }
   }
 
@@ -156,25 +159,22 @@ export function BunkerPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Vault size={22} className="text-primary" />
-          Бункер
+          {t('bunker.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? 'Модуль включён' : 'Модуль выключен'}
+          label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
         />
       </div>
       <p className="text-sm text-muted">
-        Игра «Бункер»: лобби и старт через команду /бункер-игра, а вся игра — карточка персонажа, свободное раскрытие
-        характеристик, спец. возможности и голосование за исключение — на персональной ссылке каждого игрока на
-        дашборде. Заявки на спец. возможности ведущий применяет вручную здесь же, во вкладке «Активные игры». Пока
-        модуль выключен, команда /бункер-игра отвечает «Модуль отключён».
+{t('bunker.intro')}
       </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex gap-1 border-b border-border">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {[{ key: 'settings' as Tab, labelKey: 'common.settings', icon: Gear }, { key: 'games' as Tab, labelKey: 'common.activeGames', icon: ListChecks }].map(({ key, labelKey, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -184,7 +184,7 @@ export function BunkerPage() {
             }`}
           >
             <Icon size={15} />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -192,11 +192,11 @@ export function BunkerPage() {
       {tab === 'settings' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Игроки по умолчанию</h2>
+            <h2 className="font-semibold text-foreground">{t('bunker.playersDefault')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-min-players">
-                  Минимум игроков (4–20)
+                  {t('bunker.minPlayers')}
                 </label>
                 <input
                   id="bunker-min-players"
@@ -210,7 +210,7 @@ export function BunkerPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-max-players">
-                  Максимум игроков (4–20)
+                  {t('bunker.maxPlayers')}
                 </label>
                 <input
                   id="bunker-max-players"
@@ -226,25 +226,23 @@ export function BunkerPage() {
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Раздача карточек</h2>
+            <h2 className="font-semibold text-foreground">{t('bunker.cardDeal')}</h2>
             <Toggle
               checked={settings.default_unique_cards}
               onChange={(v) => patch((p) => ({ ...p, default_unique_cards: v }))}
-              label={settings.default_unique_cards ? 'Без повторов (колодой)' : 'С повторами'}
+              label={settings.default_unique_cards ? t('bunker.uniqueCardsOn') : t('bunker.uniqueCardsOff')}
             />
             <p className="text-xs text-muted">
-              Без повторов — каждая карточка (профессия, хобби, здоровье, фобия, рюкзак, крупный инвентарь, характер,
-              доп. сведения, спец. возможности) в рамках одной игры не повторяется у разных игроков, как колода в
-              настольной версии. Ведущий может переопределить это при создании лобби.
+{t('bunker.uniqueCardsHint')}
             </p>
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Таймеры по умолчанию (сек)</h2>
+            <h2 className="font-semibold text-foreground">{t('bunker.timersDefault')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-discussion-timer">
-                  Обсуждение / раскрытие характеристик (10–3600)
+                  {t('bunker.timer.discussion')}
                 </label>
                 <input
                   id="bunker-discussion-timer"
@@ -258,7 +256,7 @@ export function BunkerPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-muted" htmlFor="bunker-vote-timer">
-                  Голосование за исключение (10–3600)
+                  {t('bunker.timer.vote')}
                 </label>
                 <input
                   id="bunker-vote-timer"
@@ -274,17 +272,17 @@ export function BunkerPage() {
           </Card>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Логи</h2>
+            <h2 className="font-semibold text-foreground">{t('bunker.logs')}</h2>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="bunker-log-channel">
-                Канал логов результатов игр
+                {t('bunker.logChannel')}
               </label>
               <Select
                 id="bunker-log-channel"
                 value={settings.log_channel_id}
                 onChange={(id) => patch((p) => ({ ...p, log_channel_id: id }))}
                 options={channels}
-                placeholder="Не задано"
+                placeholder={t('common.notSet')}
               />
             </div>
           </Card>
@@ -292,7 +290,7 @@ export function BunkerPage() {
           {saved && <p className="text-sm text-primary">{saved}</p>}
           <div>
             <Button variant="primary" onClick={save} disabled={busy}>
-              {busy ? 'Сохраняем…' : 'Сохранить'}
+              {busy ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>
@@ -300,8 +298,8 @@ export function BunkerPage() {
 
       {tab === 'games' && (
         <div className="flex flex-col gap-3">
-          {!games && <p className="text-sm text-muted">Загрузка…</p>}
-          {games && games.length === 0 && <p className="text-sm text-muted">Активных игр нет.</p>}
+          {!games && <p className="text-sm text-muted">{t('common.loading')}</p>}
+          {games && games.length === 0 && <p className="text-sm text-muted">{t('common.noActiveGames')}</p>}
           {games?.map((game) => (
             <Card key={game.id} className="flex flex-col gap-2">
               <button
@@ -311,14 +309,18 @@ export function BunkerPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Игра #{game.id} · {game.channel_name}
+                    {t('bunker.game', { id: game.id, channel: game.channel_name })}
                   </p>
                   <p className="text-xs text-muted">
-                    {PHASE_LABEL[game.phase] ?? game.phase} · раунд {game.round_number} · {game.alive_count}/
-                    {game.player_count} живы
-                    {game.bunker_capacity ? ` · вместимость ${game.bunker_capacity}` : ''}
+                    {t('bunker.gameMeta', {
+                      phase: bunkerPhaseLabel(game.phase, t),
+                      round: game.round_number,
+                      alive: game.alive_count,
+                      total: game.player_count,
+                    })}
+                    {game.bunker_capacity ? ` · ${t('bunker.capacity', { count: game.bunker_capacity })}` : ''}
                     {' · '}
-                    {game.unique_cards ? 'карточки без повторов' : 'карточки с повторами'}
+                    {game.unique_cards ? t('bunker.uniqueCards') : t('bunker.duplicateCards')}
                   </p>
                 </div>
               </button>
@@ -326,7 +328,7 @@ export function BunkerPage() {
               {detail && detail.game.id === game.id && (
                 <div className="flex flex-col gap-4 border-t border-border pt-3">
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-foreground">Игроки</h3>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">{t('bunker.players')}</h3>
                     <div className="flex flex-col gap-1.5">
                       {detail.players.map((p) => (
                         <div
@@ -337,10 +339,10 @@ export function BunkerPage() {
                         >
                           <div>
                             <span className="font-medium">{p.display_name}</span>
-                            <span className="ml-2 text-xs text-muted">{characterSummary(p.character)}</span>
+                            <span className="ml-2 text-xs text-muted">{characterSummary(p.character, t)}</span>
                           </div>
                           <Button variant="secondary" onClick={() => openEditor(p.user_id)}>
-                            Редактировать
+                            {t('common.edit')}
                           </Button>
                         </div>
                       ))}
@@ -348,9 +350,9 @@ export function BunkerPage() {
                   </div>
 
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-foreground">Заявки на спец. возможности</h3>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">{t('bunker.abilities')}</h3>
                     {detail.ability_announcements.length === 0 && (
-                      <p className="text-sm text-muted">Заявок пока нет.</p>
+                      <p className="text-sm text-muted">{t('bunker.abilities.empty')}</p>
                     )}
                     <div className="flex flex-col gap-1.5">
                       {detail.ability_announcements.map((a) => (
@@ -361,15 +363,15 @@ export function BunkerPage() {
                           <div>
                             <p className="text-foreground">
                               <span className="font-medium">{a.player_display_name}</span> — «{a.card_name}»
-                              {a.target_display_name ? ` · цель: ${a.target_display_name}` : ''}
+                              {a.target_display_name ? ` · ${t('bunker.editor.targetPlayer')}: ${a.target_display_name}` : ''}
                             </p>
                             {a.note && <p className="text-xs text-muted">{a.note}</p>}
                           </div>
                           {a.applied ? (
-                            <span className="text-xs text-primary">Применено</span>
+                            <span className="text-xs text-primary">{t('common.applied')}</span>
                           ) : (
                             <Button variant="primary" onClick={() => apply(a.id)}>
-                              Применить
+                              {t('bunker.apply')}
                             </Button>
                           )}
                         </div>
@@ -383,16 +385,15 @@ export function BunkerPage() {
         </div>
       )}
 
-      <Modal open={editingUserId !== null} title="Редактировать карточку игрока" onClose={() => setEditingUserId(null)}>
+      <Modal open={editingUserId !== null} title={t('bunker.modal.editCard')} onClose={() => setEditingUserId(null)}>
         {editingUserId && detail && (() => {
           const player = detail.players.find((p) => p.user_id === editingUserId)
           if (!player) return null
-          if (!cardPools) return <p className="text-sm text-muted">Загрузка справочника карточек…</p>
+          if (!cardPools) return <p className="text-sm text-muted">{t('bunker.modal.loadingPools')}</p>
           return (
             <div className="flex flex-col gap-3">
               <p className="text-xs text-muted">
-                Так применяются эффекты спец. возможностей (обмен, кража, изменение характеристик и т.д.) — выберите
-                новые значения нужных полей и сохраните.
+{t('bunker.modal.editHint')}
               </p>
               <BunkerCharacterEditor
                 character={player.character ?? {}}

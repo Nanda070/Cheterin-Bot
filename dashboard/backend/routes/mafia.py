@@ -2,6 +2,7 @@ import time
 
 from aiohttp import web
 
+import language_core
 import mafia_core
 import mafia_db
 
@@ -146,6 +147,7 @@ async def mafia_public_state(request: web.Request) -> web.Response:
         roster.append(entry)
 
     body = {
+        "language": language_core.get_language(game["guild_id"]),
         "game_status": game["status"],
         "phase": game["phase"],
         "round_number": round_number,

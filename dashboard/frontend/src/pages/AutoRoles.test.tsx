@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithI18n } from '../test/renderWithI18n'
 import { AutoRolesPage } from './AutoRoles'
 
 describe('AutoRolesPage', () => {
@@ -13,7 +14,7 @@ describe('AutoRolesPage', () => {
     ])
     vi.spyOn(client, 'fetchAutoRoles').mockResolvedValue({ role_ids: ['7'] })
 
-    render(<AutoRolesPage />)
+    renderWithI18n(<AutoRolesPage />)
 
     const memberCheckbox = await screen.findByLabelText('Member')
     const vipCheckbox = screen.getByLabelText('VIP')
@@ -28,12 +29,12 @@ describe('AutoRolesPage', () => {
     vi.spyOn(client, 'fetchAutoRoles').mockResolvedValue({ role_ids: [] })
     const updateSpy = vi.spyOn(client, 'updateAutoRoles').mockResolvedValue({ role_ids: ['7'] })
 
-    render(<AutoRolesPage />)
+    renderWithI18n(<AutoRolesPage />)
     fireEvent.click(await screen.findByLabelText('Member'))
     fireEvent.click(screen.getByText('Сохранить'))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(['7']))
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('shows an error when saving fails', async () => {
@@ -41,7 +42,7 @@ describe('AutoRolesPage', () => {
     vi.spyOn(client, 'fetchAutoRoles').mockResolvedValue({ role_ids: [] })
     vi.spyOn(client, 'updateAutoRoles').mockRejectedValue(new Error('fail'))
 
-    render(<AutoRolesPage />)
+    renderWithI18n(<AutoRolesPage />)
     fireEvent.click(await screen.findByText('Сохранить'))
 
     expect(await screen.findByText('Не удалось сохранить — проверьте, что роли ниже роли бота')).toBeInTheDocument()

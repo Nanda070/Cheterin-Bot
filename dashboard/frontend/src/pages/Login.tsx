@@ -2,14 +2,17 @@ import { BookOpen, DiscordLogo, Headset, Package, ShieldCheck, Sparkle } from '@
 import { Link } from 'react-router-dom'
 import { loginUrl } from '../api/client'
 import { Card } from '../components/ui/Card'
+import { useT } from '../context/LanguageContext'
 
-const FEATURES = [
-  { icon: ShieldCheck, label: 'Модерация, анти-спам и Lockdown' },
-  { icon: Package, label: 'Сборы на поставку с резервом и напоминаниями' },
-  { icon: Headset, label: 'Приватные голосовые комнаты' },
+const FEATURE_KEYS = [
+  { icon: ShieldCheck, key: 'login.feature.moderation' as const },
+  { icon: Package, key: 'login.feature.supply' as const },
+  { icon: Headset, key: 'login.feature.voice' as const },
 ]
 
 export function LoginPage() {
+  const t = useT()
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="flex items-center gap-2 text-foreground">
@@ -23,10 +26,8 @@ export function LoginPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold text-foreground">Панель управления</h1>
-          <p className="text-sm text-muted">
-            Войдите через Discord, чтобы получить доступ к панели модерации сервера.
-          </p>
+          <h1 className="text-xl font-semibold text-foreground">{t('login.title')}</h1>
+          <p className="text-sm text-muted">{t('login.subtitle')}</p>
         </div>
 
         <a
@@ -39,31 +40,31 @@ export function LoginPage() {
           ].join(' ')}
         >
           <DiscordLogo size={20} weight="fill" />
-          Войти через Discord
+          {t('login.button')}
         </a>
 
         <ul className="flex w-full flex-col gap-2 text-left">
-          {FEATURES.map(({ icon: FeatureIcon, label }) => (
-            <li key={label} className="flex items-center gap-2 text-xs text-muted">
+          {FEATURE_KEYS.map(({ icon: FeatureIcon, key }) => (
+            <li key={key} className="flex items-center gap-2 text-xs text-muted">
               <FeatureIcon size={16} className="shrink-0 text-primary" />
-              {label}
+              {t(key)}
             </li>
           ))}
         </ul>
       </Card>
 
       <div className="flex flex-col items-center gap-3">
-        <p className="text-xs text-muted">Доступ только для модераторов и администраторов сервера</p>
+        <p className="text-xs text-muted">{t('login.footer')}</p>
         <nav className="flex items-center gap-4 text-sm">
           <Link to="/docs" className="flex items-center gap-1 text-muted transition-colors hover:text-foreground">
             <BookOpen size={16} />
-            Документация
+            {t('nav.docs')}
           </Link>
           <Link to="/terms" className="text-muted transition-colors hover:text-foreground">
-            Условия
+            {t('nav.terms')}
           </Link>
           <Link to="/privacy" className="text-muted transition-colors hover:text-foreground">
-            Приватность
+            {t('nav.privacy')}
           </Link>
         </nav>
       </div>

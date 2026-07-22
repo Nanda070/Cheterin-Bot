@@ -1,6 +1,6 @@
 # План перехода к фазе «общий доступ» (мульти-серверный бот уровня MEE6)
 
-> Статус: **утверждён, в работе — Фазы 0.1, 1, 2.1, 2.2а, 2.2б, «семья» per-guild, 2.3, 2.4 и 2b выполнены (21.07.2026); Фаза 2 завершена. Следующая — Фаза 3 (двуязычность RU/EN)**. Этот файл — источник истины для всех сессий работ.
+> Статус: **утверждён, ВЫПОЛНЕН (22.07.2026)** — фазы 0.1, 1, 2 (включая 2.4), 2b и 3 (3.1 + 3.2(1–5)) закрыты. Фаза 0.2 (масштаб: шардинг/Postgres) сознательно отложена до роста числа серверов. Этот файл — источник истины для всех сессий работ.
 > Мейн-сервер (он же «Основной/Супер/Сервер 404»): **ID 1324239354154975252**.
 
 ## Принятые решения (зафиксированы с владельцем)
@@ -12,18 +12,24 @@
 | Языки | Полный перевод RU/EN: UI (~550 строк) + сообщения бота (~1600) + карточки игр (~1240) + Docs (1819 строк) |
 | Модель языка | Два независимых уровня: язык UI — личный выбор пользователя (кнопка в шапке, localStorage); язык бота — настройка сервера в панели |
 
-## Текущее состояние (факты из кода)
+## Текущее состояние (историческая справка на старте плана — УСТАРЕЛО)
+
+> **Актуально на 22.07.2026:** фазы 0.1–3 выполнены (см. шапку). Ниже — снимок «до миграции» для контекста; не использовать как чеклист.
+
+<details><summary>Снимок до миграции (не актуален)</summary>
 
 - `main.py` требует `GUILD_ID` из .env; команды синхронизируются только на этот сервер (`tree.copy_global_to`).
 - OAuth: scope только `identify`; callback жёстко проверяет членство на одном сервере + роли из `DASHBOARD_ACCESS_ROLE_IDS` (.env).
 - `app["guild_id"]` — один на всё приложение; ~25 файлов роутов читают его.
 - **10 плоских конфигов** без измерения guild: automod, bunker, daily_topic, family, mafia, xp (+ giveaways/supply data, lockdown backup).
 - **Плоские data-файлы** без guild: events_data, brackets_data, reaction_roles, buttons_config, feedback_categories, invites_stats, moderation_log, news_relay, voice_panel, serverlog_config, streams_config, embed_templates, xp_card_bg.png.
-- ~~**`stats.db`: `xp_members(user_id PK)` и `voice_sessions(user_id)` — БЕЗ guild_id вообще** (XP сейчас глобальный). `audit_log` — тоже без guild.~~ → **устранено в 2.2а**: все три таблицы получили `guild_id`, миграция старых строк → guild 404 в `stats_db.init()`.
-- Уже имеют guild_id: mafia.db/bunker.db (games), warns.db, private_rooms.db, family.db (частично — проверить при миграции).
+- ~~**`stats.db`: `xp_members(user_id PK)` и `voice_sessions(user_id)` — БЕЗ guild_id вообще** (XP сейчас глобальный). `audit_log` — тоже без guild.~~ → **устранено в 2.2а**.
+- Уже имеют guild_id: mafia.db/bunker.db (games), warns.db, private_rooms.db, family.db (частично).
 - Супер-админ: хардкод роли `1505359848433516734`, проверяется на единственном сервере.
 - CTD: `memobb.py` + `CTD_ROLE_ID`/`CTD_CHANNEL_ID` в config.json.
 - Ретрансляция новостей: `news.py` + `news_relay.json`, страница в общем меню.
+
+</details>
 
 ---
 
@@ -175,7 +181,15 @@
 
 ## Фаза 3 — Двуязычность RU/EN (пункт ТЗ №2)
 
-### 3.1 Инфраструктура
+### 3.1 Инфраструктура — ✅ ВЫПОЛНЕНО (22.07.2026)
+
+- **Frontend**: `src/i18n/{ru,en}.ts`, `translate()`, `LanguageProvider`, `useT()`, `LanguageToggle` (RU/EN в шапке дашборда и PublicLayout), выбор UI-языка в `localStorage`.
+- **Backend/бот**: `i18n.py` + `locales/{ru,en}.py`, `language_core.py` (settings.db module `language`), роут `GET/PUT /api/language`.
+- **Дашборд**: страница «Настройки сервера» (`/settings`) — выбор языка бота для текущего сервера.
+- **Публичные игры**: `language` в `/api/public/mafia/{token}` и `/api/public/bunker/{token}` (язык сервера игры).
+- **Shell переведён**: навигация DashboardShell, ServerSelect, PublicLayout header/footer.
+
+### 3.1 (исходное ТЗ)
 - **Frontend**: лёгкий самописный словарь (`src/i18n/ru.ts`, `src/i18n/en.ts`, хук `useT()`), контекст `LanguageProvider`, выбор в localStorage, кнопка RU/EN в шапке DashboardShell. Без тяжёлых библиотек.
 - **Backend/бот**: `i18n.py` — `t(key, lang, **fmt)`; словари `locales/ru.py`, `locales/en.py`. Язык сервера: `settings.db (guild_id, 'language')`, дефолт `ru`; настройка на странице «Настройки сервера».
 - Публичные страницы игроков (мафия/бункер по токену): язык = язык сервера игры (передаётся в public-state).
@@ -201,12 +215,13 @@
 | 3 | 2.2а | ✅ ВЫПОЛНЕНО (21.07.2026) — stats.db (XP/voice/audit) + xp_card_bg per-guild + миграция → guild 404 + test_stats_db.py |
 | 4 | 2.2б | ✅ ВЫПОЛНЕНО (21.07.2026) — supply/giveaway/voice_panel → settings_db per-guild; починена half-миграция buttons/embed_templates; проверены mafia/bunker/warns/private_rooms; **family полностью переведена на per-guild** (композитные PK + миграция → 404) |
 | 5 | 2.3 | ✅ ВЫПОЛНЕНО (21.07.2026) — OAuth `identify guilds` + токены/refresh; логин без проверки членства → `/servers`; `/api/auth/{guilds,select-guild,invite-url}`; доступ = Manage Server (роль-списки опциональны, переходный грант); per-request `guild_id` (guild_context_middleware, ~200 call sites); супер-админ на мейне; фронтенд ServerSelect + гейт выбора сервера |
-| 6 | 2.4 | Коги/планировщики per-guild, global sync, on_guild_join |
+| 6 | 2.4 | ✅ ВЫПОЛНЕНО (21.07.2026) — коги/планировщики per-guild, global sync, on_guild_join / on_guild_remove |
 | 7 | 2b | ✅ ВЫПОЛНЕНО (21.07.2026) — CTD gate (guild-bound `/ctd_setup` + `/api/ctd` только на мейне) + news → супер-админ с валидацией целевых каналов мейна + `is_main_guild` в me + Docs-пометки |
-| 8 | 3.1+3.2(1) | i18n-инфраструктура + UI дашборда |
-| 9 | 3.2(2,3) | Сообщения бота + локализация команд |
-| 10 | 3.2(4) | Карточки игр EN |
-| 11 | 3.2(5) | Docs EN |
+| 8 | 3.1+3.2(1) | ✅ ВЫПОЛНЕНО (22.07.2026) — i18n infra + модульные словари (`shell`, `common`, `auth`, `activity`, `admin`, `community`); все страницы дашборда через `useT()`; Login/AccessDenied/NotFound/Leaderboard; переключатель RU/EN в шапке; 253 frontend + 1340 backend тестов |
+| 9 | 3.2(2) | ✅ ВЫПОЛНЕНО (22.07.2026) — все коги бота на `i18n.lang_for()` + модульные `locales/{ru,en}/*` (~30 модулей); `guild_t()` / `module_disabled()` / `pick_random()`; core-хелперы (`economy_core.bet_error`, `casino_core.bet_error`, `wordle_core.guess_error`); исключено из scope: `bunker_data.py` (→ 3.2(4)), slash-имена (→ 3.2(3)); **1343** backend-тестов |
+| 10 | 3.2(3) | ✅ ВЫПОЛНЕНО (22.07.2026) — `slash_i18n.py` + `slash_registry.py` + `locales/{ru,en}/slash.py`; `name_localizations` / `description_localizations` для всех slash-команд и групп (~59 ключей); генератор `scripts/gen_slash_locales.py` |
+| 11 | 3.2(4) | ✅ ВЫПОЛНЕНО (22.07.2026) — `bunker_data_en.py` + `bunker_localize.py`; генерация карточек с RU+EN полями; отображение по `language` (бот, public API, card-pools) |
+| 12 | 3.2(5) | ✅ ВЫПОЛНЕНО (22.07.2026) — Docs RU/EN: `sectionsRu.tsx` / `sectionsEn.tsx`, переключатель на `/docs` |
 
 ## Риски и страховки
 

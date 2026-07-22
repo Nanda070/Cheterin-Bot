@@ -3,8 +3,9 @@ import time
 from aiohttp import web
 
 import bunker_core
-import bunker_data
 import bunker_db
+import bunker_localize
+import language_core
 
 from ..access_middleware import require_dashboard_access
 
@@ -131,25 +132,9 @@ async def bunker_put(request: web.Request) -> web.Response:
 @routes.get("/api/bunker/card-pools")
 @require_dashboard_access
 async def bunker_card_pools(request: web.Request) -> web.Response:
-    """Справочные данные для типизированного редактора карточки игрока в админке —
-    статичны в рамках процесса, поэтому просто отдаём пулы из bunker_data.py как есть."""
-    return web.json_response({
-        "genders": bunker_data.GENDERS,
-        "ages": bunker_data.AGE_CATEGORIES,
-        "body_types": bunker_data.BODY_TYPES,
-        "professions": bunker_data.PROFESSIONS,
-        "profession_experience_levels": bunker_data.PROFESSION_EXPERIENCE_LEVELS,
-        "hobbies": bunker_data.HOBBIES,
-        "hobby_experience_levels": bunker_data.HOBBY_EXPERIENCE_LEVELS,
-        "health_severities": bunker_data.HEALTH_SEVERITIES,
-        "health_diseases": bunker_data.HEALTH_DISEASES,
-        "phobias": bunker_data.PHOBIAS,
-        "backpack_items": bunker_data.BACKPACK_ITEMS,
-        "large_items": bunker_data.LARGE_INVENTORY_ITEMS,
-        "traits": bunker_data.TRAITS,
-        "additional_info": bunker_data.ADDITIONAL_INFO,
-        "special_abilities": bunker_data.SPECIAL_ABILITIES,
-    })
+    """Справочные данные для типизированного редактора карточки игрока в админке."""
+    lang = language_core.get_language(request["guild_id"])
+    return web.json_response(bunker_localize.get_card_pools(lang))
 
 
 @routes.get("/api/bunker/games")
@@ -255,16 +240,19 @@ async def bunker_public_state(request: web.Request) -> web.Response:
 
     guild = request.app["bot"].get_guild(game["guild_id"])
     round_number = game["round_number"]
+    lang = language_core.get_language(game["guild_id"])
+    cat_name, cat_desc, cond_name, cond_desc = bunker_localize.localize_game_scenario(game, lang)
 
     all_players = bunker_db.list_players(game["id"])
     roster = []
     for p in all_players:
         full = not bool(p["alive"]) or p["user_id"] == player["user_id"]
+        raw_character = p["character"] if full else _public_character_view(p["character"], p["revealed_fields"])
         roster.append({
             "user_id": str(p["user_id"]),
             "display_name": _display_name(guild, p["user_id"]),
             "alive": bool(p["alive"]),
-            "character": p["character"] if full else _public_character_view(p["character"], p["revealed_fields"]),
+            "character": bunker_localize.localize_character(raw_character, lang),
             "revealed_fields": p["revealed_fields"],
         })
 
@@ -274,17 +262,18 @@ async def bunker_public_state(request: web.Request) -> web.Response:
     alive_players = bunker_db.list_alive_players(game["id"])
 
     body = {
+        "language": lang,
         "game_status": game["status"],
         "phase": game["phase"],
         "round_number": round_number,
         "phase_deadline_ts": game["phase_deadline_ts"],
         "bunker_capacity": game["bunker_capacity"],
-        "catastrophe_name": game["catastrophe_name"],
-        "catastrophe_description": game["catastrophe_description"],
-        "bunker_conditions_name": game["bunker_conditions_name"],
-        "bunker_conditions_description": game["bunker_conditions_description"],
+        "catastrophe_name": cat_name,
+        "catastrophe_description": cat_desc,
+        "bunker_conditions_name": cond_name,
+        "bunker_conditions_description": cond_desc,
         "your_alive": bool(player["alive"]),
-        "your_character": player["character"],
+        "your_character": bunker_localize.localize_character(player["character"], lang),
         "your_revealed_fields": player["revealed_fields"],
         "action_required": action_required,
         "your_vote_submitted": vote is not None,

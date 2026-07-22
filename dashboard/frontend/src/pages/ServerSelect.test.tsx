@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../context/AuthContext'
+import { LanguageProvider } from '../context/LanguageContext'
 import { ServerSelectPage } from './ServerSelect'
 
 function jsonResponse(body: unknown, status = 200) {
@@ -11,13 +12,15 @@ function jsonResponse(body: unknown, status = 200) {
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/servers']}>
-      <AuthProvider>
-        <Routes>
-          <Route path="/servers" element={<ServerSelectPage />} />
-          <Route path="/" element={<div>Dashboard home</div>} />
-          <Route path="/login" element={<div>Login page</div>} />
-        </Routes>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/servers" element={<ServerSelectPage />} />
+            <Route path="/" element={<div>Dashboard home</div>} />
+            <Route path="/login" element={<div>Login page</div>} />
+          </Routes>
+        </AuthProvider>
+      </LanguageProvider>
     </MemoryRouter>,
   )
 }

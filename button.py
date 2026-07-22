@@ -6,6 +6,8 @@ import time
 import aiohttp
 
 import bot_config
+import i18n
+import slash_registry
 import settings_db
 
 logger = logging.getLogger("chetbot.button")
@@ -35,66 +37,92 @@ def _get_allowed_role_ids(guild_id: int) -> set[int]:
 # ─────────────────────────────────────────────
 
 class DynamicQuestionsModal(discord.ui.Modal):
-    def __init__(self, bot, title: str, questions: list[str], button_name: str):
+    def __init__(self, bot, title: str, questions: list[str], button_name: str, lang: str):
         super().__init__(title=title, timeout=None)
         self.bot = bot
         self.questions = questions
         self.button_name = button_name
+        self.lang = lang
         self.inputs: list[discord.ui.TextInput] = []
 
         for idx, q in enumerate(self.questions, start=1):
             inp = discord.ui.TextInput(
-                label=q[:45] if q else f"Вопрос {idx}",
+                label=q[:45] if q else i18n.t("button.question_fallback", lang, index=idx),
                 style=discord.TextStyle.paragraph,
                 required=False,
                 max_length=1000,
-                placeholder="Ваш ответ…",
+                placeholder=i18n.t("button.answer_placeholder", lang),
             )
             self.add_item(inp)
             self.inputs.append(inp)
 
     async def on_submit(self, interaction: discord.Interaction):
+        lang = self.lang
         answers = []
         for i, (q, inp) in enumerate(zip(self.questions, self.inputs), start=1):
             val = (inp.value or "").strip()
-            answers.append((q or f"Вопрос {i}", val if val else "—"))
+            answers.append(
+                (
+                    q or i18n.t("button.question_fallback", lang, index=i),
+                    val if val else "—",
+                )
+            )
 
         embed = discord.Embed(
-            title=f"📝 Ответ по кнопке: {self.button_name}",
+            title=i18n.t("button.embed.title", lang, name=self.button_name),
             color=discord.Color.blurple(),
             timestamp=self.bot.utcnow(),
         )
-        embed.add_field(name="Отправитель", value=f"{interaction.user.mention}", inline=False)
+        embed.add_field(
+            name=i18n.t("button.embed.submitter", lang),
+            value=f"{interaction.user.mention}",
+            inline=False,
+        )
         for q, a in answers:
-            embed.add_field(name=q[:256] if q else "Вопрос", value=a[:1024] if a else "—", inline=False)
-        embed.set_footer(text="404 Helper · Button Form")
+            embed.add_field(
+                name=q[:256] if q else i18n.t("button.embed.question_fallback", lang),
+                value=a[:1024] if a else "—",
+                inline=False,
+            )
+        embed.set_footer(text=i18n.t("button.embed.footer", lang))
 
         webhook_url = bot_config.get(interaction.guild.id, "BUTTON_WEBHOOK_URL")
         if not webhook_url:
-            await interaction.response.send_message("BUTTON_WEBHOOK_URL не задан в переменных окружения.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.webhook_missing", lang), ephemeral=True)
             return
 
         try:
             async with aiohttp.ClientSession() as session:
                 webhook = discord.Webhook.from_url(webhook_url, session=session)
-                await webhook.send(embed=embed, username="404 Button Collector", avatar_url="https://i.imgur.com/4ydti00.png")
+                username = (bot_config.get(interaction.guild.id, "BUTTON_WEBHOOK_USERNAME") or "").strip()
+                if not username:
+                    username = "404 Button Collector"
+                avatar_url = (bot_config.get(interaction.guild.id, "BUTTON_WEBHOOK_AVATAR_URL") or "").strip()
+                send_kwargs: dict = {"embed": embed, "username": username}
+                if avatar_url:
+                    send_kwargs["avatar_url"] = avatar_url
+                await webhook.send(**send_kwargs)
         except Exception as exc:
-            await interaction.response.send_message(f"⚠️ Ошибка отправки в вебхук: {exc}", ephemeral=True)
+            await interaction.response.send_message(
+                i18n.t("button.webhook_error", lang, error=exc), ephemeral=True
+            )
             return
 
-        await interaction.response.send_message("✅ Отправлено!", ephemeral=True)
+        await interaction.response.send_message(i18n.t("button.sent", lang), ephemeral=True)
 
-        # --- лог ---
         log_embed = discord.Embed(
-            title="📋 Форма отправлена",
-            description=(
-                f"**Кнопка:** {self.button_name}\n"
-                f"**Пользователь:** {interaction.user.mention} (`{interaction.user.id}`)"
+            title=i18n.t("button.log.form_submit", lang),
+            description=i18n.t(
+                "button.log.form_submit_body",
+                lang,
+                name=self.button_name,
+                mention=interaction.user.mention,
+                user_id=interaction.user.id,
             ),
             color=discord.Color.blurple(),
             timestamp=self.bot.utcnow(),
         )
-        log_embed.set_footer(text="Button · Form Submit")
+        log_embed.set_footer(text=i18n.t("button.log.form_footer", lang))
         await self.bot.send_log(interaction.guild.id, log_embed)
 
 
@@ -177,11 +205,13 @@ class ButtonCreate(commands.Cog):
             await self._handle_form_click(interaction, custom_id)
 
     async def _handle_role_click(self, interaction: discord.Interaction, custom_id: str):
+        lang = i18n.lang_for(interaction.guild_id)
         # Cooldown
         remaining = self._check_cooldown(interaction.user.id)
         if remaining is not None:
             await interaction.response.send_message(
-                f"⏳ Подождите {remaining:.0f} сек. перед следующим нажатием.", ephemeral=True,
+                i18n.t("button.cooldown", lang, seconds=remaining),
+                ephemeral=True,
             )
             return
 
@@ -193,55 +223,68 @@ class ButtonCreate(commands.Cog):
 
         role = interaction.guild.get_role(role_id)
         if not role:
-            await interaction.response.send_message("Роль не найдена на сервере.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.role_not_found", lang), ephemeral=True)
             return
 
         member = interaction.user
+        role_added = False
         if role in member.roles:
             try:
                 await member.remove_roles(role, reason="Role-button toggle")
-                await interaction.response.send_message(f"❌ Роль **{role.name}** снята.", ephemeral=True)
-                action = "снята"
+                await interaction.response.send_message(
+                    i18n.t("button.role_removed", lang, name=role.name), ephemeral=True
+                )
+                action = i18n.t("button.role_action_removed", lang)
             except discord.Forbidden:
-                await interaction.response.send_message("У бота нет прав для снятия этой роли.", ephemeral=True)
+                await interaction.response.send_message(
+                    i18n.t("button.role_remove_forbidden", lang), ephemeral=True
+                )
                 return
         else:
             try:
                 await member.add_roles(role, reason="Role-button toggle")
-                await interaction.response.send_message(f"✅ Роль **{role.name}** выдана.", ephemeral=True)
-                action = "выдана"
+                await interaction.response.send_message(
+                    i18n.t("button.role_added", lang, name=role.name), ephemeral=True
+                )
+                action = i18n.t("button.role_action_added", lang)
+                role_added = True
             except discord.Forbidden:
-                await interaction.response.send_message("У бота нет прав для выдачи этой роли.", ephemeral=True)
+                await interaction.response.send_message(
+                    i18n.t("button.role_add_forbidden", lang), ephemeral=True
+                )
                 return
 
-        # --- лог ---
         log_embed = discord.Embed(
-            title="🏷️ Роль через кнопку",
-            description=(
-                f"**Роль:** {role.mention} (`{role.id}`)\n"
-                f"**Действие:** {action}\n"
-                f"**Пользователь:** {member.mention} (`{member.id}`)"
+            title=i18n.t("button.log.role_title", lang),
+            description=i18n.t(
+                "button.log.role_body",
+                lang,
+                mention=role.mention,
+                role_id=role.id,
+                action=action,
+                mention_user=member.mention,
+                user_id=member.id,
             ),
-            color=discord.Color.green() if action == "выдана" else discord.Color.orange(),
+            color=discord.Color.green() if role_added else discord.Color.orange(),
             timestamp=self.bot.utcnow(),
         )
-        log_embed.set_footer(text="Button · Role Toggle")
+        log_embed.set_footer(text=i18n.t("button.log.role_footer", lang))
         await self.bot.send_log(interaction.guild.id, log_embed)
 
     async def _handle_form_click(self, interaction: discord.Interaction, custom_id: str):
-        # Cooldown
+        lang = i18n.lang_for(interaction.guild_id)
         remaining = self._check_cooldown(interaction.user.id)
         if remaining is not None:
             await interaction.response.send_message(
-                f"⏳ Подождите {remaining:.0f} сек. перед следующим нажатием.", ephemeral=True,
+                i18n.t("button.cooldown", lang, seconds=remaining),
+                ephemeral=True,
             )
             return
 
-        # custom_id = "btn_form_{form_id}"
         form_id = custom_id.removeprefix("btn_form_")
         form_data = _load_buttons_config(interaction.guild_id).get("forms", {}).get(form_id)
         if not form_data:
-            await interaction.response.send_message("⚠️ Конфигурация формы не найдена.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.form_not_found", lang), ephemeral=True)
             return
 
         button_name = form_data["button_name"]
@@ -249,9 +292,10 @@ class ButtonCreate(commands.Cog):
 
         modal = DynamicQuestionsModal(
             self.bot,
-            title=f"Форма: {button_name}",
+            title=i18n.t("button.modal_title", lang, name=button_name),
             questions=questions,
             button_name=button_name,
+            lang=lang,
         )
         await interaction.response.send_modal(modal)
 
@@ -276,8 +320,9 @@ class ButtonCreate(commands.Cog):
         q4: str | None = None,
         q5: str | None = None,
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         if not self._has_permission(interaction.user):
-            await interaction.response.send_message("❌ У вас нет прав для использования этой команды.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.no_permission", lang), ephemeral=True)
             return
 
         await self._create_form(interaction, name, [q1, q2, q3, q4, q5])
@@ -301,8 +346,9 @@ class ButtonCreate(commands.Cog):
         r4: discord.Role | None = None,
         r5: discord.Role | None = None,
     ):
+        lang = i18n.lang_for(interaction.guild_id)
         if not self._has_permission(interaction.user):
-            await interaction.response.send_message("❌ У вас нет прав для использования этой команды.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.no_permission", lang), ephemeral=True)
             return
 
         await self._create_role(interaction, name, [r1, r2, r3, r4, r5])
@@ -310,7 +356,9 @@ class ButtonCreate(commands.Cog):
     # ---------- internal ----------
 
     async def _create_form(self, interaction: discord.Interaction, name: str, raw_questions: list):
-        questions = [q for q in raw_questions if q] or ["Ответ"]
+        lang = i18n.lang_for(interaction.guild_id)
+        default_q = i18n.t("button.default_question", lang)
+        questions = [q for q in raw_questions if q] or [default_q]
 
         # Сохраняем конфиг формы
         config = _load_buttons_config(interaction.guild_id)
@@ -332,29 +380,36 @@ class ButtonCreate(commands.Cog):
         view.add_item(btn)
 
         # Сначала отвечаем на interaction, потом отправляем кнопку
-        await interaction.response.send_message("✅ Кнопка-форма создана.", ephemeral=True)
+        await interaction.response.send_message(i18n.t("button.form_created", lang), ephemeral=True)
         await interaction.channel.send(view=view)
 
-        # --- лог ---
         log_embed = discord.Embed(
-            title="🆕 Создана кнопка-форма",
-            description=(
-                f"**Название:** {name}\n"
-                f"**Канал:** {interaction.channel.mention}\n"
-                f"**Создал:** {interaction.user.mention} (`{interaction.user.id}`)"
+            title=i18n.t("button.log.create_form", lang),
+            description=i18n.t(
+                "button.log.create_form_body",
+                lang,
+                name=name,
+                channel=interaction.channel.mention,
+                mention=interaction.user.mention,
+                user_id=interaction.user.id,
             ),
             color=discord.Color.blurple(),
             timestamp=self.bot.utcnow(),
         )
-        if questions and questions != ["Ответ"]:
-            log_embed.add_field(name="Вопросы", value="\n".join(f"• {q}" for q in questions), inline=False)
-        log_embed.set_footer(text="Button · Create Form")
+        if questions and questions != [default_q]:
+            log_embed.add_field(
+                name=i18n.t("button.log.questions", lang),
+                value="\n".join(f"• {q}" for q in questions),
+                inline=False,
+            )
+        log_embed.set_footer(text=i18n.t("button.log.create_form_footer", lang))
         await self.bot.send_log(interaction.guild.id, log_embed)
 
     async def _create_role(self, interaction: discord.Interaction, name: str, raw_roles: list):
+        lang = i18n.lang_for(interaction.guild_id)
         roles = [r for r in raw_roles if r is not None]
         if not roles:
-            await interaction.response.send_message("Укажите хотя бы одну роль (r1 – r5).", ephemeral=True)
+            await interaction.response.send_message(i18n.t("button.need_role", lang), ephemeral=True)
             return
 
         # Собираем View
@@ -368,25 +423,29 @@ class ButtonCreate(commands.Cog):
             view.add_item(btn)
 
         # Сначала отвечаем на interaction, потом отправляем кнопку
-        await interaction.response.send_message("✅ Кнопка-роль создана.", ephemeral=True)
+        await interaction.response.send_message(i18n.t("button.role_created", lang), ephemeral=True)
         await interaction.channel.send(view=view)
 
-        # --- лог ---
         role_list = "\n".join(f"• {r.mention} (`{r.id}`)" for r in roles)
         log_embed = discord.Embed(
-            title="🆕 Создана кнопка-роль",
-            description=(
-                f"**Название:** {name}\n"
-                f"**Канал:** {interaction.channel.mention}\n"
-                f"**Создал:** {interaction.user.mention} (`{interaction.user.id}`)"
+            title=i18n.t("button.log.create_role", lang),
+            description=i18n.t(
+                "button.log.create_role_body",
+                lang,
+                name=name,
+                channel=interaction.channel.mention,
+                mention=interaction.user.mention,
+                user_id=interaction.user.id,
             ),
             color=discord.Color.green(),
             timestamp=self.bot.utcnow(),
         )
-        log_embed.add_field(name="Роли", value=role_list, inline=False)
-        log_embed.set_footer(text="Button · Create Role")
+        log_embed.add_field(name=i18n.t("button.log.roles", lang), value=role_list, inline=False)
+        log_embed.set_footer(text=i18n.t("button.log.create_role_footer", lang))
         await self.bot.send_log(interaction.guild.id, log_embed)
 
 
 async def setup(bot):
-    await bot.add_cog(ButtonCreate(bot))
+    cog = ButtonCreate(bot)
+    slash_registry.register_button(cog)
+    await bot.add_cog(cog)

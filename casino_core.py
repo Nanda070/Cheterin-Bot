@@ -1,4 +1,4 @@
-"""Ядро модуля «Казино»: слоты и монетка на серверную валюту.
+"""Ядро модуля «Казино»: слоты, монетка и блэкджек на серверную валюту.
 
 Без импорта discord — юнит-тестируемо напрямую (подход fun_core.py/economy_core.py).
 Списания/начисления выполняет economy_db — казино не хранит собственный баланс,
@@ -12,6 +12,7 @@ house_edge_percent — единый параметр «преимущества 
 
 import random
 
+import i18n
 import settings_db
 
 MODULE_NAME = "casino"
@@ -52,14 +53,26 @@ def get_settings(guild_id: int) -> dict:
     }
 
 
-def bet_error(bet: int, balance: int, settings: dict) -> str | None:
+def bet_error(
+    bet: int,
+    balance: int,
+    settings: dict,
+    *,
+    lang: str | None = None,
+    balance_display: str | None = None,
+) -> str | None:
     """None — ставка допустима, иначе текст ошибки для игрока."""
+    lang = lang or i18n.DEFAULT_LANGUAGE
     if bet < settings["min_bet"]:
-        return f"Минимальная ставка — {settings['min_bet']}."
+        return i18n.t("casino.bet_min", lang, min=settings["min_bet"])
     if settings["max_bet"] > 0 and bet > settings["max_bet"]:
-        return f"Максимальная ставка — {settings['max_bet']}."
+        return i18n.t("casino.bet_max", lang, max=settings["max_bet"])
     if bet > balance:
-        return f"Недостаточно средств: на балансе {balance}."
+        return i18n.t(
+            "casino.bet_insufficient",
+            lang,
+            balance=balance_display if balance_display is not None else balance,
+        )
     return None
 
 

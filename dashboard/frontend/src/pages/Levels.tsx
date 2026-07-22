@@ -1,5 +1,5 @@
 import { ChartBar, Crown, Gear, IdentificationCard, Microphone, Star, Trash, UsersThree } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   deleteCardBg,
   fetchChannels,
@@ -23,16 +23,9 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { useT } from '../context/LanguageContext'
 
 type Tab = 'settings' | 'level-rewards' | 'voice-rewards' | 'card' | 'members'
-
-const TABS: { key: Tab; label: string; icon: typeof Gear }[] = [
-  { key: 'settings', label: 'Настройки рейтинга', icon: Gear },
-  { key: 'level-rewards', label: 'Награды за уровень', icon: Star },
-  { key: 'voice-rewards', label: 'Награды за голос', icon: Microphone },
-  { key: 'card', label: 'Карточка рейтинга', icon: IdentificationCard },
-  { key: 'members', label: 'Участники', icon: UsersThree },
-]
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
@@ -44,16 +37,8 @@ function minutesToParts(minutes: number): { weeks: number; days: number; hours: 
   return { weeks, days, hours }
 }
 
-function formatMinutes(minutes: number): string {
-  const { weeks, days, hours } = minutesToParts(minutes)
-  const parts: string[] = []
-  if (weeks) parts.push(`${weeks} нед.`)
-  if (days) parts.push(`${days} д.`)
-  if (hours) parts.push(`${hours} ч.`)
-  return parts.length ? parts.join(' ') : `${minutes} мин.`
-}
-
 export function LevelsPage() {
+  const t = useT()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<XpSettings | null>(null)
   const [memberCount, setMemberCount] = useState(0)
@@ -74,6 +59,26 @@ export function LevelsPage() {
   const [confirmResetAll, setConfirmResetAll] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
+  const tabs = useMemo(
+    (): { key: Tab; label: string; icon: typeof Gear }[] => [
+      { key: 'settings', label: t('levels.tab.settings'), icon: Gear },
+      { key: 'level-rewards', label: t('levels.tab.levelRewards'), icon: Star },
+      { key: 'voice-rewards', label: t('levels.tab.voiceRewards'), icon: Microphone },
+      { key: 'card', label: t('levels.tab.card'), icon: IdentificationCard },
+      { key: 'members', label: t('levels.tab.members'), icon: UsersThree },
+    ],
+    [t],
+  )
+
+  const formatMinutes = (minutes: number): string => {
+    const { weeks, days, hours } = minutesToParts(minutes)
+    const parts: string[] = []
+    if (weeks) parts.push(t('levels.time.weeks', { n: weeks }))
+    if (days) parts.push(t('levels.time.days', { n: days }))
+    if (hours) parts.push(t('levels.time.hours', { n: hours }))
+    return parts.length ? parts.join(' ') : t('levels.time.minutes', { n: minutes })
+  }
+
   const roleOptions = roles.map((r) => ({ id: r.id, name: r.name }))
 
   useEffect(() => {
@@ -89,15 +94,15 @@ export function LevelsPage() {
         setChannels(ch)
         setRoles(rl)
       })
-      .catch(() => setError('Не удалось загрузить настройки рейтинга'))
-  }, [])
+      .catch(() => setError(t('levels.errorLoadSettings')))
+  }, [t])
 
   useEffect(() => {
     if (tab !== 'members') return
     fetchXpLeaderboard(boardPage, boardSearch)
       .then(setBoard)
-      .catch(() => setError('Не удалось загрузить рейтинг'))
-  }, [tab, boardPage, boardSearch])
+      .catch(() => setError(t('levels.errorLoadLeaderboard')))
+  }, [tab, boardPage, boardSearch, t])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -108,7 +113,7 @@ export function LevelsPage() {
   }, [boardSearchDraft])
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const patch = (updater: (prev: XpSettings) => XpSettings) => {
@@ -122,9 +127,9 @@ export function LevelsPage() {
     try {
       const updated = await updateXpSettings(settings)
       setSettings(updated.settings)
-      setSaved('Сохранено.')
+      setSaved(t('common.saved'))
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('levels.errorSave'))
     } finally {
       setBusy(false)
     }
@@ -139,7 +144,7 @@ export function LevelsPage() {
         setBoard(await fetchXpLeaderboard(boardPage, boardSearch))
       }
     } catch {
-      setError('Операция не удалась')
+      setError(t('levels.errorOperation'))
     } finally {
       setBusy(false)
     }
@@ -148,7 +153,7 @@ export function LevelsPage() {
   const saveBar = (
     <div className="flex items-center gap-3">
       <Button variant="primary" onClick={save} disabled={busy}>
-        {busy ? 'Сохраняем…' : 'Сохранить'}
+        {busy ? t('common.saving') : t('common.save')}
       </Button>
       {saved && <span className="text-sm text-primary">{saved}</span>}
     </div>
@@ -159,17 +164,17 @@ export function LevelsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <ChartBar size={22} className="text-primary" />
-          Рейтинг участников
+          {t('levels.title')}
         </h1>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => patch((p) => ({ ...p, enabled: v }))}
-          label={settings.enabled ? 'Модуль включён' : 'Модуль выключен'}
+          label={settings.enabled ? t('levels.moduleEnabled') : t('levels.moduleDisabled')}
         />
       </div>
 
       <nav className="flex flex-wrap gap-1 rounded-card border border-border bg-surface p-1.5">
-        {TABS.map(({ key, label, icon: TabIcon }) => (
+        {tabs.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}
             type="button"
@@ -189,51 +194,51 @@ export function LevelsPage() {
       {tab === 'settings' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Общие</h2>
+            <h2 className="font-semibold text-foreground">{t('levels.general')}</h2>
             <Toggle
               checked={settings.public_leaderboard}
               onChange={(v) => patch((p) => ({ ...p, public_leaderboard: v }))}
-              label="Публичная веб-страница рейтинга (/leaderboard)"
+              label={t('levels.publicLeaderboard')}
             />
             <Toggle
               checked={settings.reset_on_leave}
               onChange={(v) => patch((p) => ({ ...p, reset_on_leave: v }))}
-              label="Сбрасывать рейтинг выходящим с сервера участникам"
+              label={t('levels.resetOnLeave')}
             />
           </Card>
 
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-foreground">Опыт за текстовые сообщения</h2>
+              <h2 className="font-semibold text-foreground">{t('levels.textXp')}</h2>
               <Toggle
                 checked={settings.text.enabled}
                 onChange={(v) => patch((p) => ({ ...p, text: { ...p.text, enabled: v } }))}
               />
             </div>
-            <p className="text-xs text-muted">15–25 XP за сообщение, не чаще раза в минуту.</p>
+            <p className="text-xs text-muted">{t('levels.textXpHint')}</p>
             <ChipPicker
-              label="Игнорируемые роли"
-              hint="Участники с этими ролями не получают опыт"
+              label={t('levels.ignoredRoles')}
+              hint={t('levels.textIgnoredRolesHint')}
               options={roleOptions}
               selected={settings.text.ignored_roles}
               onChange={(ids) => patch((p) => ({ ...p, text: { ...p.text, ignored_roles: ids } }))}
             />
             <ChipPicker
-              label="Целевые каналы"
-              hint="Пусто = все каналы"
+              label={t('levels.targetChannels')}
+              hint={t('levels.emptyMeansAll')}
               options={channels}
               selected={settings.text.target_channels}
               onChange={(ids) => patch((p) => ({ ...p, text: { ...p.text, target_channels: ids } }))}
             />
             <ChipPicker
-              label="Игнорируемые каналы"
+              label={t('levels.ignoredChannels')}
               options={channels}
               selected={settings.text.ignored_channels}
               onChange={(ids) => patch((p) => ({ ...p, text: { ...p.text, ignored_channels: ids } }))}
             />
             <div className="flex items-center gap-3">
               <label className="text-sm text-muted" htmlFor="text-mult">
-                Множитель опыта (0–300%): {settings.text.multiplier}%
+                {t('levels.textMultiplier', { percent: settings.text.multiplier })}
               </label>
               <input
                 id="text-mult"
@@ -250,38 +255,35 @@ export function LevelsPage() {
 
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-foreground">Опыт за голосовую активность</h2>
+              <h2 className="font-semibold text-foreground">{t('levels.voiceXp')}</h2>
               <Toggle
                 checked={settings.voice.enabled}
                 onChange={(v) => patch((p) => ({ ...p, voice: { ...p.voice, enabled: v } }))}
               />
             </div>
-            <p className="text-xs text-muted">
-              Опыт получают только активные участники (микрофон и звук включены) и только когда активных в канале
-              минимум двое. При N активных каждый получает N-кратный опыт.
-            </p>
+            <p className="text-xs text-muted">{t('levels.voiceXpHint')}</p>
             <ChipPicker
-              label="Игнорируемые роли"
+              label={t('levels.ignoredRoles')}
               options={roleOptions}
               selected={settings.voice.ignored_roles}
               onChange={(ids) => patch((p) => ({ ...p, voice: { ...p.voice, ignored_roles: ids } }))}
             />
             <ChipPicker
-              label="Целевые каналы"
-              hint="Пусто = все голосовые каналы"
+              label={t('levels.targetChannels')}
+              hint={t('levels.emptyMeansAllVoice')}
               options={channels}
               selected={settings.voice.target_channels}
               onChange={(ids) => patch((p) => ({ ...p, voice: { ...p.voice, target_channels: ids } }))}
             />
             <ChipPicker
-              label="Игнорируемые каналы"
+              label={t('levels.ignoredChannels')}
               options={channels}
               selected={settings.voice.ignored_channels}
               onChange={(ids) => patch((p) => ({ ...p, voice: { ...p.voice, ignored_channels: ids } }))}
             />
             <div className="flex items-center gap-3">
               <label className="text-sm text-muted" htmlFor="voice-mult">
-                Множитель опыта (0–300%): {settings.voice.multiplier}%
+                {t('levels.voiceMultiplier', { percent: settings.voice.multiplier })}
               </label>
               <input
                 id="voice-mult"
@@ -296,7 +298,7 @@ export function LevelsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="voice-max">
-                Максимум участников для множителя (защита от фарма)
+                {t('levels.voiceMaxCount')}
               </label>
               <input
                 id="voice-max"
@@ -310,7 +312,7 @@ export function LevelsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="voice-base">
-                Базовый XP за минуту на одного активного (1–100)
+                {t('levels.voiceBasePerMinute')}
               </label>
               <input
                 id="voice-base"
@@ -323,19 +325,16 @@ export function LevelsPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted">
-                Индивидуальные множители участников (%): переопределяют скорость голосового XP для конкретного
-                участника (100 = обычная, 0 = не получает, максимум 1000).
-              </p>
+              <p className="text-sm text-muted">{t('levels.memberMultipliersHint')}</p>
               {Object.entries(settings.voice.member_multipliers).map(([userId, mult]) => (
                 <div key={userId} className="flex items-center gap-2">
-                  <input value={userId} readOnly className={`${inputClass} w-52 opacity-70`} aria-label="ID участника" />
+                  <input value={userId} readOnly className={`${inputClass} w-52 opacity-70`} aria-label={t('levels.memberIdAria')} />
                   <input
                     type="number"
                     min={0}
                     max={1000}
                     value={mult}
-                    aria-label={`Множитель для ${userId}`}
+                    aria-label={t('levels.memberMultiplierAria', { userId })}
                     onChange={(e) =>
                       patch((p) => ({
                         ...p,
@@ -357,7 +356,7 @@ export function LevelsPage() {
                       })
                     }
                   >
-                    Удалить
+                    {t('levels.remove')}
                   </Button>
                 </div>
               ))}
@@ -365,7 +364,7 @@ export function LevelsPage() {
                 <input
                   value={newMultiplierUserId}
                   onChange={(e) => setNewMultiplierUserId(e.target.value.trim())}
-                  placeholder="ID участника"
+                  placeholder={t('levels.memberIdPlaceholder')}
                   className={`${inputClass} w-52`}
                 />
                 <Button
@@ -382,7 +381,7 @@ export function LevelsPage() {
                     setNewMultiplierUserId('')
                   }}
                 >
-                  Добавить участника
+                  {t('levels.addMember')}
                 </Button>
               </div>
             </div>
@@ -390,7 +389,7 @@ export function LevelsPage() {
 
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-foreground">Уведомление о повышении уровня</h2>
+              <h2 className="font-semibold text-foreground">{t('levels.levelUpAnnounce')}</h2>
               <Toggle
                 checked={settings.announce.enabled}
                 onChange={(v) => patch((p) => ({ ...p, announce: { ...p.announce, enabled: v } }))}
@@ -398,19 +397,19 @@ export function LevelsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="announce-channel">
-                Канал уведомлений (пусто = канал сообщения)
+                {t('levels.announceChannel')}
               </label>
               <Select
                 id="announce-channel"
                 value={settings.announce.channel_id}
                 onChange={(id) => patch((p) => ({ ...p, announce: { ...p.announce, channel_id: id } }))}
                 options={channels}
-                placeholder="Канал сообщения участника"
+                placeholder={t('levels.announceChannelPlaceholder')}
               />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="announce-template">
-                Шаблон сообщения
+                {t('levels.announceTemplate')}
               </label>
               <textarea
                 id="announce-template"
@@ -419,13 +418,11 @@ export function LevelsPage() {
                 onChange={(e) => patch((p) => ({ ...p, announce: { ...p.announce, template: e.target.value } }))}
                 className={inputClass}
               />
-              <span className="text-xs text-muted">
-                {'Переменные: {{member}} — упоминание, {{level}} — уровень, {{roles_added}} — выданные роли'}
-              </span>
+              <span className="text-xs text-muted">{t('levels.announceTemplateVars')}</span>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-muted" htmlFor="announce-delete">
-                Удалять сообщение через N секунд (0 = не удалять)
+                {t('levels.announceDeleteAfter')}
               </label>
               <input
                 id="announce-delete"
@@ -448,12 +445,12 @@ export function LevelsPage() {
       {tab === 'level-rewards' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Роли за достижение уровня</h2>
-            {settings.level_rewards.length === 0 && <p className="text-sm text-muted">Наград пока нет.</p>}
+            <h2 className="font-semibold text-foreground">{t('levels.levelRewardsTitle')}</h2>
+            {settings.level_rewards.length === 0 && <p className="text-sm text-muted">{t('levels.noRewards')}</p>}
             {settings.level_rewards.map((reward, index) => (
               <div key={index} className="flex flex-wrap items-end gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0">
                 <div className="flex w-24 flex-col gap-1">
-                  <label className="text-xs text-muted">Уровень</label>
+                  <label className="text-xs text-muted">{t('levels.level')}</label>
                   <input
                     type="number"
                     min={1}
@@ -472,7 +469,7 @@ export function LevelsPage() {
                 </div>
                 <div className="min-w-60 flex-1">
                   <ChipPicker
-                    label="Роли"
+                    label={t('levels.roles')}
                     options={roleOptions}
                     selected={reward.role_ids}
                     onChange={(ids) =>
@@ -500,7 +497,7 @@ export function LevelsPage() {
                   patch((p) => ({ ...p, level_rewards: [...p.level_rewards, { level: 5, role_ids: [] }] }))
                 }
               >
-                + Добавить награду
+                {t('levels.addReward')}
               </Button>
             </div>
           </Card>
@@ -511,8 +508,8 @@ export function LevelsPage() {
       {tab === 'voice-rewards' && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">Роли за суммарное время в войсе</h2>
-            {settings.voice_rewards.length === 0 && <p className="text-sm text-muted">Наград пока нет.</p>}
+            <h2 className="font-semibold text-foreground">{t('levels.voiceRewardsTitle')}</h2>
+            {settings.voice_rewards.length === 0 && <p className="text-sm text-muted">{t('levels.noRewards')}</p>}
             {settings.voice_rewards.map((reward, index) => {
               const parts = minutesToParts(reward.minutes)
               const setParts = (weeks: number, days: number, hours: number) => {
@@ -528,7 +525,7 @@ export function LevelsPage() {
                     {(['weeks', 'days', 'hours'] as const).map((unit) => (
                       <div key={unit} className="flex w-20 flex-col gap-1">
                         <label className="text-xs text-muted">
-                          {unit === 'weeks' ? 'Недели' : unit === 'days' ? 'Дни' : 'Часы'}
+                          {unit === 'weeks' ? t('levels.weeks') : unit === 'days' ? t('levels.days') : t('levels.hours')}
                         </label>
                         <input
                           type="number"
@@ -549,7 +546,7 @@ export function LevelsPage() {
                   </div>
                   <div className="min-w-60 flex-1">
                     <ChipPicker
-                      label={`Роли (порог: ${formatMinutes(reward.minutes)})`}
+                      label={t('levels.rolesThreshold', { threshold: formatMinutes(reward.minutes) })}
                       options={roleOptions}
                       selected={reward.role_ids}
                       onChange={(ids) =>
@@ -581,7 +578,7 @@ export function LevelsPage() {
                   }))
                 }
               >
-                + Добавить награду
+                {t('levels.addReward')}
               </Button>
             </div>
           </Card>
@@ -591,10 +588,11 @@ export function LevelsPage() {
 
       {tab === 'card' && (
         <Card className="flex flex-col gap-4">
-          <h2 className="font-semibold text-foreground">Фон карточки /ранг</h2>
+          <h2 className="font-semibold text-foreground">{t('levels.cardBgTitle')}</h2>
           <p className="text-sm text-muted">
-            PNG или JPEG до 5 МБ, рекомендуемый размер 900×260. Фон автоматически затемняется, чтобы текст оставался
-            читаемым. {hasCardBg ? 'Сейчас используется пользовательский фон.' : 'Сейчас используется стандартный градиент.'}
+            {t('levels.cardBgHint', {
+              status: hasCardBg ? t('levels.cardBgCustom') : t('levels.cardBgDefault'),
+            })}
           </p>
           <input
             ref={fileInput}
@@ -607,7 +605,7 @@ export function LevelsPage() {
                 act(async () => {
                   await uploadCardBg(file)
                   setHasCardBg(true)
-                  setSaved('Фон загружен.')
+                  setSaved(t('levels.bgUploaded'))
                 })
               }
               e.target.value = ''
@@ -615,7 +613,7 @@ export function LevelsPage() {
           />
           <div className="flex gap-2">
             <Button variant="primary" onClick={() => fileInput.current?.click()} disabled={busy}>
-              Загрузить фон
+              {t('levels.uploadBg')}
             </Button>
             {hasCardBg && (
               <Button
@@ -624,12 +622,12 @@ export function LevelsPage() {
                   act(async () => {
                     await deleteCardBg()
                     setHasCardBg(false)
-                    setSaved('Фон удалён.')
+                    setSaved(t('levels.bgDeleted'))
                   })
                 }
                 disabled={busy}
               >
-                Удалить фон
+                {t('levels.deleteBg')}
               </Button>
             )}
           </div>
@@ -640,21 +638,23 @@ export function LevelsPage() {
       {tab === 'members' && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted">Участников сервера в списке: {board?.total ?? memberCount}</p>
+            <p className="text-sm text-muted">
+              {t('levels.membersInList', { count: board?.total ?? memberCount })}
+            </p>
             <Button variant="danger" onClick={() => setConfirmResetAll(true)} disabled={busy}>
-              Сбросить весь рейтинг
+              {t('levels.resetAllRating')}
             </Button>
           </div>
           <input
             value={boardSearchDraft}
             onChange={(e) => setBoardSearchDraft(e.target.value)}
-            placeholder="Поиск участника…"
+            placeholder={t('levels.searchMember')}
             className={inputClass}
           />
 
           <Card className="p-0">
-            {!board && <p className="p-4 text-sm text-muted">Загрузка…</p>}
-            {board && board.entries.length === 0 && <p className="p-4 text-sm text-muted">Рейтинг пуст.</p>}
+            {!board && <p className="p-4 text-sm text-muted">{t('common.loading')}</p>}
+            {board && board.entries.length === 0 && <p className="p-4 text-sm text-muted">{t('levels.leaderboardEmpty')}</p>}
             {board?.entries.map((entry) => (
               <div
                 key={entry.user_id}
@@ -671,10 +671,15 @@ export function LevelsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">
                     {entry.display}
-                    {!entry.on_server && <span className="ml-2 text-xs text-muted">(покинул сервер)</span>}
+                    {!entry.on_server && <span className="ml-2 text-xs text-muted">{t('levels.leftServer')}</span>}
                   </p>
                   <p className="text-xs text-muted">
-                    Уровень {entry.level} · {entry.xp} XP · 🔊 {entry.voice_time_text} · ✉️ {entry.messages}
+                    {t('levels.memberStats', {
+                      level: entry.level,
+                      xp: entry.xp,
+                      voiceTime: entry.voice_time_text,
+                      messages: entry.messages,
+                    })}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
@@ -685,14 +690,14 @@ export function LevelsPage() {
                       setEditXp(String(entry.xp))
                     }}
                   >
-                    Изменить XP
+                    {t('levels.editXp')}
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => act(() => resetMemberXp(entry.user_id), true)}
                     disabled={busy}
                   >
-                    Сбросить
+                    {t('levels.reset')}
                   </Button>
                 </div>
               </div>
@@ -702,24 +707,24 @@ export function LevelsPage() {
           {board && board.total > board.page_size && (
             <div className="flex items-center justify-center gap-3">
               <Button variant="ghost" disabled={boardPage <= 1} onClick={() => setBoardPage((p) => p - 1)}>
-                ← Назад
+                {t('levels.prevPage')}
               </Button>
               <span className="text-sm text-muted">
-                Стр. {board.page} из {Math.ceil(board.total / board.page_size)}
+                {t('levels.pageOf', { page: board.page, total: Math.ceil(board.total / board.page_size) })}
               </span>
               <Button
                 variant="ghost"
                 disabled={boardPage >= Math.ceil(board.total / board.page_size)}
                 onClick={() => setBoardPage((p) => p + 1)}
               >
-                Вперёд →
+                {t('levels.nextPage')}
               </Button>
             </div>
           )}
         </div>
       )}
 
-      <Modal open={editing !== null} title={`Изменить XP: ${editing?.display}`} onClose={() => setEditing(null)}>
+      <Modal open={editing !== null} title={t('levels.editXpTitle', { display: editing?.display ?? '' })} onClose={() => setEditing(null)}>
         <div className="flex flex-col gap-3">
           <input
             type="number"
@@ -730,7 +735,7 @@ export function LevelsPage() {
           />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setEditing(null)} disabled={busy}>
-              Отмена
+              {t('levels.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -742,19 +747,17 @@ export function LevelsPage() {
                 }, true)
               }
             >
-              Сохранить
+              {t('common.save')}
             </Button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={confirmResetAll} title="Сбросить весь рейтинг?" onClose={() => setConfirmResetAll(false)}>
-        <p className="mb-4 text-sm text-muted">
-          XP, уровни и время войса всех участников будут обнулены, роли-награды сняты. Это действие необратимо.
-        </p>
+      <Modal open={confirmResetAll} title={t('levels.resetAllTitle')} onClose={() => setConfirmResetAll(false)}>
+        <p className="mb-4 text-sm text-muted">{t('levels.resetAllWarning')}</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setConfirmResetAll(false)} disabled={busy}>
-            Отмена
+            {t('levels.cancel')}
           </Button>
           <Button
             variant="danger"
@@ -767,7 +770,7 @@ export function LevelsPage() {
             }
           >
             <Crown size={16} />
-            Сбросить всё
+            {t('levels.resetAllConfirm')}
           </Button>
         </div>
       </Modal>

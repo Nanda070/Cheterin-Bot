@@ -12,8 +12,11 @@
 
 import settings_db
 
+import i18n
+
 MODULE_NAME = "verification"
 
+# Legacy RU default kept for migration detection only.
 DEFAULT_WELCOME_TEXT = (
     "Нажмите кнопку ниже, чтобы подтвердить, что вы не бот, и получить доступ к серверу."
 )
@@ -21,6 +24,13 @@ DEFAULT_WELCOME_TEXT = (
 
 def save_config(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, MODULE_NAME, data)
+
+
+def resolve_welcome_text(guild_id: int, stored: str | None = None) -> str:
+    raw = (stored if stored is not None else "").strip()
+    if not raw or raw == DEFAULT_WELCOME_TEXT:
+        return i18n.guild_t(guild_id, "verification.panel_welcome")
+    return raw
 
 
 def get_settings(guild_id: int) -> dict:
@@ -31,11 +41,12 @@ def get_settings(guild_id: int) -> dict:
     (snowflake) — 18-19-значное число, превышает Number.MAX_SAFE_INTEGER во
     фронтенде, JS-числом его хранить нельзя (тихо портится при вводе)."""
     data = settings_db.get(guild_id, MODULE_NAME)
+    stored_welcome = str(data.get("welcome_text", "") or "")
     return {
         "enabled": bool(data.get("enabled", False)),
         "unverified_role_id": str(data.get("unverified_role_id", "") or ""),
         "verified_role_id": str(data.get("verified_role_id", "") or ""),
-        "welcome_text": str(data.get("welcome_text", DEFAULT_WELCOME_TEXT)),
+        "welcome_text": resolve_welcome_text(guild_id, stored_welcome),
     }
 
 

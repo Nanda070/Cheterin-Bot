@@ -77,6 +77,9 @@ def require_super_admin(handler):
             return web.json_response({"error": "forbidden"}, status=403)
 
         request["moderator"] = lookup.member
+        # Привилегии мейна (news и т.п.) всегда пишут/читают настройки мейн-сервера,
+        # даже если в сессии выбран другой active_guild_id.
+        request["guild_id"] = guild_id
         return await handler(request)
 
     return wrapper

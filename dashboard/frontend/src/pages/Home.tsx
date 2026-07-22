@@ -28,6 +28,7 @@ import {
 } from '../api/client'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../context/LanguageContext'
 
 const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   spam_punish: Warning,
@@ -45,25 +46,14 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   verification_pass: UserCheck,
 }
 
-const TYPE_LABEL: Record<ModerationLogEntry['type'], string> = {
-  spam_punish: 'Анти-спам',
-  tempban: 'Tempban',
-  manual_ban: 'Бан (дашборд)',
-  manual_kick: 'Кик (дашборд)',
-  warn_manual: 'Предупреждение',
-  command_ban: 'Бан (команда)',
-  command_kick: 'Кик (команда)',
-  command_mute: 'Таймаут (команда)',
-  command_unmute: 'Снятие таймаута (команда)',
-  command_unban: 'Разбан (команда)',
-  command_clear: 'Очистка чата (команда)',
-  antiraid_trigger: 'Антирейд сработал',
-  verification_pass: 'Верификация пройдена',
+function modlogLabel(t: (key: string) => string, type: ModerationLogEntry['type']): string {
+  return t(`home.modlog.${type}`)
 }
 
 export function HomePage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
 
   const [feedbackCount, setFeedbackCount] = useState<number | null>(null)
   const [feedbackError, setFeedbackError] = useState('')
@@ -83,48 +73,54 @@ export function HomePage() {
   useEffect(() => {
     fetchFeedbackCases('pending')
       .then((cases) => setFeedbackCount(cases.length))
-      .catch(() => setFeedbackError('Не удалось загрузить'))
-  }, [])
+      .catch(() => setFeedbackError(t('common.errorLoad')))
+  }, [t])
 
   useEffect(() => {
     fetchEvents('open')
       .then((events) => setEventsCount(events.length))
-      .catch(() => setEventsError('Не удалось загрузить'))
-  }, [])
+      .catch(() => setEventsError(t('common.errorLoad')))
+  }, [t])
 
   useEffect(() => {
     fetchModerationLog()
       .then(setActivity)
-      .catch(() => setActivityError('Не удалось загрузить'))
-  }, [])
+      .catch(() => setActivityError(t('common.errorLoad')))
+  }, [t])
 
   useEffect(() => {
     fetchLockdownStatus()
       .then(setLockdownStatus)
-      .catch(() => setLockdownError('Не удалось загрузить'))
-  }, [])
+      .catch(() => setLockdownError(t('common.errorLoad')))
+  }, [t])
 
   useEffect(() => {
     fetchMembers('', 1, 1)
       .then((page) => setMemberCount(page.total))
-      .catch(() => setMemberError('Не удалось загрузить'))
-  }, [])
+      .catch(() => setMemberError(t('common.errorLoad')))
+  }, [t])
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Добро пожаловать, {user?.username}</h1>
+      <h1 className="mb-4 text-lg font-semibold text-foreground">
+        {t('home.welcome', { username: user?.username ?? '' })}
+      </h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/feedback')}>
           <div className="flex items-center gap-2 text-foreground">
             <ChatCircleText size={20} className="text-primary" />
-            <h2 className="font-semibold">Feedback</h2>
+            <h2 className="font-semibold">{t('home.feedback')}</h2>
           </div>
           {feedbackError && <p className="mt-2 text-sm text-danger">{feedbackError}</p>}
-          {!feedbackError && feedbackCount === null && <p className="mt-2 text-sm text-muted">Загрузка…</p>}
+          {!feedbackError && feedbackCount === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
           {!feedbackError && feedbackCount !== null && (
             <p className="mt-2 text-sm text-muted">
-              {feedbackCount === 0 ? 'Нет ожидающих' : `Ожидают решения: ${feedbackCount}`}
+              {feedbackCount === 0
+                ? t('home.feedback.nonePending')
+                : t('home.feedback.pendingCount', { count: feedbackCount })}
             </p>
           )}
         </Card>
@@ -132,24 +128,28 @@ export function HomePage() {
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/events')}>
           <div className="flex items-center gap-2 text-foreground">
             <CalendarCheck size={20} className="text-primary" />
-            <h2 className="font-semibold">События</h2>
+            <h2 className="font-semibold">{t('home.events')}</h2>
           </div>
           {eventsError && <p className="mt-2 text-sm text-danger">{eventsError}</p>}
-          {!eventsError && eventsCount === null && <p className="mt-2 text-sm text-muted">Загрузка…</p>}
+          {!eventsError && eventsCount === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
           {!eventsError && eventsCount !== null && (
-            <p className="mt-2 text-sm text-muted">Активных событий: {eventsCount}</p>
+            <p className="mt-2 text-sm text-muted">{t('home.events.activeCount', { count: eventsCount })}</p>
           )}
         </Card>
 
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/lockdown')}>
           <div className="flex items-center gap-2 text-foreground">
             <ShieldWarning size={20} className="text-primary" />
-            <h2 className="font-semibold">Модерация</h2>
+            <h2 className="font-semibold">{t('home.moderation')}</h2>
           </div>
           {activityError && <p className="mt-2 text-sm text-danger">{activityError}</p>}
-          {!activityError && activity === null && <p className="mt-2 text-sm text-muted">Загрузка…</p>}
+          {!activityError && activity === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
           {!activityError && activity !== null && activity.length === 0 && (
-            <p className="mt-2 text-sm text-muted">Активности пока нет.</p>
+            <p className="mt-2 text-sm text-muted">{t('home.moderation.noActivity')}</p>
           )}
           {!activityError && activity !== null && activity.length > 0 && (
             <ul className="mt-2 flex flex-col gap-1">
@@ -159,7 +159,10 @@ export function HomePage() {
                   <li key={index} className="flex items-center gap-2 text-sm text-muted">
                     <Icon size={14} className="shrink-0" />
                     <span className="truncate">
-                      {TYPE_LABEL[entry.type]} — {entry.user_display}
+                      {t('home.modlog.entry', {
+                        label: modlogLabel(t, entry.type),
+                        user: entry.user_display,
+                      })}
                     </span>
                   </li>
                 )
@@ -175,24 +178,30 @@ export function HomePage() {
             ) : (
               <ShieldCheck size={20} weight="fill" className="text-success" />
             )}
-            <h2 className="font-semibold">Антиспам</h2>
+            <h2 className="font-semibold">{t('home.antispam')}</h2>
           </div>
           {lockdownError && <p className="mt-2 text-sm text-danger">{lockdownError}</p>}
-          {!lockdownError && lockdownStatus === null && <p className="mt-2 text-sm text-muted">Загрузка…</p>}
+          {!lockdownError && lockdownStatus === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
           {!lockdownError && lockdownStatus !== null && (
-            <p className="mt-2 text-sm text-muted">{lockdownStatus.active ? 'ВКЛЮЧЁН' : 'ВЫКЛЮЧЕН'}</p>
+            <p className="mt-2 text-sm text-muted">
+              {lockdownStatus.active ? t('common.on') : t('common.off')}
+            </p>
           )}
         </Card>
 
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/members')}>
           <div className="flex items-center gap-2 text-foreground">
             <UsersThree size={20} className="text-primary" />
-            <h2 className="font-semibold">Участники</h2>
+            <h2 className="font-semibold">{t('home.members')}</h2>
           </div>
           {memberError && <p className="mt-2 text-sm text-danger">{memberError}</p>}
-          {!memberError && memberCount === null && <p className="mt-2 text-sm text-muted">Загрузка…</p>}
+          {!memberError && memberCount === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
           {!memberError && memberCount !== null && (
-            <p className="mt-2 text-sm text-muted">Участников: {memberCount}</p>
+            <p className="mt-2 text-sm text-muted">{t('home.members.count', { count: memberCount })}</p>
           )}
         </Card>
       </div>

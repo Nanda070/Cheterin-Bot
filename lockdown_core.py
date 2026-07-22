@@ -1,6 +1,4 @@
 import settings_db
-import json
-import os
 
 import discord
 
@@ -10,32 +8,39 @@ BACKUP_FILE = "antispam_backup.json"
 def load_backup(guild_id: int) -> dict:
     return settings_db.get(guild_id, "lockdown_backup", {})
 
-    return {}
-
 
 def save_backup(guild_id: int, data: dict):
     settings_db.put(guild_id, "lockdown_backup", data)
 
 
 def get_mention_exempt_ids() -> set[int]:
+    import os
+
     raw = os.getenv("ANTISPAM_MENTION_EXEMPT_ROLES", "")
     return {int(x.strip()) for x in raw.split(",") if x.strip()}
 
 
 def get_mentionable_exempt_ids() -> set[int]:
+    import os
+
     raw = os.getenv("ANTISPAM_MENTIONABLE_EXEMPT_ROLES", "")
     return {int(x.strip()) for x in raw.split(",") if x.strip()}
 
 
 def antispam_status(guild_id: int) -> tuple[bool, int]:
-    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
+    backup = load_backup(guild_id)
     return bool(backup.get("active", False)), len(backup.get("roles", {}))
 
 
 async def activate_antispam(
-    guild, mention_exempt: set[int], mentionable_exempt: set[int]
+    guild,
+    mention_exempt: set[int],
+    mentionable_exempt: set[int],
+    lang: str = "ru",
 ) -> tuple[int, list[str]]:
-    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
+    import i18n
+
+    backup = load_backup(guild.id)
     backup_roles: dict[str, dict] = {}
     modified_count = 0
     errors: list[str] = []
@@ -69,9 +74,9 @@ async def activate_antispam(
             await role.edit(**kwargs, reason="Antispam ON")
             modified_count += 1
         except discord.Forbidden:
-            errors.append(f"{role.name} (нет прав)")
+            errors.append(i18n.t("lockdown.error.forbidden", lang, role=role.name))
         except Exception as exc:
-            errors.append(f"{role.name} ({exc})")
+            errors.append(i18n.t("lockdown.error.generic", lang, role=role.name, error=exc))
 
     backup["roles"] = backup_roles
     backup["active"] = True
@@ -79,8 +84,10 @@ async def activate_antispam(
     return modified_count, errors
 
 
-async def deactivate_antispam(guild) -> tuple[int, list[str]] | None:
-    backup = load_backup(guild_id if 'guild_id' in locals() else guild.id)
+async def deactivate_antispam(guild, lang: str = "ru") -> tuple[int, list[str]] | None:
+    import i18n
+
+    backup = load_backup(guild.id)
     backup_roles: dict[str, dict] = backup.get("roles", {})
     if not backup_roles:
         return None
@@ -104,9 +111,9 @@ async def deactivate_antispam(guild) -> tuple[int, list[str]] | None:
                 await role.edit(**kwargs, reason="Antispam OFF")
                 restored_count += 1
         except discord.Forbidden:
-            errors.append(f"{role.name} (нет прав)")
+            errors.append(i18n.t("lockdown.error.forbidden", lang, role=role.name))
         except Exception as exc:
-            errors.append(f"{role.name} ({exc})")
+            errors.append(i18n.t("lockdown.error.generic", lang, role=role.name, error=exc))
 
     backup["roles"] = {}
     backup["active"] = False

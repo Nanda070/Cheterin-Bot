@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useT } from '../context/LanguageContext'
 import {
   createEmbedMessage,
   deleteEmbedTemplate,
@@ -38,16 +39,16 @@ function validateEmbedSpec(spec: EmbedSpec, content: string): string | null {
     spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url,
   )
   if (!hasEmbedContent && !content.trim()) {
-    return 'Заполните хотя бы текст сообщения, title, description, поле или изображение'
+    return 'embedBuilder.error.validation.empty'
   }
-  if (spec.title.length > 256) return 'Title длиннее 256 символов'
-  if (spec.description.length > 4096) return 'Description длиннее 4096 символов'
-  if (spec.footer.text.length > 2048) return 'Текст footer длиннее 2048 символов'
-  if (spec.author.name.length > 256) return 'Имя author длиннее 256 символов'
-  if (spec.fields.length > 25) return 'Не больше 25 полей'
+  if (spec.title.length > 256) return 'embedBuilder.error.validation.title'
+  if (spec.description.length > 4096) return 'embedBuilder.error.validation.description'
+  if (spec.footer.text.length > 2048) return 'embedBuilder.error.validation.footer'
+  if (spec.author.name.length > 256) return 'embedBuilder.error.validation.author'
+  if (spec.fields.length > 25) return 'embedBuilder.error.validation.fieldsCount'
   for (const field of spec.fields) {
-    if (field.name.length > 256) return 'Название поля длиннее 256 символов'
-    if (field.value.length > 1024) return 'Значение поля длиннее 1024 символов'
+    if (field.name.length > 256) return 'embedBuilder.error.validation.fieldName'
+    if (field.value.length > 1024) return 'embedBuilder.error.validation.fieldValue'
   }
   const totalLength =
     spec.title.length +
@@ -55,11 +56,12 @@ function validateEmbedSpec(spec: EmbedSpec, content: string): string | null {
     spec.footer.text.length +
     spec.author.name.length +
     spec.fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0)
-  if (totalLength > 6000) return 'Суммарная длина текста эмбеда превышает 6000 символов'
+  if (totalLength > 6000) return 'embedBuilder.error.validation.totalLength'
   return null
 }
 
 export function EmbedBuilderPage() {
+  const t = useT()
   const [mode, setMode] = useState<'create' | 'edit'>('create')
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -87,7 +89,7 @@ export function EmbedBuilderPage() {
     setContent(template.content)
     setEmbed({ ...EMPTY_EMBED_SPEC, ...template.embed })
     setRoleIds(template.role_ids)
-    setTemplateNotice(`Шаблон «${template.name}» загружен.`)
+    setTemplateNotice(t('embedBuilder.templateLoaded', { name: template.name }))
   }
 
   const handleSaveTemplate = async () => {
@@ -95,12 +97,12 @@ export function EmbedBuilderPage() {
     setTemplateNotice('')
     const name = templateName.trim()
     if (!name) {
-      setError('Укажите название шаблона')
+      setError(t('embedBuilder.error.templateName'))
       return
     }
     const validationError = validateEmbedSpec(embed, content)
     if (validationError) {
-      setError(validationError)
+      setError(t(validationError))
       return
     }
     setBusy(true)
@@ -108,9 +110,9 @@ export function EmbedBuilderPage() {
       const created = await saveEmbedTemplate({ name, content, embed, role_ids: roleIds })
       setTemplates((prev) => [...prev, created])
       setTemplateName('')
-      setTemplateNotice(`Шаблон «${created.name}» сохранён.`)
+      setTemplateNotice(t('embedBuilder.templateSaved', { name: created.name }))
     } catch (e) {
-      setError(e instanceof Error && e.message === 'duplicate_name' ? 'Шаблон с таким именем уже есть' : 'Не удалось сохранить шаблон')
+      setError(e instanceof Error && e.message === 'duplicate_name' ? t('embedBuilder.error.duplicateName') : t('embedBuilder.error.saveTemplate'))
     } finally {
       setBusy(false)
     }
@@ -121,7 +123,7 @@ export function EmbedBuilderPage() {
       await deleteEmbedTemplate(id)
       setTemplates((prev) => prev.filter((t) => t.id !== id))
     } catch {
-      setError('Не удалось удалить шаблон')
+      setError(t('embedBuilder.error.deleteTemplate'))
     }
   }
 
@@ -148,7 +150,7 @@ export function EmbedBuilderPage() {
   const handleLoad = async () => {
     setError('')
     if (!channelId || !messageId) {
-      setError('Укажите канал и Message ID')
+      setError(t('embedBuilder.error.channelAndId'))
       return
     }
     setBusy(true)
@@ -158,7 +160,7 @@ export function EmbedBuilderPage() {
       setEmbed(data.embed)
       setRoleIds(data.role_ids)
     } catch {
-      setError('Не удалось загрузить сообщение — проверьте канал/ID')
+      setError(t('embedBuilder.error.load'))
     } finally {
       setBusy(false)
     }
@@ -168,20 +170,20 @@ export function EmbedBuilderPage() {
     setError('')
     setSavedResult(null)
     if (!channelId) {
-      setError('Укажите канал')
+      setError(t('embedBuilder.error.channel'))
       return
     }
     if (mode === 'edit' && !messageId) {
-      setError('Укажите Message ID')
+      setError(t('embedBuilder.error.messageId'))
       return
     }
     if (roleIds.length > 5) {
-      setError('Не больше 5 роль-кнопок')
+      setError(t('embedBuilder.error.tooManyRoles'))
       return
     }
     const validationError = validateEmbedSpec(embed, content)
     if (validationError) {
-      setError(validationError)
+      setError(t(validationError))
       return
     }
 
@@ -194,7 +196,7 @@ export function EmbedBuilderPage() {
           : await createEmbedMessage(channelId, payload)
       setSavedResult(result)
     } catch {
-      setError('Не удалось сохранить — проверьте канал/ID сообщения и права на роли')
+      setError(t('embedBuilder.error.save'))
     } finally {
       setBusy(false)
     }
@@ -205,21 +207,21 @@ export function EmbedBuilderPage() {
       <div className="flex flex-col gap-3">
         <div className="flex gap-2">
           <Button variant={mode === 'create' ? 'primary' : 'secondary'} onClick={() => setMode('create')}>
-            Новое сообщение
+            {t('embedBuilder.mode.create')}
           </Button>
           <Button variant={mode === 'edit' ? 'primary' : 'secondary'} onClick={() => setMode('edit')}>
-            Редактировать существующее
+            {t('embedBuilder.mode.edit')}
           </Button>
         </div>
 
         <div className="flex flex-col gap-2 rounded-control border border-border bg-surface p-3">
-          <p className="text-sm font-medium text-foreground">Шаблоны</p>
+          <p className="text-sm font-medium text-foreground">{t('embedBuilder.templates')}</p>
           <div className="flex gap-2">
             <Select
               value=""
               onChange={(id) => applyTemplate(id)}
               options={templates}
-              placeholder="Загрузить шаблон…"
+              placeholder={t('embedBuilder.loadTemplate')}
               className="flex-1"
             />
             {templates.length > 0 && (
@@ -227,8 +229,8 @@ export function EmbedBuilderPage() {
                 value=""
                 onChange={(id) => handleDeleteTemplate(id)}
                 options={templates}
-                placeholder="Удалить…"
-                ariaLabel="Удалить шаблон"
+                placeholder={t('embedBuilder.deleteTemplate')}
+                ariaLabel={t('embedBuilder.deleteTemplateAria')}
               />
             )}
           </div>
@@ -236,25 +238,25 @@ export function EmbedBuilderPage() {
             <input
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Название нового шаблона"
+              placeholder={t('embedBuilder.templateNamePlaceholder')}
               className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
             />
             <Button variant="secondary" onClick={handleSaveTemplate} disabled={busy}>
-              Сохранить как шаблон
+              {t('embedBuilder.saveAsTemplate')}
             </Button>
           </div>
           {templateNotice && <p className="text-xs text-primary">{templateNotice}</p>}
         </div>
 
         <label className="text-sm text-muted" htmlFor="eb-channel">
-          Канал
+          {t('common.channel')}
         </label>
         <Select
           id="eb-channel"
           value={channelId}
           onChange={(id) => setChannelId(id)}
           options={channels}
-          placeholder="Выберите канал…"
+          placeholder={t('common.selectChannel')}
         />
 
         {mode === 'edit' && (
@@ -262,17 +264,17 @@ export function EmbedBuilderPage() {
             <input
               value={messageId}
               onChange={(e) => setMessageId(e.target.value)}
-              placeholder="ID существующего сообщения"
+              placeholder={t('embedBuilder.messageIdPlaceholder')}
               className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
             />
             <Button variant="secondary" onClick={handleLoad} disabled={busy}>
-              Загрузить
+              {t('embedBuilder.load')}
             </Button>
           </div>
         )}
 
         <label className="text-sm text-muted" htmlFor="eb-content">
-          Текст сообщения
+          {t('embedBuilder.field.messageContent')}
         </label>
         <textarea
           id="eb-content"
@@ -283,7 +285,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-title">
-          Title (макс. 256 символов)
+          {t('embedBuilder.field.title')}
         </label>
         <input
           id="eb-title"
@@ -293,7 +295,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-description">
-          Description (макс. 4096 символов)
+          {t('embedBuilder.field.description')}
         </label>
         <textarea
           id="eb-description"
@@ -304,7 +306,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-color">
-          Цвет
+          {t('embedBuilder.field.color')}
         </label>
         <div className="flex gap-2">
           <input
@@ -323,29 +325,29 @@ export function EmbedBuilderPage() {
         </div>
 
         <label className="text-sm text-muted" htmlFor="eb-author-name">
-          Author
+          {t('embedBuilder.field.author')}
         </label>
         <input
           id="eb-author-name"
           value={embed.author.name}
           onChange={(e) => updateEmbedField('author', { ...embed.author, name: e.target.value })}
-          placeholder="Имя автора"
+          placeholder={t('embedBuilder.authorPlaceholder')}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
 
         <label className="text-sm text-muted" htmlFor="eb-footer-text">
-          Footer (макс. 2048 символов)
+          {t('embedBuilder.field.footer')}
         </label>
         <input
           id="eb-footer-text"
           value={embed.footer.text}
           onChange={(e) => updateEmbedField('footer', { ...embed.footer, text: e.target.value })}
-          placeholder="Текст footer"
+          placeholder={t('embedBuilder.footerPlaceholder')}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
 
         <label className="text-sm text-muted" htmlFor="eb-image-url">
-          Image URL
+          {t('embedBuilder.field.imageUrl')}
         </label>
         <input
           id="eb-image-url"
@@ -355,7 +357,7 @@ export function EmbedBuilderPage() {
         />
 
         <label className="text-sm text-muted" htmlFor="eb-thumbnail-url">
-          Thumbnail URL
+          {t('embedBuilder.field.thumbnailUrl')}
         </label>
         <input
           id="eb-thumbnail-url"
@@ -367,7 +369,7 @@ export function EmbedBuilderPage() {
         <Toggle
           checked={embed.timestamp !== null}
           onChange={(v) => updateEmbedField('timestamp', v ? new Date().toISOString() : null)}
-          label="Текущее время"
+          label={t('embedBuilder.timestamp')}
         />
 
         <div className="flex flex-col gap-2">
@@ -376,13 +378,13 @@ export function EmbedBuilderPage() {
               <input
                 value={field.name}
                 onChange={(e) => updateField(index, { name: e.target.value })}
-                placeholder="Название поля"
+                placeholder={t('embedBuilder.fieldNamePlaceholder')}
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <input
                 value={field.value}
                 onChange={(e) => updateField(index, { value: e.target.value })}
-                placeholder="Значение поля"
+                placeholder={t('embedBuilder.fieldValuePlaceholder')}
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <Checkbox checked={field.inline} onChange={(v) => updateField(index, { inline: v })} label="inline" />
@@ -392,12 +394,12 @@ export function EmbedBuilderPage() {
             </div>
           ))}
           <button type="button" onClick={addField} className="cursor-pointer self-start text-sm text-primary hover:text-primary-hover">
-            + Добавить поле (макс. 25)
+            {t('embedBuilder.addField')}
           </button>
         </div>
 
         <div>
-          <p className="mb-1 text-sm text-muted">Роль-кнопки (до 5)</p>
+          <p className="mb-1 text-sm text-muted">{t('embedBuilder.roleButtons')}</p>
           <div className="flex flex-wrap gap-3">
             {roles.map((role) => (
               <Checkbox
@@ -413,12 +415,12 @@ export function EmbedBuilderPage() {
         {error && <p className="text-sm text-danger">{error}</p>}
         {savedResult && (
           <p className="text-sm text-success">
-            Сохранено: message_id {savedResult.message_id} в канале {savedResult.channel_id}
+{t('embedBuilder.saved', { messageId: savedResult.message_id, channelId: savedResult.channel_id })}
           </p>
         )}
 
         <Button variant="primary" onClick={handleSave} disabled={busy}>
-          {busy ? 'Сохраняем…' : mode === 'edit' ? 'Сохранить' : 'Отправить'}
+          {busy ? t('common.saving') : mode === 'edit' ? t('common.save') : t('embedBuilder.send')}
         </Button>
       </div>
 

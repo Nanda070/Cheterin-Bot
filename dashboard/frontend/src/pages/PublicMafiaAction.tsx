@@ -4,28 +4,7 @@ import { fetchPublicMafia, submitMafiaAction, submitMafiaVote, type MafiaPublicS
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
-
-const ROLE_LABEL: Record<string, string> = {
-  mafia: 'Мафия',
-  citizen: 'Мирный житель',
-  doctor: 'Доктор',
-  sheriff: 'Шериф',
-}
-
-const ROLE_HINT: Record<string, string> = {
-  mafia: 'Ночью вместе с командой выбираете, кого убить. Решает большинство голосов команды.',
-  doctor: 'Ночью можете вылечить одного игрока (в том числе себя), защитив его от убийства.',
-  sheriff: 'Ночью можете проверить одного игрока — узнаете, состоит ли он в мафии.',
-  citizen: 'У вас нет ночных действий — участвуйте в дневном голосовании за казнь прямо на этой странице.',
-}
-
-const PHASE_LABEL: Record<string, string> = {
-  lobby: 'Лобби',
-  night: 'Ночь',
-  day_discussion: 'Обсуждение',
-  day_vote: 'Голосование',
-  ended: 'Игра завершена',
-}
+import { useLanguage, useT } from '../context/LanguageContext'
 
 function useCountdown(deadlineTs: number | null): number {
   const [now, setNow] = useState(() => Date.now())
@@ -39,12 +18,17 @@ function useCountdown(deadlineTs: number | null): number {
 }
 
 export function PublicMafiaActionPage() {
+  const { setLang } = useLanguage()
+  const t = useT()
   const { token } = useParams<{ token: string }>()
   const [state, setState] = useState<MafiaPublicState | null>(null)
   const [error, setError] = useState('')
   const [target, setTarget] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+
+  const roleLabel = (role: string) => t(`publicMafia.role.${role}` as const)
+  const phaseLabel = (phase: string) => t(`publicMafia.phase.${phase}` as const)
 
   useEffect(() => {
     if (!token) return
@@ -53,21 +37,22 @@ export function PublicMafiaActionPage() {
         .then((s) => {
           setState(s)
           setError('')
+          if (s.language) setLang(s.language)
         })
-        .catch(() => setError('Ссылка недействительна или игра не найдена.'))
+        .catch(() => setError(t('publicMafia.errorInvalid')))
     }
     load()
     const timer = setInterval(load, 4000)
     return () => clearInterval(timer)
-  }, [token])
+  }, [token, t, setLang])
 
   const remaining = useCountdown(state?.phase_deadline_ts ?? null)
 
   const targetOptions = useMemo(() => {
     if (!state) return []
     const options = state.alive_players.map((p) => ({ id: p.user_id, name: p.display_name }))
-    return [{ id: '', name: 'Пропустить' }, ...options]
-  }, [state])
+    return [{ id: '', name: t('game.skip') }, ...options]
+  }, [state, t])
 
   const isVotePhase = state?.phase === 'day_vote'
 
@@ -81,11 +66,11 @@ export function PublicMafiaActionPage() {
       } else {
         await submitMafiaAction(token, target || null)
       }
-      setMessage('Отправлено.')
+      setMessage(t('game.sent'))
       const refreshed = await fetchPublicMafia(token)
       setState(refreshed)
     } catch {
-      setMessage('Не удалось отправить.')
+      setMessage(t('game.sendFailed'))
     } finally {
       setBusy(false)
     }
@@ -102,7 +87,7 @@ export function PublicMafiaActionPage() {
   if (!state) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background">
-        <p className="text-sm text-muted">Загрузка…</p>
+        <p className="text-sm text-muted">{t('common.loading')}</p>
       </div>
     )
   }
@@ -114,12 +99,12 @@ export function PublicMafiaActionPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background p-6">
       <div className="flex w-full max-w-lg flex-col gap-4">
-        <h1 className="text-lg font-semibold text-foreground">Игра «Мафия»</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t('publicMafia.title')}</h1>
 
         <Card className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted">
-              Раунд {state.round_number} · {PHASE_LABEL[state.phase] ?? state.phase}
+              {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase) ?? state.phase}
             </p>
             {state.game_status === 'active' && state.phase_deadline_ts && (
               <span className="text-xs font-medium text-muted">
@@ -128,22 +113,24 @@ export function PublicMafiaActionPage() {
             )}
           </div>
           <p className="text-xl font-semibold text-foreground">
-            {state.your_role ? ROLE_LABEL[state.your_role] : '—'}
+            {state.your_role ? roleLabel(state.your_role) : t('common.none')}
           </p>
-          <p className="text-sm text-muted">{state.your_role ? ROLE_HINT[state.your_role] : ''}</p>
-          {!state.your_alive && <p className="text-sm text-danger">Ты выбыл из игры.</p>}
+          <p className="text-sm text-muted">
+            {state.your_role ? t(`publicMafia.roleHint.${state.your_role}` as const) : ''}
+          </p>
+          {!state.your_alive && <p className="text-sm text-danger">{t('game.eliminated')}</p>}
           {state.game_status !== 'active' && (
             <p className="text-sm text-muted">
-              {state.game_status === 'finished' ? 'Игра завершена.' : 'Игра отменена.'}
+              {state.game_status === 'finished' ? t('game.finished') : t('game.cancelled')}
             </p>
           )}
         </Card>
 
         {state.your_role === 'mafia' && state.phase === 'night' && state.teammates && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Команда мафии</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t('publicMafia.mafiaTeam')}</h2>
             {state.teammates.length === 0 ? (
-              <p className="text-sm text-muted">Ты единственный представитель мафии.</p>
+              <p className="text-sm text-muted">{t('publicMafia.mafiaTeamSolo')}</p>
             ) : (
               <ul className="flex flex-col gap-0.5 text-sm text-foreground">
                 {state.teammates.map((m) => (
@@ -157,7 +144,9 @@ export function PublicMafiaActionPage() {
         {state.action_required && (
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">{isVotePhase ? 'Дневное голосование' : 'Ночное действие'}</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                {isVotePhase ? t('publicMafia.dayVote') : t('publicMafia.nightAction')}
+              </h2>
               <span className="text-sm text-muted">
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
               </span>
@@ -166,14 +155,16 @@ export function PublicMafiaActionPage() {
               value={target}
               onChange={setTarget}
               options={targetOptions}
-              placeholder={isVotePhase ? 'Кого казнить?' : 'Выберите цель…'}
+              placeholder={isVotePhase ? t('publicMafia.executeWho') : t('publicMafia.selectTarget')}
             />
             <Button variant="primary" onClick={submit} disabled={busy}>
-              {busy ? 'Отправляем…' : state.your_action_submitted ? 'Изменить выбор' : 'Отправить'}
+              {busy ? t('game.sending') : state.your_action_submitted ? t('game.changeChoice') : t('game.submit')}
             </Button>
             {state.your_action_submitted && (
               <p className="text-xs text-muted">
-                Выбор уже отправлен — можно изменить до конца {isVotePhase ? 'голосования' : 'ночи'}.
+                {t('publicMafia.choiceSent', {
+                  phase: isVotePhase ? t('publicMafia.votePhase') : t('publicMafia.nightPhase'),
+                })}
               </p>
             )}
             {message && <p className="text-sm text-primary">{message}</p>}
@@ -182,11 +173,11 @@ export function PublicMafiaActionPage() {
 
         {isVotePhase && state.vote_tally && state.vote_tally.length > 0 && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Текущие голоса</h2>
+            <h2 className="text-sm font-semibold text-foreground">{t('game.currentVotes')}</h2>
             <ul className="flex flex-col gap-0.5 text-sm text-foreground">
               {state.vote_tally.map((entry) => (
                 <li key={entry.target ?? 'skip'}>
-                  {entry.target_display ?? 'Пропустить'}: {entry.count}
+                  {entry.target_display ?? t('game.skip')}: {entry.count}
                 </li>
               ))}
             </ul>
@@ -195,13 +186,13 @@ export function PublicMafiaActionPage() {
 
         <Card className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-foreground">
-            Игроки ({aliveCount}/{state.roster.length})
+            {t('game.players', { alive: aliveCount, total: state.roster.length })}
           </h2>
           <ul className="flex flex-col gap-0.5 text-sm">
             {state.roster.map((p) => (
               <li key={p.user_id} className={p.alive ? 'text-foreground' : 'text-muted line-through'}>
                 {p.display_name}
-                {p.role && ` — ${ROLE_LABEL[p.role]}`}
+                {p.role && ` — ${roleLabel(p.role)}`}
                 {!p.alive && ' 💀'}
               </li>
             ))}
@@ -210,7 +201,7 @@ export function PublicMafiaActionPage() {
 
         {!state.action_required && state.your_alive && state.game_status === 'active' && (
           <p className="text-sm text-muted">
-            {state.phase === 'night' ? 'Сейчас не твой ход — жди утра.' : 'Сейчас обсуждение — скоро начнётся голосование.'}
+            {state.phase === 'night' ? t('publicMafia.waitNight') : t('publicMafia.waitDiscussion')}
           </p>
         )}
       </div>

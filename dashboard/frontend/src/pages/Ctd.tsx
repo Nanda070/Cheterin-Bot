@@ -11,10 +11,12 @@ import {
 } from '../api/client'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
+import { useT } from '../context/LanguageContext'
 
 const EMPTY: CtdConfig = { CTD_ROLE_ID: '', CTD_CHANNEL_ID: '' }
 
 export function CtdPage() {
+  const t = useT()
   const [config, setConfig] = useState<CtdConfig>(EMPTY)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -31,9 +33,9 @@ export function CtdPage() {
         setChannels(ch)
         setRoles(rl)
       })
-      .catch(() => setError('Не удалось загрузить настройки CTD'))
+      .catch(() => setError(t('ctd.errorLoad')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   const setField = (key: keyof CtdConfig, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }))
@@ -48,17 +50,17 @@ export function CtdPage() {
     try {
       const updated = await updateCtdConfig(config)
       setConfig(updated)
-      setSavedMessage('Сохранено.')
+      setSavedMessage(t('common.saved'))
       setDirty(false)
     } catch {
-      setError('Не удалось сохранить настройки — проверьте поля')
+      setError(t('ctd.errorSave'))
     } finally {
       setBusy(false)
     }
   }
 
   if (loading) {
-    return <p className="text-sm text-muted">Загрузка…</p>
+    return <p className="text-sm text-muted">{t('common.loading')}</p>
   }
 
   return (
@@ -66,11 +68,9 @@ export function CtdPage() {
       <div>
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Ticket size={22} className="text-primary" />
-          Тикеты CTD
+          {t('ctd.title')}
         </h1>
-        <p className="mt-1 text-sm text-muted">
-          Функция основного сервера: панель тикетов поддержки. Доступна только когда выбран основной сервер.
-        </p>
+        <p className="mt-1 text-sm text-muted">{t('ctd.intro')}</p>
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -78,26 +78,26 @@ export function CtdPage() {
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-muted" htmlFor="CTD_ROLE_ID">
-            Роль поддержки
+            {t('ctd.field.supportRole')}
           </label>
           <Select
             id="CTD_ROLE_ID"
             value={config.CTD_ROLE_ID}
             onChange={(id) => setField('CTD_ROLE_ID', id)}
             options={roles}
-            placeholder="Не задано"
+            placeholder={t('common.notSet')}
           />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm text-muted" htmlFor="CTD_CHANNEL_ID">
-            Канал панели тикетов
+            {t('ctd.field.ticketPanel')}
           </label>
           <Select
             id="CTD_CHANNEL_ID"
             value={config.CTD_CHANNEL_ID}
             onChange={(id) => setField('CTD_CHANNEL_ID', id)}
             options={channels}
-            placeholder="Не задано"
+            placeholder={t('common.notSet')}
           />
         </div>
       </section>
@@ -107,13 +107,13 @@ export function CtdPage() {
           {savedMessage ? (
             <span className="text-primary">{savedMessage}</span>
           ) : dirty ? (
-            'Есть несохранённые изменения'
+            t('common.unsavedChanges')
           ) : (
-            'Все изменения сохранены'
+            t('common.allSaved')
           )}
         </span>
         <Button variant="primary" onClick={save} disabled={busy || !dirty}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+          {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </div>

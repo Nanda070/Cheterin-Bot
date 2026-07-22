@@ -118,9 +118,11 @@ def test_generate_characters_relationship_card_no_link_when_solo(monkeypatch):
 
 def test_pick_catastrophe_and_bunker_conditions_return_known_entries():
     catastrophe = bunker_core.pick_catastrophe()
-    assert catastrophe in bunker_data.CATASTROPHES
+    assert catastrophe["key"] in {c["key"] for c in bunker_data.CATASTROPHES}
+    assert "name_en" in catastrophe
     conditions = bunker_core.pick_bunker_conditions()
-    assert conditions in bunker_data.BUNKER_CONDITIONS
+    assert conditions["key"] in {c["key"] for c in bunker_data.BUNKER_CONDITIONS}
+    assert "name_en" in conditions
 
 
 # ────────────────────────── Раздача карточек: без повторов / с повторами ──────────────────────────

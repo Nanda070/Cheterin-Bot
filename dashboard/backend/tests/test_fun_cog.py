@@ -64,7 +64,7 @@ async def test_roulette_disabled_module():
 
 @pytest.mark.asyncio
 async def test_roulette_survive(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     cog, player, guild = build()
     interaction = FakeInteraction(player, guild)
 
@@ -77,7 +77,7 @@ async def test_roulette_survive(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_death_applies_configured_timeout(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
     cog, player, guild = build(timeout_minutes=7)
     interaction = FakeInteraction(player, guild)
 
@@ -94,7 +94,7 @@ async def test_roulette_death_applies_configured_timeout(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_death_without_punishment(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
     cog, player, guild = build(timeout_minutes=0)
     interaction = FakeInteraction(player, guild)
 
@@ -108,7 +108,7 @@ async def test_roulette_death_without_punishment(monkeypatch):
 async def test_roulette_death_survives_timeout_failure(monkeypatch):
     import discord
 
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
     cog, player, guild = build(timeout_minutes=5)
     player.action_raises = discord.HTTPException.__new__(discord.HTTPException)
     interaction = FakeInteraction(player, guild)
@@ -120,7 +120,7 @@ async def test_roulette_death_survives_timeout_failure(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_roulette_cooldown(monkeypatch):
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     cog, player, guild = build(cooldown_sec=60)
     first = FakeInteraction(player, guild)
     second = FakeInteraction(player, guild)
@@ -319,22 +319,42 @@ def test_spin_trigger_chance_grows(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_roulette_empty_cylinder_survives_all_six(monkeypatch):
+    cog, player, guild = build()
+    monkeypatch.setattr(fun_core, "roll_empty_cylinder", lambda: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
+    for _ in range(5):
+        await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
+    assert cog._roulette_clicks[player.id] == 5
+    assert cog._roulette_empty[player.id] is True
+
+    sixth = FakeInteraction(player, guild)
+    await FunCog.russian_roulette.callback(cog, sixth)
+    assert cog._roulette_clicks[player.id] == 0
+    assert player.id not in cog._roulette_empty
+    assert "пустой" in sixth.response.messages[0]["content"].lower() or "empty" in sixth.response.messages[0]["content"].lower() or "6/6" in sixth.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
 async def test_roulette_click_counter_grows_and_resets(monkeypatch):
     cog, player, guild = build()
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "roll_empty_cylinder", lambda: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
     assert cog._roulette_clicks[player.id] == 2
 
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
     assert cog._roulette_clicks[player.id] == 0
+    assert player.id not in cog._roulette_empty
 
 
 @pytest.mark.asyncio
 async def test_roulette_shows_chamber_number(monkeypatch):
     cog, player, guild = build()
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "roll_empty_cylinder", lambda: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction)
     assert "1/6" in interaction.response.messages[0]["content"]
@@ -349,7 +369,7 @@ def enable_economy(guild_id, max_bet=1000):
 @pytest.mark.asyncio
 async def test_roulette_bet_requires_economy(monkeypatch):
     cog, player, guild = build()
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=10)
     assert "Экономика" in interaction.response.messages[0]["content"]
@@ -360,7 +380,7 @@ async def test_roulette_bet_survive_doubles(monkeypatch):
     cog, player, guild = build()
     enable_economy(guild.id)
     economy_db.add(player.id, 100, "seed")
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
@@ -374,7 +394,7 @@ async def test_roulette_bet_death_burns(monkeypatch):
     cog, player, guild = build(timeout_minutes=0)
     enable_economy(guild.id)
     economy_db.add(player.id, 100, "seed")
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: True)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
@@ -388,7 +408,7 @@ async def test_roulette_bet_insufficient_funds(monkeypatch):
     cog, player, guild = build(cooldown_sec=30)
     enable_economy(guild.id)
     economy_db.add(player.id, 5, "seed")
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=50)
@@ -406,7 +426,7 @@ async def test_roulette_bet_over_max(monkeypatch):
     cog, player, guild = build()
     enable_economy(guild.id, max_bet=100)
     economy_db.add(player.id, 5000, "seed")
-    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=500)

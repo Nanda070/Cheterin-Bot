@@ -8,6 +8,7 @@ CONFIG_KEYS = [
     "LOG_CHANNEL_ID",
     "SPAM_EXCEPTION_CHANNELS",
     "TEMPBAN_CHANNEL_ID",
+    "TEMPBAN_LOG_CHANNEL_ID",
     "SPAM_LOG_CHANNEL_ID",
     "SPAM_LOG_ROLE_ID",
     "WELCOME_CHANNEL_ID",
@@ -20,6 +21,8 @@ CONFIG_KEYS = [
     "CTD_CHANNEL_ID",
     "BUTTON_CREATE_ALLOWED_ROLES",
     "BUTTON_WEBHOOK_URL",
+    "BUTTON_WEBHOOK_USERNAME",
+    "BUTTON_WEBHOOK_AVATAR_URL",
     "SERVER_INVITE_LINK",
     "VOICE_LOBBY_CHANNEL_ID",
     "VOICE_PANEL_CHANNEL_ID",
@@ -44,6 +47,11 @@ def save_config(guild_id: int, data: dict) -> None:
 
 def get(guild_id: int, key: str, default=None):
     return load_config(guild_id).get(key, default)
+
+
+def resolve_server_invite_link(guild_id: int) -> str:
+    """Invite link for tempban DM and other modules (no hardcoded fallback)."""
+    return str(get(guild_id, "SERVER_INVITE_LINK") or "").strip()
 
 
 def migrate_from_env_if_needed(guild_id: int) -> None:

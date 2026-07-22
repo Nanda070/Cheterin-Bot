@@ -12,6 +12,7 @@
 import re
 from urllib.parse import urlparse
 
+import i18n
 import settings_db
 
 MODULE_NAME = "automod"
@@ -56,7 +57,13 @@ PUNISHMENTS = ("none", "warn", "mute", "kick", "ban")
 ESCALATION_ACTIONS = ("mute", "kick", "ban")
 
 MAX_DURATION_MINUTES = 40320  # 28 дней — максимум таймаута Discord
-DEFAULT_NOTIFY_TEMPLATE = "Привет {{member}}! Вы получили предупреждение за нарушение правил сервера: {{reason}}."
+DEFAULT_NOTIFY_TEMPLATE_RU = (
+    "Привет {{member}}! Вы получили предупреждение за нарушение правил сервера: {{reason}}."
+)
+DEFAULT_NOTIFY_TEMPLATE_EN = (
+    "Hello {{member}}! You received a warning for breaking server rules: {{reason}}."
+)
+DEFAULT_NOTIFY_TEMPLATE = DEFAULT_NOTIFY_TEMPLATE_RU
 DEFAULT_MANUAL_WARN_DURATION_MINUTES = 30 * 1440  # 30 дней
 
 _DEFAULT_FILTER: dict = {
@@ -66,7 +73,6 @@ _DEFAULT_FILTER: dict = {
     "duration_minutes": 0,
     "notify_member": False,
     "notify_channel_id": "",
-    "notify_template": DEFAULT_NOTIFY_TEMPLATE,
 }
 
 FILTER_EXTRA_DEFAULTS: dict[str, dict] = {
@@ -99,8 +105,19 @@ def _normalized(data: dict) -> dict:
     return data
 
 
+def _default_notify_template(guild_id: int) -> str:
+    return i18n.t("automod.default_notify_template", i18n.lang_for(guild_id))
+
+
+def _stored_notify_template(raw_filters: dict, key: str, guild_id: int) -> str:
+    stored = raw_filters.get(key, {}).get("notify_template")
+    return str(stored) if stored else _default_notify_template(guild_id)
+
+
 def get_settings(guild_id: int) -> dict:
-    data = _normalized(settings_db.get(guild_id, MODULE_NAME))
+    raw = settings_db.get(guild_id, MODULE_NAME)
+    data = _normalized(raw)
+    raw_filters = raw.get("filters", {})
     return {
         "enabled": bool(data["enabled"]),
         "filters": {
@@ -108,6 +125,7 @@ def get_settings(guild_id: int) -> dict:
                 "label": FILTER_LABELS[key],
                 "description": FILTER_DESCRIPTIONS[key],
                 **data["filters"][key],
+                "notify_template": _stored_notify_template(raw_filters, key, guild_id),
             }
             for key in FILTER_KEYS
         },
@@ -119,7 +137,12 @@ def get_settings(guild_id: int) -> dict:
 def get_filter_config(guild_id: int, key: str) -> dict | None:
     if key not in FILTER_KEYS:
         return None
-    return _normalized(settings_db.get(guild_id, MODULE_NAME))["filters"][key]
+    raw = settings_db.get(guild_id, MODULE_NAME)
+    data = _normalized(raw)
+    return {
+        **data["filters"][key],
+        "notify_template": _stored_notify_template(raw.get("filters", {}), key, guild_id),
+    }
 
 
 def update_module_enabled(guild_id: int, enabled: bool) -> dict:

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { DailyTopicPage } from './DailyTopic'
@@ -15,7 +16,7 @@ describe('DailyTopicPage', () => {
 
   it('renders defaults with no topics and no post times', async () => {
     mockBaseFetches()
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
 
     expect(await screen.findByText('Ежедневная рубрика')).toBeInTheDocument()
     expect(screen.getByText('Время не задано')).toBeInTheDocument()
@@ -32,7 +33,7 @@ describe('DailyTopicPage', () => {
       topics: [],
     })
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     await screen.findByText('Ежедневная рубрика')
 
     fireEvent.click(screen.getByRole('switch'))
@@ -47,7 +48,7 @@ describe('DailyTopicPage', () => {
     mockBaseFetches()
     const saveSpy = vi.spyOn(client, 'updateDailyTopicSettings').mockResolvedValue(emptySettings)
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     await screen.findByText('Ежедневная рубрика')
 
     const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement
@@ -66,7 +67,7 @@ describe('DailyTopicPage', () => {
     mockBaseFetches()
     const createSpy = vi.spyOn(client, 'createDailyTopic').mockResolvedValue({ id: '1', text: 'Вопрос дня?' })
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     await screen.findByText('Ежедневная рубрика')
 
     fireEvent.click(screen.getByRole('button', { name: /Добавить тему/ }))
@@ -80,7 +81,7 @@ describe('DailyTopicPage', () => {
     mockBaseFetches({ enabled: false, channel_id: '', post_times: [], topics: [{ id: '1', text: 'Старый вопрос' }] })
     const updateSpy = vi.spyOn(client, 'updateDailyTopic').mockResolvedValue({ id: '1', text: 'Новый вопрос' })
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     expect(await screen.findByText('Старый вопрос')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Изменить' }))
@@ -96,7 +97,7 @@ describe('DailyTopicPage', () => {
     mockBaseFetches({ enabled: false, channel_id: '', post_times: [], topics: [{ id: '1', text: 'Вопрос' }] })
     const deleteSpy = vi.spyOn(client, 'deleteDailyTopic').mockResolvedValue()
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     expect(await screen.findByText('Вопрос')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Удалить тему' }))
@@ -107,7 +108,7 @@ describe('DailyTopicPage', () => {
     mockBaseFetches({ enabled: false, channel_id: '500', post_times: [], topics: [{ id: '1', text: 'Вопрос' }] })
     const postSpy = vi.spyOn(client, 'postDailyTopicNow').mockResolvedValue({ ok: true, topic: { id: '1', text: 'Вопрос' } })
 
-    render(<DailyTopicPage />)
+    renderWithLanguage(<DailyTopicPage />)
     const postButton = await screen.findByRole('button', { name: 'Опубликовать сейчас' })
     expect(postButton).not.toBeDisabled()
 

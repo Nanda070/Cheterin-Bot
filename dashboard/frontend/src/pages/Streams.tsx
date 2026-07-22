@@ -1,4 +1,5 @@
 import { Broadcast, Plus, Trash, TwitchLogo, YoutubeLogo } from '@phosphor-icons/react'
+import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
 import {
   createStreamSubscription,
@@ -29,6 +30,7 @@ function PlatformIcon({ platform }: { platform: 'twitch' | 'youtube' }) {
 }
 
 export function StreamsPage() {
+  const t = useT()
   const [subs, setSubs] = useState<StreamSubscription[] | null>(null)
   const [twitchConfigured, setTwitchConfigured] = useState(true)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -48,7 +50,7 @@ export function StreamsPage() {
         setTwitchConfigured(data.twitch_configured)
         setError('')
       })
-      .catch(() => setError('Не удалось загрузить подписки'))
+      .catch(() => setError(t('streams.errorLoad')))
 
   useEffect(() => {
     reload()
@@ -57,7 +59,7 @@ export function StreamsPage() {
   }, [])
 
   if (!subs) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const act = async (fn: () => Promise<unknown>) => {
@@ -70,12 +72,12 @@ export function StreamsPage() {
       const message = e instanceof Error ? e.message : ''
       setError(
         message === 'channel_not_found'
-          ? 'Канал не найден — проверьте имя или ссылку'
+          ? t('streams.error.channelNotFound')
           : message === 'already_subscribed'
-            ? 'Подписка на этот канал уже существует'
+            ? t('streams.error.alreadySubscribed')
             : message === 'twitch_not_configured'
-              ? 'Twitch API не настроен: добавьте TWITCH_CLIENT_ID и TWITCH_CLIENT_SECRET в .env'
-              : 'Операция не удалась',
+              ? t('streams.error.twitchNotConfigured')
+              : t('common.operationFailed'),
       )
     } finally {
       setBusy(false)
@@ -90,19 +92,18 @@ export function StreamsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Broadcast size={22} className="text-primary" />
-          Публикации и подписки
+          {t('streams.title')}
         </h1>
         <Button variant="primary" onClick={() => setAdding(true)}>
           <Plus size={16} />
-          Подписаться
+          {t('streams.subscribe')}
         </Button>
       </div>
 
       {!twitchConfigured && (
         <Card>
           <p className="text-sm text-warning">
-            ⚠️ Twitch API не настроен. Зарегистрируйте приложение на dev.twitch.tv и добавьте TWITCH_CLIENT_ID и
-            TWITCH_CLIENT_SECRET в .env — до этого работают только YouTube-подписки.
+{t('streams.twitchWarning')}
           </p>
         </Card>
       )}
@@ -112,8 +113,7 @@ export function StreamsPage() {
       {subs.length === 0 && (
         <Card>
           <p className="text-sm text-muted">
-            Подписок пока нет. Добавьте стримера — участники будут получать уведомления о начале трансляций и новых
-            видео.
+{t('streams.empty')}
           </p>
         </Card>
       )}
@@ -134,14 +134,14 @@ export function StreamsPage() {
                   <PlatformIcon platform={sub.platform} />
                   {sub.display_name}
                 </p>
-                <p className="text-xs text-muted">{sub.platform === 'twitch' ? 'Канал Twitch.tv' : 'Канал YouTube'}</p>
+                <p className="text-xs text-muted">{sub.platform === 'twitch' ? t('streams.platform.twitch') : t('streams.platform.youtube')}</p>
               </div>
               <Toggle checked={sub.enabled} onChange={(v) => patchSub(sub.id, { enabled: v })} disabled={busy} />
               <button
                 type="button"
                 onClick={() => act(() => deleteStreamSubscription(sub.id))}
                 className="text-muted transition-colors hover:text-danger"
-                aria-label="Удалить подписку"
+                aria-label={t('streams.deleteAria')}
               >
                 <Trash size={17} />
               </button>
@@ -155,31 +155,31 @@ export function StreamsPage() {
               }}
               className="self-start text-xs text-primary hover:underline"
             >
-              {expanded === sub.id ? 'Скрыть настройки' : 'Настройки уведомления'}
+              {expanded === sub.id ? t('streams.hideSettings') : t('streams.showSettings')}
             </button>
 
             {expanded === sub.id && (
               <div className="flex flex-col gap-3 border-t border-border pt-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted">Канал публикации</label>
+                  <label className="text-xs text-muted">{t('streams.field.publishChannel')}</label>
                   <Select
                     value={sub.channel_id}
                     onChange={(id) => patchSub(sub.id, { channel_id: id })}
                     options={channels}
-                    placeholder="Не выбран"
+                    placeholder={t('streams.notSelected')}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted">Роль для пинга</label>
+                  <label className="text-xs text-muted">{t('streams.field.pingRole')}</label>
                   <Select
                     value={sub.ping_role_id}
                     onChange={(id) => patchSub(sub.id, { ping_role_id: id })}
                     options={roles}
-                    placeholder="Без пинга"
+                    placeholder={t('streams.noPing')}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted">Шаблон сообщения (пусто = стандартный)</label>
+                  <label className="text-xs text-muted">{t('streams.field.template')}</label>
                   <textarea
                     rows={3}
                     defaultValue={sub.template}
@@ -187,11 +187,11 @@ export function StreamsPage() {
                     className={inputClass}
                   />
                   <span className="text-[11px] text-muted">
-                    {'Переменные: {{channel}}, {{stream}} — название, {{game}}, {{channel.url}}'}
+                    {t('streams.templateVars')}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted">Ключевые слова в названии (через запятую)</label>
+                  <label className="text-xs text-muted">{t('streams.field.keywords')}</label>
                   <input
                     value={keywordsDraft}
                     onChange={(e) => setKeywordsDraft(e.target.value)}
@@ -203,24 +203,24 @@ export function StreamsPage() {
                           .filter(Boolean),
                       })
                     }
-                    placeholder="например: #дота, турнир"
+                    placeholder={t('streams.keywordsPlaceholder')}
                     className={inputClass}
                   />
                 </div>
                 <div className="flex gap-3">
                   <div className="flex flex-1 flex-col gap-1">
-                    <label className="text-xs text-muted">Режим фильтра</label>
+                    <label className="text-xs text-muted">{t('streams.field.filterMode')}</label>
                     <Select
                       value={sub.keyword_mode}
                       onChange={(id) => patchSub(sub.id, { keyword_mode: id as 'any' | 'all' })}
                       options={[
-                        { id: 'any', name: 'Любое из слов' },
-                        { id: 'all', name: 'Все слова' },
+                        { id: 'any', name: t('streams.filter.any') },
+                        { id: 'all', name: t('streams.filter.all') },
                       ]}
                     />
                   </div>
                   <div className="flex flex-1 flex-col gap-1">
-                    <label className="text-xs text-muted">Мин. интервал (минут)</label>
+                    <label className="text-xs text-muted">{t('streams.field.minInterval')}</label>
                     <input
                       type="number"
                       min={0}
@@ -240,7 +240,7 @@ export function StreamsPage() {
         ))}
       </div>
 
-      <Modal open={adding} title="Новая подписка" onClose={() => setAdding(false)}>
+      <Modal open={adding} title={t('streams.modal.title')} onClose={() => setAdding(false)}>
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
             {(['twitch', 'youtube'] as const).map((p) => (
@@ -262,33 +262,33 @@ export function StreamsPage() {
 
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="stream-query">
-              {addForm.platform === 'twitch' ? 'Логин стримера или ссылка на канал' : 'Ссылка на канал, @handle или ID'}
+              {addForm.platform === 'twitch' ? t('streams.field.query.twitch') : t('streams.field.query.youtube')}
             </label>
             <input
               id="stream-query"
               value={addForm.query}
               onChange={(e) => setAddForm((f) => ({ ...f, query: e.target.value }))}
-              placeholder={addForm.platform === 'twitch' ? 'cheterin' : '@cheterin или UC…'}
+              placeholder={addForm.platform === 'twitch' ? t('streams.queryPlaceholder.twitch') : t('streams.queryPlaceholder.youtube')}
               className={inputClass}
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="stream-channel">
-              Канал для уведомлений
+              {t('streams.field.notifyChannel')}
             </label>
             <Select
               id="stream-channel"
               value={addForm.channel_id}
               onChange={(id) => setAddForm((f) => ({ ...f, channel_id: id }))}
               options={channels}
-              placeholder="Выберите канал"
+              placeholder={t('common.selectChannel')}
             />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setAdding(false)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -305,7 +305,7 @@ export function StreamsPage() {
                 })
               }
             >
-              {busy ? 'Проверяем…' : 'Подписаться'}
+              {busy ? t('streams.checking') : t('streams.subscribe')}
             </Button>
           </div>
         </div>

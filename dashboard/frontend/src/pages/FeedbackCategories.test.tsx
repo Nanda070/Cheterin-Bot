@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FeedbackCategoriesPage } from './FeedbackCategories'
@@ -29,7 +30,7 @@ describe('FeedbackCategoriesPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'reports' }])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([{ id: '111', name: 'Reviewers', color: '#000000', position: 1 }])
 
-    render(<FeedbackCategoriesPage />)
+    renderWithLanguage(<FeedbackCategoriesPage />)
 
     expect(await screen.findByText('Жалоба на участника')).toBeInTheDocument()
     expect(screen.getByText((_, element) => element?.tagName === 'P' && !!element.textContent?.startsWith('PR'))).toBeInTheDocument()
@@ -41,7 +42,7 @@ describe('FeedbackCategoriesPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([{ id: '111', name: 'Reviewers', color: '#000000', position: 1 }])
     const createSpy = vi.spyOn(client, 'createFeedbackCategory').mockResolvedValue(sampleCategory)
 
-    render(<FeedbackCategoriesPage />)
+    renderWithLanguage(<FeedbackCategoriesPage />)
 
     await waitFor(() => screen.getByText('Создать категорию'))
     fireEvent.click(screen.getByText('Создать категорию'))
@@ -71,7 +72,7 @@ describe('FeedbackCategoriesPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     const deleteSpy = vi.spyOn(client, 'deleteFeedbackCategory').mockResolvedValue(undefined)
 
-    render(<FeedbackCategoriesPage />)
+    renderWithLanguage(<FeedbackCategoriesPage />)
 
     await waitFor(() => screen.getByText('Удалить'))
     fireEvent.click(screen.getByText('Удалить'))
@@ -85,7 +86,7 @@ describe('FeedbackCategoriesPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'reports' }])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    render(<FeedbackCategoriesPage />)
+    renderWithLanguage(<FeedbackCategoriesPage />)
 
     await waitFor(() => screen.getByText('Дефолтный шаблон'))
     fireEvent.click(screen.getByText('Дефолтный шаблон'))
@@ -94,6 +95,32 @@ describe('FeedbackCategoriesPage', () => {
     expect((screen.getByLabelText('Ключ') as HTMLInputElement).value).toBe('players')
     expect((screen.getByLabelText('Префикс дела') as HTMLInputElement).value).toBe('PR')
     expect((screen.getByLabelText('Имя треда') as HTMLInputElement).value).toBe('player-report')
+    expect((screen.getByLabelText('Название') as HTMLInputElement).value).toBe('Жалоба на участника')
+  })
+
+  it('prefills the default template in the current UI language', async () => {
+    const store: Record<string, string> = { chetbot_ui_lang: 'en' }
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value
+      },
+      removeItem: (key: string) => {
+        delete store[key]
+      },
+    })
+    vi.spyOn(client, 'fetchFeedbackCategories').mockResolvedValue([])
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'reports' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+
+    renderWithLanguage(<FeedbackCategoriesPage />)
+
+    await waitFor(() => screen.getByText('Default template'))
+    fireEvent.click(screen.getByText('Default template'))
+
+    await waitFor(() => screen.getByLabelText('Title'))
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Member report')
+    vi.unstubAllGlobals()
   })
 
   it('publishes the panel to the selected channel', async () => {
@@ -102,7 +129,7 @@ describe('FeedbackCategoriesPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
     const publishSpy = vi.spyOn(client, 'publishFeedbackPanel').mockResolvedValue({ ok: true, message_id: '999' })
 
-    render(<FeedbackCategoriesPage />)
+    renderWithLanguage(<FeedbackCategoriesPage />)
 
     await waitFor(() => screen.getByRole('button', { name: 'Опубликовать' }))
     fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }))

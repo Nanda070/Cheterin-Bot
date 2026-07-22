@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { EconomyPage } from './Economy'
 
 const emptySettings: client.EconomySettings = {
@@ -29,7 +30,7 @@ describe('EconomyPage', () => {
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([
       { user_id: '20', display_name: 'Rich', balance: 300 },
     ])
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByText('Валюта и начисление')).toBeInTheDocument()
@@ -43,7 +44,7 @@ describe('EconomyPage', () => {
     const updateSpy = vi
       .spyOn(client, 'updateEconomySettings')
       .mockResolvedValue({ ...emptySettings, enabled: true, text_rate_percent: 100 })
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
     fireEvent.change(screen.getByLabelText(/Монет за текстовый XP/), { target: { value: '100' } })
@@ -52,14 +53,14 @@ describe('EconomyPage', () => {
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, text_rate_percent: 100 })),
     )
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('adds and removes shop items', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Добавить товар/ }))
     fireEvent.change(screen.getByLabelText('Название товара 1'), { target: { value: 'VIP' } })
@@ -80,7 +81,7 @@ describe('EconomyPage', () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Добавить товар/ }))
     fireEvent.change(screen.getByLabelText('Тип товара 1'), { target: { value: 'title' } })
@@ -101,7 +102,7 @@ describe('EconomyPage', () => {
     vi.spyOn(client, 'fetchEconomySettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
     const updateSpy = vi.spyOn(client, 'updateEconomySettings').mockResolvedValue(emptySettings)
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Добавить товар/ }))
     fireEvent.change(screen.getByLabelText('Тип товара 1'), { target: { value: 'frame_color' } })
@@ -123,7 +124,7 @@ describe('EconomyPage', () => {
       { user_id: '20', display_name: 'Rich', balance: 300 },
     ])
     const setSpy = vi.spyOn(client, 'setEconomyBalance').mockResolvedValue({ user_id: '20', balance: 50 })
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     fireEvent.change(await screen.findByLabelText('Новый баланс Rich'), { target: { value: '50' } })
     fireEvent.click(screen.getByRole('button', { name: 'Применить' }))
@@ -137,7 +138,7 @@ describe('EconomyPage', () => {
     const updateSpy = vi
       .spyOn(client, 'updateEconomySettings')
       .mockResolvedValue({ ...emptySettings, daily_bonus_enabled: false, daily_base_amount: 100 })
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
 
     expect(await screen.findByText(/Ежедневный бонус — \/daily/)).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Включено'))
@@ -154,7 +155,7 @@ describe('EconomyPage', () => {
   it('shows an error when loading fails', async () => {
     vi.spyOn(client, 'fetchEconomySettings').mockRejectedValue(new Error('fail'))
     vi.spyOn(client, 'fetchEconomyTop').mockResolvedValue([])
-    render(<EconomyPage />)
+    renderWithLanguage(<EconomyPage />)
     expect(await screen.findByText('Не удалось загрузить настройки модуля «Экономика»')).toBeInTheDocument()
   })
 })

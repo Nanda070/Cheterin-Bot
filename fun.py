@@ -1,13 +1,13 @@
 """Ког «Развлечения»: русская рулетка и эмодзи-рулетка.
 
 Модуль выключен по умолчанию, включается в дашборде (раздел «Развлечения»).
-Русская рулетка — соло: один спуск курка, шанс 1/6. «Погибший» получает
+Русская рулетка — соло: барабан без проворота, шанс растёт 1/6→…→1/1;
+с шансом 15% барабан пустой (можно пройти 6/6). «Погибший» получает
 Discord-таймаут на настраиваемое число минут (0 — без наказания).
 """
 
 import asyncio
 import logging
-import random
 import time
 from datetime import timedelta
 
@@ -18,58 +18,26 @@ from discord.ext import commands
 import economy_core
 import economy_db
 import fun_core
+import i18n
+import slash_registry
 
 logger = logging.getLogger("fun")
 
-INTRO_LINES = (
-    "крутит барабан и жмёт на курок…",
-    "подносит револьвер к виску и зажмуривается…",
-    "раскручивает барабан, глубоко вдыхает и жмёт…",
-    "шепчет «да будет удача» и спускает курок…",
-    "с дрожащей рукой тянет спусковой крючок…",
-    "уверенно, как в кино, жмёт на курок…",
-)
-
-SURVIVE_LINES = (
-    "*щёлк* … пусто. Сегодня не твой день… в хорошем смысле. 😮‍💨",
-    "*щёлк* … барабан провернулся впустую. Живём! 🎉",
-    "*щёлк* … тишина. Судьба улыбнулась. 🍀",
-    "*щёлк* … осечка судьбы — ты жив. 😅",
-    "*щёлк* … пронесло! Сердце ушло в пятки, но всё цело. 💓",
-    "*щёлк* … пустая камора. Кто-то наверху тебя любит. 😇",
-    "*щёлк* … ничего. Можно выдохнуть и заказать нервный чай. 🍵",
-    "*щёлк* … мимо! Барабан сегодня добрый. 🎲",
-    "*щёлк* … жив. Легенды говорят, что так везёт раз в жизни. ✨",
-    "*щёлк* … тишина звенит в ушах. Победа над судьбой! 🏆",
-)
-
-DEATH_LINES = (
-    "💥 **БАХ!** Не повезло…",
-    "💥 **ВЫСТРЕЛ!** Барабан был заряжен…",
-    "💥 **БАБАХ!** Русская рулетка беспощадна…",
-    "💥 **БАХ!** Эхо разносится по каналу…",
-    "💥 **ВЫСТРЕЛ!** Судьба сегодня не на твоей стороне…",
-    "💥 **БАМ!** Вот это поворот…",
-    "💥 **БАХ!** F в чат…",
-    "💥 **ВЫСТРЕЛ!** Шанс был 1 к 6 — и он выпал…",
-)
+INTRO_COUNT = 6
+SURVIVE_COUNT = 10
+DEATH_COUNT = 8
 
 
 class FunCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._roulette_cooldowns: dict[int, float] = {}
-        # user_id -> сколько «щёлк» подряд без выстрела (барабан не прокручивается заново)
         self._roulette_clicks: dict[int, int] = {}
-        self._auto_emoji_last: dict[int, float] = {}  # channel_id -> monotonic ts последней авто-реакции
-
-    # ────────────────────────── Авто-Эмодзи ──────────────────────────
+        self._roulette_empty: dict[int, bool] = {}
+        self._auto_emoji_last: dict[int, float] = {}
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Изредка ставит случайное серверное эмодзи на сообщения людей (как в Juniper):
-        шанс в процентах + минимальный интервал на канал, реакция снимается через
-        настроенное время, чтобы не висела вечно."""
         if message.author.bot or message.guild is None:
             return
 
@@ -105,17 +73,18 @@ class FunCog(commands.Cog):
         except Exception:
             logger.exception("Не удалось снять авто-эмодзи с сообщения %s", message.id)
 
-    # ────────────────────────── Русская рулетка ──────────────────────────
-
     @app_commands.command(
         name="русская-рулетка",
-        description="Спустить курок: барабан не прокручивается, с каждым щелчком шанс растёт. Можно ставить монеты",
+        description="Спустить курок: шанс растёт (1/6→1/1), 15% пустой барабан. Можно ставить монеты",
     )
     @app_commands.describe(ставка="Ставка монет: выжил — удвоил, погиб — потерял (необязательно)")
     async def russian_roulette(self, interaction: discord.Interaction, ставка: int | None = None):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = fun_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Модуль «Развлечения» отключён.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "fun"), ephemeral=True
+            )
 
         cooldown = settings["roulette_cooldown_sec"]
         now = time.monotonic()
@@ -123,89 +92,141 @@ class FunCog(commands.Cog):
         if cooldown > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
             return await interaction.response.send_message(
-                f"Барабан ещё крутится — попробуй через {remaining} сек.", ephemeral=True
+                i18n.t("fun.roulette.cooldown", lang, seconds=remaining), ephemeral=True
             )
 
-        # Ставка проверяется и списывается ДО установки кулдауна и спуска курка
         econ = economy_core.get_settings(interaction.guild.id)
         bet = ставка or 0
         if bet > 0:
             if not econ["enabled"]:
                 return await interaction.response.send_message(
-                    "Модуль «Экономика» отключён — сыграй без ставки.", ephemeral=True
+                    i18n.t("error.economy_disabled_play_without_bet", lang), ephemeral=True
                 )
-            error = economy_core.bet_error(bet, economy_db.get_balance(interaction.user.id), econ)
+            error = economy_core.bet_error(bet, economy_db.get_balance(interaction.user.id), econ, lang=lang)
             if error:
                 return await interaction.response.send_message(error, ephemeral=True)
             if not economy_db.try_spend(interaction.user.id, bet, "roulette_bet"):
-                return await interaction.response.send_message("Недостаточно средств для ставки.", ephemeral=True)
+                return await interaction.response.send_message(
+                    i18n.t("error.insufficient_funds_bet", lang), ephemeral=True
+                )
 
         self._roulette_cooldowns[interaction.user.id] = now + cooldown
 
-        # Барабан не прокручивается заново: каждый «щёлк» приближает патрон
         clicks = self._roulette_clicks.get(interaction.user.id, 0)
-        chamber_text = f"Камора **{clicks + 1}/{fun_core.ROULETTE_CHAMBERS}**."
+        if clicks == 0:
+            empty = fun_core.roll_empty_cylinder()
+            self._roulette_empty[interaction.user.id] = empty
+        else:
+            empty = self._roulette_empty.get(interaction.user.id, False)
 
-        if not fun_core.spin_trigger(clicks):
-            self._roulette_clicks[interaction.user.id] = clicks + 1
+        chamber_text = i18n.t(
+            "fun.roulette.chamber",
+            lang,
+            current=clicks + 1,
+            total=fun_core.ROULETTE_CHAMBERS,
+        )
+        intro = i18n.pick_random("fun.roulette.intro", lang, INTRO_COUNT)
+
+        if not fun_core.spin_trigger(clicks, empty_cylinder=empty):
+            next_clicks = clicks + 1
+            reload_note = ""
+            if next_clicks >= fun_core.ROULETTE_CHAMBERS:
+                self._roulette_clicks[interaction.user.id] = 0
+                self._roulette_empty.pop(interaction.user.id, None)
+                if empty:
+                    reload_note = i18n.t("fun.roulette.empty_reload", lang)
+            else:
+                self._roulette_clicks[interaction.user.id] = next_clicks
             win_text = ""
             if bet > 0:
                 balance = economy_db.add(interaction.user.id, bet * 2, "roulette_win")
-                win_text = (
-                    f"\n💰 Ставка сыграла: **+{economy_core.format_amount(bet, econ)}** "
-                    f"(баланс: {economy_core.format_amount(balance, econ)})."
+                win_text = i18n.t(
+                    "fun.roulette.win_bet",
+                    lang,
+                    bet=economy_core.format_amount(bet, econ),
+                    balance=economy_core.format_amount(balance, econ),
                 )
+            outcome = i18n.pick_random("fun.roulette.survive", lang, SURVIVE_COUNT)
             return await interaction.response.send_message(
-                f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n"
-                f"{random.choice(SURVIVE_LINES)} {chamber_text}{win_text}"
+                i18n.t(
+                    "fun.roulette.play_line",
+                    lang,
+                    mention=interaction.user.mention,
+                    intro=intro,
+                    outcome=outcome,
+                    chamber=chamber_text,
+                    extra=win_text + reload_note,
+                )
             )
 
         self._roulette_clicks[interaction.user.id] = 0
+        self._roulette_empty.pop(interaction.user.id, None)
 
         timeout_minutes = settings["roulette_timeout_minutes"]
-        death_line = random.choice(DEATH_LINES)
+        death_line = i18n.pick_random("fun.roulette.death", lang, DEATH_COUNT)
         punished = False
         if timeout_minutes > 0 and interaction.guild is not None:
             try:
                 await interaction.user.timeout(
-                    timedelta(minutes=timeout_minutes), reason="Проигрыш в русской рулетке"
+                    timedelta(minutes=timeout_minutes),
+                    reason=i18n.t("fun.roulette.timeout_reason", lang),
                 )
                 punished = True
             except (discord.HTTPException, AttributeError):
                 logger.info("Не удалось выдать таймаут за рулетку пользователю %s", interaction.user.id)
 
         if punished:
-            suffix = f"{interaction.user.mention} выбывает и получает таймаут на **{timeout_minutes} мин**. 🪦"
+            suffix = i18n.t(
+                "fun.roulette.punished",
+                lang,
+                mention=interaction.user.mention,
+                minutes=timeout_minutes,
+            )
         elif timeout_minutes > 0:
-            suffix = f"{interaction.user.mention} должен был получить таймаут, но оказался неуязвим. Повезло. 😎"
+            suffix = i18n.t("fun.roulette.immune", lang, mention=interaction.user.mention)
         else:
-            suffix = f"{interaction.user.mention} выбывает. Почтим память минутой молчания. 🪦"
+            suffix = i18n.t("fun.roulette.eliminated", lang, mention=interaction.user.mention)
 
         bet_text = ""
         if bet > 0:
             balance = economy_db.get_balance(interaction.user.id)
-            bet_text = (
-                f"\n💸 Ставка **{economy_core.format_amount(bet, econ)}** сгорела "
-                f"(баланс: {economy_core.format_amount(balance, econ)})."
+            bet_text = i18n.t(
+                "fun.roulette.lost_bet",
+                lang,
+                bet=economy_core.format_amount(bet, econ),
+                balance=economy_core.format_amount(balance, econ),
             )
 
         await interaction.response.send_message(
-            f"🔫 {interaction.user.mention} {random.choice(INTRO_LINES)}\n"
-            f"{death_line} {chamber_text}\n{suffix}{bet_text}"
+            i18n.t(
+                "fun.roulette.death_line",
+                lang,
+                mention=interaction.user.mention,
+                intro=intro,
+                death=death_line,
+                chamber=chamber_text,
+                suffix=suffix,
+                bet_text=bet_text,
+            )
         )
-
-    # ────────────────────────── Эмодзи-рулетка ──────────────────────────
 
     @app_commands.command(name="эмодзи-рулетка", description="Крутануть рулетку и получить случайное эмодзи сервера")
     async def emoji_roulette(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         settings = fun_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
-            return await interaction.response.send_message("Модуль «Развлечения» отключён.", ephemeral=True)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "fun"), ephemeral=True
+            )
 
         emojis = list(interaction.guild.emojis) if interaction.guild else []
         emoji = fun_core.pick_emoji(emojis)
-        await interaction.response.send_message(f"🎰 {interaction.user.mention} крутит рулетку… выпало: {emoji}")
+        await interaction.response.send_message(
+            i18n.t("fun.emoji.result", lang, mention=interaction.user.mention, emoji=emoji)
+        )
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(FunCog(bot))
+    cog = FunCog(bot)
+    slash_registry.register_fun(cog)
+    await bot.add_cog(cog)

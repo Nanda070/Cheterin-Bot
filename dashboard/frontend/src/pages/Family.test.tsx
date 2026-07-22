@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { FamilyPage } from './Family'
@@ -33,7 +34,7 @@ describe('FamilyPage', () => {
 
   it('renders the module toggle and tabs', async () => {
     mockBaseFetches()
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Настройки' })).toBeInTheDocument()
@@ -46,17 +47,17 @@ describe('FamilyPage', () => {
     mockBaseFetches()
     const updateSpy = vi.spyOn(client, 'updateFamilySettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })))
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('adds a target role row in roster settings', async () => {
     mockBaseFetches()
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
 
     fireEvent.click(await screen.findByText('Добавить роль'))
 
@@ -71,7 +72,7 @@ describe('FamilyPage', () => {
       ],
     })
 
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Ростер' }))
 
     expect(await screen.findByText('Верхушка')).toBeInTheDocument()
@@ -106,7 +107,7 @@ describe('FamilyPage', () => {
     })
     const decideSpy = vi.spyOn(client, 'decideFamilyTicket').mockResolvedValue()
 
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Заявки' }))
 
     await screen.findByText('Nick · Applicant')
@@ -128,7 +129,7 @@ describe('FamilyPage', () => {
     })
     const setSpy = vi.spyOn(client, 'setFamilyBirthday').mockResolvedValue({ date_display: '06.02' })
 
-    render(<FamilyPage />)
+    renderWithLanguage(<FamilyPage />)
     fireEvent.click(await screen.findByRole('button', { name: 'Дни рождения' }))
 
     await screen.findByText('05.01')

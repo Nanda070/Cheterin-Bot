@@ -5,7 +5,9 @@ from datetime import timedelta
 import logging
 
 import bot_config
+import i18n
 import moderation_log
+import spam_core
 
 logger = logging.getLogger("chetbot.spam")
 
@@ -64,17 +66,17 @@ class Spam(commands.Cog):
         elif custom_id.startswith("spam_leave_"):
             await self._handle_spam_leave(interaction, custom_id)
 
-    def _make_disabled_spam_view(self, incident_id: str) -> discord.ui.View:
+    def _make_disabled_spam_view(self, incident_id: str, lang: str) -> discord.ui.View:
         """Создаёт вью с отключёнными кнопками для обновления сообщения."""
         view = discord.ui.View(timeout=None)
         ban_btn = discord.ui.Button(
-            label="Забанить",
+            label=i18n.t("spam.btn.ban", lang),
             style=discord.ButtonStyle.danger,
             custom_id=f"spam_ban_{incident_id}",
             disabled=True,
         )
         leave_btn = discord.ui.Button(
-            label="Оставить",
+            label=i18n.t("spam.btn.leave", lang),
             style=discord.ButtonStyle.secondary,
             custom_id=f"spam_leave_{incident_id}",
             disabled=True,
@@ -84,9 +86,10 @@ class Spam(commands.Cog):
         return view
 
     async def _handle_spam_ban(self, interaction: discord.Interaction, custom_id: str):
+        lang = i18n.lang_for(interaction.guild_id)
         if not interaction.user.guild_permissions.ban_members:
             return await interaction.response.send_message(
-                "У вас нет прав для этого.", ephemeral=True
+                i18n.t("spam.no_permission", lang), ephemeral=True
             )
 
         # custom_id = "spam_ban_{user_id}_{timestamp}"
@@ -103,41 +106,45 @@ class Spam(commands.Cog):
         try:
             await guild.ban(
                 discord.Object(id=target_id),
-                reason=f"Анти-Спам by {interaction.user.id} ({interaction.user.name})",
+                reason=i18n.t(
+                    "spam.ban_reason", lang,
+                    id=interaction.user.id, name=interaction.user.name,
+                ),
             )
         except discord.Forbidden:
             return await interaction.response.send_message(
-                "❌ Недостаточно прав для бана этого пользователя.", ephemeral=True
+                i18n.t("spam.ban_forbidden", lang), ephemeral=True
             )
         except discord.NotFound:
             return await interaction.response.send_message(
-                "⚠️ Пользователь не найден на сервере (возможно уже забанен/ушёл).", ephemeral=True
+                i18n.t("spam.ban_not_found", lang), ephemeral=True
             )
         except Exception as e:
             return await interaction.response.send_message(
-                f"Ошибка при бане: {e}", ephemeral=True
+                i18n.t("spam.ban_error", lang, error=e), ephemeral=True
             )
 
         # Бан прошёл успешно — блокируем кнопки
-        view = self._make_disabled_spam_view(incident_id)
+        view = self._make_disabled_spam_view(incident_id, lang)
         await interaction.response.edit_message(
-            content=f"✅ Пользователь забанен модератором {interaction.user.mention}.",
+            content=i18n.t("spam.ban_success", lang, mention=interaction.user.mention),
             view=view,
         )
 
     async def _handle_spam_leave(self, interaction: discord.Interaction, custom_id: str):
+        lang = i18n.lang_for(interaction.guild_id)
         if (
             not interaction.user.guild_permissions.ban_members
             and not interaction.user.guild_permissions.moderate_members
         ):
             return await interaction.response.send_message(
-                "У вас нет прав для этого.", ephemeral=True
+                i18n.t("spam.no_permission", lang), ephemeral=True
             )
 
         incident_id = custom_id.removeprefix("spam_leave_")
-        view = self._make_disabled_spam_view(incident_id)
+        view = self._make_disabled_spam_view(incident_id, lang)
         await interaction.response.edit_message(
-            content=f"🔵 Оставлено без действий модератором {interaction.user.mention}.",
+            content=i18n.t("spam.leave_success", lang, mention=interaction.user.mention),
             view=view,
         )
 
@@ -179,8 +186,9 @@ class Spam(commands.Cog):
         has_attachments = len(message.attachments) > 0
         signature = message.content.strip()
 
-        limit = 3 if has_attachments else 5
-        time_window = 60  # секунд
+        spam_settings = spam_core.get_settings(message.guild.id)
+        limit = spam_core.message_limit(spam_settings, has_attachments)
+        time_window = spam_settings["time_window_sec"]
 
         if user_id not in self.cache:
             self.cache[user_id] = []
@@ -224,14 +232,22 @@ class Spam(commands.Cog):
     async def _punish(self, message: discord.Message, matches: list, limit: int):
         member = message.author
         guild = message.guild
+        lang = i18n.lang_for(guild.id)
+        spam_settings = spam_core.get_settings(guild.id)
         log_channel_id = bot_config.get(guild.id, "SPAM_LOG_CHANNEL_ID")
         role_ping_id = bot_config.get(guild.id, "SPAM_LOG_ROLE_ID")
         signature = matches[0]["signature"]
+        log_reason = i18n.t(
+            "spam.log_reason",
+            lang,
+            limit=limit,
+            time_window=spam_settings["time_window_sec"],
+        )
 
         # Таймаут на 24 часа
         try:
             until = discord.utils.utcnow() + timedelta(days=1)
-            await member.timeout(until, reason="Анти-Спам (Упоминания)")
+            await member.timeout(until, reason=i18n.t("spam.timeout_reason", lang))
         except discord.Forbidden:
             logger.warning("Нет прав для таймаута %s", member.id)
         except Exception as e:
@@ -242,10 +258,11 @@ class Spam(commands.Cog):
 
         channels_spammed_for_log = list(set(f"<#{e['channel_id']}>" for e in matches))
         moderation_log.append_event(
+            guild.id,
             "spam_punish",
             member.id,
             member.name,
-            f"Спам массовыми тегами ({limit} одинаковых сообщений за 60 сек.)",
+            log_reason,
             extra=", ".join(channels_spammed_for_log),
         )
 
@@ -257,34 +274,34 @@ class Spam(commands.Cog):
             return
 
         embed = discord.Embed(
-            title="⚠️ Анти-Спам срабатывание",
+            title=i18n.t("spam.embed.title", lang),
             color=discord.Color.orange(),
         )
         embed.add_field(
-            name="Пользователь",
+            name=i18n.t("spam.embed.user", lang),
             value=f"{member.name} ({member.mention})",
             inline=False,
         )
         embed.add_field(name="ID", value=str(member.id), inline=True)
         embed.add_field(
-            name="Нарушение",
-            value=f"Спам массовыми тегами ({limit} одинаковых сообщений за 60 сек.)",
+            name=i18n.t("spam.embed.violation", lang),
+            value=log_reason,
             inline=False,
         )
         channels_spammed = list(set(f"<#{e['channel_id']}>" for e in matches))
         embed.add_field(
-            name="Затронутые каналы",
+            name=i18n.t("spam.embed.channels", lang),
             value=", ".join(channels_spammed),
             inline=False,
         )
         embed.add_field(
-            name="Сообщение",
-            value=signature[:1024] if signature else "Только медиа",
+            name=i18n.t("spam.embed.message", lang),
+            value=signature[:1024] if signature else i18n.t("spam.embed.message_media_only", lang),
             inline=False,
         )
         embed.add_field(
-            name="Наказание",
-            value="Таймаут 24 часа. Сообщения за 20 мин. удалены.",
+            name=i18n.t("spam.embed.punishment", lang),
+            value=i18n.t("spam.embed.punishment_value", lang),
             inline=False,
         )
         embed.timestamp = discord.utils.utcnow()
@@ -297,12 +314,12 @@ class Spam(commands.Cog):
         # Кнопки для лога (обрабатываются через on_interaction)
         view = discord.ui.View(timeout=None)
         ban_btn = discord.ui.Button(
-            label="Забанить",
+            label=i18n.t("spam.btn.ban", lang),
             style=discord.ButtonStyle.danger,
             custom_id=f"spam_ban_{incident_id}",
         )
         leave_btn = discord.ui.Button(
-            label="Оставить",
+            label=i18n.t("spam.btn.leave", lang),
             style=discord.ButtonStyle.secondary,
             custom_id=f"spam_leave_{incident_id}",
         )

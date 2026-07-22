@@ -12,6 +12,7 @@ logger = logging.getLogger("dashboard.audit")
 # Порядок важен: первое совпадение по (метод, префикс) даёт подпись
 ACTION_LABELS: list[tuple[str, str, str]] = [
     ("PUT", "/api/config", "Изменение конфигурации"),
+    ("PUT", "/api/language", "Язык бота сервера"),
     ("PUT", "/api/ctd", "Настройки тикетов CTD"),
     ("POST", "/api/lockdown/activate", "Включение антиспам-режима"),
     ("POST", "/api/lockdown/deactivate", "Выключение антиспам-режима"),

@@ -1,5 +1,6 @@
 import pytest
 
+import language_core
 import settings_db
 import xp_core
 
@@ -116,6 +117,9 @@ def test_format_voice_time():
     assert xp_core.format_voice_time(0) == "0 мин."
     assert "нед." in xp_core.format_voice_time(2 * 7 * 24 * 3600)
     assert "ч." in xp_core.format_voice_time(3 * 3600)
+    assert xp_core.format_voice_time(0, "en") == "0 min"
+    assert "wk" in xp_core.format_voice_time(2 * 7 * 24 * 3600, "en")
+    assert "h" in xp_core.format_voice_time(3 * 3600, "en")
 
 
 def test_settings_defaults():
@@ -125,3 +129,10 @@ def test_settings_defaults():
     assert settings["voice"]["multiplier"] == 100
     assert settings["level_rewards"] == []
     assert settings["voice_rewards"] == []
+    assert "Поздравляю" in settings["announce"]["template"]
+
+
+def test_settings_defaults_respect_guild_language():
+    language_core.set_language(404, "en")
+    settings = xp_core.get_settings(404)
+    assert "Congratulations" in settings["announce"]["template"]

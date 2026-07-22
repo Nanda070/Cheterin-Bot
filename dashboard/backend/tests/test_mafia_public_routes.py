@@ -60,6 +60,7 @@ async def test_public_state_mafia_sees_teammates_and_votes(aiohttp_client):
     resp = await client.get("/api/public/mafia/tok-20")
     assert resp.status == 200
     body = await resp.json()
+    assert body["language"] == "ru"
     assert body["your_role"] == "mafia"
     assert body["action_required"] is True
     assert body["your_action_submitted"] is True

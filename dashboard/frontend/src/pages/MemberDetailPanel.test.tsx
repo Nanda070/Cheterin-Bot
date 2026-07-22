@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithI18n } from '../test/renderWithI18n'
 import { MemberDetailPanel } from './MemberDetailPanel'
 
 const baseDetail: client.MemberDetail = {
@@ -27,7 +28,7 @@ describe('MemberDetailPanel warns', () => {
 
   it('shows no-warns message when member has none', async () => {
     mockBaseFetches()
-    render(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
+    renderWithI18n(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
 
     expect(await screen.findByText('Предупреждения (0)')).toBeInTheDocument()
     expect(screen.getByText('Предупреждений нет.')).toBeInTheDocument()
@@ -66,7 +67,7 @@ describe('MemberDetailPanel warns', () => {
       1,
     )
 
-    render(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
+    renderWithI18n(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
 
     expect(await screen.findByText('Предупреждения (1)')).toBeInTheDocument()
     expect(screen.getByText(/#1 — Спам/)).toBeInTheDocument()
@@ -92,7 +93,7 @@ describe('MemberDetailPanel warns', () => {
       active_count: 1,
     })
 
-    render(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
+    renderWithI18n(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
     await screen.findByText('Предупреждения (0)')
 
     fireEvent.click(screen.getByRole('button', { name: 'Выдать предупреждение' }))
@@ -123,7 +124,7 @@ describe('MemberDetailPanel warns', () => {
     )
     const deleteSpy = vi.spyOn(client, 'deleteWarn').mockResolvedValue()
 
-    render(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
+    renderWithI18n(<MemberDetailPanel memberId="100" onClose={() => {}} onActionDone={() => {}} />)
     await screen.findByText(/#5 — Спам/)
 
     fireEvent.click(screen.getByTitle('Снять предупреждение'))

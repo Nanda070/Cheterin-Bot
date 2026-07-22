@@ -11,6 +11,7 @@
 
 import random
 
+import i18n
 import settings_db
 
 MODULE_NAME = "xp"
@@ -31,13 +32,22 @@ TEXT_XP_COOLDOWN = 60  # секунд
 
 VOICE_XP_PER_ACTIVE_MINUTE = 6  # дефолт базового XP за минуту на одного активного (паритет с Juniper)
 
-DEFAULT_ANNOUNCE_TEMPLATE = (
+DEFAULT_ANNOUNCE_TEMPLATE_RU = (
     "Поздравляю {{member}}! 🎉\n"
     "Вы достигли **{{level}}** уровня. Спасибо за вашу активность на сервере!"
 )
+DEFAULT_ANNOUNCE_TEMPLATE_EN = (
+    "Congratulations {{member}}! 🎉\n"
+    "You reached **{{level}}** level. Thank you for your activity on the server!"
+)
+DEFAULT_ANNOUNCE_TEMPLATE = DEFAULT_ANNOUNCE_TEMPLATE_RU
 
 def save_config(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, MODULE_NAME, data)
+
+
+def _default_announce_template(guild_id: int) -> str:
+    return i18n.t("xp.default_announce_template", i18n.lang_for(guild_id))
 
 
 def get_settings(guild_id: int) -> dict:
@@ -46,6 +56,8 @@ def get_settings(guild_id: int) -> dict:
     text = data.get("text", {})
     voice = data.get("voice", {})
     announce = data.get("announce", {})
+    stored_template = announce.get("template")
+    announce_template = str(stored_template) if stored_template else _default_announce_template(guild_id)
     return {
         "enabled": bool(data.get("enabled", False)),
         "public_leaderboard": bool(data.get("public_leaderboard", True)),
@@ -72,7 +84,7 @@ def get_settings(guild_id: int) -> dict:
         "announce": {
             "enabled": bool(announce.get("enabled", True)),
             "channel_id": str(announce.get("channel_id") or ""),
-            "template": str(announce.get("template") or DEFAULT_ANNOUNCE_TEMPLATE),
+            "template": announce_template,
             "delete_after": int(announce.get("delete_after", 0)),
         },
         "level_rewards": [
@@ -194,19 +206,19 @@ def render_announce(template: str, member_mention: str, level: int, roles_added:
     return text.strip()
 
 
-def format_voice_time(seconds: int) -> str:
-    """Человекочитаемое время войса: «2 нед. 1 д. 3 ч.»"""
+def format_voice_time(seconds: int, lang: str = "ru") -> str:
+    """Человекочитаемое время войса: «2 нед. 1 д. 3 ч.» / «2 wk 1 d 3 h»."""
     minutes = seconds // 60
     weeks, rem = divmod(minutes, 7 * 24 * 60)
     days, rem = divmod(rem, 24 * 60)
     hours, mins = divmod(rem, 60)
     parts = []
     if weeks:
-        parts.append(f"{weeks} нед.")
+        parts.append(i18n.t("xp.voice_time.week", lang, n=weeks))
     if days:
-        parts.append(f"{days} д.")
+        parts.append(i18n.t("xp.voice_time.day", lang, n=days))
     if hours:
-        parts.append(f"{hours} ч.")
+        parts.append(i18n.t("xp.voice_time.hour", lang, n=hours))
     if mins or not parts:
-        parts.append(f"{mins} мин.")
+        parts.append(i18n.t("xp.voice_time.min", lang, n=mins))
     return " ".join(parts)

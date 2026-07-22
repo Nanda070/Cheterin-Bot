@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   deleteBracket,
@@ -7,18 +7,15 @@ import {
   fetchBracketDetail,
   setBracketMatchWinner,
   type BracketDetail,
+  type BracketFormat,
 } from '../api/client'
 import { BracketView, type PickHandler } from '../components/BracketView'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
-
-const FORMAT_LABEL: Record<string, string> = {
-  single_elim: 'Single Elimination',
-  double_elim: 'Double Elimination',
-  round_robin: 'Round Robin',
-}
+import { useT } from '../context/LanguageContext'
 
 export function BracketDetailPage() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [bracket, setBracket] = useState<BracketDetail | null>(null)
@@ -27,6 +24,11 @@ export function BracketDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
 
+  const formatLabel = (format: BracketFormat | string) => {
+    const key = `brackets.format.${format === 'single_elim' ? 'singleElim' : format === 'double_elim' ? 'doubleElim' : 'roundRobin'}`
+    return t(key)
+  }
+
   const reload = () => {
     if (!id) return
     fetchBracketDetail(id)
@@ -34,10 +36,10 @@ export function BracketDetailPage() {
         setBracket(b)
         setError('')
       })
-      .catch(() => setError('Не удалось загрузить сетку'))
+      .catch(() => setError(t('brackets.detail.errorLoad')))
   }
 
-  useEffect(reload, [id])
+  useEffect(reload, [id, t])
 
   const pickWinner: PickHandler = async (segment, roundIndex, matchIndex, winner) => {
     if (!id) return
@@ -45,7 +47,7 @@ export function BracketDetailPage() {
       const updated = await setBracketMatchWinner(id, roundIndex, matchIndex, winner, segment)
       setBracket(updated)
     } catch {
-      setError('Не удалось сохранить результат')
+      setError(t('brackets.detail.errorSave'))
     }
   }
 
@@ -61,7 +63,7 @@ export function BracketDetailPage() {
         setBracket({ ...bracket, share_token: token })
       }
     } catch {
-      setError('Не удалось изменить доступ к ссылке')
+      setError(t('brackets.detail.errorShare'))
     } finally {
       setShareBusy(false)
     }
@@ -74,13 +76,13 @@ export function BracketDetailPage() {
       await deleteBracket(id)
       navigate('/brackets')
     } catch {
-      setError('Не удалось удалить сетку')
+      setError(t('brackets.detail.errorDelete'))
       setDeleteBusy(false)
     }
   }
 
   if (!bracket) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const shareUrl = bracket.share_token ? `${window.location.origin}/bracket/${bracket.share_token}` : null
@@ -90,19 +92,19 @@ export function BracketDetailPage() {
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-lg font-semibold text-foreground">{bracket.title}</h1>
         <span className="rounded-full bg-primary-muted px-2.5 py-0.5 text-xs text-foreground">
-          {FORMAT_LABEL[bracket.format] ?? bracket.format}
+          {formatLabel(bracket.format)}
         </span>
         <Button variant="secondary" onClick={toggleShare} disabled={shareBusy} className="ml-auto">
-          {bracket.share_token ? 'Отключить ссылку' : 'Поделиться ссылкой'}
+          {bracket.share_token ? t('brackets.detail.shareDisable') : t('brackets.detail.shareEnable')}
         </Button>
         <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
-          Удалить
+          {t('common.delete')}
         </Button>
       </div>
 
       {shareUrl && (
         <p className="mb-4 text-sm text-muted">
-          Публичная ссылка: <span className="text-foreground">{shareUrl}</span>
+          {t('brackets.detail.publicLink')} <span className="text-foreground">{shareUrl}</span>
         </p>
       )}
 
@@ -110,14 +112,14 @@ export function BracketDetailPage() {
 
       <BracketView bracket={bracket} onPick={pickWinner} />
 
-      <Modal open={confirmingDelete} title="Удалить сетку?" onClose={() => setConfirmingDelete(false)}>
-        <p className="mb-4 text-sm text-muted">Это действие необратимо.</p>
+      <Modal open={confirmingDelete} title={t('brackets.detail.deleteConfirm')} onClose={() => setConfirmingDelete(false)}>
+        <p className="mb-4 text-sm text-muted">{t('brackets.detail.deleteIrreversible')}</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setConfirmingDelete(false)} disabled={deleteBusy}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDelete} disabled={deleteBusy}>
-            {deleteBusy ? 'Удаляем…' : 'Подтвердить'}
+            {deleteBusy ? t('common.deleting') : t('common.confirm')}
           </Button>
         </div>
       </Modal>

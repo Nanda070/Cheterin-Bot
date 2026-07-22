@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { CasinoPage } from './Casino'
 
 const emptySettings: client.CasinoSettings = {
@@ -25,7 +26,7 @@ describe('CasinoPage', () => {
   it('renders settings and an empty leaderboard', async () => {
     vi.spyOn(client, 'fetchCasinoSettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchCasinoLeaderboard').mockResolvedValue(emptyLeaderboard)
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
 
     expect(await screen.findByText('Выключено')).toBeInTheDocument()
     expect(screen.getByText('Настройки игры')).toBeInTheDocument()
@@ -39,7 +40,7 @@ describe('CasinoPage', () => {
     const updateSpy = vi
       .spyOn(client, 'updateCasinoSettings')
       .mockResolvedValue({ ...emptySettings, enabled: true, house_edge_percent: 10 })
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
 
     fireEvent.click(await screen.findByLabelText('Выключено'))
     fireEvent.change(screen.getByLabelText(/Преимущество казино/), { target: { value: '10' } })
@@ -48,14 +49,14 @@ describe('CasinoPage', () => {
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, house_edge_percent: 10 })),
     )
-    expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
+    expect(await screen.findByText('Сохранено')).toBeInTheDocument()
   })
 
   it('adds and removes a loss-role rule', async () => {
     vi.spyOn(client, 'fetchCasinoSettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchCasinoLeaderboard').mockResolvedValue(emptyLeaderboard)
     const updateSpy = vi.spyOn(client, 'updateCasinoSettings').mockImplementation(async (s) => s)
-    const { container } = render(<CasinoPage />)
+    const { container } = renderWithLanguage(<CasinoPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Добавить роль/ }))
     fireEvent.change(screen.getByPlaceholderText('ID роли'), { target: { value: '777' } })
@@ -68,7 +69,7 @@ describe('CasinoPage', () => {
         }),
       ),
     )
-    await screen.findByText('Сохранено.')
+    await screen.findByText('Сохранено')
 
     const removeButton = container.querySelector('input[placeholder="ID роли"]')!.closest('div')!.querySelector('button')!
     fireEvent.click(removeButton)
@@ -78,7 +79,7 @@ describe('CasinoPage', () => {
   it('strips non-digit characters from the role id field', async () => {
     vi.spyOn(client, 'fetchCasinoSettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchCasinoLeaderboard').mockResolvedValue(emptyLeaderboard)
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Добавить роль/ }))
     const roleInput = screen.getByPlaceholderText('ID роли') as HTMLInputElement
@@ -97,7 +98,7 @@ describe('CasinoPage', () => {
       page: 1,
       page_size: 50,
     })
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
 
     expect(await screen.findByText('Rich')).toBeInTheDocument()
     // Дефолтный режим — «Проигрыши»: slots_losses(2) + bj_losses(1) = 3
@@ -127,7 +128,7 @@ describe('CasinoPage', () => {
       page: 1,
       page_size: 50,
     })
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
 
     await screen.findByText('Player0')
     const nextButton = screen.getByRole('button', { name: 'Вперёд' })
@@ -143,7 +144,7 @@ describe('CasinoPage', () => {
   it('shows an error when loading settings fails', async () => {
     vi.spyOn(client, 'fetchCasinoSettings').mockRejectedValue(new Error('fail'))
     vi.spyOn(client, 'fetchCasinoLeaderboard').mockResolvedValue(emptyLeaderboard)
-    render(<CasinoPage />)
+    renderWithLanguage(<CasinoPage />)
     expect(await screen.findByText('Не удалось загрузить настройки казино')).toBeInTheDocument()
   })
 })

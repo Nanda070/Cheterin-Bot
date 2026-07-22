@@ -1,7 +1,8 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { LanguageProvider } from '../context/LanguageContext'
 import { MembersPage } from './Members'
 
 const page = (members: Partial<client.MemberSummary>[], total = members.length): client.MembersPage => ({
@@ -27,7 +28,9 @@ describe('MembersPage', () => {
     vi.spyOn(client, 'fetchMembers').mockResolvedValue(page([{ username: 'Alpha' }, { username: 'Beta' }]))
     render(
       <MemoryRouter>
-        <MembersPage />
+        <LanguageProvider>
+          <MembersPage />
+        </LanguageProvider>
       </MemoryRouter>,
     )
     await waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument())
@@ -39,7 +42,9 @@ describe('MembersPage', () => {
     const spy = vi.spyOn(client, 'fetchMembers').mockResolvedValue(page([]))
     render(
       <MemoryRouter>
-        <MembersPage />
+        <LanguageProvider>
+          <MembersPage />
+        </LanguageProvider>
       </MemoryRouter>,
     )
     await waitFor(() => expect(spy).toHaveBeenCalledWith('', 1))
@@ -69,7 +74,9 @@ describe('MembersPage', () => {
 
     render(
       <MemoryRouter>
-        <MembersPage />
+        <LanguageProvider>
+          <MembersPage />
+        </LanguageProvider>
       </MemoryRouter>,
     )
     await waitFor(() => screen.getByText('Clicky'))

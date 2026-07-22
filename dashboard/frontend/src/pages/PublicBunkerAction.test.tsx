@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
+import { renderWithLanguage } from '../test/renderWithLanguage'
 import { PublicBunkerActionPage } from './PublicBunkerAction'
 
 const baseState: client.BunkerPublicState = {
@@ -45,7 +46,7 @@ const baseState: client.BunkerPublicState = {
 }
 
 function renderAt(token: string) {
-  return render(
+  return renderWithLanguage(
     <MemoryRouter initialEntries={[`/bunker/${token}`]}>
       <Routes>
         <Route path="/bunker/:token" element={<PublicBunkerActionPage />} />
@@ -136,5 +137,14 @@ describe('PublicBunkerActionPage', () => {
 
     await screen.findByText('Пожарный (Эксперт, есть способность) — МЧС')
     expect(screen.queryByText('Голосование за исключение')).not.toBeInTheDocument()
+  })
+
+  it('switches UI language when API returns language', async () => {
+    vi.spyOn(client, 'fetchPublicBunker').mockResolvedValue({ ...baseState, language: 'en' })
+    renderAt('my-token')
+
+    expect(await screen.findByText('Bunker game')).toBeInTheDocument()
+    expect(screen.getByText('Your card')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Reveal' }).length).toBeGreaterThan(0)
   })
 })

@@ -12,6 +12,8 @@ import random
 import string
 
 import events_core
+import i18n
+import slash_registry
 import settings_db
 
 logger = logging.getLogger("chetbot.events")
@@ -37,7 +39,7 @@ def upsert_embed_field(embed: discord.Embed, name: str, value: str, inline: bool
     embed.add_field(name=name, value=value, inline=inline)
 
 
-def rebuild_event_embed(embed: discord.Embed, event_data: dict) -> discord.Embed:
+def rebuild_event_embed(embed: discord.Embed, event_data: dict, lang: str) -> discord.Embed:
     emb = embed.copy()
     if event_data["type"] == "tournament":
         participants = event_data.get("participants", [])
@@ -46,12 +48,17 @@ def rebuild_event_embed(embed: discord.Embed, event_data: dict) -> discord.Embed
             current_count = len(teams)
         else:
             current_count = len(participants)
-            
+
         max_limit = event_data.get("max_limit", 0)
         if max_limit > 0:
-            upsert_embed_field(emb, "Лимит", f"{current_count} / {max_limit}", inline=True)
+            upsert_embed_field(
+                emb,
+                i18n.t("events.field.limit", lang),
+                i18n.t("events.field.limit_value", lang, current=current_count, max=max_limit),
+                inline=True,
+            )
         else:
-            upsert_embed_field(emb, "Участники", str(current_count), inline=True)
+            upsert_embed_field(emb, i18n.t("events.field.participants", lang), str(current_count), inline=True)
     else:
         votes = event_data.get("votes", {})
         opts = event_data.get("options", [])
@@ -62,12 +69,12 @@ def rebuild_event_embed(embed: discord.Embed, event_data: dict) -> discord.Embed
                 if v < len(counts):
                     counts[v] += 1
                     total += 1
-        
+
         for idx, opt in enumerate(opts):
             c = counts[idx]
             pct = int((c / total * 100) if total > 0 else 0)
             bars = "🟩" * (pct // 10) + "⬛" * (10 - (pct // 10))
-            upsert_embed_field(emb, opt, f"{bars} {pct}% ({c} гол.)", inline=False)
+            upsert_embed_field(emb, opt, i18n.t("events.poll.bar", lang, bars=bars, pct=pct, count=c), inline=False)
     return emb
 
 
@@ -94,15 +101,15 @@ class DraftEvent:
         self.multi_select = False
 
 
-class TextModal(discord.ui.Modal, title="Текст события"):
-    def __init__(self, draft: DraftEvent, view):
-        super().__init__()
+class TextModal(discord.ui.Modal):
+    def __init__(self, draft: DraftEvent, view, lang: str):
+        super().__init__(title=i18n.t("events.modal.text.title", lang))
         self.draft = draft
         self.builder_view = view
-        
-        self.inp_title = discord.ui.TextInput(label="Заголовок", style=discord.TextStyle.short, default=draft.title, required=True, max_length=100)
-        self.inp_desc = discord.ui.TextInput(label="Описание", style=discord.TextStyle.paragraph, default=draft.description, required=True, max_length=2000)
-        self.inp_banner = discord.ui.TextInput(label="URL баннера (опционально)", style=discord.TextStyle.short, default=draft.banner_url, required=False)
+
+        self.inp_title = discord.ui.TextInput(label=i18n.t("events.modal.text.title_label", lang), style=discord.TextStyle.short, default=draft.title, required=True, max_length=100)
+        self.inp_desc = discord.ui.TextInput(label=i18n.t("events.modal.text.desc_label", lang), style=discord.TextStyle.paragraph, default=draft.description, required=True, max_length=2000)
+        self.inp_banner = discord.ui.TextInput(label=i18n.t("events.modal.text.banner_label", lang), style=discord.TextStyle.short, default=draft.banner_url, required=False)
         self.add_item(self.inp_title)
         self.add_item(self.inp_desc)
         self.add_item(self.inp_banner)
@@ -114,14 +121,15 @@ class TextModal(discord.ui.Modal, title="Текст события"):
         await self.builder_view.refresh(interaction)
 
 
-class LimitsModal(discord.ui.Modal, title="Настройка лимитов"):
-    def __init__(self, draft: DraftEvent, view):
-        super().__init__()
+class LimitsModal(discord.ui.Modal):
+    def __init__(self, draft: DraftEvent, view, lang: str):
+        super().__init__(title=i18n.t("events.modal.limits.title", lang))
         self.draft = draft
         self.builder_view = view
-        
-        self.inp_max = discord.ui.TextInput(label="Макс. участников/команд (0 = безлимит)", style=discord.TextStyle.short, default=str(draft.max_limit), required=True)
-        self.inp_team = discord.ui.TextInput(label="Размер команды", style=discord.TextStyle.short, default=str(draft.team_size), required=True)
+        self.lang = lang
+
+        self.inp_max = discord.ui.TextInput(label=i18n.t("events.modal.limits.max", lang), style=discord.TextStyle.short, default=str(draft.max_limit), required=True)
+        self.inp_team = discord.ui.TextInput(label=i18n.t("events.modal.limits.team", lang), style=discord.TextStyle.short, default=str(draft.team_size), required=True)
         self.add_item(self.inp_max)
         if draft.mode != "solo":
             self.add_item(self.inp_team)
@@ -132,18 +140,19 @@ class LimitsModal(discord.ui.Modal, title="Настройка лимитов"):
             if self.draft.mode != "solo":
                 self.draft.team_size = max(2, int(self.inp_team.value.strip()))
         except ValueError:
-            await interaction.response.send_message("Ошибка: Введите число!", ephemeral=True)
+            await interaction.response.send_message(i18n.t("events.error.not_number", self.lang), ephemeral=True)
             return
         await self.builder_view.refresh(interaction)
 
 
-class OptionsModal(discord.ui.Modal, title="Варианты ответа (каждый с новой строки)"):
-    def __init__(self, draft: DraftEvent, view):
-        super().__init__()
+class OptionsModal(discord.ui.Modal):
+    def __init__(self, draft: DraftEvent, view, lang: str):
+        super().__init__(title=i18n.t("events.modal.options.title", lang))
         self.draft = draft
         self.builder_view = view
-        
-        self.inp_opts = discord.ui.TextInput(label="Варианты (Макс 10 строк)", style=discord.TextStyle.paragraph, default="\n".join(draft.options), required=True, max_length=1000)
+        self.lang = lang
+
+        self.inp_opts = discord.ui.TextInput(label=i18n.t("events.modal.options.label", lang), style=discord.TextStyle.paragraph, default="\n".join(draft.options), required=True, max_length=1000)
         self.add_item(self.inp_opts)
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -151,16 +160,17 @@ class OptionsModal(discord.ui.Modal, title="Варианты ответа (ка�
         if len(lines) > 10:
             lines = lines[:10]
         if len(lines) < 2:
-            await interaction.response.send_message("Нужно минимум 2 варианта ответа!", ephemeral=True)
+            await interaction.response.send_message(i18n.t("events.error.min_options", self.lang), ephemeral=True)
             return
         self.draft.options = lines
         await self.builder_view.refresh(interaction)
 
 
 class EventPublishSelect(discord.ui.ChannelSelect):
-    def __init__(self, view):
-        super().__init__(placeholder="🚀 Опубликовать (Выбрать канал)", channel_types=[discord.ChannelType.text, discord.ChannelType.news], min_values=1, max_values=1, row=4)
+    def __init__(self, view, lang: str):
+        super().__init__(placeholder=i18n.t("events.publish.placeholder", lang), channel_types=[discord.ChannelType.text, discord.ChannelType.news], min_values=1, max_values=1, row=4)
         self.builder_view = view
+        self.lang = lang
 
     async def callback(self, interaction: discord.Interaction):
         channel = self.values[0]
@@ -181,10 +191,7 @@ class EventPublishSelect(discord.ui.ChannelSelect):
         }
         error = events_core.validate_event_spec(spec)
         if error:
-            await interaction.response.send_message(
-                "❌ Проверьте настройки события (название, описание, варианты и т.д.) — что-то заполнено некорректно.",
-                ephemeral=True,
-            )
+            await interaction.response.send_message(i18n.t("events.error.invalid_spec", self.lang), ephemeral=True)
             return
 
         await interaction.response.defer(ephemeral=True)
@@ -192,35 +199,43 @@ class EventPublishSelect(discord.ui.ChannelSelect):
 
 
 class EventBuilderView(discord.ui.View):
-    def __init__(self, bot, author_id: int):
+    def __init__(self, bot, author_id: int, lang: str):
         super().__init__(timeout=600)
         self.bot = bot
+        self.lang = lang
         self.draft = DraftEvent(author_id)
         self.update_buttons()
 
     def build_embed(self) -> discord.Embed:
         d = self.draft
-        emb = discord.Embed(title="🎛️ Конструктор событий", color=discord.Color.gold())
-        emb.add_field(name="Тип события", value="Турнир/Регистрация" if d.type == "tournament" else "Опрос/Голосование", inline=False)
-        emb.add_field(name="Название", value=d.title or "❌ Не задано", inline=True)
+        lang = self.lang
+        emb = discord.Embed(title=i18n.t("events.builder.title", lang), color=discord.Color.gold())
+        type_val = i18n.t("events.builder.type_tournament", lang) if d.type == "tournament" else i18n.t("events.builder.type_poll", lang)
+        emb.add_field(name=i18n.t("events.builder.type", lang), value=type_val, inline=False)
+        emb.add_field(name=i18n.t("events.builder.name", lang), value=d.title or i18n.t("events.builder.not_set", lang), inline=True)
         desc = d.description[:100] + "..." if len(d.description) > 100 else d.description
-        emb.add_field(name="Описание", value=desc or "❌ Не задано", inline=True)
-        
+        emb.add_field(name=i18n.t("events.builder.description", lang), value=desc or i18n.t("events.builder.not_set", lang), inline=True)
+
         if d.type == "tournament":
-            mode_str = {"solo": "Соло", "team_captain": "Командный (Капитан)", "team_code": "Командный (По коду)"}.get(d.mode)
-            emb.add_field(name="Формат", value=mode_str, inline=True)
-            emb.add_field(name="Анкета (Ники)", value="✅ Да" if d.require_info else "❌ Нет", inline=True)
-            limits = f"{d.max_limit if d.max_limit > 0 else '♾️'}"
-            if d.mode != "solo": limits += f" (команд по {d.team_size} чел)"
-            emb.add_field(name="Лимиты", value=limits, inline=True)
-            emb.add_field(name="Выдаваемая роль", value=f"<@&{d.role_reward}>" if d.role_reward else "❌ Нет", inline=True)
+            mode_str = {
+                "solo": i18n.t("events.builder.mode.solo", lang),
+                "team_captain": i18n.t("events.builder.mode.team_captain", lang),
+                "team_code": i18n.t("events.builder.mode.team_code", lang),
+            }.get(d.mode)
+            emb.add_field(name=i18n.t("events.builder.format", lang), value=mode_str, inline=True)
+            emb.add_field(name=i18n.t("events.builder.form", lang), value=i18n.t("events.builder.yes", lang) if d.require_info else i18n.t("events.builder.no", lang), inline=True)
+            limits = f"{d.max_limit if d.max_limit > 0 else i18n.t('events.builder.unlimited', lang)}"
+            if d.mode != "solo":
+                limits += i18n.t("events.builder.team_size_suffix", lang, size=d.team_size)
+            emb.add_field(name=i18n.t("events.builder.limits", lang), value=limits, inline=True)
+            emb.add_field(name=i18n.t("events.builder.role", lang), value=f"<@&{d.role_reward}>" if d.role_reward else i18n.t("events.builder.no", lang), inline=True)
         else:
-            opts = "\n".join(f"• {x}" for x in d.options) if d.options else "❌ Нет вариантов"
-            emb.add_field(name="Варианты ответа", value=opts, inline=False)
-            emb.add_field(name="Мульти-выбор", value="✅ Да" if d.multi_select else "❌ Нет", inline=True)
-            
-        ping_str = {"none": "❌ Нет", "everyone": "@everyone", "here": "@here"}.get(d.ping, f"<@&{d.ping}>")
-        emb.add_field(name="Пинг", value=ping_str, inline=True)
+            opts = "\n".join(f"• {x}" for x in d.options) if d.options else i18n.t("events.builder.no_options", lang)
+            emb.add_field(name=i18n.t("events.builder.options", lang), value=opts, inline=False)
+            emb.add_field(name=i18n.t("events.builder.multi", lang), value=i18n.t("events.builder.yes", lang) if d.multi_select else i18n.t("events.builder.no", lang), inline=True)
+
+        ping_str = {"none": i18n.t("events.builder.ping_none", lang), "everyone": "@everyone", "here": "@here"}.get(d.ping, f"<@&{d.ping}>")
+        emb.add_field(name=i18n.t("events.builder.ping", lang), value=ping_str, inline=True)
         if d.banner_url:
             emb.set_thumbnail(url=d.banner_url)
         return emb
@@ -228,45 +243,48 @@ class EventBuilderView(discord.ui.View):
     def update_buttons(self):
         self.clear_items()
         d = self.draft
-        
-        btn_type = discord.ui.Button(label="Сменить тип", style=discord.ButtonStyle.primary, row=0)
+        lang = self.lang
+
+        btn_type = discord.ui.Button(label=i18n.t("events.builder.btn.type", lang), style=discord.ButtonStyle.primary, row=0)
         btn_type.callback = self.cb_type
         self.add_item(btn_type)
-        
-        btn_text = discord.ui.Button(label="Название и Текст", style=discord.ButtonStyle.secondary, row=0)
+
+        btn_text = discord.ui.Button(label=i18n.t("events.builder.btn.text", lang), style=discord.ButtonStyle.secondary, row=0)
         btn_text.callback = self.cb_text
         self.add_item(btn_text)
-        
-        btn_ping = discord.ui.Button(label="Пинг: " + str(d.ping), style=discord.ButtonStyle.secondary, row=0)
+
+        btn_ping = discord.ui.Button(label=i18n.t("events.builder.btn.ping", lang, ping=str(d.ping)), style=discord.ButtonStyle.secondary, row=0)
         btn_ping.callback = self.cb_ping
         self.add_item(btn_ping)
 
         if d.type == "tournament":
-            btn_mode = discord.ui.Button(label="Формат: " + d.mode, style=discord.ButtonStyle.secondary, row=1)
+            btn_mode = discord.ui.Button(label=i18n.t("events.builder.btn.mode", lang, mode=d.mode), style=discord.ButtonStyle.secondary, row=1)
             btn_mode.callback = self.cb_mode
             self.add_item(btn_mode)
-            
-            btn_info = discord.ui.Button(label="Анкета: " + ("ВКЛ" if d.require_info else "ВЫКЛ"), style=discord.ButtonStyle.secondary, row=1)
+
+            form_label = i18n.t("events.builder.btn.form_on", lang) if d.require_info else i18n.t("events.builder.btn.form_off", lang)
+            btn_info = discord.ui.Button(label=form_label, style=discord.ButtonStyle.secondary, row=1)
             btn_info.callback = self.cb_info
             self.add_item(btn_info)
-            
-            btn_limits = discord.ui.Button(label="Лимиты", style=discord.ButtonStyle.secondary, row=1)
+
+            btn_limits = discord.ui.Button(label=i18n.t("events.builder.btn.limits", lang), style=discord.ButtonStyle.secondary, row=1)
             btn_limits.callback = self.cb_limits
             self.add_item(btn_limits)
-            
-            role_select = discord.ui.RoleSelect(placeholder="🏷️ Выбрать роль для авто-выдачи", min_values=1, max_values=1, row=2)
+
+            role_select = discord.ui.RoleSelect(placeholder=i18n.t("events.builder.role_placeholder", lang), min_values=1, max_values=1, row=2)
             role_select.callback = self.cb_role
             self.add_item(role_select)
         else:
-            btn_opts = discord.ui.Button(label="Варианты ответа", style=discord.ButtonStyle.secondary, row=1)
+            btn_opts = discord.ui.Button(label=i18n.t("events.builder.btn.options", lang), style=discord.ButtonStyle.secondary, row=1)
             btn_opts.callback = self.cb_opts
             self.add_item(btn_opts)
-            
-            btn_multi = discord.ui.Button(label="Мультивыбор: " + ("ВКЛ" if d.multi_select else "ВЫКЛ"), style=discord.ButtonStyle.secondary, row=1)
+
+            multi_label = i18n.t("events.builder.btn.multi_on", lang) if d.multi_select else i18n.t("events.builder.btn.multi_off", lang)
+            btn_multi = discord.ui.Button(label=multi_label, style=discord.ButtonStyle.secondary, row=1)
             btn_multi.callback = self.cb_multi
             self.add_item(btn_multi)
 
-        self.add_item(EventPublishSelect(self))
+        self.add_item(EventPublishSelect(self, lang))
 
     async def refresh(self, interaction: discord.Interaction):
         self.update_buttons()
@@ -280,7 +298,7 @@ class EventBuilderView(discord.ui.View):
         await self.refresh(interaction)
 
     async def cb_text(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(TextModal(self.draft, self))
+        await interaction.response.send_modal(TextModal(self.draft, self, self.lang))
 
     async def cb_ping(self, interaction: discord.Interaction):
         cycles = ["none", "everyone", "here"]
@@ -299,14 +317,14 @@ class EventBuilderView(discord.ui.View):
         await self.refresh(interaction)
 
     async def cb_limits(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(LimitsModal(self.draft, self))
+        await interaction.response.send_modal(LimitsModal(self.draft, self, self.lang))
 
     async def cb_role(self, interaction: discord.Interaction):
         self.draft.role_reward = interaction.data["values"][0]
         await self.refresh(interaction)
 
     async def cb_opts(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(OptionsModal(self.draft, self))
+        await interaction.response.send_modal(OptionsModal(self.draft, self, self.lang))
 
     async def cb_multi(self, interaction: discord.Interaction):
         self.draft.multi_select = not self.draft.multi_select
@@ -322,7 +340,7 @@ class EventBuilderView(discord.ui.View):
             try:
                 resolved_channel = await self.bot.fetch_channel(channel.id)
             except Exception:
-                await interaction.edit_original_response(content="❌ Не удалось получить доступ к выбранному каналу.")
+                await interaction.edit_original_response(content=i18n.t("events.error.channel_access", self.lang))
                 return
 
         spec = {
@@ -343,7 +361,7 @@ class EventBuilderView(discord.ui.View):
 
         self.clear_items()
         await interaction.edit_original_response(
-            content=f"✅ Успешно опубликовано в {resolved_channel.mention}!\nID сообщения: `{msg.id}`",
+            content=i18n.t("events.published", self.lang, channel=resolved_channel.mention, message_id=msg.id),
             embed=None,
             view=None,
         )
@@ -353,137 +371,148 @@ class EventBuilderView(discord.ui.View):
 # REGISTRATION MODALS
 # ==========================================
 
-class RegisterSoloModal(discord.ui.Modal, title="Регистрация"):
-    def __init__(self, message_id: str, require_info: bool):
-        super().__init__()
+class RegisterSoloModal(discord.ui.Modal):
+    def __init__(self, message_id: str, require_info: bool, lang: str):
+        super().__init__(title=i18n.t("events.modal.register_solo.title", lang))
         self.message_id = message_id
         self.require_info = require_info
         if require_info:
-            self.inp_ign = discord.ui.TextInput(label="Ваш игровой ник", style=discord.TextStyle.short, required=True, max_length=50)
+            self.inp_ign = discord.ui.TextInput(label=i18n.t("events.modal.register_solo.ign", lang), style=discord.TextStyle.short, required=True, max_length=50)
             self.add_item(self.inp_ign)
         else:
-            self.inp_ign = discord.ui.TextInput(label="Подтверждение", style=discord.TextStyle.short, default="Участвую!", required=True, max_length=20)
+            self.inp_ign = discord.ui.TextInput(
+                label=i18n.t("events.modal.register_solo.confirm", lang),
+                style=discord.TextStyle.short,
+                default=i18n.t("events.modal.register_solo.confirm_default", lang),
+                required=True,
+                max_length=20,
+            )
             self.add_item(self.inp_ign)
 
     async def on_submit(self, interaction: discord.Interaction):
-        ign = self.inp_ign.value.strip() if self.require_info else "—"
+        lang = i18n.lang_for(interaction.guild_id)
+        ign = self.inp_ign.value.strip() if self.require_info else i18n.t("events.ign_placeholder", lang)
         await handle_registration(interaction, self.message_id, "solo", ign=ign)
 
 
-class RegisterTeamCaptainModal(discord.ui.Modal, title="Регистрация команды"):
-    def __init__(self, message_id: str, team_size: int, require_info: bool):
-        super().__init__()
+class RegisterTeamCaptainModal(discord.ui.Modal):
+    def __init__(self, message_id: str, team_size: int, require_info: bool, lang: str):
+        super().__init__(title=i18n.t("events.modal.register_team.title", lang))
         self.message_id = message_id
         self.require_info = require_info
-        self.inp_team = discord.ui.TextInput(label="Название команды", style=discord.TextStyle.short, required=True, max_length=50)
-        self.inp_members = discord.ui.TextInput(label=f"Ники всех игроков (до {team_size} шт)", style=discord.TextStyle.paragraph, required=True, max_length=1000)
+        self.inp_team = discord.ui.TextInput(label=i18n.t("events.modal.register_team.name", lang), style=discord.TextStyle.short, required=True, max_length=50)
+        self.inp_members = discord.ui.TextInput(label=i18n.t("events.modal.register_team.members", lang, size=team_size), style=discord.TextStyle.paragraph, required=True, max_length=1000)
         self.add_item(self.inp_team)
         self.add_item(self.inp_members)
 
     async def on_submit(self, interaction: discord.Interaction):
         await handle_registration(
-            interaction, self.message_id, "team_captain", 
+            interaction, self.message_id, "team_captain",
             team_name=self.inp_team.value.strip(),
             members=self.inp_members.value.strip()
         )
 
 
-class CreateTeamCodeModal(discord.ui.Modal, title="Создание команды"):
-    def __init__(self, message_id: str, require_info: bool):
-        super().__init__()
+class CreateTeamCodeModal(discord.ui.Modal):
+    def __init__(self, message_id: str, require_info: bool, lang: str):
+        super().__init__(title=i18n.t("events.modal.create_team.title", lang))
         self.message_id = message_id
         self.require_info = require_info
-        self.inp_team = discord.ui.TextInput(label="Название команды", style=discord.TextStyle.short, required=True, max_length=50)
+        self.inp_team = discord.ui.TextInput(label=i18n.t("events.modal.register_team.name", lang), style=discord.TextStyle.short, required=True, max_length=50)
         self.add_item(self.inp_team)
         if require_info:
-            self.inp_ign = discord.ui.TextInput(label="Ваш игровой ник (Капитан)", style=discord.TextStyle.short, required=True, max_length=50)
+            self.inp_ign = discord.ui.TextInput(label=i18n.t("events.modal.create_team.captain_ign", lang), style=discord.TextStyle.short, required=True, max_length=50)
             self.add_item(self.inp_ign)
 
     async def on_submit(self, interaction: discord.Interaction):
-        ign = self.inp_ign.value.strip() if self.require_info else "—"
+        lang = i18n.lang_for(interaction.guild_id)
+        ign = self.inp_ign.value.strip() if self.require_info else i18n.t("events.ign_placeholder", lang)
         await handle_registration(interaction, self.message_id, "create_team_code", team_name=self.inp_team.value.strip(), ign=ign)
 
 
-class JoinTeamCodeModal(discord.ui.Modal, title="Вступление в команду"):
-    def __init__(self, message_id: str, require_info: bool):
-        super().__init__()
+class JoinTeamCodeModal(discord.ui.Modal):
+    def __init__(self, message_id: str, require_info: bool, lang: str):
+        super().__init__(title=i18n.t("events.modal.join_team.title", lang))
         self.message_id = message_id
         self.require_info = require_info
-        self.inp_code = discord.ui.TextInput(label="Код команды", style=discord.TextStyle.short, required=True, max_length=20)
+        self.inp_code = discord.ui.TextInput(label=i18n.t("events.modal.join_team.code", lang), style=discord.TextStyle.short, required=True, max_length=20)
         self.add_item(self.inp_code)
         if require_info:
-            self.inp_ign = discord.ui.TextInput(label="Ваш игровой ник", style=discord.TextStyle.short, required=True, max_length=50)
+            self.inp_ign = discord.ui.TextInput(label=i18n.t("events.modal.join_team.ign", lang), style=discord.TextStyle.short, required=True, max_length=50)
             self.add_item(self.inp_ign)
 
     async def on_submit(self, interaction: discord.Interaction):
-        ign = self.inp_ign.value.strip() if self.require_info else "—"
+        lang = i18n.lang_for(interaction.guild_id)
+        ign = self.inp_ign.value.strip() if self.require_info else i18n.t("events.ign_placeholder", lang)
         await handle_registration(interaction, self.message_id, "join_team_code", team_code=self.inp_code.value.strip().upper(), ign=ign)
 
 
 async def handle_registration(interaction: discord.Interaction, message_id: str, action: str, **kwargs):
     await interaction.response.defer(ephemeral=True)
+    lang = i18n.lang_for(interaction.guild_id)
     data = load_events(interaction.guild_id)
     ev = data.get("events", {}).get(message_id)
     if not ev:
-        await interaction.followup.send("❌ Событие не найдено.", ephemeral=True)
+        await interaction.followup.send(i18n.t("events.error.not_found", lang), ephemeral=True)
         return
     if ev["status"] != "open":
-        await interaction.followup.send("❌ Регистрация уже закрыта.", ephemeral=True)
+        await interaction.followup.send(i18n.t("events.error.registration_closed", lang), ephemeral=True)
         return
 
     uid = interaction.user.id
     parts = ev.setdefault("participants", [])
+    ign_ph = i18n.t("events.ign_placeholder", lang)
 
     if action in ["solo", "team_captain", "create_team_code"]:
         if any(p.get("user_id") == uid for p in parts):
-            await interaction.followup.send("❌ Вы уже зарегистрированы!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.already_registered", lang), ephemeral=True)
             return
 
     max_limit = ev.get("max_limit", 0)
-    custom_success_msg = "✅ Вы успешно зарегистрированы!"
-    
+    custom_success_msg = i18n.t("events.success.registered", lang)
+
     if action == "solo":
         if max_limit > 0 and len(parts) >= max_limit:
-            await interaction.followup.send("❌ Мест больше нет!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.no_slots", lang), ephemeral=True)
             return
         parts.append({"user_id": uid, "ign": kwargs.get("ign")})
-        
+
     elif action == "team_captain":
         if max_limit > 0 and len(parts) >= max_limit:
-            await interaction.followup.send("❌ Мест для команд больше нет!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.no_team_slots", lang), ephemeral=True)
             return
         parts.append({"user_id": uid, "team_name": kwargs.get("team_name"), "members": kwargs.get("members")})
 
     elif action == "create_team_code":
         teams = set(p.get("team_code") for p in parts if p.get("team_code"))
         if max_limit > 0 and len(teams) >= max_limit:
-            await interaction.followup.send("❌ Мест для команд больше нет!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.no_team_slots", lang), ephemeral=True)
             return
         code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
         parts.append({"user_id": uid, "team_name": kwargs.get("team_name"), "team_code": code, "ign": kwargs.get("ign"), "is_captain": True})
-        
+
         try:
-            await interaction.user.send(f"✅ Команда **{kwargs.get('team_name')}** создана!\nСекретный код для вступления тиммейтов: `{code}`")
-            custom_success_msg = f"✅ Команда **{kwargs.get('team_name')}** создана!\nСекретный код отправлен вам в ЛС."
+            await interaction.user.send(i18n.t("events.team.created_dm", lang, name=kwargs.get("team_name"), code=code))
+            custom_success_msg = i18n.t("events.team.created_ephemeral", lang, name=kwargs.get("team_name"))
         except discord.Forbidden:
-            custom_success_msg = f"✅ Команда **{kwargs.get('team_name')}** создана!\nСекретный код для тиммейтов: `{code}`\n\n*(Сохраните его, ваши ЛС закрыты!)*"
+            custom_success_msg = i18n.t("events.team.created_no_dm", lang, name=kwargs.get("team_name"), code=code)
 
     elif action == "join_team_code":
         if any(p.get("user_id") == uid for p in parts):
-            await interaction.followup.send("❌ Вы уже зарегистрированы!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.already_registered", lang), ephemeral=True)
             return
-            
+
         code = kwargs.get("team_code")
         team_members = [p for p in parts if p.get("team_code") == code]
         if not team_members:
-            await interaction.followup.send("❌ Команда с таким кодом не найдена.", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.team_not_found", lang), ephemeral=True)
             return
-            
+
         team_size = ev.get("team_size", 5)
         if len(team_members) >= team_size:
-            await interaction.followup.send("❌ В этой команде уже нет мест!", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.team_full", lang), ephemeral=True)
             return
-            
+
         parts.append({"user_id": uid, "team_code": code, "ign": kwargs.get("ign"), "is_captain": False})
 
     # Add Role
@@ -495,14 +524,14 @@ async def handle_registration(interaction: discord.Interaction, message_id: str,
             except discord.Forbidden: pass
 
     save_events(interaction.guild_id, data)
-    
+
     # Update Embed
     try:
-        emb = rebuild_event_embed(interaction.message.embeds[0], ev)
+        emb = rebuild_event_embed(interaction.message.embeds[0], ev, lang)
         await interaction.message.edit(embed=emb)
     except Exception:
         pass
-        
+
     await interaction.followup.send(custom_success_msg, ephemeral=True)
 
 
@@ -510,49 +539,59 @@ async def handle_registration(interaction: discord.Interaction, message_id: str,
 # PARTICIPATION UI
 # ==========================================
 
-def create_participation_view(message_id: str, event_data: dict, disabled: bool = False) -> discord.ui.View:
+def create_participation_view(message_id: str, event_data: dict, disabled: bool = False, lang: str | None = None) -> discord.ui.View:
     view = discord.ui.View(timeout=None)
-    
+
     async def cb_reg_solo(interaction: discord.Interaction):
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if ev: await interaction.response.send_modal(RegisterSoloModal(message_id, ev.get("require_info", False)))
+        if ev:
+            await interaction.response.send_modal(RegisterSoloModal(message_id, ev.get("require_info", False), l))
 
     async def cb_reg_captain(interaction: discord.Interaction):
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if ev: await interaction.response.send_modal(RegisterTeamCaptainModal(message_id, ev.get("team_size", 5), ev.get("require_info", False)))
+        if ev:
+            await interaction.response.send_modal(RegisterTeamCaptainModal(message_id, ev.get("team_size", 5), ev.get("require_info", False), l))
 
     async def cb_create_code(interaction: discord.Interaction):
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if ev: await interaction.response.send_modal(CreateTeamCodeModal(message_id, ev.get("require_info", False)))
+        if ev:
+            await interaction.response.send_modal(CreateTeamCodeModal(message_id, ev.get("require_info", False), l))
 
     async def cb_join_code(interaction: discord.Interaction):
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if ev: await interaction.response.send_modal(JoinTeamCodeModal(message_id, ev.get("require_info", False)))
+        if ev:
+            await interaction.response.send_modal(JoinTeamCodeModal(message_id, ev.get("require_info", False), l))
 
     async def cb_leave(interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if not ev: return
+        if not ev:
+            return
         uid = interaction.user.id
-        
+        ign_ph = i18n.t("events.ign_placeholder", l)
+
         parts = ev.get("participants", [])
         user_p = next((p for p in parts if p.get("user_id") == uid), None)
         if not user_p:
-            await interaction.followup.send("❌ Вы не зарегистрированы.", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.not_registered", l), ephemeral=True)
             return
-            
+
         if user_p.get("is_captain"):
             code = user_p.get("team_code")
             team_members = [p for p in parts if p.get("team_code") == code]
             ev["participants"] = [p for p in parts if p.get("team_code") != code]
-            await interaction.followup.send("Команда удалена, так как вы капитан.", ephemeral=True)
-            
-            # Remove roles from all team members
+            await interaction.followup.send(i18n.t("events.team.disbanded", l), ephemeral=True)
+
             role_id = ev.get("role_reward")
             if role_id:
                 role = interaction.guild.get_role(role_id)
@@ -561,42 +600,50 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
                         if tm.get("user_id") != uid:
                             try:
                                 m = interaction.guild.get_member(tm["user_id"])
-                                if m: await m.remove_roles(role)
-                            except Exception: pass
+                                if m:
+                                    await m.remove_roles(role)
+                            except Exception:
+                                pass
         else:
             ev["participants"] = [p for p in parts if p.get("user_id") != uid]
-            await interaction.followup.send("✅ Вы покинули событие.", ephemeral=True)
-            
+            await interaction.followup.send(i18n.t("events.left", l), ephemeral=True)
+
         role_id = ev.get("role_reward")
         if role_id:
             role = interaction.guild.get_role(role_id)
             if role:
-                try: await interaction.user.remove_roles(role)
-                except discord.Forbidden: pass
+                try:
+                    await interaction.user.remove_roles(role)
+                except discord.Forbidden:
+                    pass
 
         save_events(interaction.guild_id, data)
         try:
-            emb = rebuild_event_embed(interaction.message.embeds[0], ev)
+            emb = rebuild_event_embed(interaction.message.embeds[0], ev, l)
             await interaction.message.edit(embed=emb)
-        except Exception: pass
+        except Exception:
+            pass
 
     async def cb_list(interaction: discord.Interaction):
+        l = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(message_id)
-        if not ev: return
+        if not ev:
+            return
         parts = ev.get("participants", [])
         if not parts:
-            await interaction.response.send_message("Список пуст.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("events.list.empty", l), ephemeral=True)
             return
-            
+
+        ign_ph = i18n.t("events.ign_placeholder", l)
         lines = []
         if ev["mode"] == "solo":
             for idx, p in enumerate(parts, 1):
-                ign = f" [{p.get('ign')}]" if p.get('ign') and p.get('ign') != "—" else ""
+                ign = f" [{p.get('ign')}]" if p.get("ign") and p.get("ign") != ign_ph else ""
                 lines.append(f"{idx}. <@{p['user_id']}>{ign}")
         elif ev["mode"] == "team_captain":
             for idx, p in enumerate(parts, 1):
-                lines.append(f"{idx}. Команда **{p.get('team_name')}** (Капитан: <@{p['user_id']}>)\n> {p.get('members')}")
+                lines.append(i18n.t("events.list.team_captain", l, idx=idx, name=p.get("team_name"), user_id=p["user_id"], members=p.get("members")))
         elif ev["mode"] == "team_code":
             teams = {}
             for p in parts:
@@ -604,76 +651,81 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
             idx = 1
             for code, members in teams.items():
                 cap = next((m for m in members if m.get("is_captain")), members[0])
-                lines.append(f"{idx}. Команда **{cap.get('team_name')}**")
+                lines.append(i18n.t("events.list.team_code_header", l, idx=idx, name=cap.get("team_name")))
                 for m in members:
-                    ign = f" [{m.get('ign')}]" if m.get('ign') and m.get('ign') != "—" else ""
+                    ign = f" [{m.get('ign')}]" if m.get("ign") and m.get("ign") != ign_ph else ""
                     lines.append(f"  - <@{m['user_id']}>{ign}")
                 idx += 1
-                
+
         text = "\n".join(lines)
         if len(text) > 2000:
             import io
-            file = discord.File(io.BytesIO(text.encode('utf-8')), filename="participants.txt")
+            file = discord.File(io.BytesIO(text.encode("utf-8")), filename=i18n.t("events.participants_file", l))
             await interaction.response.send_message(file=file, ephemeral=True)
         else:
             await interaction.response.send_message(text, ephemeral=True)
 
+    btn_lang = lang or i18n.DEFAULT_LANGUAGE
     if event_data["type"] == "tournament":
         mode = event_data.get("mode")
         if mode == "solo":
-            b = discord.ui.Button(label="Зарегистрироваться", style=discord.ButtonStyle.success, custom_id=f"ev_reg_{message_id}")
+            b = discord.ui.Button(label=i18n.t("events.button.register", btn_lang), style=discord.ButtonStyle.success, custom_id=f"ev_reg_{message_id}")
             b.callback = cb_reg_solo
             view.add_item(b)
         elif mode == "team_captain":
-            b = discord.ui.Button(label="Регистрация команды", style=discord.ButtonStyle.success, custom_id=f"ev_reg_{message_id}")
+            b = discord.ui.Button(label=i18n.t("events.button.register_team", btn_lang), style=discord.ButtonStyle.success, custom_id=f"ev_reg_{message_id}")
             b.callback = cb_reg_captain
             view.add_item(b)
         elif mode == "team_code":
-            b1 = discord.ui.Button(label="Создать команду", style=discord.ButtonStyle.primary, custom_id=f"ev_cre_{message_id}")
+            b1 = discord.ui.Button(label=i18n.t("events.button.create_team", btn_lang), style=discord.ButtonStyle.primary, custom_id=f"ev_cre_{message_id}")
             b1.callback = cb_create_code
             view.add_item(b1)
-            b2 = discord.ui.Button(label="Вступить по коду", style=discord.ButtonStyle.secondary, custom_id=f"ev_join_{message_id}")
+            b2 = discord.ui.Button(label=i18n.t("events.button.join_code", btn_lang), style=discord.ButtonStyle.secondary, custom_id=f"ev_join_{message_id}")
             b2.callback = cb_join_code
             view.add_item(b2)
-            
-        bleave = discord.ui.Button(label="Покинуть", style=discord.ButtonStyle.danger, custom_id=f"ev_leave_{message_id}")
+
+        bleave = discord.ui.Button(label=i18n.t("events.button.leave", btn_lang), style=discord.ButtonStyle.danger, custom_id=f"ev_leave_{message_id}")
         bleave.callback = cb_leave
         view.add_item(bleave)
-        
-        blist = discord.ui.Button(label="Список", style=discord.ButtonStyle.secondary, custom_id=f"ev_list_{message_id}")
+
+        blist = discord.ui.Button(label=i18n.t("events.button.list", btn_lang), style=discord.ButtonStyle.secondary, custom_id=f"ev_list_{message_id}")
         blist.callback = cb_list
         view.add_item(blist)
-        
-    else: # poll
+
+    else:
         for idx, opt in enumerate(event_data["options"]):
             b = discord.ui.Button(label=opt[:80], style=discord.ButtonStyle.primary, custom_id=f"ev_vote_{message_id}_{idx}")
-            
+
             async def cb_vote(interaction: discord.Interaction, opt_idx=idx):
+                l = i18n.lang_for(interaction.guild_id)
                 await interaction.response.defer(ephemeral=True)
                 data = load_events(interaction.guild_id)
                 ev = data.get("events", {}).get(message_id)
                 if not ev or ev["status"] != "open":
-                    await interaction.followup.send("❌ Опрос закрыт.", ephemeral=True)
+                    await interaction.followup.send(i18n.t("events.error.poll_closed", l), ephemeral=True)
                     return
-                    
+
                 uid = str(interaction.user.id)
                 votes = ev.setdefault("votes", {})
                 user_votes = votes.setdefault(uid, [])
-                
+
                 if ev.get("multi_select"):
-                    if opt_idx in user_votes: user_votes.remove(opt_idx)
-                    else: user_votes.append(opt_idx)
+                    if opt_idx in user_votes:
+                        user_votes.remove(opt_idx)
+                    else:
+                        user_votes.append(opt_idx)
                 else:
                     user_votes.clear()
                     user_votes.append(opt_idx)
-                    
+
                 save_events(interaction.guild_id, data)
                 try:
-                    emb = rebuild_event_embed(interaction.message.embeds[0], ev)
+                    emb = rebuild_event_embed(interaction.message.embeds[0], ev, l)
                     await interaction.message.edit(embed=emb)
-                except Exception: pass
-                await interaction.followup.send("✅ Голос засчитан!", ephemeral=True)
-                
+                except Exception:
+                    pass
+                await interaction.followup.send(i18n.t("events.vote.counted", l), ephemeral=True)
+
             b.callback = cb_vote
             view.add_item(b)
 
@@ -687,87 +739,93 @@ def create_participation_view(message_id: str, event_data: dict, disabled: bool 
 # MANAGEMENT
 # ==========================================
 
-class EventNotifyModal(discord.ui.Modal, title="Рассылка участникам"):
-    def __init__(self, bot, message_id: str):
-        super().__init__()
+class EventNotifyModal(discord.ui.Modal):
+    def __init__(self, bot, message_id: str, lang: str):
+        super().__init__(title=i18n.t("events.notify.modal.title", lang))
         self.bot = bot
         self.message_id = message_id
-        
+        self.lang = lang
+
         self.inp_text = discord.ui.TextInput(
-            label="Текст сообщения", style=discord.TextStyle.paragraph,
+            label=i18n.t("events.notify.modal.label", lang), style=discord.TextStyle.paragraph,
             required=True, max_length=2000
         )
         self.add_item(self.inp_text)
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
+        lang = self.lang
         text = self.inp_text.value.strip()
 
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(self.message_id)
         if not ev:
-            await interaction.followup.send("❌ Событие не найдено.", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.error.not_found", lang), ephemeral=True)
             return
         if not ev.get("participants"):
-            await interaction.followup.send("❌ Список участников пуст. Рассылать некому.", ephemeral=True)
+            await interaction.followup.send(i18n.t("events.notify.empty", lang), ephemeral=True)
             return
 
         user_ids = list(set(p.get("user_id") for p in ev.get("participants", []) if p.get("user_id")))
         await interaction.followup.send(
-            f"Начинаю рассылку для {len(user_ids)} участников... Пожалуйста, подождите.", ephemeral=True
+            i18n.t("events.notify.start", lang, count=len(user_ids)), ephemeral=True
         )
 
-        result = await events_core.notify_participants(self.bot, interaction.guild, self.message_id, text)
+        result = await events_core.notify_participants(self.bot, interaction.guild_id, self.message_id, text)
 
         await interaction.followup.send(
-            f"✅ Рассылка завершена!\nУспешно: {result['success']}\nНе удалось (ЛС закрыты): {result['failed']}",
+            i18n.t("events.notify.done", lang, success=result["success"], failed=result["failed"]),
             ephemeral=True,
         )
 
 
 class EventManageSelect(discord.ui.Select):
-    def __init__(self, bot, options: list[discord.SelectOption]):
-        super().__init__(placeholder="Выберите событие для управления...", min_values=1, max_values=1, options=options)
+    def __init__(self, bot, options: list[discord.SelectOption], lang: str):
+        super().__init__(placeholder=i18n.t("events.manage.placeholder", lang), min_values=1, max_values=1, options=options)
         self.bot = bot
+        self.lang = lang
 
     async def callback(self, interaction: discord.Interaction):
+        lang = self.lang
         msg_id = self.values[0]
         data = load_events(interaction.guild_id)
         ev = data.get("events", {}).get(msg_id)
         if not ev:
-            await interaction.response.send_message("Событие не найдено.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("events.manage.not_found", lang), ephemeral=True)
             return
-            
-        emb = discord.Embed(title=f"⚙️ Управление: {ev['title']}", color=discord.Color.orange())
-        emb.add_field(name="Тип", value=ev['type'])
-        emb.add_field(name="Статус", value="Открыто" if ev['status'] == 'open' else "Закрыто")
-        emb.add_field(name="Участников/Голосов", value=str(len(ev.get('participants', [])) or len(ev.get('votes', {}))))
-        
+
+        emb = discord.Embed(title=i18n.t("events.manage.title", lang, title=ev["title"]), color=discord.Color.orange())
+        emb.add_field(name=i18n.t("events.manage.type", lang), value=ev["type"])
+        status_val = i18n.t("events.manage.status_open", lang) if ev["status"] == "open" else i18n.t("events.manage.status_closed", lang)
+        emb.add_field(name=i18n.t("events.manage.status", lang), value=status_val)
+        emb.add_field(name=i18n.t("events.manage.count", lang), value=str(len(ev.get("participants", [])) or len(ev.get("votes", {}))))
+
         view = discord.ui.View(timeout=None)
-        
-        btn_notify = discord.ui.Button(label="📢 Рассылка", style=discord.ButtonStyle.primary)
-        btn_close = discord.ui.Button(label="🛑 Закрыть", style=discord.ButtonStyle.secondary)
-        btn_delete = discord.ui.Button(label="🗑️ Удаление", style=discord.ButtonStyle.danger)
-        
+
+        btn_notify = discord.ui.Button(label=i18n.t("events.manage.btn.notify", lang), style=discord.ButtonStyle.primary)
+        btn_close = discord.ui.Button(label=i18n.t("events.manage.btn.close", lang), style=discord.ButtonStyle.secondary)
+        btn_delete = discord.ui.Button(label=i18n.t("events.manage.btn.delete", lang), style=discord.ButtonStyle.danger)
+
         async def cb_notify(i: discord.Interaction):
-            await i.response.send_modal(EventNotifyModal(self.bot, msg_id))
-            
+            await i.response.send_modal(EventNotifyModal(self.bot, msg_id, lang))
+
         async def cb_close(i: discord.Interaction):
-            await events_core.close_event(self.bot, msg_id)
-            await i.response.send_message("✅ Событие закрыто.", ephemeral=True)
+            await events_core.close_event(self.bot, i.guild_id, msg_id)
+            await i.response.send_message(i18n.t("events.manage.closed", lang), ephemeral=True)
 
         async def cb_delete(i: discord.Interaction):
-            await events_core.delete_event(self.bot, i.guild, msg_id)
-            await i.response.send_message("🗑️ Событие удалено.", ephemeral=True)
+            await events_core.delete_event(self.bot, i.guild_id, msg_id)
+            await i.response.send_message(i18n.t("events.manage.deleted", lang), ephemeral=True)
 
         btn_notify.callback = cb_notify
         btn_close.callback = cb_close
         btn_delete.callback = cb_delete
-        
-        if ev['type'] == 'tournament': view.add_item(btn_notify)
+
+        if ev["type"] == "tournament":
+            view.add_item(btn_notify)
         view.add_item(btn_close)
         view.add_item(btn_delete)
-        
+
         await interaction.response.edit_message(embed=emb, view=view)
 
 
@@ -787,36 +845,42 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if getattr(self.bot, "_event_views_loaded", False): return
+        if getattr(self.bot, "_event_views_loaded", False):
+            return
         for guild in self.bot.guilds:
+            lang = i18n.lang_for(guild.id)
             data = load_events(guild.id)
             for msg_id, ev_data in data.get("events", {}).items():
                 if ev_data.get("status") == "open":
-                    self.bot.add_view(create_participation_view(msg_id, ev_data), message_id=int(msg_id))
+                    self.bot.add_view(create_participation_view(msg_id, ev_data, lang=lang), message_id=int(msg_id))
         self.bot._event_views_loaded = True
 
     @event_group.command(name="setup", description="Запустить конструктор событий/опросов")
     async def event_setup(self, interaction: discord.Interaction):
-        view = EventBuilderView(self.bot, interaction.user.id)
+        lang = i18n.lang_for(interaction.guild_id)
+        view = EventBuilderView(self.bot, interaction.user.id, lang)
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
 
     @event_group.command(name="manage", description="Управление активными событиями")
     async def event_manage(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         evs = data.get("events", {})
         opts = []
         for mid, ev in evs.items():
             status = "🟢" if ev["status"] == "open" else "🔴"
             opts.append(discord.SelectOption(label=ev["title"][:90], description=f"ID: {mid}", value=mid, emoji=status))
-            
+
         if not opts:
-            await interaction.response.send_message("Нет активных событий.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("events.manage.none", lang), ephemeral=True)
             return
-            
+
         view = discord.ui.View(timeout=600)
-        view.add_item(EventManageSelect(self.bot, opts[:25]))
-        await interaction.response.send_message("Выберите событие для управления:", view=view, ephemeral=True)
+        view.add_item(EventManageSelect(self.bot, opts[:25], lang))
+        await interaction.response.send_message(i18n.t("events.manage.prompt", lang), view=view, ephemeral=True)
 
 
 async def setup(bot):
-    await bot.add_cog(Events(bot))
+    cog = Events(bot)
+    slash_registry.register_events(cog)
+    await bot.add_cog(cog)

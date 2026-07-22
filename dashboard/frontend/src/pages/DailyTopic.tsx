@@ -1,4 +1,5 @@
 import { Lightbulb, Plus, Trash } from '@phosphor-icons/react'
+import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
 import {
   createDailyTopic,
@@ -21,6 +22,7 @@ const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
 export function DailyTopicPage() {
+  const t = useT()
   const [settings, setSettings] = useState<DailyTopicSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [error, setError] = useState('')
@@ -46,7 +48,7 @@ export function DailyTopicPage() {
         setPostTimes(data.post_times)
         setError('')
       })
-      .catch(() => setError('Не удалось загрузить настройки рубрики'))
+      .catch(() => setError(t('dailyTopic.errorLoad')))
 
   useEffect(() => {
     reload()
@@ -55,7 +57,7 @@ export function DailyTopicPage() {
       .catch(() => setChannels([]))
   }, [])
 
-  const act = async (fn: () => Promise<unknown>, errorMessage = 'Операция не удалась') => {
+  const act = async (fn: () => Promise<unknown>, errorMessage?: string) => {
     setBusy(true)
     setError('')
     setNotice('')
@@ -63,7 +65,7 @@ export function DailyTopicPage() {
       await fn()
       await reload()
     } catch {
-      setError(errorMessage)
+      setError(errorMessage ?? t('common.operationFailed'))
     } finally {
       setBusy(false)
     }
@@ -96,11 +98,11 @@ export function DailyTopicPage() {
   const postNow = () =>
     act(async () => {
       await postDailyTopicNow()
-      setNotice('Тема дня опубликована.')
-    }, 'Не удалось опубликовать — проверьте канал и список тем')
+      setNotice(t('dailyTopic.published'))
+    }, t('dailyTopic.errorPublish'))
 
   if (!settings) {
-    return <p className="text-sm text-muted">{error || 'Загрузка…'}</p>
+    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   return (
@@ -108,11 +110,10 @@ export function DailyTopicPage() {
       <div>
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Lightbulb size={22} className="text-primary" />
-          Ежедневная рубрика
+          {t('dailyTopic.title')}
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Бот сам публикует вопрос/тему дня в заданный канал по расписанию, чтобы разговор не затухал в тихие дни.
-          Выключена по умолчанию.
+{t('dailyTopic.intro')}
         </p>
       </div>
 
@@ -120,19 +121,19 @@ export function DailyTopicPage() {
       {notice && <p className="text-sm text-primary">{notice}</p>}
 
       <Card className="flex flex-col gap-4">
-        <Toggle checked={enabled} onChange={setEnabled} label="Рубрика включена" disabled={busy} />
+        <Toggle checked={enabled} onChange={setEnabled} label={t('dailyTopic.enabled')} disabled={busy} />
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted">Канал публикации</label>
-          <Select value={channelId} onChange={setChannelId} options={channels} placeholder="Канал не выбран" />
+          <label className="text-xs text-muted">{t('dailyTopic.publishChannel')}</label>
+          <Select value={channelId} onChange={setChannelId} options={channels} placeholder={t('dailyTopic.channelNotSelected')} />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-muted">
-            Время публикации (МСК, формат HH:MM, макс. 10) — каждый день бот случайно выбирает одно из них
+{t('dailyTopic.timesHint')}
           </label>
           <div className="flex flex-wrap gap-2">
-            {postTimes.length === 0 && <span className="text-sm text-muted">Время не задано</span>}
+            {postTimes.length === 0 && <span className="text-sm text-muted">{t('dailyTopic.noTimes')}</span>}
             {postTimes.map((time) => (
               <span
                 key={time}
@@ -142,7 +143,7 @@ export function DailyTopicPage() {
                 <button
                   type="button"
                   onClick={() => removeTime(time)}
-                  aria-label={`Удалить время ${time}`}
+                  aria-label={t('dailyTopic.removeTime', { time })}
                   className="text-muted hover:text-danger"
                 >
                   <Trash size={13} />
@@ -154,7 +155,7 @@ export function DailyTopicPage() {
             <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className={`${inputClass} w-36`} />
             <Button variant="secondary" onClick={addTime} disabled={!newTime}>
               <Plus size={15} />
-              Добавить время
+              {t('dailyTopic.addTime')}
             </Button>
           </div>
         </div>
@@ -165,26 +166,26 @@ export function DailyTopicPage() {
             onClick={postNow}
             disabled={busy || !settings.channel_id || settings.topics.length === 0}
           >
-            Опубликовать сейчас
+            {t('dailyTopic.publishNow')}
           </Button>
           <Button variant="primary" onClick={saveSettings} disabled={busy}>
-            {busy ? 'Сохраняем…' : 'Сохранить'}
+            {busy ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </Card>
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted">Темы дня ({settings.topics.length})</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted">{t('dailyTopic.topics', { count: settings.topics.length })}</h2>
           <Button variant="primary" onClick={() => setAddingTopic(true)}>
             <Plus size={16} />
-            Добавить тему
+            {t('dailyTopic.addTopic')}
           </Button>
         </div>
 
         {settings.topics.length === 0 && (
           <Card>
-            <p className="text-sm text-muted">Тем пока нет — добавьте хотя бы одну, чтобы включить рубрику.</p>
+{t('dailyTopic.topics.empty')}
           </Card>
         )}
 
@@ -195,10 +196,10 @@ export function DailyTopicPage() {
                 <textarea rows={2} value={editDraft} onChange={(e) => setEditDraft(e.target.value)} className={inputClass} />
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" onClick={() => setEditingId(null)} disabled={busy}>
-                    Отмена
+                    {t('common.cancel')}
                   </Button>
                   <Button variant="primary" onClick={() => saveEdit(topic.id)} disabled={busy || !editDraft.trim()}>
-                    Сохранить
+                    {t('common.save')}
                   </Button>
                 </div>
               </>
@@ -214,13 +215,13 @@ export function DailyTopicPage() {
                     }}
                     className="text-xs text-primary hover:underline"
                   >
-                    Изменить
+                    {t('dailyTopic.edit')}
                   </button>
                   <button
                     type="button"
                     onClick={() => act(() => deleteDailyTopic(topic.id))}
                     className="text-muted transition-colors hover:text-danger"
-                    aria-label="Удалить тему"
+                    aria-label={t('dailyTopic.deleteAria')}
                   >
                     <Trash size={16} />
                   </button>
@@ -231,20 +232,20 @@ export function DailyTopicPage() {
         ))}
       </section>
 
-      <Modal open={addingTopic} title="Новая тема дня" onClose={() => setAddingTopic(false)}>
+      <Modal open={addingTopic} title={t('dailyTopic.modal.title')} onClose={() => setAddingTopic(false)}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="daily-topic-text">
-              Текст темы/вопроса (макс. 300 символов)
+              {t('dailyTopic.field.text')}
             </label>
             <textarea id="daily-topic-text" rows={3} value={topicDraft} onChange={(e) => setTopicDraft(e.target.value)} className={inputClass} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setAddingTopic(false)} disabled={busy}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={submitNewTopic} disabled={busy || !topicDraft.trim()}>
-              {busy ? 'Добавляем…' : 'Добавить'}
+              {busy ? t('common.adding') : t('common.add')}
             </Button>
           </div>
         </div>

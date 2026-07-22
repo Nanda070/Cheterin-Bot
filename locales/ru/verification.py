@@ -1,0 +1,15 @@
+MESSAGES: dict[str, str] = {
+    "verification.button": "Я не бот",
+    "verification.panel_welcome": "Нажмите кнопку ниже, чтобы подтвердить, что вы не бот, и получить доступ к серверу.",
+    "verification.role_reason_unverified": "Верификация: роль до подтверждения",
+    "verification.not_configured": "Верификация не настроена администратором — сообщите об этом в поддержку.",
+    "verification.role_not_found": "Роль верификации не найдена на сервере — сообщите админам.",
+    "verification.already_verified": "Вы уже верифицированы.",
+    "verification.bot_forbidden": "Недостаточно прав у бота, чтобы выдать роль — сообщите админам.",
+    "verification.log_reason": "Верификация по кнопке пройдена",
+    "verification.success": "✅ Добро пожаловать! Доступ открыт.",
+    "verification.setup_configure_first": "Сначала укажите роль верификации в дашборде (раздел «Верификация»).",
+    "verification.panel_installed": "Панель установлена.",
+    "verification.role_reason_verified": "Верификация: подтверждение по кнопке",
+    "verification.role_reason_remove_unverified": "Верификация пройдена",
+}

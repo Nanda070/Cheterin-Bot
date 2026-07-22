@@ -33,6 +33,17 @@ def test_get_settings_isolated_by_guild():
     assert fun_core.get_settings(2)["enabled"] is False
 
 
+def test_spin_trigger_empty_cylinder_never_fires():
+    assert all(not fun_core.spin_trigger(clicks, empty_cylinder=True) for clicks in range(6))
+
+
+def test_roll_empty_cylinder_chance(monkeypatch):
+    monkeypatch.setattr(fun_core.random, "random", lambda: 0.14)
+    assert fun_core.roll_empty_cylinder() is True
+    monkeypatch.setattr(fun_core.random, "random", lambda: 0.15)
+    assert fun_core.roll_empty_cylinder() is False
+
+
 def test_spin_trigger_probability_is_one_in_six():
     # Детерминированно: перебираем все исходы randrange.
     outcomes = set()

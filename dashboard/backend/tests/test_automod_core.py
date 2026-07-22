@@ -1,6 +1,7 @@
 import pytest
 
 import automod_core
+import language_core
 import settings_db
 
 GUILD_ID = 404
@@ -27,6 +28,13 @@ def test_get_settings_defaults():
     assert links["punishment"] == "warn"
     assert links["whitelist_domains"] == []
     assert links["label"] == "Ссылки"
+    assert "Привет {{member}}" in links["notify_template"]
+
+
+def test_get_settings_defaults_respect_guild_language():
+    language_core.set_language(GUILD_ID, "en")
+    links = automod_core.get_settings(GUILD_ID)["filters"]["links"]
+    assert "Hello {{member}}" in links["notify_template"]
 
 
 def test_update_module_enabled():

@@ -4,11 +4,13 @@ import logging
 import discord
 
 import events
+import i18n
 
 logger = logging.getLogger("chetbot.events_core")
 
 
 async def close_event(bot, guild_id: int, message_id: str) -> dict:
+    lang = i18n.lang_for(guild_id)
     data = events.load_events(guild_id)
     ev = data["events"].get(message_id)
     if not ev:
@@ -28,8 +30,8 @@ async def close_event(bot, guild_id: int, message_id: str) -> dict:
             msg = await ch.fetch_message(int(message_id))
             if msg.embeds:
                 emb = msg.embeds[0].copy()
-                emb.set_footer(text="🔴 Статус: Закрыто")
-                view = events.create_participation_view(message_id, ev, disabled=True)
+                emb.set_footer(text=i18n.t("events.core.status.closed", lang))
+                view = events.create_participation_view(message_id, ev, disabled=True, lang=lang)
                 await msg.edit(embed=emb, view=view)
     except Exception as e:
         logger.warning("Не удалось закрыть сообщение события %s: %s", message_id, e)
@@ -74,6 +76,7 @@ async def delete_event(bot, guild_id: int, message_id: str) -> dict:
 
 
 async def notify_participants(bot, guild_id: int, message_id: str, text: str) -> dict:
+    lang = i18n.lang_for(guild_id)
     data = events.load_events(guild_id)
     ev = data.get("events", {}).get(message_id)
     if not ev:
@@ -92,7 +95,7 @@ async def notify_participants(bot, guild_id: int, message_id: str, text: str) ->
             guild = bot.get_guild(guild_id)
             user = (guild.get_member(uid) if guild else None) or await bot.fetch_user(uid)
             if user:
-                await user.send(content=f"**📢 Уведомление о событии «{ev.get('title')}»:**\n\n{text}")
+                await user.send(content=i18n.t("events.core.notify_dm", lang, title=ev.get("title"), text=text))
                 success += 1
             else:
                 failed += 1
@@ -142,6 +145,7 @@ def validate_event_spec(spec: dict) -> str | None:
 
 
 async def publish_event(bot, channel, spec: dict, author_id: int) -> discord.Message:
+    lang = i18n.lang_for(channel.guild.id)
     emb = discord.Embed(
         title=spec["title"],
         description=spec["description"],
@@ -152,20 +156,19 @@ async def publish_event(bot, channel, spec: dict, author_id: int) -> discord.Mes
         emb.set_image(url=banner_url)
 
     if spec["type"] == "tournament":
-        mode_str = {"solo": "Соло", "team_captain": "Командный", "team_code": "Командный (по коду)"}.get(
-            spec.get("mode", "solo")
-        )
-        emb.add_field(name="Формат", value=mode_str, inline=True)
+        mode_key = f"events.core.mode.{spec.get('mode', 'solo')}"
+        mode_str = i18n.t(mode_key, lang)
+        emb.add_field(name=i18n.t("events.core.field.format", lang), value=mode_str, inline=True)
         max_limit = spec.get("max_limit", 0)
         if max_limit > 0:
-            emb.add_field(name="Лимит", value=f"0 / {max_limit}", inline=True)
+            emb.add_field(name=i18n.t("events.core.field.limit", lang), value=f"0 / {max_limit}", inline=True)
         else:
-            emb.add_field(name="Участники", value="0", inline=True)
+            emb.add_field(name=i18n.t("events.core.field.participants", lang), value="0", inline=True)
     else:
         for opt in spec.get("options", []):
-            emb.add_field(name=opt, value="░░░░░░░░░░ 0% (0 гол.)", inline=False)
+            emb.add_field(name=opt, value=i18n.t("events.core.poll.bar", lang), inline=False)
 
-    emb.set_footer(text="🟢 Статус: Открыто")
+    emb.set_footer(text=i18n.t("events.core.status.open", lang))
 
     ping = spec.get("ping", "none")
     content = None
@@ -202,7 +205,7 @@ async def publish_event(bot, channel, spec: dict, author_id: int) -> discord.Mes
     data["events"][str(msg.id)] = event_obj
     events.save_events(guild_id, data)
 
-    view = events.create_participation_view(str(msg.id), event_obj)
+    view = events.create_participation_view(str(msg.id), event_obj, lang=lang)
     await msg.edit(view=view)
 
     return msg
