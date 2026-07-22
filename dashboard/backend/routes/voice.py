@@ -12,10 +12,11 @@ routes = web.RouteTableDef()
 @require_dashboard_access
 async def voice_rooms_list(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request["guild_id"])
+    guild_id = request["guild_id"]
+    guild = bot.get_guild(guild_id)
 
     rooms = []
-    for row in voice_db.db_get_all_rooms():
+    for row in voice_db.db_get_rooms_for_guild(guild_id):
         channel = guild.get_channel(row["channel_id"]) if guild else None
         owner = guild.get_member(row["owner_id"]) if guild else None
         rooms.append({
@@ -35,7 +36,8 @@ async def voice_rooms_list(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def voice_room_delete(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    guild = bot.get_guild(request["guild_id"])
+    guild_id = request["guild_id"]
+    guild = bot.get_guild(guild_id)
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
@@ -46,6 +48,8 @@ async def voice_room_delete(request: web.Request) -> web.Response:
 
     room = voice_db.db_get_room(channel_id)
     if room is None:
+        return web.json_response({"error": "not_found"}, status=404)
+    if int(room["guild_id"]) != int(guild_id):
         return web.json_response({"error": "not_found"}, status=404)
 
     channel = guild.get_channel(channel_id)

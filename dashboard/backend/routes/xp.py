@@ -308,14 +308,13 @@ async def xp_card_bg_delete(request: web.Request) -> web.Response:
 
 # ────────────────── Публичный лидерборд ──────────────────
 
-@routes.get("/api/public/leaderboard")
-async def xp_public_leaderboard(request: web.Request) -> web.Response:
-    settings = xp_core.get_settings(request["guild_id"])
+def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
+    settings = xp_core.get_settings(guild_id)
     if not settings["enabled"] or not settings["public_leaderboard"]:
         return web.json_response({"error": "not_found"}, status=404)
 
-    guild = request.app["bot"].get_guild(request["guild_id"])
-    rows = stats_db.xp_leaderboard(request["guild_id"], limit=100)
+    guild = bot.get_guild(guild_id)
+    rows = stats_db.xp_leaderboard(guild_id, limit=100)
     entries = []
     for i, row in enumerate(rows):
         member = guild.get_member(row["user_id"]) if guild else None
@@ -328,7 +327,30 @@ async def xp_public_leaderboard(request: web.Request) -> web.Response:
             "xp": row["xp"],
             "voice_time_text": xp_core.format_voice_time(row["voice_seconds"]),
         })
-    return web.json_response({
+    return {
+        "guild_id": str(guild_id),
         "guild_name": guild.name if guild else "",
         "entries": entries,
-    })
+    }
+
+
+@routes.get("/api/public/leaderboard")
+async def xp_public_leaderboard(request: web.Request) -> web.Response:
+    """Legacy: top for the main guild (app default). Prefer /api/public/leaderboard/{guild_id}."""
+    payload = _public_leaderboard_payload(request.app["bot"], request["guild_id"])
+    if isinstance(payload, web.Response):
+        return payload
+    return web.json_response(payload)
+
+
+@routes.get("/api/public/leaderboard/{guild_id}")
+async def xp_public_leaderboard_for_guild(request: web.Request) -> web.Response:
+    try:
+        guild_id = int(request.match_info["guild_id"])
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    payload = _public_leaderboard_payload(request.app["bot"], guild_id)
+    if isinstance(payload, web.Response):
+        return payload
+    return web.json_response(payload)

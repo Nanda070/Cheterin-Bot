@@ -71,6 +71,14 @@ def db_get_all_rooms():
         return conn.execute("SELECT * FROM private_rooms").fetchall()
 
 
+def db_get_rooms_for_guild(guild_id: int):
+    with closing(db_connect()) as conn:
+        return conn.execute(
+            "SELECT * FROM private_rooms WHERE guild_id = ?",
+            (guild_id,),
+        ).fetchall()
+
+
 def db_update_room_name(channel_id: int, room_name: str):
     with closing(db_connect()) as conn, conn:
         conn.execute("UPDATE private_rooms SET room_name = ? WHERE channel_id = ?", (room_name, channel_id))

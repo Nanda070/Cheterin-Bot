@@ -173,14 +173,8 @@
   "171": "test_roles.py",
   "172": "setup_session",
   "173": "test_wordle_routes.py",
-  "174": "AntiRaidCog",
-  "175": "test_roles.py",
-  "176": "test_feedback_panel_routes.py",
   "177": "test_antiraid_routes.py",
   "178": "Welcome.tsx",
   "179": "__init__.py",
-  "180": "require_super_admin",
-  "181": "init",
-  "182": "Command",
   "183": "pick_bunker_conditions"
 }

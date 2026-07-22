@@ -339,7 +339,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             level, rank place, voice time. Card background is configurable - upload your own image in the dashboard.
           </li>
           <li>
-            The leaderboard is in the dashboard and on the public <Code>/leaderboard</Code> page (can be disabled).
+            The leaderboard is in the dashboard and on the public{' '}
+            <Code>/leaderboard/&lt;server ID&gt;</Code> page (can be disabled; each server has its own
+            link).
           </li>
           <li>
             The Members tab lets you view, edit, or reset any member&apos;s XP, or reset the whole server ranking.

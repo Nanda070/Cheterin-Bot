@@ -24,6 +24,7 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 
 type Tab = 'settings' | 'level-rewards' | 'voice-rewards' | 'card' | 'members'
@@ -40,6 +41,7 @@ function minutesToParts(minutes: number): { weeks: number; days: number; hours: 
 
 export function LevelsPage() {
   const t = useT()
+  const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<XpSettings | null>(null)
   const [memberCount, setMemberCount] = useState(0)
@@ -201,6 +203,21 @@ export function LevelsPage() {
               onChange={(v) => patch((p) => ({ ...p, public_leaderboard: v }))}
               label={t('levels.publicLeaderboard')}
             />
+            {settings.public_leaderboard && user?.active_guild_id && (
+              <div className="rounded-control border border-border bg-background px-3 py-2">
+                <p className="text-xs text-muted">{t('levels.publicLeaderboardUrlHint')}</p>
+                <a
+                  href={`/leaderboard/${user.active_guild_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block break-all text-sm text-primary hover:underline"
+                >
+                  {typeof window !== 'undefined'
+                    ? `${window.location.origin}/leaderboard/${user.active_guild_id}`
+                    : `/leaderboard/${user.active_guild_id}`}
+                </a>
+              </div>
+            )}
             <Toggle
               checked={settings.reset_on_leave}
               onChange={(v) => patch((p) => ({ ...p, reset_on_leave: v }))}

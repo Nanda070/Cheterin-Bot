@@ -88,6 +88,37 @@ async def test_rooms_list(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_rooms_list_filters_by_active_guild(aiohttp_client):
+    owner = FakeMember(20, name="owner", display_name="Owner")
+    channel = FakeVoiceChannel(700, name="Комната • Owner", members=[owner])
+    _, app = build(channels=[channel], members=[owner])
+
+    voice_db.db_upsert_room(1, 700, 20, "Комната • Owner", is_closed=False, user_limit=5)
+    # Room from another guild must not appear for the active dashboard guild.
+    voice_db.db_upsert_room(999, 800, 20, "Чужая комната", is_closed=False, user_limit=0)
+
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/voice/rooms")
+    body = await resp.json()
+    assert [r["channel_id"] for r in body["rooms"]] == ["700"]
+
+
+@pytest.mark.asyncio
+async def test_delete_room_rejects_other_guild(aiohttp_client):
+    _, app = build()
+    voice_db.db_upsert_room(999, 800, 20, "Чужая комната", is_closed=False, user_limit=0)
+
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.delete("/api/voice/rooms/800")
+    assert resp.status == 404
+    assert voice_db.db_get_room(800) is not None
+
+
+@pytest.mark.asyncio
 async def test_delete_room(aiohttp_client):
     owner = FakeMember(20, name="owner")
     channel = FakeVoiceChannel(700, members=[owner])

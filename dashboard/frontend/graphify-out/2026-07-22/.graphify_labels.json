@@ -33,12 +33,5 @@
   "31": "tsconfig.json",
   "32": "setupTests.ts",
   "33": "vite.config.js",
-  "34": "vite.config.ts",
-  "35": "Toggle.tsx",
-  "36": "FeedbackCaseDetailPanel.tsx",
-  "37": "Home.tsx",
-  "38": "Card.tsx",
-  "39": "Mafia.tsx",
-  "40": "AntiRaid.tsx",
-  "41": "PublicMafiaAction.tsx"
+  "34": "vite.config.ts"
 }

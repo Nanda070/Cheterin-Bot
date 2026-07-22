@@ -175,3 +175,49 @@ async def test_put_settings_rejects_bad_voice_base_and_multipliers(aiohttp_clien
     payload["voice"]["member_multipliers"] = ["42"]
     resp = await client.put("/api/xp", json=payload)
     assert resp.status == 400
+
+
+@pytest.mark.asyncio
+async def test_public_leaderboard_for_guild_id(aiohttp_client):
+    member = FakeMember(20, name="alice", display_name="Alice")
+    _, app = build([member])
+    stats_db.xp_add_text(1, 20, 500, 1000)
+    # XP on another guild must not leak into guild 1's public page.
+    stats_db.xp_add_text(999, 20, 9999, 1000)
+    settings = xp_core.get_settings(1)
+    settings["enabled"] = True
+    settings["public_leaderboard"] = True
+    xp_core.save_config(1, settings)
+    other = xp_core.get_settings(999)
+    other["enabled"] = True
+    other["public_leaderboard"] = True
+    xp_core.save_config(999, other)
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/leaderboard/1")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["guild_id"] == "1"
+    assert body["entries"][0]["xp"] == 500
+    assert body["entries"][0]["display"] == "Alice"
+
+
+@pytest.mark.asyncio
+async def test_public_leaderboard_disabled_returns_404(aiohttp_client):
+    _, app = build([])
+    settings = xp_core.get_settings(1)
+    settings["enabled"] = True
+    settings["public_leaderboard"] = False
+    xp_core.save_config(1, settings)
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/leaderboard/1")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_public_leaderboard_invalid_guild_id(aiohttp_client):
+    _, app = build([])
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/leaderboard/not-a-number")
+    assert resp.status == 400

@@ -165,8 +165,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/voice.py": {
-    "mtime": 1784639294.6418812,
-    "ast_hash": "65afb86418889599e5994dfff0bd47f3",
+    "mtime": 1784723556.5574858,
+    "ast_hash": "7e1efb0a320622ce39893d7fa61415d9",
     "semantic_hash": ""
   },
   "dashboard/backend/routes/voice_stats.py": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/xp.py": {
-    "mtime": 1784639323.5267942,
-    "ast_hash": "5ac48934f67b5a2490fe98bf35783e51",
+    "mtime": 1784723762.9950373,
+    "ast_hash": "22bd654bd19c1eeb597fbe7302c0336e",
     "semantic_hash": ""
   },
   "dashboard/backend/session.py": {
@@ -490,8 +490,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_voice_routes.py": {
-    "mtime": 1784632287.1045485,
-    "ast_hash": "7683373af989ab99a24b3e5e1812ec64",
+    "mtime": 1784723557.846028,
+    "ast_hash": "43eade6cb3e65f1648b053869114978c",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_welcome_routes.py": {
@@ -505,8 +505,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_xp_routes.py": {
-    "mtime": 1784633311.1904929,
-    "ast_hash": "454819a455454cb3c862784290555d89",
+    "mtime": 1784723849.8073761,
+    "ast_hash": "ab7995cfddb0079acee87cd6dcc8aacd",
     "semantic_hash": ""
   },
   "dashboard/frontend/.oxlintrc.json": {
@@ -520,8 +520,8 @@
     "semantic_hash": "6b697d4051febe981499a774b73f72c8"
   },
   "dashboard/frontend/src/App.tsx": {
-    "mtime": 1784719828.1193302,
-    "ast_hash": "648fdd209e000add01ccec17fdceaff6",
+    "mtime": 1784723773.58326,
+    "ast_hash": "0b6996ef8e465f75ceb2de3f1be360d9",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/brackets.test.ts": {
@@ -535,8 +535,8 @@
     "semantic_hash": "bc6595f41fce6aba115a36214fccd559"
   },
   "dashboard/frontend/src/api/client.ts": {
-    "mtime": 1784720286.2642918,
-    "ast_hash": "a746a75cb94085b5d0f74ea91e0b20bd",
+    "mtime": 1784723771.8209686,
+    "ast_hash": "e1f38a0b85f2dce07c5213b07469c4ef",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/config.test.ts": {
@@ -875,13 +875,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Leaderboard.tsx": {
-    "mtime": 1784710902.475778,
-    "ast_hash": "bfd12ba8f875c612817125ed6aab3ff7",
+    "mtime": 1784723773.3200567,
+    "ast_hash": "c7e356997ae04fba044e65e44cc7654c",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Levels.tsx": {
-    "mtime": 1784723078.5820732,
-    "ast_hash": "0bc3132a174e72a3c1087da197a89a13",
+    "mtime": 1784723804.889408,
+    "ast_hash": "4bfd7d976eb33294db739c9894632365",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.test.tsx": {
@@ -1215,8 +1215,8 @@
     "semantic_hash": ""
   },
   "voice_db.py": {
-    "mtime": 1784607539.373469,
-    "ast_hash": "22a806c13d07d800fa71e5f6482d7486",
+    "mtime": 1784723551.6985252,
+    "ast_hash": "c1cc6461d024ddcbdb51e51f0048b063",
     "semantic_hash": ""
   },
   "voice_logs.py": {
@@ -1995,8 +1995,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/activity.ts": {
-    "mtime": 1784718695.6586664,
-    "ast_hash": "15b19b2bee305e8481acb7999e72d2a7",
+    "mtime": 1784723837.0684624,
+    "ast_hash": "e08fe52f407660b33b2ff5e25139899c",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/admin.ts": {
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/activity.ts": {
-    "mtime": 1784718786.2179866,
-    "ast_hash": "73983ae4d65af24818976a72bf59289b",
+    "mtime": 1784723806.8514419,
+    "ast_hash": "d4a939611673bcd434b849485a630390",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/admin.ts": {
@@ -2530,13 +2530,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsEn.tsx": {
-    "mtime": 1784718486.5796766,
-    "ast_hash": "8c50e88e9d2e818e8d0203a16ba0aba2",
+    "mtime": 1784723814.238483,
+    "ast_hash": "30d95823f4e6bb6f41d9b5f5f2cfe9f5",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsRu.tsx": {
-    "mtime": 1784718958.7725122,
-    "ast_hash": "c5d4f4dbbe41eb425c8940ebbd3e16a6",
+    "mtime": 1784723814.1591682,
+    "ast_hash": "b9d34026163ec66b5b4f6c8085aad895",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/config/bunkerMarkers.ts": {

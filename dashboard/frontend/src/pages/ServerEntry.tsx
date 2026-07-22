@@ -219,8 +219,12 @@ export function ServerEntryPage() {
     setError('')
     setSavedMessage('')
     try {
-      const updated = await updateWelcomeSettings(settings)
+      const [updated, updatedConfig] = await Promise.all([
+        updateWelcomeSettings(settings),
+        updateConfig(config),
+      ])
       setSettings({ ...updated, messages: { ...emptyMessages(), ...updated.messages } })
+      setConfig(updatedConfig)
       setSavedMessage(t('common.saved'))
     } catch (err) {
       setError(formatApiError(err, t, 'welcome.errorSave'))
@@ -326,6 +330,21 @@ export function ServerEntryPage() {
                 onChange={() => toggle('channel_enabled')}
                 label={t('welcome.channelEnabled')}
               />
+              {settings.channel_enabled && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-muted" htmlFor="welcome-channel">
+                    {t('config.field.welcomeChannel')}
+                  </label>
+                  <Select
+                    id="welcome-channel"
+                    value={config.WELCOME_CHANNEL_ID}
+                    onChange={(id) => setConfig((prev) => ({ ...prev, WELCOME_CHANNEL_ID: id }))}
+                    options={channels}
+                    placeholder={t('common.notSet')}
+                  />
+                  <p className="text-xs text-muted">{t('welcome.welcomeChannelHint')}</p>
+                </div>
+              )}
               <Toggle
                 checked={settings.goodbye_channel_enabled}
                 onChange={() => toggle('goodbye_channel_enabled')}

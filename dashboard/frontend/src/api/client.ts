@@ -964,8 +964,17 @@ export interface PublicLeaderboardEntry {
   voice_time_text: string
 }
 
-export function fetchPublicLeaderboard(): Promise<{ guild_name: string; entries: PublicLeaderboardEntry[] }> {
-  return apiFetch('/api/public/leaderboard')
+export interface PublicLeaderboardResponse {
+  guild_id?: string
+  guild_name: string
+  entries: PublicLeaderboardEntry[]
+}
+
+export function fetchPublicLeaderboard(guildId?: string): Promise<PublicLeaderboardResponse> {
+  const path = guildId
+    ? `/api/public/leaderboard/${encodeURIComponent(guildId)}`
+    : '/api/public/leaderboard'
+  return apiFetch(path)
 }
 
 // ────────────────────────── Статистика войса ──────────────────────────

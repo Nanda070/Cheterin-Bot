@@ -66,6 +66,7 @@ function App() {
           <Route path="/docs/:sectionId" element={<DocsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/leaderboard/:guildId" element={<LeaderboardPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route
             path="/"

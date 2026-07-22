@@ -1,5 +1,6 @@
 import { Trophy } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { fetchPublicLeaderboard, type PublicLeaderboardEntry } from '../api/client'
 import { PublicLayout } from '../components/PublicLayout'
 import { useT } from '../context/LanguageContext'
@@ -8,18 +9,21 @@ const MEDAL = ['🥇', '🥈', '🥉']
 
 export function LeaderboardPage() {
   const t = useT()
+  const { guildId } = useParams<{ guildId?: string }>()
   const [entries, setEntries] = useState<PublicLeaderboardEntry[] | null>(null)
   const [guildName, setGuildName] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchPublicLeaderboard()
+    setEntries(null)
+    setError('')
+    fetchPublicLeaderboard(guildId)
       .then((data) => {
         setEntries(data.entries)
         setGuildName(data.guild_name)
       })
       .catch(() => setError(t('leaderboard.error')))
-  }, [t])
+  }, [t, guildId])
 
   return (
     <PublicLayout>
