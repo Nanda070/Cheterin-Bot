@@ -1510,8 +1510,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_fun_core.py": {
-    "mtime": 1784717127.9088314,
-    "ast_hash": "f9024a3eb917d153990f6da870ccff19",
+    "mtime": 1784726351.4779477,
+    "ast_hash": "9d44a378bc85c4f9e5d914e93ae0c1ce",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_fun_routes.py": {
@@ -1530,13 +1530,13 @@
     "semantic_hash": ""
   },
   "fun.py": {
-    "mtime": 1784717454.7857223,
-    "ast_hash": "c386ddee6ea90cb551c88c77cea77e5e",
+    "mtime": 1784726343.8132057,
+    "ast_hash": "1b046be221cba03cad688ebe370095c5",
     "semantic_hash": ""
   },
   "fun_core.py": {
-    "mtime": 1784717081.2170725,
-    "ast_hash": "7c7ab731db0f75445c3f080017c65232",
+    "mtime": 1784726340.795064,
+    "ast_hash": "f51e6c1d0441e94775da3f926df1e687",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -2015,8 +2015,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/community.ts": {
-    "mtime": 1784719207.1328151,
-    "ast_hash": "660c5cd96fc7bca5b5a7a1b4423ef6f3",
+    "mtime": 1784726351.3640652,
+    "ast_hash": "8af95be9278ca2194c4f6e4492422cb2",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/shell.ts": {
@@ -2045,8 +2045,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/community.ts": {
-    "mtime": 1784719207.4928193,
-    "ast_hash": "bf491ac1b55ff5893a964ea22b9f888b",
+    "mtime": 1784726348.8127546,
+    "ast_hash": "b4a86d410bec948dc21f7f7236f86363",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/shell.ts": {
@@ -2400,13 +2400,13 @@
     "semantic_hash": ""
   },
   "locales/en/slash.py": {
-    "mtime": 1784717444.709861,
-    "ast_hash": "511194587d12ead4a05671792a553f7d",
+    "mtime": 1784726344.3987637,
+    "ast_hash": "106acdb75ff36c365b9419e8a92852f9",
     "semantic_hash": ""
   },
   "locales/ru/slash.py": {
-    "mtime": 1784717444.7053897,
-    "ast_hash": "e1279a5f469d6c6811ecb8ce2051e34e",
+    "mtime": 1784726346.6287107,
+    "ast_hash": "9733760d44bface49ecb6907f181bb93",
     "semantic_hash": ""
   },
   "slash_i18n.py": {
@@ -2530,13 +2530,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsEn.tsx": {
-    "mtime": 1784723814.238483,
-    "ast_hash": "30d95823f4e6bb6f41d9b5f5f2cfe9f5",
+    "mtime": 1784726359.6027708,
+    "ast_hash": "43e08f174f80acdd7f91f97f95c4750b",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsRu.tsx": {
-    "mtime": 1784723814.1591682,
-    "ast_hash": "b9d34026163ec66b5b4f6c8085aad895",
+    "mtime": 1784726362.5954847,
+    "ast_hash": "18766a772d8f0d5bc584dcc1a6a73f99",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/config/bunkerMarkers.ts": {

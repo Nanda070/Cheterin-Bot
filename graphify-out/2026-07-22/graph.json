@@ -801,8 +801,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "automod_core_add_escalation_rule",
-      "community": 12,
-      "community_name": "Automod Filter Core",
+      "community": 63,
+      "community_name": "resolve_guild_member()",
       "norm_label": "add_escalation_rule()"
     },
     {
@@ -812,8 +812,8 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "automod_core_update_escalation_rule",
-      "community": 12,
-      "community_name": "Automod Filter Core",
+      "community": 63,
+      "community_name": "resolve_guild_member()",
       "norm_label": "update_escalation_rule()"
     },
     {
@@ -823,8 +823,8 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "automod_core_delete_escalation_rule",
-      "community": 12,
-      "community_name": "Automod Filter Core",
+      "community": 63,
+      "community_name": "resolve_guild_member()",
       "norm_label": "delete_escalation_rule()"
     },
     {
@@ -1560,8 +1560,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "enum",
-      "community": 15,
-      "community_name": "API Client Functions",
+      "community": 104,
+      "community_name": "format_voice_time()",
       "norm_label": "enum"
     },
     {
@@ -5245,8 +5245,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_backend_access_has_super_admin_access",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 65,
+      "community_name": "test_feedback_category_routes.py",
       "norm_label": "has_super_admin_access()"
     },
     {
@@ -5311,8 +5311,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "dashboard_backend_access_rationale_38",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 65,
+      "community_name": "test_feedback_category_routes.py",
       "norm_label": "\u0441\u0443\u043f\u0435\u0440-\u0430\u0434\u043c\u0438\u043d: \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u0438\u043b\u0438 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u0441\u0443\u043f\u0435\u0440-\u0440\u043e\u043b\u0438 \u043d\u0430 \u043c\u0435\u0438\u043d-\u0441\u0435\u0440\u0432\u0435\u0440\u0435     (\u0441\u0430\u043c \u0444\u0430\u043a"
     },
     {
@@ -5553,8 +5553,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_auth",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "auth.py"
     },
     {
@@ -5564,8 +5564,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "dashboard_backend_auth_frontend",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "_frontend()"
     },
     {
@@ -5575,8 +5575,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_auth_py_request",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "request"
     },
     {
@@ -5586,8 +5586,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "dashboard_backend_auth_login",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "login()"
     },
     {
@@ -5597,8 +5597,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_auth_py_response",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "response"
     },
     {
@@ -5608,8 +5608,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "dashboard_backend_auth_callback",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "callback()"
     },
     {
@@ -5619,8 +5619,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "dashboard_backend_auth_valid_access_token",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "_valid_access_token()"
     },
     {
@@ -5630,8 +5630,8 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "dashboard_backend_auth_list_guilds",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "list_guilds()"
     },
     {
@@ -5641,8 +5641,8 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "dashboard_backend_auth_select_guild",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "select_guild()"
     },
     {
@@ -5652,8 +5652,8 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "dashboard_backend_auth_invite_url",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "invite_url()"
     },
     {
@@ -5663,8 +5663,8 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "dashboard_backend_auth_logout",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "logout()"
     },
     {
@@ -5674,8 +5674,8 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "dashboard_backend_auth_me",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "me()"
     },
     {
@@ -5685,8 +5685,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_auth_rationale_1",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "oauth-\u043b\u043e\u0433\u0438\u043d \u0438 \u0432\u044b\u0431\u043e\u0440 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 (\u0444\u0430\u0437\u0430 2.3, \u043c\u043e\u0434\u0435\u043b\u044c mee6).  \u043b\u043e\u0433\u0438\u043d \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0437\u0430\u0432\u044f\u0437\u0430\u043d \u043d\u0430"
     },
     {
@@ -5696,8 +5696,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "dashboard_backend_auth_rationale_117",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 94,
+      "community_name": "test_warns_routes.py",
       "norm_label": "\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u0440\u0430\u0431\u043e\u0447\u0438\u0438 access_token, \u043f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438 \u043e\u0431\u043d\u043e\u0432\u0438\u0432 \u0435\u0433\u043e \u043f\u043e refresh_token."
     },
     {
@@ -5905,8 +5905,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_mass_role_jobs",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "mass_role_jobs.py"
     },
     {
@@ -5916,8 +5916,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_backend_mass_role_jobs_massassignjob",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "massassignjob"
     },
     {
@@ -5927,8 +5927,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_mass_role_jobs_run_mass_assign",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "run_mass_assign()"
     },
     {
@@ -8171,8 +8171,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia.py"
     },
     {
@@ -8182,8 +8182,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_is_id",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "_is_id()"
     },
     {
@@ -8193,8 +8193,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_display_name",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "_display_name()"
     },
     {
@@ -8204,8 +8204,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_serialize_game_summary",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "_serialize_game_summary()"
     },
     {
@@ -8215,8 +8215,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_get",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia_get()"
     },
     {
@@ -8226,8 +8226,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_py_request",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "request"
     },
     {
@@ -8237,8 +8237,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_py_response",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "response"
     },
     {
@@ -8248,8 +8248,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_put",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia_put()"
     },
     {
@@ -8259,8 +8259,8 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_games_list",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia_games_list()"
     },
     {
@@ -8281,8 +8281,8 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_public_action",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia_public_action()"
     },
     {
@@ -8292,8 +8292,8 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_public_vote",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "mafia_public_vote()"
     },
     {
@@ -10338,8 +10338,8 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "dashboard_backend_tests_fakes_fakethread",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": "fakethread"
     },
     {
@@ -10349,8 +10349,8 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "dashboard_backend_tests_fakes_fakethread_init",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": ".__init__()"
     },
     {
@@ -10360,8 +10360,8 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "dashboard_backend_tests_fakes_fakethread_fetch_message",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": ".fetch_message()"
     },
     {
@@ -10371,8 +10371,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "dashboard_backend_tests_fakes_fakethread_send",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": ".send()"
     },
     {
@@ -10382,8 +10382,8 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "dashboard_backend_tests_fakes_fakethread_edit",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": ".edit()"
     },
     {
@@ -11064,8 +11064,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_access_test_super_admin_by_role_membership",
-      "community": 150,
-      "community_name": "Levels.tsx",
+      "community": 65,
+      "community_name": "test_feedback_category_routes.py",
       "norm_label": "test_super_admin_by_role_membership()"
     },
     {
@@ -11460,8 +11460,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "test_antiraid_routes.py"
     },
     {
@@ -11471,8 +11471,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_isolated_config",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "isolated_config()"
     },
     {
@@ -11482,8 +11482,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_build",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "build()"
     },
     {
@@ -11493,8 +11493,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_test_get_defaults_disabled",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "test_get_defaults_disabled()"
     },
     {
@@ -11504,8 +11504,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_test_put_then_get",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "test_put_then_get()"
     },
     {
@@ -11515,8 +11515,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_test_put_validation",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "test_put_validation()"
     },
     {
@@ -11526,8 +11526,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_antiraid_routes_test_requires_login",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "test_requires_login()"
     },
     {
@@ -12208,8 +12208,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_automod_core_test_get_settings_defaults_respect_guild_language",
-      "community": 93,
-      "community_name": "test_mafia_routes.py",
+      "community": 12,
+      "community_name": "Automod Filter Core",
       "norm_label": "test_get_settings_defaults_respect_guild_language()"
     },
     {
@@ -12263,8 +12263,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_automod_core_test_escalation_crud",
-      "community": 12,
-      "community_name": "Automod Filter Core",
+      "community": 63,
+      "community_name": "resolve_guild_member()",
       "norm_label": "test_escalation_crud()"
     },
     {
@@ -15904,8 +15904,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_casino_routes.py"
     },
     {
@@ -15915,8 +15915,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_isolated_config",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "isolated_config()"
     },
     {
@@ -15926,8 +15926,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_build",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "build()"
     },
     {
@@ -15937,8 +15937,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_test_get_defaults",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_get_defaults()"
     },
     {
@@ -15948,8 +15948,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_test_put_then_get",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_then_get()"
     },
     {
@@ -15959,8 +15959,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_test_put_validation",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_validation()"
     },
     {
@@ -15970,8 +15970,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_test_put_allows_unlimited_max_bet",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_allows_unlimited_max_bet()"
     },
     {
@@ -15981,8 +15981,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_casino_routes_test_requires_login",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_requires_login()"
     },
     {
@@ -16322,8 +16322,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_ctd_routes.py"
     },
     {
@@ -16333,8 +16333,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_isolated_settings_db",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "isolated_settings_db()"
     },
     {
@@ -16344,8 +16344,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_build",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "build()"
     },
     {
@@ -16355,8 +16355,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_test_get_ctd_defaults_on_main_guild",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_get_ctd_defaults_on_main_guild()"
     },
     {
@@ -16366,8 +16366,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_test_put_and_get_ctd_round_trip",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_put_and_get_ctd_round_trip()"
     },
     {
@@ -16377,8 +16377,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_test_put_ctd_404_when_role_missing",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_put_ctd_404_when_role_missing()"
     },
     {
@@ -16388,8 +16388,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_test_ctd_forbidden_when_active_guild_not_main",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_ctd_forbidden_when_active_guild_not_main()"
     },
     {
@@ -16399,8 +16399,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_test_ctd_requires_auth",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "test_ctd_requires_auth()"
     },
     {
@@ -16410,8 +16410,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_ctd_routes_rationale_1",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "ctd-\u043d\u0430\u0441\u0442\u0440\u043e\u0438\u043a\u0438 \u2014 \u043f\u0440\u0438\u0432\u0438\u043b\u0435\u0433\u0438\u044f \u043c\u0435\u0438\u043d\u0430 (\u0444\u0430\u0437\u0430 2b): \u0440\u043e\u0443\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d \u0442\u043e\u043b\u044c\u043a\u043e \u043a\u043e\u0433\u0434\u0430 \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0438"
     },
     {
@@ -19512,8 +19512,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fakes_feedback_extensions.py"
     },
     {
@@ -19523,8 +19523,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_thread_send_creates_and_stores_message",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": "test_fake_thread_send_creates_and_stores_message()"
     },
     {
@@ -19534,8 +19534,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_thread_edit_records_archived_and_locked",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": "test_fake_thread_edit_records_archived_and_locked()"
     },
     {
@@ -19545,8 +19545,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_thread_send_raises_when_configured",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": "test_fake_thread_send_raises_when_configured()"
     },
     {
@@ -19556,8 +19556,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_thread_fetch_message_raises_not_found",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 71,
+      "community_name": "Interaction",
       "norm_label": "test_fake_thread_fetch_message_raises_not_found()"
     },
     {
@@ -19567,8 +19567,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_bot_get_channel_finds_channel_and_thread",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_bot_get_channel_finds_channel_and_thread()"
     },
     {
@@ -19578,8 +19578,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_bot_fetch_user_falls_back_when_not_in_guild",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_bot_fetch_user_falls_back_when_not_in_guild()"
     },
     {
@@ -19589,8 +19589,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_bot_fetch_user_raises_when_nowhere_found",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_bot_fetch_user_raises_when_nowhere_found()"
     },
     {
@@ -19600,8 +19600,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_bot_update_file_records_calls",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_bot_update_file_records_calls()"
     },
     {
@@ -19611,8 +19611,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_member_send_records_dm",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_member_send_records_dm()"
     },
     {
@@ -19622,8 +19622,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_fakes_feedback_extensions_test_fake_member_send_raises_when_configured",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 5,
+      "community_name": "Test Fake Bot",
       "norm_label": "test_fake_member_send_raises_when_configured()"
     },
     {
@@ -20084,8 +20084,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_family_routes.py"
     },
     {
@@ -20106,8 +20106,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_build",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "build()"
     },
     {
@@ -20117,8 +20117,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_get_defaults",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_get_defaults()"
     },
     {
@@ -20128,8 +20128,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_put_then_get",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_put_then_get()"
     },
     {
@@ -20139,8 +20139,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_put_validation",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_put_validation()"
     },
     {
@@ -20150,8 +20150,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_requires_auth",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_requires_auth()"
     },
     {
@@ -20161,8 +20161,8 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_roster_preview",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_roster_preview()"
     },
     {
@@ -20172,8 +20172,8 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_roster_preview_missing_role",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_roster_preview_missing_role()"
     },
     {
@@ -20183,8 +20183,8 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_ticket_data",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "_ticket_data()"
     },
     {
@@ -20194,8 +20194,8 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_tickets_list_and_filter",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_tickets_list_and_filter()"
     },
     {
@@ -20205,8 +20205,8 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_ticket_approve_full_flow",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_ticket_approve_full_flow()"
     },
     {
@@ -20216,8 +20216,8 @@
       "source_location": "L217",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_ticket_decide_not_open_returns_404",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_ticket_decide_not_open_returns_404()"
     },
     {
@@ -20227,8 +20227,8 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_birthdays_crud",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_birthdays_crud()"
     },
     {
@@ -20238,8 +20238,8 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_birthday_set_invalid_date",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_birthday_set_invalid_date()"
     },
     {
@@ -20249,8 +20249,8 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_family_routes_test_birthday_set_unknown_member",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "test_birthday_set_unknown_member()"
     },
     {
@@ -20293,8 +20293,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_categories_test_load_categories_returns_empty_dict_when_file_missing",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "test_load_categories_returns_empty_dict_when_file_missing()"
     },
     {
@@ -20304,8 +20304,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_categories_test_save_then_load_round_trip",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "test_save_then_load_round_trip()"
     },
     {
@@ -20436,8 +20436,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_categories_test_migrate_from_env_if_needed_creates_config_from_env",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "test_migrate_from_env_if_needed_creates_config_from_env()"
     },
     {
@@ -20447,8 +20447,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_categories_test_migrate_from_env_if_needed_skips_when_file_already_exists",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "test_migrate_from_env_if_needed_skips_when_file_already_exists()"
     },
     {
@@ -20458,8 +20458,8 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_categories_test_migrate_from_env_if_needed_skips_when_env_vars_missing",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "test_migrate_from_env_if_needed_skips_when_env_vars_missing()"
     },
     {
@@ -20810,8 +20810,8 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_core_test_publish_feedback_panel_sends_embed_and_logs",
-      "community": 75,
-      "community_name": "test_access.py",
+      "community": 8,
+      "community_name": "Feedback Cases",
       "norm_label": "test_publish_feedback_panel_sends_embed_and_logs()"
     },
     {
@@ -20942,8 +20942,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_feedback_routes.py"
     },
     {
@@ -20953,8 +20953,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_isolated_feedback_categories",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "isolated_feedback_categories()"
     },
     {
@@ -20964,8 +20964,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_case",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "_case()"
     },
     {
@@ -20975,8 +20975,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_build",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "build()"
     },
     {
@@ -20986,8 +20986,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_empty",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_empty()"
     },
     {
@@ -20997,8 +20997,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_returns_all_by_default",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_returns_all_by_default()"
     },
     {
@@ -21008,8 +21008,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_filters_by_status",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_filters_by_status()"
     },
     {
@@ -21019,8 +21019,8 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_rejects_invalid_status",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_rejects_invalid_status()"
     },
     {
@@ -21030,8 +21030,8 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_resolves_submitter_display_name",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_resolves_submitter_display_name()"
     },
     {
@@ -21041,8 +21041,8 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_list_feedback_cases_requires_auth",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_list_feedback_cases_requires_auth()"
     },
     {
@@ -21052,8 +21052,8 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_get_feedback_case_returns_full_detail_with_answers",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_feedback_case_returns_full_detail_with_answers()"
     },
     {
@@ -21063,8 +21063,8 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_get_feedback_case_404_when_unknown",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_feedback_case_404_when_unknown()"
     },
     {
@@ -21074,8 +21074,8 @@
       "source_location": "L211",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_get_feedback_case_requires_auth",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_feedback_case_requires_auth()"
     },
     {
@@ -21085,8 +21085,8 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_build_with_channels",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "build_with_channels()"
     },
     {
@@ -21096,8 +21096,8 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_approves_and_persists",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_approves_and_persists()"
     },
     {
@@ -21107,8 +21107,8 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_404_when_unknown",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_404_when_unknown()"
     },
     {
@@ -21118,8 +21118,8 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_409_when_already_decided",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_409_when_already_decided()"
     },
     {
@@ -21129,8 +21129,8 @@
       "source_location": "L273",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_409_when_category_deleted",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_409_when_category_deleted()"
     },
     {
@@ -21140,8 +21140,8 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_rejects_non_boolean_approved",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_rejects_non_boolean_approved()"
     },
     {
@@ -21151,8 +21151,8 @@
       "source_location": "L308",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_requires_auth",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_requires_auth()"
     },
     {
@@ -21162,8 +21162,8 @@
       "source_location": "L316",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_rejects_non_dict_body",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_rejects_non_dict_body()"
     },
     {
@@ -21173,8 +21173,8 @@
       "source_location": "L331",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_feedback_routes_test_decide_feedback_case_unknown_error_maps_to_400",
-      "community": 101,
-      "community_name": "xp_card.py",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_decide_feedback_case_unknown_error_maps_to_400()"
     },
     {
@@ -22405,8 +22405,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_language_routes.py"
     },
     {
@@ -22416,8 +22416,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_isolated_config",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "isolated_config()"
     },
     {
@@ -22427,8 +22427,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_build",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "build()"
     },
     {
@@ -22438,8 +22438,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_test_get_language_defaults_to_ru",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_get_language_defaults_to_ru()"
     },
     {
@@ -22449,8 +22449,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_test_put_and_get_language_round_trip",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_and_get_language_round_trip()"
     },
     {
@@ -22460,8 +22460,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_test_put_rejects_invalid_language",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_rejects_invalid_language()"
     },
     {
@@ -22471,8 +22471,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_language_routes_test_language_isolated_per_guild",
-      "community": 5,
-      "community_name": "Test Fake Bot",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_language_isolated_per_guild()"
     },
     {
@@ -23637,8 +23637,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_routes.py"
     },
     {
@@ -23648,8 +23648,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_clear_jobs",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "clear_jobs()"
     },
     {
@@ -23659,8 +23659,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_build",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "build()"
     },
     {
@@ -23670,8 +23670,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_wait_for_completion",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "_wait_for_completion()"
     },
     {
@@ -23681,8 +23681,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_all_except_bots_completes",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_all_except_bots_completes()"
     },
     {
@@ -23692,8 +23692,8 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_selected_records_missing_member",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_selected_records_missing_member()"
     },
     {
@@ -23703,8 +23703,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_selected_requires_member_ids",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_selected_requires_member_ids()"
     },
     {
@@ -23714,8 +23714,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_selected_rejects_oversized_member_ids",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_selected_rejects_oversized_member_ids()"
     },
     {
@@ -23725,8 +23725,8 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_rejects_role_above_bot",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_rejects_role_above_bot()"
     },
     {
@@ -23736,8 +23736,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_rejects_second_job_while_running",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_rejects_second_job_while_running()"
     },
     {
@@ -23747,8 +23747,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_status_404_for_unknown_job",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_status_404_for_unknown_job()"
     },
     {
@@ -23758,8 +23758,8 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_requires_auth",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_requires_auth()"
     },
     {
@@ -23769,8 +23769,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_concurrent_requests_only_one_job_starts",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_concurrent_requests_only_one_job_starts()"
     },
     {
@@ -23780,8 +23780,8 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_assign_routes_test_mass_assign_job_marked_failed_on_unexpected_exception",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 89,
+      "community_name": "Giveaways.tsx",
       "norm_label": "test_mass_assign_job_marked_failed_on_unexpected_exception()"
     },
     {
@@ -23791,8 +23791,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "test_mass_role_jobs.py"
     },
     {
@@ -23802,8 +23802,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_stubforbidden",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "_stubforbidden"
     },
     {
@@ -23813,8 +23813,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_stubforbidden_init",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": ".__init__()"
     },
     {
@@ -23824,8 +23824,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_dashboard_reason",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "_dashboard_reason()"
     },
     {
@@ -23835,8 +23835,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_clear_jobs",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "clear_jobs()"
     },
     {
@@ -23846,8 +23846,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_test_assigns_role_to_all_members_without_it",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "test_assigns_role_to_all_members_without_it()"
     },
     {
@@ -23857,8 +23857,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_test_skips_members_who_already_have_the_role",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "test_skips_members_who_already_have_the_role()"
     },
     {
@@ -23868,8 +23868,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_test_continues_after_one_member_fails",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "test_continues_after_one_member_fails()"
     },
     {
@@ -23879,8 +23879,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_mass_role_jobs_test_processed_equals_sum_of_outcomes",
-      "community": 37,
-      "community_name": "Events Route Tests",
+      "community": 0,
+      "community_name": "Game Settings & Bunker DB",
       "norm_label": "test_processed_equals_sum_of_outcomes()"
     },
     {
@@ -23890,8 +23890,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_member_detail.py"
     },
     {
@@ -23901,8 +23901,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail_build",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "build()"
     },
     {
@@ -23912,8 +23912,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail_test_detail_shape_matches_userinfo",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_detail_shape_matches_userinfo()"
     },
     {
@@ -23923,8 +23923,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail_test_detail_defaults_when_no_stats",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_detail_defaults_when_no_stats()"
     },
     {
@@ -23934,8 +23934,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail_test_detail_404_when_member_absent",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_detail_404_when_member_absent()"
     },
     {
@@ -23945,8 +23945,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_member_detail_test_detail_400_on_non_numeric_id",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_detail_400_on_non_numeric_id()"
     },
     {
@@ -25804,8 +25804,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "test_serverlog_routes.py"
     },
     {
@@ -25815,8 +25815,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_isolated_config",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "isolated_config()"
     },
     {
@@ -25826,8 +25826,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_build",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "build()"
     },
     {
@@ -25837,8 +25837,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_test_get_defaults_all_disabled",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "test_get_defaults_all_disabled()"
     },
     {
@@ -25848,8 +25848,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_test_put_then_get",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "test_put_then_get()"
     },
     {
@@ -25859,8 +25859,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_test_put_validation",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "test_put_validation()"
     },
     {
@@ -25870,8 +25870,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_serverlog_routes_test_requires_auth",
-      "community": 98,
-      "community_name": "FakeAsset",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "test_requires_auth()"
     },
     {
@@ -26057,8 +26057,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_settings_migration.py"
     },
     {
@@ -26068,8 +26068,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_isolated_db",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "isolated_db()"
     },
     {
@@ -26079,8 +26079,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_write_json",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "_write_json()"
     },
     {
@@ -26090,8 +26090,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_one_moves_data_and_renames_file",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_one_moves_data_and_renames_file()"
     },
     {
@@ -26101,8 +26101,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_one_missing_file_is_noop",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_one_missing_file_is_noop()"
     },
     {
@@ -26112,8 +26112,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_one_skips_when_already_migrated",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_one_skips_when_already_migrated()"
     },
     {
@@ -26123,8 +26123,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_one_treats_corrupt_json_as_empty_object",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_one_treats_corrupt_json_as_empty_object()"
     },
     {
@@ -26134,8 +26134,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_all_migrates_existing_files_only",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_all_migrates_existing_files_only()"
     },
     {
@@ -26145,8 +26145,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_test_migrate_all_is_idempotent_across_two_runs",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "test_migrate_all_is_idempotent_across_two_runs()"
     },
     {
@@ -26156,8 +26156,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_settings_migration_rationale_1",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "\u0442\u0435\u0441\u0442\u044b settings_migration: \u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u043f\u043b\u043e\u0441\u043a\u0438\u0445 json \u0432 settings_db, \u0438\u0434\u0435\u043c\u043f\u043e\u0442\u0435\u043d\u0442\u043d\u043e\u0441\u0442\u044c."
     },
     {
@@ -27300,8 +27300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_verification_routes.py"
     },
     {
@@ -27311,8 +27311,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_isolated_config",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "isolated_config()"
     },
     {
@@ -27322,8 +27322,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_build",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "build()"
     },
     {
@@ -27333,8 +27333,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_test_get_defaults_disabled",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_get_defaults_disabled()"
     },
     {
@@ -27344,8 +27344,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_test_put_then_get",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_then_get()"
     },
     {
@@ -27355,8 +27355,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_test_put_validation",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_put_validation()"
     },
     {
@@ -27366,8 +27366,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_verification_routes_test_requires_login",
-      "community": 90,
-      "community_name": "PublicMafiaAction.tsx",
+      "community": 98,
+      "community_name": "FakeAsset",
       "norm_label": "test_requires_login()"
     },
     {
@@ -28037,8 +28037,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_welcome_routes.py"
     },
     {
@@ -28048,8 +28048,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_isolated_settings_db",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "isolated_settings_db()"
     },
     {
@@ -28059,8 +28059,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_build",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "build()"
     },
     {
@@ -28070,8 +28070,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_get_welcome_settings_defaults_to_enabled_when_file_missing",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_welcome_settings_defaults_to_enabled_when_file_missing()"
     },
     {
@@ -28081,8 +28081,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_get_welcome_settings_returns_stored_values",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_welcome_settings_returns_stored_values()"
     },
     {
@@ -28092,8 +28092,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_get_welcome_settings_requires_auth",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_get_welcome_settings_requires_auth()"
     },
     {
@@ -28103,8 +28103,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_update_welcome_settings_persists",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_update_welcome_settings_persists()"
     },
     {
@@ -28114,8 +28114,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_update_welcome_settings_allows_empty_embeds_in_text_mode",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_update_welcome_settings_allows_empty_embeds_in_text_mode()"
     },
     {
@@ -28125,8 +28125,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_update_welcome_settings_rejects_oversized_dm_field",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_update_welcome_settings_rejects_oversized_dm_field()"
     },
     {
@@ -28136,8 +28136,8 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_update_welcome_settings_rejects_non_dict_body",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_update_welcome_settings_rejects_non_dict_body()"
     },
     {
@@ -28147,8 +28147,8 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_test_update_welcome_settings_requires_auth",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "test_update_welcome_settings_requires_auth()"
     },
     {
@@ -28169,8 +28169,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_welcome_routes_rationale_87",
-      "community": 184,
-      "community_name": "Casino.tsx",
+      "community": 147,
+      "community_name": "test_supply_routes.py",
       "norm_label": "saving toggles with empty channel/dm embed stubs must not fail as empty_embed."
     },
     {
@@ -30534,8 +30534,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_loginurl",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "loginurl()"
     },
     {
@@ -30655,8 +30655,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_jsoninit",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "jsoninit()"
     },
     {
@@ -30666,8 +30666,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_membersummary",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "membersummary"
     },
     {
@@ -30677,8 +30677,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_memberspage",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 19,
+      "community_name": "Mass Role Assignment",
       "norm_label": "memberspage"
     },
     {
@@ -30688,8 +30688,8 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_rolechip",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "rolechip"
     },
     {
@@ -30699,8 +30699,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_memberdetail",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "memberdetail"
     },
     {
@@ -30710,8 +30710,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_roleinfo",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "roleinfo"
     },
     {
@@ -30743,8 +30743,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmemberdetail",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "fetchmemberdetail()"
     },
     {
@@ -30754,8 +30754,8 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_banmember",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "banmember()"
     },
     {
@@ -30765,8 +30765,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_kickmember",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "kickmember()"
     },
     {
@@ -30776,8 +30776,8 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchroles",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "fetchroles()"
     },
     {
@@ -30787,8 +30787,8 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_grantrole",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "grantrole()"
     },
     {
@@ -30798,8 +30798,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_revokerole",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "revokerole()"
     },
     {
@@ -30864,8 +30864,8 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_massassigntarget",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassigntarget"
     },
     {
@@ -30875,8 +30875,8 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_massassignstatus",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassignstatus"
     },
     {
@@ -30886,8 +30886,8 @@
       "source_location": "L219",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_startmassassign",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "startmassassign()"
     },
     {
@@ -30897,8 +30897,8 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmassassignstatus",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "fetchmassassignstatus()"
     },
     {
@@ -30908,8 +30908,8 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_reactionrolepair",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionrolepair"
     },
     {
@@ -30919,8 +30919,8 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_reactionroleentry",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroleentry"
     },
     {
@@ -30930,8 +30930,8 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_customemoji",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "customemoji"
     },
     {
@@ -30941,8 +30941,8 @@
       "source_location": "L251",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_channelinfo",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "channelinfo"
     },
     {
@@ -30952,8 +30952,8 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchreactionroles",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchreactionroles()"
     },
     {
@@ -30963,8 +30963,8 @@
       "source_location": "L262",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createreactionrole",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "createreactionrole()"
     },
     {
@@ -30974,8 +30974,8 @@
       "source_location": "L273",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatereactionrole",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "updatereactionrole()"
     },
     {
@@ -30985,8 +30985,8 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletereactionrole",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "deletereactionrole()"
     },
     {
@@ -31007,8 +31007,8 @@
       "source_location": "L286",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchchannels",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchchannels()"
     },
     {
@@ -31392,8 +31392,8 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_botconfig",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "botconfig"
     },
     {
@@ -31403,8 +31403,8 @@
       "source_location": "L545",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchconfig",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "fetchconfig()"
     },
     {
@@ -31414,8 +31414,8 @@
       "source_location": "L549",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateconfig",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "updateconfig()"
     },
     {
@@ -31425,8 +31425,8 @@
       "source_location": "L554",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_ctdconfig",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "ctdconfig"
     },
     {
@@ -31436,8 +31436,8 @@
       "source_location": "L559",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchctdconfig",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "fetchctdconfig()"
     },
     {
@@ -31447,8 +31447,8 @@
       "source_location": "L563",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatectdconfig",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "updatectdconfig()"
     },
     {
@@ -31546,8 +31546,8 @@
       "source_location": "L621",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_voiceroom",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "voiceroom"
     },
     {
@@ -31557,8 +31557,8 @@
       "source_location": "L632",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchvoicerooms",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "fetchvoicerooms()"
     },
     {
@@ -31568,8 +31568,8 @@
       "source_location": "L637",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletevoiceroom",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "deletevoiceroom()"
     },
     {
@@ -31579,8 +31579,8 @@
       "source_location": "L641",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_publishvoicepanel",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "publishvoicepanel()"
     },
     {
@@ -31601,8 +31601,8 @@
       "source_location": "L651",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_newssettings",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "newssettings"
     },
     {
@@ -31612,8 +31612,8 @@
       "source_location": "L659",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchnewssettings",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchnewssettings()"
     },
     {
@@ -31623,8 +31623,8 @@
       "source_location": "L663",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatenewssettings",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "updatenewssettings()"
     },
     {
@@ -31788,8 +31788,8 @@
       "source_location": "L763",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_welcomemessagesettings",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "welcomemessagesettings"
     },
     {
@@ -31799,8 +31799,8 @@
       "source_location": "L776",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_welcomesettings",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "welcomesettings"
     },
     {
@@ -31876,8 +31876,8 @@
       "source_location": "L813",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchwelcomesettings",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "fetchwelcomesettings()"
     },
     {
@@ -31887,8 +31887,8 @@
       "source_location": "L817",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatewelcomesettings",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "updatewelcomesettings()"
     },
     {
@@ -31931,8 +31931,8 @@
       "source_location": "L835",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_serverlogeventconfig",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "serverlogeventconfig"
     },
     {
@@ -31953,8 +31953,8 @@
       "source_location": "L845",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchserverlog",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchserverlog()"
     },
     {
@@ -31964,8 +31964,8 @@
       "source_location": "L849",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateserverlog",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "updateserverlog()"
     },
     {
@@ -32184,8 +32184,8 @@
       "source_location": "L982",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_voicestats",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "voicestats"
     },
     {
@@ -32195,8 +32195,8 @@
       "source_location": "L994",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchvoicestats",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "fetchvoicestats()"
     },
     {
@@ -32239,8 +32239,8 @@
       "source_location": "L1026",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_streamsubscription",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "streamsubscription"
     },
     {
@@ -32250,8 +32250,8 @@
       "source_location": "L1042",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchstreams",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchstreams()"
     },
     {
@@ -32261,8 +32261,8 @@
       "source_location": "L1046",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createstreamsubscription",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "createstreamsubscription()"
     },
     {
@@ -32272,8 +32272,8 @@
       "source_location": "L1054",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatestreamsubscription",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "updatestreamsubscription()"
     },
     {
@@ -32283,8 +32283,8 @@
       "source_location": "L1061",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletestreamsubscription",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "deletestreamsubscription()"
     },
     {
@@ -32503,8 +32503,8 @@
       "source_location": "L1202",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_mafiasettings",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mafiasettings"
     },
     {
@@ -32514,8 +32514,8 @@
       "source_location": "L1212",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmafiasettings",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchmafiasettings()"
     },
     {
@@ -32525,8 +32525,8 @@
       "source_location": "L1216",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatemafiasettings",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "updatemafiasettings()"
     },
     {
@@ -32558,8 +32558,8 @@
       "source_location": "L1223",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_mafiagamesummary",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mafiagamesummary"
     },
     {
@@ -32569,8 +32569,8 @@
       "source_location": "L1235",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmafiagames",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "fetchmafiagames()"
     },
     {
@@ -32624,8 +32624,8 @@
       "source_location": "L1260",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_mafiapublicstate",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "mafiapublicstate"
     },
     {
@@ -32635,8 +32635,8 @@
       "source_location": "L1278",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchpublicmafia",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchpublicmafia()"
     },
     {
@@ -32646,8 +32646,8 @@
       "source_location": "L1282",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_submitmafiaaction",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "submitmafiaaction()"
     },
     {
@@ -32657,8 +32657,8 @@
       "source_location": "L1286",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_submitmafiavote",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "submitmafiavote()"
     },
     {
@@ -32668,8 +32668,8 @@
       "source_location": "L1292",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_superadminguild",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "superadminguild"
     },
     {
@@ -32679,8 +32679,8 @@
       "source_location": "L1300",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchsuperadminguilds",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "fetchsuperadminguilds()"
     },
     {
@@ -32789,8 +32789,8 @@
       "source_location": "L1363",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_dailytopicsettings",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "dailytopicsettings"
     },
     {
@@ -32800,8 +32800,8 @@
       "source_location": "L1370",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchdailytopic",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "fetchdailytopic()"
     },
     {
@@ -32811,8 +32811,8 @@
       "source_location": "L1374",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatedailytopicsettings",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "updatedailytopicsettings()"
     },
     {
@@ -32822,8 +32822,8 @@
       "source_location": "L1382",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createdailytopic",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "createdailytopic()"
     },
     {
@@ -32833,8 +32833,8 @@
       "source_location": "L1386",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatedailytopic",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "updatedailytopic()"
     },
     {
@@ -32844,8 +32844,8 @@
       "source_location": "L1390",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletedailytopic",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "deletedailytopic()"
     },
     {
@@ -32855,8 +32855,8 @@
       "source_location": "L1394",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_postdailytopicnow",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "postdailytopicnow()"
     },
     {
@@ -32976,8 +32976,8 @@
       "source_location": "L1463",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateescalationrule",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "updateescalationrule()"
     },
     {
@@ -32998,8 +32998,8 @@
       "source_location": "L1476",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_warn",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "warn"
     },
     {
@@ -33009,8 +33009,8 @@
       "source_location": "L1490",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmemberwarns",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "fetchmemberwarns()"
     },
     {
@@ -33020,8 +33020,8 @@
       "source_location": "L1494",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_creatememberwarn",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "creatememberwarn()"
     },
     {
@@ -33031,8 +33031,8 @@
       "source_location": "L1498",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletewarn",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "deletewarn()"
     },
     {
@@ -33438,8 +33438,8 @@
       "source_location": "L1765",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_funsettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "funsettings"
     },
     {
@@ -33449,8 +33449,8 @@
       "source_location": "L1775",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchfunsettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchfunsettings()"
     },
     {
@@ -33460,8 +33460,8 @@
       "source_location": "L1779",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatefunsettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "updatefunsettings()"
     },
     {
@@ -33471,8 +33471,8 @@
       "source_location": "L1783",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_wordlesettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "wordlesettings"
     },
     {
@@ -33482,8 +33482,8 @@
       "source_location": "L1790",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchwordlesettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchwordlesettings()"
     },
     {
@@ -33493,8 +33493,8 @@
       "source_location": "L1794",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatewordlesettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "updatewordlesettings()"
     },
     {
@@ -33603,8 +33603,8 @@
       "source_location": "L1859",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_casinosettings",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinosettings"
     },
     {
@@ -33614,8 +33614,8 @@
       "source_location": "L1868",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchcasinosettings",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchcasinosettings()"
     },
     {
@@ -33625,8 +33625,8 @@
       "source_location": "L1872",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatecasinosettings",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "updatecasinosettings()"
     },
     {
@@ -33636,8 +33636,8 @@
       "source_location": "L1876",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_casinoleaderboardentry",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinoleaderboardentry"
     },
     {
@@ -33658,8 +33658,8 @@
       "source_location": "L1893",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchcasinoleaderboard",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchcasinoleaderboard()"
     },
     {
@@ -33768,8 +33768,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_config_test",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "config.test.ts"
     },
     {
@@ -33779,8 +33779,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_config_test_jsonresponse",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "jsonresponse()"
     },
     {
@@ -33790,8 +33790,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_config_test_sampleconfig",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "sampleconfig"
     },
     {
@@ -33988,8 +33988,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_massassign_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassign.test.ts"
     },
     {
@@ -33999,8 +33999,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_massassign_test_okjson",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "okjson()"
     },
     {
@@ -34032,8 +34032,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_reactionroles_test",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroles.test.ts"
     },
     {
@@ -34043,8 +34043,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_reactionroles_test_okjson",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "okjson()"
     },
     {
@@ -34208,8 +34208,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embededitor_empty_embed_spec",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "empty_embed_spec"
     },
     {
@@ -34296,8 +34296,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassignmodal.test.tsx"
     },
     {
@@ -34307,8 +34307,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassignmodal.tsx"
     },
     {
@@ -34318,8 +34318,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_props",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "props"
     },
     {
@@ -34329,8 +34329,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_massassignmodal",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "massassignmodal()"
     },
     {
@@ -34351,8 +34351,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_moduleconfigpanel",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "moduleconfigpanel.tsx"
     },
     {
@@ -34362,8 +34362,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_moduleconfigpanel_moduleconfigpanelprops",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "moduleconfigpanelprops"
     },
     {
@@ -34373,8 +34373,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_moduleconfigpanel_moduleconfigpanel",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "moduleconfigpanel()"
     },
     {
@@ -34439,8 +34439,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_reactionroleform",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroleform.tsx"
     },
     {
@@ -34450,8 +34450,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_reactionroleform_props",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "props"
     },
     {
@@ -34461,8 +34461,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_reactionroleform_hasduplicateemoji",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "hasduplicateemoji()"
     },
     {
@@ -34472,8 +34472,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_reactionroleform_reactionroleform",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroleform()"
     },
     {
@@ -34714,8 +34714,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_card",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "card.tsx"
     },
     {
@@ -34725,8 +34725,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_card_cardprops",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "cardprops"
     },
     {
@@ -34736,8 +34736,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_card_card",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "card()"
     },
     {
@@ -34945,8 +34945,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "botconfigdefaults.ts"
     },
     {
@@ -34956,8 +34956,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults_empty_bot_config",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "empty_bot_config"
     },
     {
@@ -34967,8 +34967,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults_moduleconfigvariant",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "moduleconfigvariant"
     },
     {
@@ -35033,8 +35033,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_welcomedmdefaults",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "welcomedmdefaults.ts"
     },
     {
@@ -35044,8 +35044,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_welcomedmdefaults_builddefaultdmembed",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "builddefaultdmembed()"
     },
     {
@@ -35055,8 +35055,8 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_welcomedmdefaults_embedhascontent",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "embedhascontent()"
     },
     {
@@ -35825,8 +35825,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "automod.test.tsx"
     },
     {
@@ -35836,8 +35836,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test_makefilter",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "makefilter()"
     },
     {
@@ -35847,8 +35847,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test_filter_keys",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "filter_keys"
     },
     {
@@ -35858,8 +35858,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test_filter_labels_ru",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "filter_labels_ru"
     },
     {
@@ -35869,8 +35869,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test_basesettings",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "basesettings()"
     },
     {
@@ -35880,8 +35880,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_automod_test_mockbasefetches",
-      "community": 142,
-      "community_name": "MafiaLobbyView",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "mockbasefetches()"
     },
     {
@@ -36342,8 +36342,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casino.test.tsx"
     },
     {
@@ -36353,8 +36353,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_emptysettings",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptysettings"
     },
     {
@@ -36364,8 +36364,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_emptyleaderboard",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptyleaderboard"
     },
     {
@@ -36375,8 +36375,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casino.tsx"
     },
     {
@@ -36386,8 +36386,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_casinopage",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinopage()"
     },
     {
@@ -36397,8 +36397,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_config_test",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "config.test.tsx"
     },
     {
@@ -36408,8 +36408,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_ctd",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "ctd.tsx"
     },
     {
@@ -36419,8 +36419,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_ctd_empty",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "empty"
     },
     {
@@ -36430,8 +36430,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_ctd_ctdpage",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 141,
+      "community_name": "test_feedback_panel_routes.py",
       "norm_label": "ctdpage()"
     },
     {
@@ -36441,8 +36441,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dailytopic_test",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "dailytopic.test.tsx"
     },
     {
@@ -36452,8 +36452,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dailytopic_test_emptysettings",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "emptysettings"
     },
     {
@@ -36463,8 +36463,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dailytopic_test_mockbasefetches",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "mockbasefetches()"
     },
     {
@@ -36474,8 +36474,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dailytopic",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "dailytopic.tsx"
     },
     {
@@ -36485,8 +36485,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dailytopic_dailytopicpage",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "dailytopicpage()"
     },
     {
@@ -37222,8 +37222,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun_test",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fun.test.tsx"
     },
     {
@@ -37233,8 +37233,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun_test_emptysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptysettings"
     },
     {
@@ -37244,8 +37244,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun_test_emptywordle",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptywordle"
     },
     {
@@ -37255,8 +37255,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun_test_mockwordle",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "mockwordle()"
     },
     {
@@ -37266,8 +37266,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fun.tsx"
     },
     {
@@ -37277,8 +37277,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_fun_funpage",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "funpage()"
     },
     {
@@ -37563,8 +37563,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_login",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "login.tsx"
     },
     {
@@ -37574,8 +37574,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_login_feature_keys",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "feature_keys"
     },
     {
@@ -37585,8 +37585,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_login_loginpage",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "loginpage()"
     },
     {
@@ -37596,8 +37596,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mafia.test.tsx"
     },
     {
@@ -37607,8 +37607,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia_test_emptysettings",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "emptysettings"
     },
     {
@@ -37618,8 +37618,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia_test_mockbasefetches",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mockbasefetches()"
     },
     {
@@ -37629,8 +37629,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mafia.tsx"
     },
     {
@@ -37640,8 +37640,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia_tab",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "tab"
     },
     {
@@ -37651,8 +37651,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_mafia_mafiapage",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "mafiapage()"
     },
     {
@@ -37662,8 +37662,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_test",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "memberdetailpanel.test.tsx"
     },
     {
@@ -37673,8 +37673,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_test_basedetail",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "basedetail"
     },
     {
@@ -37684,8 +37684,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_test_mockbasefetches",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "mockbasefetches()"
     },
     {
@@ -37695,8 +37695,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "memberdetailpanel.tsx"
     },
     {
@@ -37706,8 +37706,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_pendingaction",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "pendingaction"
     },
     {
@@ -37717,8 +37717,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_props",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "props"
     },
     {
@@ -37728,8 +37728,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_memberdetailpanel_memberdetailpanel",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 57,
+      "community_name": "test_feedback_routes.py",
       "norm_label": "memberdetailpanel()"
     },
     {
@@ -37739,8 +37739,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_members_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 19,
+      "community_name": "Mass Role Assignment",
       "norm_label": "members.test.tsx"
     },
     {
@@ -37750,8 +37750,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_members_test_page",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 19,
+      "community_name": "Mass Role Assignment",
       "norm_label": "page()"
     },
     {
@@ -37761,8 +37761,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_members",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 19,
+      "community_name": "Mass Role Assignment",
       "norm_label": "members.tsx"
     },
     {
@@ -37772,8 +37772,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_members_memberspage",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 19,
+      "community_name": "Mass Role Assignment",
       "norm_label": "memberspage()"
     },
     {
@@ -37827,8 +37827,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_news",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "news.tsx"
     },
     {
@@ -37838,8 +37838,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_news_newspage",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "newspage()"
     },
     {
@@ -37849,8 +37849,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_notfound_test",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "notfound.test.tsx"
     },
     {
@@ -37860,8 +37860,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_notfound",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "notfound.tsx"
     },
     {
@@ -37871,8 +37871,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_notfound_notfoundpage",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "notfoundpage()"
     },
     {
@@ -37992,8 +37992,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicbunkeraction_test",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "publicbunkeraction.test.tsx"
     },
     {
@@ -38003,8 +38003,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicbunkeraction_test_basestate",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "basestate"
     },
     {
@@ -38014,8 +38014,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicbunkeraction_test_renderat",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "renderat()"
     },
     {
@@ -38058,8 +38058,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction_test",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "publicmafiaaction.test.tsx"
     },
     {
@@ -38069,8 +38069,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction_test_basestate",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "basestate"
     },
     {
@@ -38080,8 +38080,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction_test_renderat",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "renderat()"
     },
     {
@@ -38091,8 +38091,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "publicmafiaaction.tsx"
     },
     {
@@ -38102,8 +38102,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction_usecountdown",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "usecountdown()"
     },
     {
@@ -38113,8 +38113,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_publicmafiaaction_publicmafiaactionpage",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "publicmafiaactionpage()"
     },
     {
@@ -38124,8 +38124,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_reactionroles_test",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroles.test.tsx"
     },
     {
@@ -38135,8 +38135,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_reactionroles",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionroles.tsx"
     },
     {
@@ -38146,8 +38146,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_reactionroles_reactionrolespage",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "reactionrolespage()"
     },
     {
@@ -38157,8 +38157,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "serverentry.tsx"
     },
     {
@@ -38168,8 +38168,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_tab",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "tab"
     },
     {
@@ -38179,8 +38179,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_onboarding_channel_keys",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "onboarding_channel_keys"
     },
     {
@@ -38190,8 +38190,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_onboardingchannelkey",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "onboardingchannelkey"
     },
     {
@@ -38201,8 +38201,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_emptymessages",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "emptymessages()"
     },
     {
@@ -38212,8 +38212,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_channellabel",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "channellabel()"
     },
     {
@@ -38223,8 +38223,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_applyvars",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "applyvars()"
     },
     {
@@ -38234,8 +38234,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_previewembed",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "previewembed()"
     },
     {
@@ -38245,8 +38245,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverentry_serverentrypage",
-      "community": 44,
-      "community_name": "Bunker API Client",
+      "community": 62,
+      "community_name": "auth.py",
       "norm_label": "serverentrypage()"
     },
     {
@@ -38256,8 +38256,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverlog",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "serverlog.tsx"
     },
     {
@@ -38267,8 +38267,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serverlog_serverlogpage",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "serverlogpage()"
     },
     {
@@ -38377,8 +38377,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_streams",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "streams.tsx"
     },
     {
@@ -38388,8 +38388,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_streams_platformicon",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "platformicon()"
     },
     {
@@ -38399,8 +38399,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_streams_streamspage",
-      "community": 57,
-      "community_name": "test_feedback_routes.py",
+      "community": 160,
+      "community_name": ".start_lobby",
       "norm_label": "streamspage()"
     },
     {
@@ -38410,8 +38410,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_superadmin_test",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "superadmin.test.tsx"
     },
     {
@@ -38421,8 +38421,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_superadmin",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "superadmin.tsx"
     },
     {
@@ -38432,8 +38432,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_superadmin_superadminpage",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "superadminpage()"
     },
     {
@@ -38608,8 +38608,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "voicerooms.tsx"
     },
     {
@@ -38619,8 +38619,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms_tab",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "tab"
     },
     {
@@ -38630,8 +38630,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms_voiceroomspage",
-      "community": 160,
-      "community_name": ".start_lobby",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "voiceroomspage()"
     },
     {
@@ -38641,8 +38641,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "voicestats.tsx"
     },
     {
@@ -38652,8 +38652,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats_periods",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "periods"
     },
     {
@@ -38663,8 +38663,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats_weekday_keys",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "weekday_keys"
     },
     {
@@ -38674,8 +38674,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats_barchart",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "barchart()"
     },
     {
@@ -38685,8 +38685,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats_stattile",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "stattile()"
     },
     {
@@ -38696,8 +38696,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicestats_voicestatspage",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 36,
+      "community_name": "Lockdown Routes",
       "norm_label": "voicestatspage()"
     },
     {
@@ -39015,8 +39015,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "dashboard_frontend_src_test_renderwithlanguage_renderwithlanguage",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "renderwithlanguage()"
     },
     {
@@ -42777,8 +42777,8 @@
       "source_location": "L491",
       "_origin": "ast",
       "id": "family_tickets_familyticketscog",
-      "community": 147,
-      "community_name": "test_supply_routes.py",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "familyticketscog"
     },
     {
@@ -42876,8 +42876,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "feedback_categories",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "feedback_categories.py"
     },
     {
@@ -42887,8 +42887,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "feedback_categories_load_categories",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "load_categories()"
     },
     {
@@ -42898,8 +42898,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "feedback_categories_save_categories",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "save_categories()"
     },
     {
@@ -42920,8 +42920,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "feedback_categories_migrate_from_env_if_needed",
-      "community": 23,
-      "community_name": "Lockdown API Client",
+      "community": 124,
+      "community_name": "init",
       "norm_label": "migrate_from_env_if_needed()"
     },
     {
@@ -42942,8 +42942,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "feedback_core_upsert_embed_field",
-      "community": 75,
-      "community_name": "test_access.py",
+      "community": 8,
+      "community_name": "Feedback Cases",
       "norm_label": "upsert_embed_field()"
     },
     {
@@ -42953,8 +42953,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "feedback_core_py_embed",
-      "community": 75,
-      "community_name": "test_access.py",
+      "community": 8,
+      "community_name": "Feedback Cases",
       "norm_label": "embed"
     },
     {
@@ -42975,8 +42975,8 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "feedback_core_publish_feedback_panel",
-      "community": 75,
-      "community_name": "test_access.py",
+      "community": 8,
+      "community_name": "Feedback Cases",
       "norm_label": "publish_feedback_panel()"
     },
     {
@@ -42986,8 +42986,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "feedback_core_py_message",
-      "community": 75,
-      "community_name": "test_access.py",
+      "community": 8,
+      "community_name": "Feedback Cases",
       "norm_label": "message"
     },
     {
@@ -43618,7 +43618,7 @@
       "norm_label": "\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043b\u0438 \u0430\u0432\u0442\u043e-\u044d\u043c\u043e\u0434\u0437\u0438 \u043d\u0430 \u044d\u0442\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435 (\u0448\u0430\u043d\u0441 \u0432 \u043f\u0440\u043e\u0446\u0435\u043d\u0442\u0430\u0445)."
     },
     {
-      "label": "\u041f\u0440\u0438 \u0437\u0430\u0440\u044f\u0434\u043a\u0435 \u043d\u043e\u0432\u043e\u0433\u043e \u0431\u0430\u0440\u0430\u0431\u0430\u043d\u0430: True \u2014 \u043f\u0430\u0442\u0440\u043e\u043d\u043e\u0432 \u043d\u0435\u0442 \u0432\u043e\u043e\u0431\u0449\u0435 (15%).",
+      "label": "\u041f\u0440\u0438 \u0437\u0430\u0440\u044f\u0434\u043a\u0435 \u043d\u043e\u0432\u043e\u0433\u043e \u0431\u0430\u0440\u0430\u0431\u0430\u043d\u0430: True \u2014 \u043f\u0430\u0442\u0440\u043e\u043d\u043e\u0432 \u043d\u0435\u0442 \u0432\u043e\u043e\u0431\u0449\u0435 (8%).",
       "file_type": "rationale",
       "source_file": "fun_core.py",
       "source_location": "L58",
@@ -43626,7 +43626,7 @@
       "id": "fun_core_rationale_58",
       "community": 80,
       "community_name": "Leaderboard.tsx",
-      "norm_label": "\u043f\u0440\u0438 \u0437\u0430\u0440\u044f\u0434\u043a\u0435 \u043d\u043e\u0432\u043e\u0433\u043e \u0431\u0430\u0440\u0430\u0431\u0430\u043d\u0430: true \u2014 \u043f\u0430\u0442\u0440\u043e\u043d\u043e\u0432 \u043d\u0435\u0442 \u0432\u043e\u043e\u0431\u0449\u0435 (15%)."
+      "norm_label": "\u043f\u0440\u0438 \u0437\u0430\u0440\u044f\u0434\u043a\u0435 \u043d\u043e\u0432\u043e\u0433\u043e \u0431\u0430\u0440\u0430\u0431\u0430\u043d\u0430: true \u2014 \u043f\u0430\u0442\u0440\u043e\u043d\u043e\u0432 \u043d\u0435\u0442 \u0432\u043e\u043e\u0431\u0449\u0435 (8%)."
     },
     {
       "label": "\u041e\u0434\u0438\u043d \u0441\u043f\u0443\u0441\u043a \u043a\u0443\u0440\u043a\u0430: True \u2014 \u0432\u044b\u0441\u0442\u0440\u0435\u043b.      \u0411\u0430\u0440\u0430\u0431\u0430\u043d \u041d\u0415 \u043f\u0440\u043e\u043a\u0440\u0443\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u0437\u0430\u043d\u043e\u0432\u043e \u043f\u043e\u0441\u043b\u0435 \u043e\u0441",
@@ -46253,8 +46253,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "mafia_db_get_game",
-      "community": 38,
-      "community_name": "Mafia Public Route Tests",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "get_game()"
     },
     {
@@ -46352,8 +46352,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "mafia_db_list_alive_players",
-      "community": 76,
-      "community_name": "test_config_routes.py",
+      "community": 148,
+      "community_name": "lockdown.py",
       "norm_label": "list_alive_players()"
     },
     {
@@ -48629,8 +48629,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "settings_db_has",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "has()"
     },
     {
@@ -48684,8 +48684,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "settings_db_rationale_79",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "true, \u0435\u0441\u043b\u0438 \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u0443\u0436\u0435 \u0435\u0441\u0442\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043d\u044b\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u043a\u0438 \u043c\u043e\u0434\u0443\u043b\u044f (\u0434\u043b\u044f \u043c\u0438\u0433\u0440\u0430\u0446\u0438\u0438"
     },
     {
@@ -48706,8 +48706,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "settings_migration",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "settings_migration.py"
     },
     {
@@ -48717,8 +48717,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "settings_migration_migrate_one",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "migrate_one()"
     },
     {
@@ -48728,8 +48728,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "settings_migration_migrate_all",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "migrate_all()"
     },
     {
@@ -48739,8 +48739,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "settings_migration_rationale_1",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "\u043e\u0434\u043d\u043e\u0440\u0430\u0437\u043e\u0432\u0430\u044f \u0438\u0434\u0435\u043c\u043f\u043e\u0442\u0435\u043d\u0442\u043d\u0430\u044f \u043c\u0438\u0433\u0440\u0430\u0446\u0438\u044f \u043f\u043b\u043e\u0441\u043a\u0438\u0445 json-\u043a\u043e\u043d\u0444\u0438\u0433\u043e\u0432 \u0432 settings_db (\u0444\u0430\u0437\u0430 2.1"
     },
     {
@@ -48750,8 +48750,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "settings_migration_rationale_55",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "\u043c\u0438\u0433\u0440\u0438\u0440\u0443\u0435\u0442 \u043e\u0434\u0438\u043d \u043c\u043e\u0434\u0443\u043b\u044c. true \u2014 \u0440\u0435\u0430\u043b\u044c\u043d\u043e \u043f\u0435\u0440\u0435\u043d\u0435\u0441\u0435\u043d, false \u2014 \u043d\u0435\u0447\u0435\u0433\u043e \u0431\u044b\u043b\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0438\u0442\u044c."
     },
     {
@@ -48761,8 +48761,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "settings_migration_rationale_77",
-      "community": 63,
-      "community_name": "resolve_guild_member()",
+      "community": 37,
+      "community_name": "Events Route Tests",
       "norm_label": "\u043c\u0438\u0433\u0440\u0438\u0440\u0443\u0435\u0442 \u0432\u0441\u0435 \u0438\u0437\u0432\u0435\u0441\u0442\u043d\u044b\u0435 \u043c\u043e\u0434\u0443\u043b\u0438; \u0432\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u0442 \u0441\u043f\u0438\u0441\u043e\u043a \u0440\u0435\u0430\u043b\u044c\u043d\u043e \u043f\u0435\u0440\u0435\u043d\u0435\u0441\u0435\u043d\u043d\u044b\u0445 \u0438\u043c\u0435\u043d."
     },
     {
