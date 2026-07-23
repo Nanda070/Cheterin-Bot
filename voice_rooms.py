@@ -1,6 +1,5 @@
 import settings_db
 import asyncio
-import os
 
 import discord
 from discord.ext import commands
@@ -13,12 +12,6 @@ import voice_logs as logs
 from voice_logs import VCTheme, logger
 
 MODULE_NAME = "voice_panel"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
-
-
-def _main_guild_id() -> int:
-    """Legacy helper for one-off migrations that still need GUILD_ID.
-    Do not use as a runtime default for panel publish or per-guild config."""
-    return int(os.getenv("GUILD_ID", "0") or 0)
 
 
 def _config_channel_id(guild_id: int, key: str) -> int:
@@ -96,7 +89,8 @@ async def set_member_deny(channel: discord.VoiceChannel, member: discord.Member)
 
 
 def is_room_owner(user_id: int, channel_id: int) -> bool:
-    return db.user_owned_channels.get(user_id) == channel_id
+    room = db.db_get_room(channel_id)
+    return bool(room and int(room["owner_id"]) == int(user_id))
 
 
 async def safe_followup(interaction: discord.Interaction, text: str):
@@ -375,8 +369,9 @@ class ChannelControlView(View):
             return
 
         old_owner = interaction.user
-        db.user_owned_channels.pop(old_owner.id, None)
-        db.user_owned_channels[target.id] = channel.id
+        guild_id = interaction.guild.id
+        db.user_owned_channels.pop((guild_id, old_owner.id), None)
+        db.user_owned_channels[(guild_id, target.id)] = channel.id
         await remove_owner_permissions(channel, old_owner)
         await apply_owner_permissions(channel, target)
         db.db_update_room_owner(channel.id, target.id)
@@ -453,7 +448,8 @@ class VoiceManager(commands.Cog):
         self._recovered = False
 
     def get_channel_owner_id(self, channel_id: int) -> int | None:
-        return next((uid for uid, cid in db.user_owned_channels.items() if cid == channel_id), None)
+        room = db.db_get_room(channel_id)
+        return int(room["owner_id"]) if room else None
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -503,7 +499,8 @@ class VoiceManager(commands.Cog):
             lang = i18n.lang_for(member.guild.id)
             lobby_id = _config_channel_id(member.guild.id, "VOICE_LOBBY_CHANNEL_ID")
             if after.channel and after.channel.id == lobby_id:
-                old_channel_id = db.user_owned_channels.get(member.id)
+                ownership_key = (member.guild.id, member.id)
+                old_channel_id = db.user_owned_channels.get(ownership_key)
                 if old_channel_id:
                     old_channel = member.guild.get_channel(old_channel_id)
                     if isinstance(old_channel, discord.VoiceChannel):
@@ -511,8 +508,11 @@ class VoiceManager(commands.Cog):
                             await old_channel.delete(reason="Recreated private room")
                         except Exception as exc:
                             await logs.log_error(self.bot, member.guild.id, "delete_old_room_before_create", exc)
-                    db.user_owned_channels.pop(member.id, None)
-                    db.db_delete_room(old_channel_id)
+                        db.user_owned_channels.pop(ownership_key, None)
+                        db.db_delete_room(old_channel_id)
+                    else:
+                        # Room exists in another guild or already gone — don't delete foreign DB rows.
+                        db.user_owned_channels.pop(ownership_key, None)
 
                 guild = member.guild
                 overwrites = {
@@ -531,7 +531,7 @@ class VoiceManager(commands.Cog):
                 )
 
                 await member.move_to(channel)
-                db.user_owned_channels[member.id] = channel.id
+                db.user_owned_channels[ownership_key] = channel.id
                 db.db_upsert_room(guild.id, channel.id, member.id, channel.name, is_closed=False, user_limit=0)
                 await logs.log_action(self.bot, member.guild.id, member, "Создал приватную комнату", channel, color=VCTheme.SUCCESS)
 
@@ -540,7 +540,7 @@ class VoiceManager(commands.Cog):
                 if room and len(before.channel.members) == 0:
                     owner_id = self.get_channel_owner_id(before.channel.id)
                     if owner_id:
-                        db.user_owned_channels.pop(owner_id, None)
+                        db.user_owned_channels.pop((member.guild.id, owner_id), None)
 
                     room_name = before.channel.name
                     channel_id = before.channel.id
@@ -592,7 +592,7 @@ class VoiceManager(commands.Cog):
                 removed += 1
                 continue
 
-            db.user_owned_channels[owner.id] = channel.id
+            db.user_owned_channels[(guild.id, owner.id)] = channel.id
 
             try:
                 await apply_owner_permissions(channel, owner)

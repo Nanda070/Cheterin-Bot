@@ -2,6 +2,7 @@ from aiohttp import web
 
 import bot_config
 import embed_builder
+import i18n
 import welcome_core
 from message_template_core import normalize_embed_spec
 
@@ -124,3 +125,64 @@ async def update_welcome_settings(request: web.Request) -> web.Response:
             "messages": _serialize_messages(guild_id),
         }
     )
+
+
+@routes.post("/api/welcome-settings/test")
+@require_dashboard_access
+async def welcome_test(request: web.Request) -> web.Response:
+    """Send a sample welcome (channel and/or DM) using the dashboard user as the member."""
+    try:
+        body = await request.json()
+    except ValueError:
+        body = {}
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    target = body.get("target", "channel")
+    if target not in ("channel", "dm", "both"):
+        return web.json_response({"error": "invalid_target"}, status=400)
+
+    guild_id = request["guild_id"]
+    bot = request.app["bot"]
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    moderator = request["moderator"]
+    member = guild.get_member(moderator.id) or moderator
+    lang = i18n.lang_for(guild_id)
+    settings = welcome_core.get_settings(guild_id)
+    sent: dict[str, bool] = {"channel": False, "dm": False}
+    prefix = i18n.t("welcome.test_prefix", lang)
+
+    if target in ("channel", "both"):
+        channel_raw = bot_config.get(guild_id, "WELCOME_CHANNEL_ID")
+        if not channel_raw:
+            return web.json_response({"error": "welcome_channel_not_set"}, status=400)
+        try:
+            channel = guild.get_channel(int(channel_raw))
+        except (TypeError, ValueError):
+            channel = None
+        if channel is None or not hasattr(channel, "send"):
+            return web.json_response({"error": "channel_not_found"}, status=404)
+        payload = welcome_core.build_channel_payload(settings, member, guild, lang, bot_config.get)
+        content = payload.get("content") or ""
+        payload["content"] = f"{prefix}\n{content}".strip() if content else prefix
+        try:
+            await channel.send(**payload)
+            sent["channel"] = True
+        except Exception:
+            return web.json_response({"error": "send_failed"}, status=502)
+
+    if target in ("dm", "both"):
+        payload = welcome_core.build_dm_payload(settings, member, guild, lang, bot_config.get)
+        content = payload.get("content") or ""
+        payload["content"] = f"{prefix}\n{content}".strip() if content else prefix
+        try:
+            await member.send(**payload)
+            sent["dm"] = True
+        except Exception:
+            return web.json_response({"error": "dm_failed", "sent": sent}, status=502)
+
+    return web.json_response({"ok": True, "sent": sent})
+

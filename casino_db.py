@@ -4,7 +4,8 @@ import os
 import sqlite3
 from contextlib import closing
 
-MAIN_GUILD = int(os.getenv("GUILD_ID", "404"))
+# Легаси-строки без guild_id при миграции достаются мейн-серверу (как в economy_db / stats_db).
+MAIN_GUILD = 404
 
 
 def get_db_path() -> str:

@@ -35,4 +35,5 @@ MESSAGES: dict[str, str] = {
     "welcome.userinfo_feedback": "Feedback/tickets created",
     "welcome.title": "Welcome to {guild_name}!",
     "welcome.goodbye_message": "Goodbye, {mention}! Hope to see you again.",
+    "welcome.test_prefix": "🧪 **Test welcome** (from dashboard)",
 }

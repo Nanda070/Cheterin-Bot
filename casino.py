@@ -88,7 +88,10 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
 class CasinoCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._cooldowns: dict[int, float] = {}
+        self._cooldowns: dict[tuple[int, int], float] = {}
+
+    def cooldown_ready_at(self, guild_id: int, user_id: int) -> float:
+        return self._cooldowns.get((guild_id, user_id), 0.0)
 
     def _gate(
         self, interaction: discord.Interaction,
@@ -109,18 +112,20 @@ class CasinoCog(commands.Cog):
         ):
             return settings, econ, i18n.t("casino.bj_active_first", lang), lang
 
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
         now = time.monotonic()
         ready_at = max(
-            self._cooldowns.get(interaction.user.id, 0.0),
-            bj_cog.cooldown_ready_at(interaction.user.id) if bj_cog else 0.0,
+            self.cooldown_ready_at(guild_id, user_id),
+            bj_cog.cooldown_ready_at(guild_id, user_id) if bj_cog else 0.0,
         )
         if settings["cooldown_sec"] > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
             return settings, econ, i18n.t("casino.cooldown", lang, seconds=remaining), lang
         return settings, econ, None, lang
 
-    def _start_cooldown(self, user_id: int, cooldown_sec: int):
-        self._cooldowns[user_id] = time.monotonic() + cooldown_sec
+    def _start_cooldown(self, guild_id: int, user_id: int, cooldown_sec: int):
+        self._cooldowns[(guild_id, user_id)] = time.monotonic() + cooldown_sec
 
     @app_commands.command(name="слоты", description="Крутить слоты на ставку монет: 3 барабана, совпадения дают выигрыш")
     @app_commands.describe(ставка="Сколько монет поставить")
@@ -141,7 +146,7 @@ class CasinoCog(commands.Cog):
             return await interaction.response.send_message(
                 i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
             )
-        self._start_cooldown(interaction.user.id, settings["cooldown_sec"])
+        self._start_cooldown(interaction.guild.id, interaction.user.id, settings["cooldown_sec"])
 
         reels = casino_core.roll_slots()
         multiplier = casino_core.slot_multiplier(reels)
@@ -202,7 +207,7 @@ class CasinoCog(commands.Cog):
             return await interaction.response.send_message(
                 i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
             )
-        self._start_cooldown(interaction.user.id, settings["cooldown_sec"])
+        self._start_cooldown(interaction.guild.id, interaction.user.id, settings["cooldown_sec"])
 
         result = casino_core.flip_coin()
         emoji = "🦅" if result == "орел" else "🪙"

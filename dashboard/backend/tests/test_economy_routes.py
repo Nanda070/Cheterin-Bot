@@ -115,6 +115,9 @@ async def test_put_validation(aiohttp_client):
         {"enabled": True, "shop_items": [{"type": "frame_color", "color_hex": "#FFF", "price": 100}]},  # короткий hex
         {"enabled": True, "shop_items": [{"type": "title", "title_text": "", "price": 100}]},
         {"enabled": True, "shop_items": [{"type": "title", "title_text": "x" * 31, "price": 100}]},
+        {"enabled": True, "weekly_report_days": "seven"},
+        {"enabled": True, "weekly_report_days": 0},
+        {"enabled": True, "weekly_report_days": 31},
     ]
     for body in cases:
         resp = await client.put("/api/economy", json=body)

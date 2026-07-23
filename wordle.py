@@ -147,7 +147,7 @@ class PlayNowView(discord.ui.View):
 class WordleCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._training: dict[int, dict] = {}
+        self._training: dict[tuple[int, int], dict] = {}
         self.announce_loop.start()
 
     def cog_unload(self):
@@ -273,7 +273,7 @@ class WordleCog(commands.Cog):
 
     async def handle_training_guess(self, interaction: discord.Interaction, raw_word: str):
         lang = i18n.lang_for(interaction.guild_id)
-        game = self._training.get(interaction.user.id)
+        game = self._training.get((interaction.guild_id, interaction.user.id))
         if game is None:
             return await interaction.response.send_message(
                 i18n.t("wordle.error.training_not_started", lang), ephemeral=True,
@@ -301,7 +301,7 @@ class WordleCog(commands.Cog):
         )
         view = None if finished else BoardView(self, training=True, lang=lang)
         if finished:
-            self._training.pop(interaction.user.id, None)
+            self._training.pop((interaction.guild_id, interaction.user.id), None)
         await interaction.response.edit_message(embed=embed, view=view)
 
     @app_commands.command(name="вордл", description="Слово дня: 6 попыток угадать слово из 5 букв")
@@ -318,7 +318,7 @@ class WordleCog(commands.Cog):
             )
 
         game = {"answer": wordle_core.training_word(), "guesses": [], "states": []}
-        self._training[interaction.user.id] = game
+        self._training[(interaction.guild.id, interaction.user.id)] = game
         embed = build_board_embed(
             i18n.t("wordle.training.title", lang), [], [], game["answer"], False, False, lang,
         )

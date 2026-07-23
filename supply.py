@@ -7,7 +7,6 @@ per-guild в settings_db и восстанавливаются после пер
 
 import asyncio
 import logging
-import os
 
 import discord
 from discord import app_commands
@@ -21,20 +20,16 @@ import supply_core
 logger = logging.getLogger("supply")
 
 
-def _main_guild_id() -> int:
-    return int(os.getenv("GUILD_ID", "0") or 0)
-
-
-def _config_int(key: str) -> int:
-    raw = bot_config.get(_main_guild_id(), key)
+def _config_int(guild_id: int, key: str) -> int:
+    raw = bot_config.get(guild_id, key)
     try:
         return int(raw)
     except (TypeError, ValueError):
         return 0
 
 
-def get_reminder_minutes() -> int:
-    raw = bot_config.get(_main_guild_id(), "SUPPLY_REMINDER_MINUTES")
+def get_reminder_minutes(guild_id: int) -> int:
+    raw = bot_config.get(guild_id, "SUPPLY_REMINDER_MINUTES")
     try:
         value = int(raw)
         return value if value > 0 else 0
@@ -44,11 +39,12 @@ def get_reminder_minutes() -> int:
 
 async def send_dev_log(
     bot: commands.Bot,
+    guild_id: int,
     title: str,
     description: str,
     color: discord.Color,
 ):
-    channel_id = _config_int("SUPPLY_LOG_CHANNEL_ID") or _config_int("LOG_CHANNEL_ID")
+    channel_id = _config_int(guild_id, "SUPPLY_LOG_CHANNEL_ID") or _config_int(guild_id, "LOG_CHANNEL_ID")
     channel = bot.get_channel(channel_id)
     if channel:
         now = supply_core.now_msk().strftime('%Y-%m-%d %H:%M:%S')
@@ -61,6 +57,7 @@ async def send_dev_log(
 
 
 def generate_embed(supply: dict, lang: str) -> discord.Embed:
+    guild_id = int(supply["guild_id"])
     unix_time = supply["target_ts"]
     is_closed = supply["status"] != "active"
 
@@ -99,7 +96,7 @@ def generate_embed(supply: dict, lang: str) -> discord.Embed:
         inline=False,
     )
 
-    voice_channel_id = _config_int("SUPPLY_VOICE_CHANNEL_ID")
+    voice_channel_id = _config_int(guild_id, "SUPPLY_VOICE_CHANNEL_ID")
     if voice_channel_id:
         embed.add_field(
             name=i18n.t("supply.embed.voice_channel", lang),
@@ -138,7 +135,7 @@ def generate_embed(supply: dict, lang: str) -> discord.Embed:
             inline=False,
         )
 
-    reminder = get_reminder_minutes()
+    reminder = get_reminder_minutes(guild_id)
     if not is_closed and reminder:
         embed.set_footer(text=i18n.t("supply.embed.reminder_footer", lang, minutes=reminder))
     return embed
@@ -204,6 +201,7 @@ class SupplyView(discord.ui.View):
             )
             await send_dev_log(
                 self.cog.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.reserve", lang),
                 i18n.t(
                     "supply.log.reserve_body",
@@ -217,6 +215,7 @@ class SupplyView(discord.ui.View):
         else:
             await send_dev_log(
                 self.cog.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.join", lang),
                 i18n.t(
                     "supply.log.join_body",
@@ -253,6 +252,7 @@ class SupplyView(discord.ui.View):
         await interaction.response.edit_message(embed=generate_embed(supply, lang), view=self)
         await send_dev_log(
             self.cog.bot,
+            interaction.guild_id,
             i18n.t("supply.log.leave", lang),
             i18n.t(
                 "supply.log.leave_body",
@@ -280,6 +280,7 @@ class SupplyView(discord.ui.View):
                     pass
             await send_dev_log(
                 self.cog.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.promoted", lang),
                 i18n.t(
                     "supply.log.promoted_body",
@@ -319,7 +320,7 @@ class SupplyView(discord.ui.View):
 class SupplyCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._timers: dict[str, asyncio.Task] = {}
+        self._timers: dict[tuple[int, str], asyncio.Task] = {}
         self._recovered = False
         self.view = SupplyView(self)
 
@@ -338,21 +339,21 @@ class SupplyCog(commands.Cog):
         await self.recover_supplies()
 
     async def recover_supplies(self):
-        recovered = 0
         for guild in self.bot.guilds:
             lang = i18n.lang_for(guild.id)
+            recovered = 0
             for supply in supply_core.list_active(guild.id):
                 self.schedule_supply(supply)
                 await self._refresh_supply_message_labels(guild.id, supply, lang)
                 recovered += 1
-        if recovered:
-            lang = i18n.lang_for(self.bot.guilds[0].id if self.bot.guilds else None)
-            await send_dev_log(
-                self.bot,
-                i18n.t("supply.log.recovery", lang),
-                i18n.t("supply.log.recovery_body", lang, count=recovered),
-                discord.Color.blue(),
-            )
+            if recovered:
+                await send_dev_log(
+                    self.bot,
+                    guild.id,
+                    i18n.t("supply.log.recovery", lang),
+                    i18n.t("supply.log.recovery_body", lang, count=recovered),
+                    discord.Color.blue(),
+                )
 
     async def _refresh_supply_message_labels(self, guild_id: int, supply: dict, lang: str) -> None:
         if not supply.get("message_id") or not supply.get("channel_id"):
@@ -384,7 +385,7 @@ class SupplyCog(commands.Cog):
             if supply is None or supply["status"] != "active":
                 return
 
-            reminder_minutes = get_reminder_minutes()
+            reminder_minutes = get_reminder_minutes(guild_id)
             now_ts = int(supply_core.now_msk().timestamp())
             reminder_ts = supply["target_ts"] - reminder_minutes * 60
 
@@ -426,7 +427,7 @@ class SupplyCog(commands.Cog):
             return
 
         mentions = " ".join(f"<@{uid}>" for uid in supply["participants"])
-        voice_channel_id = _config_int("SUPPLY_VOICE_CHANNEL_ID")
+        voice_channel_id = _config_int(guild_id, "SUPPLY_VOICE_CHANNEL_ID")
         voice_part = (
             i18n.t("supply.reminder_voice", lang, channel_id=voice_channel_id)
             if voice_channel_id else ""
@@ -444,6 +445,7 @@ class SupplyCog(commands.Cog):
             pass
         await send_dev_log(
             self.bot,
+            guild_id,
             i18n.t("supply.log.reminder", lang),
             i18n.t("supply.log.reminder_body", lang, initiator=supply["initiator_id"]),
             discord.Color.blue(),
@@ -495,6 +497,7 @@ class SupplyCog(commands.Cog):
             )
             await send_dev_log(
                 self.bot,
+                guild_id,
                 title,
                 i18n.t(
                     "supply.log.close_body",
@@ -508,6 +511,7 @@ class SupplyCog(commands.Cog):
         except discord.HTTPException as e:
             await send_dev_log(
                 self.bot,
+                guild_id,
                 i18n.t("supply.log.close_error", lang),
                 i18n.t(
                     "supply.log.close_error_body",
@@ -531,7 +535,7 @@ class SupplyCog(commands.Cog):
         lang = i18n.lang_for(guild_id)
         supply = supply_core.create_supply(guild_id, initiator_id, opponent, limit, time_str)
 
-        role_id = _config_int("SUPPLY_ROLE_ID")
+        role_id = _config_int(guild_id, "SUPPLY_ROLE_ID")
         content = f"<@&{role_id}>" if role_id else None
         allowed = discord.AllowedMentions(roles=[discord.Object(id=role_id)]) if role_id else discord.AllowedMentions.none()
 
@@ -551,6 +555,7 @@ class SupplyCog(commands.Cog):
 
         await send_dev_log(
             self.bot,
+            guild_id,
             i18n.t("supply.log.new", lang),
             i18n.t(
                 "supply.log.new_body",
@@ -577,6 +582,7 @@ class SupplyCog(commands.Cog):
         except discord.errors.NotFound:
             await send_dev_log(
                 self.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.timeout", lang),
                 i18n.t("supply.log.timeout_body", lang, user=interaction.user.id),
                 discord.Color.dark_theme(),
@@ -586,6 +592,7 @@ class SupplyCog(commands.Cog):
         if not supply_core.is_valid_time(время):
             await send_dev_log(
                 self.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.validation", lang),
                 i18n.t("supply.log.validation_time", lang, user=interaction.user.id, time=время),
                 discord.Color.red(),
@@ -609,6 +616,7 @@ class SupplyCog(commands.Cog):
         except Exception as e:
             await send_dev_log(
                 self.bot,
+                interaction.guild_id,
                 i18n.t("supply.log.critical", lang),
                 i18n.t("supply.log.critical_body", lang, error=str(e)),
                 discord.Color.dark_red(),

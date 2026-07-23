@@ -2,7 +2,7 @@ import os
 import sqlite3
 from contextlib import closing
 
-user_owned_channels: dict[int, int] = {}
+user_owned_channels: dict[tuple[int, int], int] = {}  # (guild_id, owner_id) -> channel_id
 
 
 def get_db_path() -> str:

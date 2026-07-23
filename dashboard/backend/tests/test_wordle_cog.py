@@ -197,7 +197,7 @@ async def test_training_flow_win_without_stats(monkeypatch):
     interaction = FakeInteraction(player, guild, channel)
     await cog.handle_training_guess(interaction, "школа")
     assert interaction.response.edits[0]["view"] is None  # победа — кнопки нет
-    assert player.id not in cog._training
+    assert (guild.id, player.id) not in cog._training
     # тренировка не пишет ни игр дня, ни статистику
     assert wordle_db.get_daily_game(guild.id, player.id, DAY) is None
     assert wordle_db.get_stats(guild.id, player.id)["played"] == 0

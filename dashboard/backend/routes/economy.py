@@ -51,6 +51,7 @@ async def economy_put(request: web.Request) -> web.Response:
         ("daily_base_amount", economy_core.DEFAULT_DAILY_BASE_AMOUNT, 0, economy_core.DAILY_AMOUNT_MAX),
         ("daily_growth_per_day", economy_core.DEFAULT_DAILY_GROWTH_PER_DAY, 0, economy_core.DAILY_AMOUNT_MAX),
         ("daily_max_streak_days", economy_core.DEFAULT_DAILY_MAX_STREAK_DAYS, 1, economy_core.DAILY_STREAK_DAYS_MAX),
+        ("weekly_report_days", 7, 1, 30),
     )
     int_values = {}
     for key, default, lo, hi in int_checks:
@@ -120,7 +121,7 @@ async def economy_put(request: web.Request) -> web.Response:
         "shop_items": shop_items,
         "weekly_report_enabled": bool(body.get("weekly_report_enabled", False)),
         "weekly_report_channel_id": str(body.get("weekly_report_channel_id") or ""),
-        "weekly_report_days": max(1, min(30, int(body.get("weekly_report_days") or 7))),
+        "weekly_report_days": int_values["weekly_report_days"],
         "last_weekly_report_date": economy_core.get_settings(guild_id).get("last_weekly_report_date", ""),
     })
     return web.json_response(economy_core.get_settings(guild_id))

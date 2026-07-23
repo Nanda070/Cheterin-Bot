@@ -35,4 +35,5 @@ MESSAGES: dict[str, str] = {
     "welcome.userinfo_feedback": "Создано обращений/жалоб",
     "welcome.title": "Добро пожаловать на {guild_name}!",
     "welcome.goodbye_message": "До встречи, {mention}! Будем рады видеть снова.",
+    "welcome.test_prefix": "🧪 **Тестовое приветствие** (из дашборда)",
 }

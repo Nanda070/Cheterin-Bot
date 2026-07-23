@@ -4,6 +4,7 @@ import {
   fetchChannels,
   fetchConfig,
   fetchWelcomeSettings,
+  testWelcomeSettings,
   updateConfig,
   updateWelcomeSettings,
   type BotConfig,
@@ -233,6 +234,20 @@ export function ServerEntryPage() {
     }
   }
 
+  const sendWelcomeTest = async (target: 'channel' | 'dm') => {
+    setBusy(true)
+    setError('')
+    setSavedMessage('')
+    try {
+      await testWelcomeSettings(target)
+      setSavedMessage(t('common.testSent'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'common.testFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const openEditor = () => {
     if (!settings) return
     const seeded: WelcomeSettings = {
@@ -433,9 +448,16 @@ export function ServerEntryPage() {
 
           {error && <p className="text-sm text-danger">{error}</p>}
           {savedMessage && <p className="text-sm text-primary">{savedMessage}</p>}
-          <div>
+          <div className="flex flex-wrap gap-2">
             <Button variant="primary" onClick={saveWelcome} disabled={busy}>
               {busy ? t('common.saving') : t('common.save')}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => sendWelcomeTest('channel')}
+              disabled={busy || !config.WELCOME_CHANNEL_ID}
+            >
+              {t('welcome.testChannel')}
             </Button>
           </div>
         </div>
@@ -472,9 +494,12 @@ export function ServerEntryPage() {
 
           {error && <p className="text-sm text-danger">{error}</p>}
           {savedMessage && !editorOpen && <p className="text-sm text-primary">{savedMessage}</p>}
-          <div>
+          <div className="flex flex-wrap gap-2">
             <Button variant="primary" onClick={saveWelcome} disabled={busy}>
               {busy ? t('common.saving') : t('common.save')}
+            </Button>
+            <Button variant="secondary" onClick={() => sendWelcomeTest('dm')} disabled={busy}>
+              {t('welcome.testDm')}
             </Button>
           </div>
         </div>

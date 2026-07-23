@@ -62,8 +62,9 @@ async def voice_room_delete(request: web.Request) -> web.Response:
 
     voice_db.db_delete_room(channel_id)
     # Убираем владельца из кэша, только если он всё ещё привязан к этой комнате
-    if voice_db.user_owned_channels.get(room["owner_id"]) == channel_id:
-        voice_db.user_owned_channels.pop(room["owner_id"], None)
+    ownership_key = (room["guild_id"], room["owner_id"])
+    if voice_db.user_owned_channels.get(ownership_key) == channel_id:
+        voice_db.user_owned_channels.pop(ownership_key, None)
     return web.json_response({"ok": True})
 
 

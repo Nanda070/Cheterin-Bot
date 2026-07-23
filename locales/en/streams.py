@@ -12,4 +12,7 @@ MESSAGES: dict[str, str] = {
     "streams.embed.author_twitch": "{name} — Twitch",
     "streams.embed.author_youtube": "{name} — YouTube",
     "streams.game_unknown": "—",
+    "streams.test.sample_title": "[TEST] Sample stream title",
+    "streams.test.sample_game": "Test Game",
+    "streams.test.footer": "Test notification from dashboard",
 }

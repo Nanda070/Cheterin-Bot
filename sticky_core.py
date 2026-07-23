@@ -34,6 +34,13 @@ def get_settings(guild_id: int) -> dict:
     }
 
 
+def get_sticky(guild_id: int, sticky_id: str) -> dict | None:
+    for sticky in get_settings(guild_id)["stickies"]:
+        if sticky["id"] == str(sticky_id):
+            return sticky
+    return None
+
+
 def update_enabled(guild_id: int, enabled: bool) -> dict:
     data = _normalized(settings_db.get(guild_id, MODULE_NAME))
     data["enabled"] = bool(enabled)

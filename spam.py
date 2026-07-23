@@ -15,10 +15,10 @@ logger = logging.getLogger("chetbot.spam")
 class Spam(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # {user_id: [ {"signature": str, "has_attachments": bool, "time": datetime, "channel_id": int}, ... ]}
-        self.cache: dict[int, list] = {}
-        # Набор user_id, для которых уже запущено наказание (защита от двойного срабатывания)
-        self._processing: set[int] = set()
+        # { (guild_id, user_id): [ {"signature": str, "has_attachments": bool, "time": datetime, "channel_id": int}, ... ]}
+        self.cache: dict[tuple[int, int], list] = {}
+        # Набор (guild_id, user_id), для которых уже запущено наказание (защита от двойного срабатывания)
+        self._processing: set[tuple[int, int]] = set()
 
         self._cleanup_cache.start()
 
@@ -33,13 +33,13 @@ class Spam(commands.Cog):
         # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
             now = discord.utils.utcnow()
-            expired_users = []
-            for user_id, entries in self.cache.items():
+            expired_keys = []
+            for key, entries in self.cache.items():
                 entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= 120]
                 if not entries:
-                    expired_users.append(user_id)
-            for uid in expired_users:
-                del self.cache[uid]
+                    expired_keys.append(key)
+            for key in expired_keys:
+                del self.cache[key]
         except Exception:
             logger.exception("_cleanup_cache: ошибка итерации — цикл продолжает работать")
 
@@ -177,9 +177,10 @@ class Spam(commands.Cog):
             return
 
         user_id = message.author.id
+        cache_key = (message.guild.id, user_id)
 
-        # Если уже обрабатываем этого пользователя — пропускаем
-        if user_id in self._processing:
+        # Если уже обрабатываем этого пользователя на этом сервере — пропускаем
+        if cache_key in self._processing:
             return
 
         now = discord.utils.utcnow()
@@ -190,10 +191,10 @@ class Spam(commands.Cog):
         limit = spam_core.message_limit(spam_settings, has_attachments)
         time_window = spam_settings["time_window_sec"]
 
-        if user_id not in self.cache:
-            self.cache[user_id] = []
+        if cache_key not in self.cache:
+            self.cache[cache_key] = []
 
-        self.cache[user_id].append(
+        self.cache[cache_key].append(
             {
                 "signature": signature,
                 "has_attachments": has_attachments,
@@ -203,31 +204,31 @@ class Spam(commands.Cog):
         )
 
         # Удаляем записи старше time_window
-        self.cache[user_id] = [
+        self.cache[cache_key] = [
             e
-            for e in self.cache[user_id]
+            for e in self.cache[cache_key]
             if (now - e["time"]).total_seconds() <= time_window
         ]
 
         # Если кэш пуст после фильтрации — удаляем запись пользователя из памяти
-        if not self.cache[user_id]:
-            del self.cache[user_id]
+        if not self.cache[cache_key]:
+            del self.cache[cache_key]
             return
 
         # Совпадения по сигнатуре и наличию вложений
         matches = [
             e
-            for e in self.cache[user_id]
+            for e in self.cache[cache_key]
             if e["signature"] == signature and e["has_attachments"] == has_attachments
         ]
 
         if len(matches) >= limit:
-            self.cache.pop(user_id, None)
-            self._processing.add(user_id)
+            self.cache.pop(cache_key, None)
+            self._processing.add(cache_key)
             try:
                 await self._punish(message, matches, limit)
             finally:
-                self._processing.discard(user_id)
+                self._processing.discard(cache_key)
 
     async def _punish(self, message: discord.Message, matches: list, limit: int):
         member = message.author

@@ -101,7 +101,23 @@ async def scheduled_messages_update(request: web.Request) -> web.Response:
     if err:
         return err
     assert fields is not None
-    msg = scheduled_messages_core.update_message(request["guild_id"], request.match_info["msg_id"], **fields)
+
+    guild_id = request["guild_id"]
+    msg_id = request.match_info["msg_id"]
+    existing = next(
+        (m for m in scheduled_messages_core.get_settings(guild_id)["messages"] if m["id"] == str(msg_id)),
+        None,
+    )
+    if existing is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    merged = {**existing, **fields}
+    if merged.get("schedule_type") == "once" and not merged.get("run_at"):
+        return web.json_response({"error": "run_at_required"}, status=400)
+    if merged.get("schedule_type") == "daily" and not merged.get("daily_time"):
+        return web.json_response({"error": "daily_time_required"}, status=400)
+
+    msg = scheduled_messages_core.update_message(guild_id, msg_id, **fields)
     if msg is None:
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response(msg)

@@ -197,7 +197,7 @@ class BlackjackView(discord.ui.View):
         casino_db.record_bj(interaction.guild.id, self.player.id, db_result)
         await check_loss_roles(interaction, settings)
 
-        self.cog._cooldowns[self.player.id] = time.monotonic() + settings["cooldown_sec"]
+        self.cog._cooldowns[self._game_key()] = time.monotonic() + settings["cooldown_sec"]
         self.cog._games.pop(self._game_key(), None)
 
         self._finish_view()
@@ -287,13 +287,13 @@ class BlackjackCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._games: dict[tuple[int, int], bj.BlackjackGame] = {}
-        self._cooldowns: dict[int, float] = {}
+        self._cooldowns: dict[tuple[int, int], float] = {}
 
     def has_active_game(self, guild_id: int, user_id: int) -> bool:
         return (guild_id, user_id) in self._games
 
-    def cooldown_ready_at(self, user_id: int) -> float:
-        return self._cooldowns.get(user_id, 0.0)
+    def cooldown_ready_at(self, guild_id: int, user_id: int) -> float:
+        return self._cooldowns.get((guild_id, user_id), 0.0)
 
     @app_commands.command(
         name="блэкджек",
@@ -330,7 +330,7 @@ class BlackjackCog(commands.Cog):
             )
 
         now = time.monotonic()
-        ready_at = self._cooldowns.get(user_id, 0.0)
+        ready_at = self.cooldown_ready_at(guild_id, user_id)
         if settings["cooldown_sec"] > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
             return await interaction.response.send_message(
@@ -339,7 +339,7 @@ class BlackjackCog(commands.Cog):
 
         casino_cog: "CasinoCog | None" = self.bot.cogs.get("CasinoCog")
         if casino_cog is not None:
-            casino_ready_at = casino_cog._cooldowns.get(user_id, 0.0)
+            casino_ready_at = casino_cog.cooldown_ready_at(guild_id, user_id)
             if settings["cooldown_sec"] > 0 and now < casino_ready_at:
                 remaining = int(casino_ready_at - now) + 1
                 return await interaction.response.send_message(
@@ -376,7 +376,7 @@ class BlackjackCog(commands.Cog):
                 db_result = "push"
             casino_db.record_bj(guild_id, user_id, db_result)
             await check_loss_roles(interaction, settings)
-            self._cooldowns[user_id] = time.monotonic() + settings["cooldown_sec"]
+            self._cooldowns[game_key] = time.monotonic() + settings["cooldown_sec"]
             self._games.pop(game_key, None)
 
             embed = build_embed(

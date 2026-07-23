@@ -823,6 +823,10 @@ export function updateWelcomeSettings(settings: Partial<WelcomeSettings>): Promi
   return apiFetch('/api/welcome-settings', jsonInit('PUT', settings))
 }
 
+export function testWelcomeSettings(target: 'channel' | 'dm' | 'both' = 'channel'): Promise<{ ok: boolean; sent: { channel: boolean; dm: boolean } }> {
+  return apiFetch('/api/welcome-settings/test', jsonInit('POST', { target }))
+}
+
 export interface AutoRolesSettings {
   role_ids: string[]
 }
@@ -1095,6 +1099,10 @@ export function updateStreamSubscription(
 
 export async function deleteStreamSubscription(id: string): Promise<void> {
   await apiFetch(`/api/streams/${id}`, { method: 'DELETE' })
+}
+
+export async function testStreamSubscription(id: string): Promise<void> {
+  await apiFetch(`/api/streams/${id}/test`, { method: 'POST' })
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¨Ð°Ð±Ð»Ð¾Ð½Ñ‹ ÑÐ¼Ð±ÐµÐ´Ð¾Ð² â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2228,6 +2236,10 @@ export function upsertSticky(input: {
 
 export async function deleteSticky(id: string): Promise<void> {
   await apiFetch(`/api/sticky/${id}`, { method: 'DELETE' })
+}
+
+export async function testSticky(id: string): Promise<void> {
+  await apiFetch(`/api/sticky/${id}/test`, { method: 'POST' })
 }
 
 export interface OwnerAlertsSettings {

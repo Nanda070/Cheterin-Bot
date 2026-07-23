@@ -59,10 +59,24 @@ class BirthdaysCog(commands.Cog):
                     continue
                 lang = i18n.lang_for(guild.id)
                 mentions = []
+                unresolved = False
                 for row in rows:
                     member = guild.get_member(row["user_id"])
+                    if not member:
+                        try:
+                            member = await guild.fetch_member(row["user_id"])
+                        except discord.NotFound:
+                            # Left the server — skip for today without blocking others.
+                            continue
+                        except discord.HTTPException:
+                            # Transient API failure — retry on the next loop tick.
+                            unresolved = True
+                            continue
                     if member:
                         mentions.append(member.mention)
+                if unresolved:
+                    # Avoid partial announces that would be marked done forever.
+                    continue
                 if not mentions:
                     birthdays_core.mark_announced(guild.id, date_iso)
                     continue

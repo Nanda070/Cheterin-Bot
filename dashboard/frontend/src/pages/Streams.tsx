@@ -7,6 +7,7 @@ import {
   fetchChannels,
   fetchRoles,
   fetchStreams,
+  testStreamSubscription,
   updateStreamSubscription,
   type ChannelInfo,
   type RoleInfo,
@@ -137,6 +138,13 @@ export function StreamsPage() {
                 <p className="text-xs text-muted">{sub.platform === 'twitch' ? t('streams.platform.twitch') : t('streams.platform.youtube')}</p>
               </div>
               <Toggle checked={sub.enabled} onChange={(v) => patchSub(sub.id, { enabled: v })} disabled={busy} />
+              <Button
+                variant="secondary"
+                disabled={busy || !sub.channel_id}
+                onClick={() => act(() => testStreamSubscription(sub.id))}
+              >
+                {t('streams.testSend')}
+              </Button>
               <button
                 type="button"
                 onClick={() => act(() => deleteStreamSubscription(sub.id))}

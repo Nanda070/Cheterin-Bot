@@ -385,10 +385,10 @@ class Streams(commands.Cog):
         await self._announce(sub, content, embed)
         update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"], last_notified_ts=now)
 
-    async def _announce(self, sub: dict, content: str, embed: discord.Embed):
+    async def _announce(self, sub: dict, content: str, embed: discord.Embed) -> bool:
         channel = self.bot.get_channel(int(sub["channel_id"]))
         if channel is None:
-            return
+            return False
         # Optional custom embed color (#RRGGBB)
         raw_color = (sub.get("embed_color") or "").strip()
         if raw_color.startswith("#") and len(raw_color) == 7:
@@ -418,8 +418,54 @@ class Streams(commands.Cog):
                 embed=embed if use_embed else None,
                 allowed_mentions=allowed,
             )
+            return True
         except discord.HTTPException as exc:
             logger.warning("Не удалось отправить стрим-уведомление %s: %s", sub["id"], exc)
+            return False
+
+    async def send_test_announce(self, guild_id: int, sub: dict) -> str | None:
+        """Send a sample notification without updating last_stream_id. Returns error code or None."""
+        if not sub.get("channel_id"):
+            return "channel_required"
+        if self.bot.get_channel(int(sub["channel_id"])) is None:
+            return "channel_not_found"
+        lang = i18n.lang_for(guild_id)
+        display = sub.get("display_name") or sub.get("identifier") or "stream"
+        if sub.get("platform") == "youtube":
+            url = f"https://www.youtube.com/channel/{sub.get('identifier', '')}"
+            template = sub.get("template") or default_template("youtube", lang)
+            title = i18n.t("streams.test.sample_title", lang)
+            content = render_template(template, display, title, "", url, lang)
+            embed = discord.Embed(
+                title=title,
+                url=url,
+                color=discord.Color.red(),
+                timestamp=discord.utils.utcnow(),
+            )
+            embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=display))
+            embed.set_footer(text=i18n.t("streams.test.footer", lang))
+        else:
+            url = f"https://www.twitch.tv/{sub.get('identifier', '')}"
+            template = sub.get("template") or default_template("twitch", lang)
+            title = i18n.t("streams.test.sample_title", lang)
+            game = i18n.t("streams.test.sample_game", lang)
+            content = render_template(template, display, title, game, url, lang)
+            embed = discord.Embed(
+                title=title,
+                url=url,
+                color=discord.Color.purple(),
+                timestamp=discord.utils.utcnow(),
+            )
+            embed.set_author(
+                name=i18n.t("streams.embed.author_twitch", lang, name=display),
+                icon_url=sub.get("avatar_url") or None,
+            )
+            embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
+            embed.set_footer(text=i18n.t("streams.test.footer", lang))
+
+        if not await self._announce(sub, content, embed):
+            return "send_failed"
+        return None
 
 
 async def setup(bot: commands.Bot):

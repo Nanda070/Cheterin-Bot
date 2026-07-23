@@ -125,7 +125,7 @@ async def test_delete_room(aiohttp_client):
     _, app = build(channels=[channel], members=[owner])
 
     voice_db.db_upsert_room(1, 700, 20, "room", is_closed=False, user_limit=0)
-    voice_db.user_owned_channels[20] = 700
+    voice_db.user_owned_channels[(1, 20)] = 700
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -134,7 +134,7 @@ async def test_delete_room(aiohttp_client):
     assert resp.status == 200
     assert channel.deleted is True
     assert voice_db.db_get_room(700) is None
-    assert 20 not in voice_db.user_owned_channels
+    assert (1, 20) not in voice_db.user_owned_channels
 
 
 @pytest.mark.asyncio

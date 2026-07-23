@@ -427,6 +427,8 @@ const admin: TranslationDict = {
   'welcome.errorLoad': 'Failed to load settings',
   'welcome.errorSave': 'Failed to save settings',
   'welcome.channelEnabled': 'Send welcome message to channel',
+  'welcome.testChannel': 'Send test to channel',
+  'welcome.testDm': 'Send test DM to me',
   'welcome.welcomeChannelHint': 'Where to post the public welcome for new members.',
   'welcome.dmEnabled': 'Send welcome message via DM',
   'welcome.goodbyeChannelEnabled': 'Send goodbye message to channel',

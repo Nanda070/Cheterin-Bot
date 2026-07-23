@@ -5,6 +5,7 @@ import {
   fetchChannels,
   fetchSticky,
   setStickyEnabled,
+  testSticky,
   upsertSticky,
   type ChannelInfo,
   type StickySettings,
@@ -107,6 +108,13 @@ export function StickyMessagesPage() {
                 <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{row.content}</p>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={busy || !row.enabled}
+                  onClick={() => act(() => testSticky(row.id))}
+                >
+                  {t('sticky.testSend')}
+                </Button>
                 <Toggle
                   checked={row.enabled}
                   onChange={(v) =>

@@ -139,7 +139,7 @@ class ButtonCreate(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self._cooldowns: dict[int, float] = {}
+        self._cooldowns: dict[tuple[int, int], float] = {}
         self._cleanup_cooldowns.start()
 
     async def _save_and_cache(self, guild_id: int, config: dict):
@@ -156,9 +156,9 @@ class ButtonCreate(commands.Cog):
         # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
             now = time.time()
-            expired = [uid for uid, ts in self._cooldowns.items() if now - ts > COOLDOWN_SECONDS * 2]
-            for uid in expired:
-                del self._cooldowns[uid]
+            expired = [key for key, ts in self._cooldowns.items() if now - ts > COOLDOWN_SECONDS * 2]
+            for key in expired:
+                del self._cooldowns[key]
         except Exception:
             logger.exception("_cleanup_cooldowns: ошибка итерации — цикл продолжает работать")
 
@@ -173,14 +173,15 @@ class ButtonCreate(commands.Cog):
 
     # ---------- helpers ----------
 
-    def _check_cooldown(self, user_id: int) -> float | None:
+    def _check_cooldown(self, guild_id: int, user_id: int) -> float | None:
         """Возвращает оставшиеся секунды если кулдаун активен, иначе None."""
         now = time.time()
-        last = self._cooldowns.get(user_id, 0)
+        key = (guild_id, user_id)
+        last = self._cooldowns.get(key, 0)
         remaining = COOLDOWN_SECONDS - (now - last)
         if remaining > 0:
             return remaining
-        self._cooldowns[user_id] = now
+        self._cooldowns[key] = now
         return None
 
     def _has_permission(self, member: discord.Member) -> bool:
@@ -207,7 +208,7 @@ class ButtonCreate(commands.Cog):
     async def _handle_role_click(self, interaction: discord.Interaction, custom_id: str):
         lang = i18n.lang_for(interaction.guild_id)
         # Cooldown
-        remaining = self._check_cooldown(interaction.user.id)
+        remaining = self._check_cooldown(interaction.guild_id, interaction.user.id)
         if remaining is not None:
             await interaction.response.send_message(
                 i18n.t("button.cooldown", lang, seconds=remaining),
@@ -273,7 +274,7 @@ class ButtonCreate(commands.Cog):
 
     async def _handle_form_click(self, interaction: discord.Interaction, custom_id: str):
         lang = i18n.lang_for(interaction.guild_id)
-        remaining = self._check_cooldown(interaction.user.id)
+        remaining = self._check_cooldown(interaction.guild_id, interaction.user.id)
         if remaining is not None:
             await interaction.response.send_message(
                 i18n.t("button.cooldown", lang, seconds=remaining),

@@ -24,21 +24,27 @@ class StickyCog(commands.Cog):
             self._locks[channel_id] = lock
         return lock
 
-    async def refresh_sticky(self, channel: discord.TextChannel, sticky: dict) -> None:
+    async def refresh_sticky(self, channel: discord.TextChannel, sticky: dict) -> bool:
+        """Repost sticky. Returns False if send failed (old message left intact)."""
         async with self._lock_for(channel.id):
             self._reposting.add(channel.id)
             try:
+                try:
+                    msg = await channel.send(content=sticky["content"][:2000])
+                except discord.HTTPException:
+                    logger.warning("sticky refresh failed channel=%s", channel.id)
+                    return False
+
+                sticky_core.set_message_id(channel.guild.id, sticky["id"], str(msg.id))
+
                 old_id = sticky.get("message_id") or ""
-                if old_id.isdigit():
+                if old_id.isdigit() and old_id != str(msg.id):
                     try:
                         old = await channel.fetch_message(int(old_id))
                         await old.delete()
                     except (discord.NotFound, discord.HTTPException):
                         pass
-                msg = await channel.send(content=sticky["content"][:2000])
-                sticky_core.set_message_id(channel.guild.id, sticky["id"], str(msg.id))
-            except discord.HTTPException:
-                logger.warning("sticky refresh failed channel=%s", channel.id)
+                return True
             finally:
                 self._reposting.discard(channel.id)
 

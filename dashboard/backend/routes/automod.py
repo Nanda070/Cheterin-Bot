@@ -120,6 +120,17 @@ async def automod_update_filter(request: web.Request) -> web.Response:
     if error:
         return web.json_response({"error": error}, status=400)
 
+    if "notify_channel_id" in cleaned and cleaned["notify_channel_id"]:
+        guild = request.app["bot"].get_guild(request["guild_id"])
+        if guild is None:
+            return web.json_response({"error": "service_unavailable"}, status=503)
+        try:
+            channel_id = int(cleaned["notify_channel_id"])
+        except (TypeError, ValueError):
+            return web.json_response({"error": "invalid_notify_channel_id"}, status=400)
+        if guild.get_channel(channel_id) is None:
+            return web.json_response({"error": "notify_channel_id_not_found"}, status=404)
+
     updated = automod_core.update_filter(request["guild_id"], key, cleaned)
     return web.json_response(updated)
 

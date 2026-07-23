@@ -69,3 +69,38 @@ async def sticky_delete(request: web.Request) -> web.Response:
     if not sticky_core.delete_sticky(request["guild_id"], request.match_info["sticky_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})
+
+
+@routes.post("/api/sticky/{sticky_id}/test")
+@require_dashboard_access
+async def sticky_test(request: web.Request) -> web.Response:
+    guild_id = request["guild_id"]
+    sticky = sticky_core.get_sticky(guild_id, request.match_info["sticky_id"])
+    if sticky is None:
+        return web.json_response({"error": "not_found"}, status=404)
+    if not sticky["enabled"]:
+        return web.json_response({"error": "sticky_disabled"}, status=400)
+
+    bot = request.app["bot"]
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    try:
+        channel = guild.get_channel(int(sticky["channel_id"]))
+    except (TypeError, ValueError):
+        channel = None
+    if channel is None or not hasattr(channel, "send"):
+        return web.json_response({"error": "channel_not_found"}, status=404)
+
+    cog = bot.get_cog("StickyCog")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    try:
+        ok = await cog.refresh_sticky(channel, sticky)
+    except Exception:
+        return web.json_response({"error": "send_failed"}, status=502)
+    if not ok:
+        return web.json_response({"error": "send_failed"}, status=502)
+    return web.json_response({"ok": True})

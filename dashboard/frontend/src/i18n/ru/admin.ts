@@ -427,6 +427,8 @@ const admin: TranslationDict = {
   'welcome.errorLoad': 'Не удалось загрузить настройки',
   'welcome.errorSave': 'Не удалось сохранить настройки',
   'welcome.channelEnabled': 'Отправлять приветствие в канал',
+  'welcome.testChannel': 'Тест в канал',
+  'welcome.testDm': 'Тест в ЛС мне',
   'welcome.welcomeChannelHint': 'Куда писать публичное приветствие новым участникам.',
   'welcome.dmEnabled': 'Отправлять приветствие в личные сообщения',
   'welcome.goodbyeChannelEnabled': 'Отправлять прощание в канал',

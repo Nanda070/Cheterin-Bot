@@ -126,10 +126,36 @@ async def test_active_game_is_isolated_per_guild(monkeypatch):
 async def test_cooldown_blocks_new_game():
     cog, player, guild = build(cooldown_sec=30)
     economy_db.add(GUILD_ID, player.id, 1000, "seed")
-    cog._cooldowns[player.id] = time.monotonic() + 30
+    cog._cooldowns[(guild.id, player.id)] = time.monotonic() + 30
     interaction = FakeInteraction(player, guild)
     await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
     assert "отдыхает" in interaction.response.messages[0]["content"]
+    assert economy_db.get_balance(GUILD_ID, player.id) == 1000
+
+
+@pytest.mark.asyncio
+async def test_cooldown_is_per_guild(monkeypatch):
+    cog, player, guild = build(cooldown_sec=30)
+    other = FakeGuild(guild_id=99, members=[player])
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
+    economy_db.add(99, player.id, 1000, "seed")
+    economy_core.save_config(99, {"enabled": True})
+    casino_core.save_config(99, {"enabled": True, "cooldown_sec": 30, "min_bet": 10, "max_bet": 1000})
+    cog._cooldowns[(guild.id, player.id)] = time.monotonic() + 30
+    monkeypatch.setattr(
+        bj, "new_game",
+        lambda bet: make_game(["10♠", "7♦"], ["9♣", "5♥"], deck=["2♠"], bet=bet),
+    )
+
+    blocked = FakeInteraction(player, guild)
+    await BlackjackCog.blackjack_command.callback(cog, blocked, 50)
+    assert "отдыхает" in blocked.response.messages[0]["content"]
+
+    ok = FakeInteraction(player, other)
+    ok.guild_id = other.id
+    await BlackjackCog.blackjack_command.callback(cog, ok, 50)
+    assert isinstance(ok.response.messages[0]["view"], BlackjackView)
+    assert economy_db.get_balance(99, player.id) == 950
     assert economy_db.get_balance(GUILD_ID, player.id) == 1000
 
 
@@ -174,7 +200,7 @@ async def test_natural_blackjack_pays_and_records_stats(monkeypatch):
     assert economy_db.get_balance(GUILD_ID, player.id) == 1150
     assert casino_db.get_stats(guild.id, player.id)["bj_wins"] == 1
     assert not cog.has_active_game(guild.id, player.id)
-    assert cog.cooldown_ready_at(player.id) > time.monotonic()
+    assert cog.cooldown_ready_at(guild.id, player.id) > time.monotonic()
 
 
 # ────────────────────────── Кнопки ──────────────────────────

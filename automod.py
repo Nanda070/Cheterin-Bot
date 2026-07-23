@@ -44,7 +44,7 @@ class AutoMod(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._repeat_cache: dict[int, list[dict]] = {}
+        self._repeat_cache: dict[tuple[int, int], list[dict]] = {}
         self._cleanup_repeat_cache.start()
 
     def cog_unload(self):
@@ -54,13 +54,13 @@ class AutoMod(commands.Cog):
     async def _cleanup_repeat_cache(self):
         try:
             now = discord.utils.utcnow()
-            stale_users = []
-            for user_id, entries in self._repeat_cache.items():
+            stale_keys = []
+            for key, entries in self._repeat_cache.items():
                 entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= REPEATED_TEXT_WINDOW_SECONDS]
                 if not entries:
-                    stale_users.append(user_id)
-            for user_id in stale_users:
-                del self._repeat_cache[user_id]
+                    stale_keys.append(key)
+            for key in stale_keys:
+                del self._repeat_cache[key]
         except Exception:
             logger.exception("_cleanup_repeat_cache: ошибка итерации — цикл продолжает работать")
 
@@ -121,9 +121,9 @@ class AutoMod(commands.Cog):
     def _check_repeated_text(self, message: discord.Message, content: str, cfg: dict) -> bool:
         if not content:
             return False
-        user_id = message.author.id
+        cache_key = (message.guild.id, message.author.id)
         now = discord.utils.utcnow()
-        entries = self._repeat_cache.setdefault(user_id, [])
+        entries = self._repeat_cache.setdefault(cache_key, [])
         entries[:] = [e for e in entries if (now - e["time"]).total_seconds() <= REPEATED_TEXT_WINDOW_SECONDS]
 
         if cfg["consecutive_only"]:
@@ -160,6 +160,7 @@ class AutoMod(commands.Cog):
             await self._notify(message, cfg, reason)
 
         moderation_log.append_event(
+            guild.id,
             f"automod_{key}",
             member.id,
             member.name,
@@ -211,6 +212,7 @@ class AutoMod(commands.Cog):
         duration = min(rule["duration_minutes"], automod_core.MAX_DURATION_MINUTES) if rule["duration_minutes"] > 0 else 0
         await self._apply_punishment(guild, member, rule["action"], duration, reason, source="escalation", lang=lang)
         moderation_log.append_event(
+            guild.id,
             "warn_escalation",
             member.id,
             member.name,
@@ -232,8 +234,8 @@ class AutoMod(commands.Cog):
     async def _notify(self, message: discord.Message, cfg: dict, reason: str):
         text = automod_core.render_notify_template(cfg["notify_template"], message.author.mention, reason)
         channel = message.channel
-        if cfg["notify_channel_id"]:
-            target = self.bot.get_channel(int(cfg["notify_channel_id"]))
+        if cfg["notify_channel_id"] and message.guild is not None:
+            target = message.guild.get_channel(int(cfg["notify_channel_id"]))
             if target is not None:
                 channel = target
         try:
@@ -260,6 +262,7 @@ class AutoMod(commands.Cog):
         )
         await self.apply_escalation_if_needed(interaction.guild, участник, lang=lang)
         moderation_log.append_event(
+            interaction.guild.id,
             "warn_manual",
             участник.id,
             участник.name,

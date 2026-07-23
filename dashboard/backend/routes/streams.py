@@ -141,3 +141,26 @@ async def streams_delete(request: web.Request) -> web.Response:
     if not streams.delete_subscription(request["guild_id"], request.match_info["sub_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})
+
+
+@routes.post("/api/streams/{sub_id}/test")
+@require_dashboard_access
+async def streams_test(request: web.Request) -> web.Response:
+    bot = request.app["bot"]
+    cog = bot.get_cog("Streams")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    guild_id = request["guild_id"]
+    sub = next(
+        (s for s in streams.get_subscriptions(guild_id) if str(s["id"]) == request.match_info["sub_id"]),
+        None,
+    )
+    if sub is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    err = await cog.send_test_announce(guild_id, sub)
+    if err:
+        status = 400 if err in ("channel_required",) else 404 if err == "channel_not_found" else 502
+        return web.json_response({"error": err}, status=status)
+    return web.json_response({"ok": True})
