@@ -1,7 +1,7 @@
 """SQLite-хранилище Вордла: игры дня, статистика игроков, серия сервера.
 
 Игры дня переживают перезапуск бота (догадки хранятся в БД), тренировочные
-игры — только в памяти кога и в БД не попадают.
+игры — только в памяти кога и в БД не попадают. Все таблицы per-guild.
 """
 
 import json
@@ -11,6 +11,8 @@ from contextlib import closing
 from datetime import datetime, timezone
 
 import wordle_core
+
+MAIN_GUILD = int(os.getenv("GUILD_ID", "404"))
 
 
 def get_db_path() -> str:
@@ -25,38 +27,122 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+def _table_columns(conn, table: str) -> list[str]:
+    return [r["name"] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+
+
 def init():
     with closing(connect()) as conn, conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS daily_games (
-                user_id INTEGER NOT NULL,
-                day_no INTEGER NOT NULL,
-                guesses TEXT NOT NULL DEFAULT '[]',
-                finished INTEGER NOT NULL DEFAULT 0,
-                won INTEGER NOT NULL DEFAULT 0,
-                live_channel_id INTEGER NOT NULL DEFAULT 0,
-                live_message_id INTEGER NOT NULL DEFAULT 0,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (user_id, day_no)
+        # ── daily_games: (user_id, day_no) → (guild_id, user_id, day_no) ──
+        cols = _table_columns(conn, "daily_games")
+        if cols and "guild_id" not in cols:
+            conn.execute("ALTER TABLE daily_games RENAME TO daily_games_old")
+            conn.execute("""
+                CREATE TABLE daily_games (
+                    guild_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    day_no INTEGER NOT NULL,
+                    guesses TEXT NOT NULL DEFAULT '[]',
+                    finished INTEGER NOT NULL DEFAULT 0,
+                    won INTEGER NOT NULL DEFAULT 0,
+                    live_channel_id INTEGER NOT NULL DEFAULT 0,
+                    live_message_id INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (guild_id, user_id, day_no)
+                )
+            """)
+            conn.execute(
+                """INSERT INTO daily_games
+                   (guild_id, user_id, day_no, guesses, finished, won,
+                    live_channel_id, live_message_id, updated_at)
+                   SELECT ?, user_id, day_no, guesses, finished, won,
+                          live_channel_id, live_message_id, updated_at
+                   FROM daily_games_old""",
+                (MAIN_GUILD,),
             )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS stats (
-                user_id INTEGER PRIMARY KEY,
-                played INTEGER NOT NULL DEFAULT 0,
-                won INTEGER NOT NULL DEFAULT 0,
-                streak INTEGER NOT NULL DEFAULT 0,
-                max_streak INTEGER NOT NULL DEFAULT 0,
-                last_won_day INTEGER NOT NULL DEFAULT 0,
-                distribution TEXT NOT NULL DEFAULT '[0,0,0,0,0,0]'
+            conn.execute("DROP TABLE daily_games_old")
+        else:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS daily_games (
+                    guild_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    day_no INTEGER NOT NULL,
+                    guesses TEXT NOT NULL DEFAULT '[]',
+                    finished INTEGER NOT NULL DEFAULT 0,
+                    won INTEGER NOT NULL DEFAULT 0,
+                    live_channel_id INTEGER NOT NULL DEFAULT 0,
+                    live_message_id INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (guild_id, user_id, day_no)
+                )
+            """)
+
+        # ── stats: user_id → (guild_id, user_id) ──
+        cols = _table_columns(conn, "stats")
+        if cols and "guild_id" not in cols:
+            conn.execute("ALTER TABLE stats RENAME TO stats_old")
+            conn.execute("""
+                CREATE TABLE stats (
+                    guild_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    played INTEGER NOT NULL DEFAULT 0,
+                    won INTEGER NOT NULL DEFAULT 0,
+                    streak INTEGER NOT NULL DEFAULT 0,
+                    max_streak INTEGER NOT NULL DEFAULT 0,
+                    last_won_day INTEGER NOT NULL DEFAULT 0,
+                    distribution TEXT NOT NULL DEFAULT '[0,0,0,0,0,0]',
+                    PRIMARY KEY (guild_id, user_id)
+                )
+            """)
+            conn.execute(
+                """INSERT INTO stats
+                   (guild_id, user_id, played, won, streak, max_streak, last_won_day, distribution)
+                   SELECT ?, user_id, played, won, streak, max_streak, last_won_day, distribution
+                   FROM stats_old""",
+                (MAIN_GUILD,),
             )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS meta (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL
+            conn.execute("DROP TABLE stats_old")
+        else:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS stats (
+                    guild_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    played INTEGER NOT NULL DEFAULT 0,
+                    won INTEGER NOT NULL DEFAULT 0,
+                    streak INTEGER NOT NULL DEFAULT 0,
+                    max_streak INTEGER NOT NULL DEFAULT 0,
+                    last_won_day INTEGER NOT NULL DEFAULT 0,
+                    distribution TEXT NOT NULL DEFAULT '[0,0,0,0,0,0]',
+                    PRIMARY KEY (guild_id, user_id)
+                )
+            """)
+
+        # ── meta: key → (guild_id, key) ──
+        cols = _table_columns(conn, "meta")
+        if cols and "guild_id" not in cols:
+            conn.execute("ALTER TABLE meta RENAME TO meta_old")
+            conn.execute("""
+                CREATE TABLE meta (
+                    guild_id INTEGER NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    PRIMARY KEY (guild_id, key)
+                )
+            """)
+            conn.execute(
+                "INSERT INTO meta (guild_id, key, value) SELECT ?, key, value FROM meta_old",
+                (MAIN_GUILD,),
             )
-        """)
+            conn.execute("DROP TABLE meta_old")
+        else:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS meta (
+                    guild_id INTEGER NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    PRIMARY KEY (guild_id, key)
+                )
+            """)
 
 
 def _now() -> str:
@@ -65,10 +151,11 @@ def _now() -> str:
 
 # ────────────────────────── Игры дня ──────────────────────────
 
-def get_daily_game(user_id: int, day_no: int) -> dict | None:
+def get_daily_game(guild_id: int, user_id: int, day_no: int) -> dict | None:
     with closing(connect()) as conn:
         row = conn.execute(
-            "SELECT * FROM daily_games WHERE user_id = ? AND day_no = ?", (user_id, day_no)
+            "SELECT * FROM daily_games WHERE guild_id = ? AND user_id = ? AND day_no = ?",
+            (guild_id, user_id, day_no),
         ).fetchone()
     if row is None:
         return None
@@ -77,42 +164,44 @@ def get_daily_game(user_id: int, day_no: int) -> dict | None:
     return game
 
 
-def start_daily_game(user_id: int, day_no: int) -> dict:
+def start_daily_game(guild_id: int, user_id: int, day_no: int) -> dict:
     with closing(connect()) as conn, conn:
         conn.execute(
-            "INSERT OR IGNORE INTO daily_games (user_id, day_no, updated_at) VALUES (?, ?, ?)",
-            (user_id, day_no, _now()),
+            "INSERT OR IGNORE INTO daily_games (guild_id, user_id, day_no, updated_at) VALUES (?, ?, ?, ?)",
+            (guild_id, user_id, day_no, _now()),
         )
-    return get_daily_game(user_id, day_no)
+    return get_daily_game(guild_id, user_id, day_no)
 
 
-def add_guess(user_id: int, day_no: int, guess: str, finished: bool, won: bool) -> dict:
-    game = get_daily_game(user_id, day_no)
+def add_guess(guild_id: int, user_id: int, day_no: int, guess: str, finished: bool, won: bool) -> dict:
+    game = get_daily_game(guild_id, user_id, day_no)
     guesses = (game["guesses"] if game else []) + [guess]
     with closing(connect()) as conn, conn:
         conn.execute(
-            """INSERT INTO daily_games (user_id, day_no, guesses, finished, won, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)
-               ON CONFLICT(user_id, day_no) DO UPDATE SET
+            """INSERT INTO daily_games (guild_id, user_id, day_no, guesses, finished, won, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(guild_id, user_id, day_no) DO UPDATE SET
                  guesses = excluded.guesses, finished = excluded.finished,
                  won = excluded.won, updated_at = excluded.updated_at""",
-            (user_id, day_no, json.dumps(guesses, ensure_ascii=False), int(finished), int(won), _now()),
+            (guild_id, user_id, day_no, json.dumps(guesses, ensure_ascii=False), int(finished), int(won), _now()),
         )
-    return get_daily_game(user_id, day_no)
+    return get_daily_game(guild_id, user_id, day_no)
 
 
-def set_live_message(user_id: int, day_no: int, channel_id: int, message_id: int) -> None:
+def set_live_message(guild_id: int, user_id: int, day_no: int, channel_id: int, message_id: int) -> None:
     with closing(connect()) as conn, conn:
         conn.execute(
-            "UPDATE daily_games SET live_channel_id = ?, live_message_id = ? WHERE user_id = ? AND day_no = ?",
-            (channel_id, message_id, user_id, day_no),
+            """UPDATE daily_games SET live_channel_id = ?, live_message_id = ?
+               WHERE guild_id = ? AND user_id = ? AND day_no = ?""",
+            (channel_id, message_id, guild_id, user_id, day_no),
         )
 
 
-def list_day_games(day_no: int) -> list[dict]:
+def list_day_games(guild_id: int, day_no: int) -> list[dict]:
     with closing(connect()) as conn:
         rows = conn.execute(
-            "SELECT * FROM daily_games WHERE day_no = ? ORDER BY updated_at", (day_no,)
+            "SELECT * FROM daily_games WHERE guild_id = ? AND day_no = ? ORDER BY updated_at",
+            (guild_id, day_no),
         ).fetchall()
     games = []
     for row in rows:
@@ -124,11 +213,15 @@ def list_day_games(day_no: int) -> list[dict]:
 
 # ────────────────────────── Статистика ──────────────────────────
 
-def get_stats(user_id: int) -> dict:
+def get_stats(guild_id: int, user_id: int) -> dict:
     with closing(connect()) as conn:
-        row = conn.execute("SELECT * FROM stats WHERE user_id = ?", (user_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM stats WHERE guild_id = ? AND user_id = ?",
+            (guild_id, user_id),
+        ).fetchone()
     if row is None:
         return {
+            "guild_id": guild_id,
             "user_id": user_id, "played": 0, "won": 0, "streak": 0,
             "max_streak": 0, "last_won_day": 0,
             "distribution": [0] * wordle_core.MAX_ATTEMPTS,
@@ -138,12 +231,12 @@ def get_stats(user_id: int) -> dict:
     return stats
 
 
-def record_result(user_id: int, day_no: int, won: bool, attempts: int) -> dict:
+def record_result(guild_id: int, user_id: int, day_no: int, won: bool, attempts: int) -> dict:
     """Обновить статистику после завершённой игры дня.
 
     Стрик продолжается, если предыдущая победа была вчера (day_no - 1).
     """
-    stats = get_stats(user_id)
+    stats = get_stats(guild_id, user_id)
     stats["played"] += 1
     if won:
         stats["won"] += 1
@@ -157,24 +250,25 @@ def record_result(user_id: int, day_no: int, won: bool, attempts: int) -> dict:
 
     with closing(connect()) as conn, conn:
         conn.execute(
-            """INSERT INTO stats (user_id, played, won, streak, max_streak, last_won_day, distribution)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(user_id) DO UPDATE SET
+            """INSERT INTO stats (guild_id, user_id, played, won, streak, max_streak, last_won_day, distribution)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(guild_id, user_id) DO UPDATE SET
                  played = excluded.played, won = excluded.won, streak = excluded.streak,
                  max_streak = excluded.max_streak, last_won_day = excluded.last_won_day,
                  distribution = excluded.distribution""",
-            (user_id, stats["played"], stats["won"], stats["streak"],
+            (guild_id, user_id, stats["played"], stats["won"], stats["streak"],
              stats["max_streak"], stats["last_won_day"], json.dumps(stats["distribution"])),
         )
     return stats
 
 
-def top_players(limit: int = 10) -> list[dict]:
+def top_players(guild_id: int, limit: int = 10) -> list[dict]:
     """Топ по победам, при равенстве — по максимальному стрику."""
     with closing(connect()) as conn:
         rows = conn.execute(
-            "SELECT * FROM stats WHERE played > 0 ORDER BY won DESC, max_streak DESC, played ASC LIMIT ?",
-            (limit,),
+            """SELECT * FROM stats WHERE guild_id = ? AND played > 0
+               ORDER BY won DESC, max_streak DESC, played ASC LIMIT ?""",
+            (guild_id, limit),
         ).fetchall()
     result = []
     for row in rows:
@@ -186,39 +280,43 @@ def top_players(limit: int = 10) -> list[dict]:
 
 # ────────────────────────── Мета: анонсы и серия сервера ──────────────────────────
 
-def _get_meta(key: str, default: str) -> str:
+def _get_meta(guild_id: int, key: str, default: str) -> str:
     with closing(connect()) as conn:
-        row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        row = conn.execute(
+            "SELECT value FROM meta WHERE guild_id = ? AND key = ?",
+            (guild_id, key),
+        ).fetchone()
     return row["value"] if row else default
 
 
-def _set_meta(key: str, value: str) -> None:
+def _set_meta(guild_id: int, key: str, value: str) -> None:
     with closing(connect()) as conn, conn:
         conn.execute(
-            "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            (key, value),
+            """INSERT INTO meta (guild_id, key, value) VALUES (?, ?, ?)
+               ON CONFLICT(guild_id, key) DO UPDATE SET value = excluded.value""",
+            (guild_id, key, value),
         )
 
 
-def get_last_announced_day() -> int:
-    return int(_get_meta("last_announced_day", "0"))
+def get_last_announced_day(guild_id: int) -> int:
+    return int(_get_meta(guild_id, "last_announced_day", "0"))
 
 
-def set_last_announced_day(day_no: int) -> None:
-    _set_meta("last_announced_day", str(day_no))
+def set_last_announced_day(guild_id: int, day_no: int) -> None:
+    _set_meta(guild_id, "last_announced_day", str(day_no))
 
 
-def get_group_streak() -> int:
-    return int(_get_meta("group_streak", "0"))
+def get_group_streak(guild_id: int) -> int:
+    return int(_get_meta(guild_id, "group_streak", "0"))
 
 
-def update_group_streak(day_no: int, anyone_won: bool) -> int:
+def update_group_streak(guild_id: int, day_no: int, anyone_won: bool) -> int:
     """Серия сервера: подряд идущие дни, когда хоть кто-то отгадал слово."""
-    last_win_day = int(_get_meta("group_last_win_day", "0"))
+    last_win_day = int(_get_meta(guild_id, "group_last_win_day", "0"))
     if anyone_won:
-        streak = get_group_streak() + 1 if last_win_day == day_no - 1 else 1
-        _set_meta("group_last_win_day", str(day_no))
+        streak = get_group_streak(guild_id) + 1 if last_win_day == day_no - 1 else 1
+        _set_meta(guild_id, "group_last_win_day", str(day_no))
     else:
         streak = 0
-    _set_meta("group_streak", str(streak))
+    _set_meta(guild_id, "group_streak", str(streak))
     return streak

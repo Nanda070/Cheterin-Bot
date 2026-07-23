@@ -103,7 +103,7 @@ async def mafia_put(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def mafia_games_list(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    games = mafia_db.list_active_games()
+    games = mafia_db.list_active_games(request["guild_id"])
     return web.json_response({"games": [_serialize_game_summary(g, bot) for g in games]})
 
 

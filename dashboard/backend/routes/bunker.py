@@ -137,11 +137,18 @@ async def bunker_card_pools(request: web.Request) -> web.Response:
     return web.json_response(bunker_localize.get_card_pools(lang))
 
 
+def _game_for_guild(game_id: int, guild_id: int) -> dict | None:
+    game = bunker_db.get_game(game_id)
+    if game is None or int(game["guild_id"]) != int(guild_id):
+        return None
+    return game
+
+
 @routes.get("/api/bunker/games")
 @require_dashboard_access
 async def bunker_games_list(request: web.Request) -> web.Response:
     bot = request.app["bot"]
-    games = bunker_db.list_active_games()
+    games = bunker_db.list_active_games(request["guild_id"])
     return web.json_response({"games": [_serialize_game_summary(g, bot) for g in games]})
 
 
@@ -152,7 +159,7 @@ async def bunker_game_detail(request: web.Request) -> web.Response:
         game_id = int(request.match_info["id"])
     except ValueError:
         return web.json_response({"error": "invalid_id"}, status=400)
-    game = bunker_db.get_game(game_id)
+    game = _game_for_guild(game_id, request["guild_id"])
     if game is None:
         return web.json_response({"error": "not_found"}, status=404)
 
@@ -187,7 +194,7 @@ async def bunker_patch_player(request: web.Request) -> web.Response:
         user_id = int(request.match_info["user_id"])
     except ValueError:
         return web.json_response({"error": "invalid_id"}, status=400)
-    game = bunker_db.get_game(game_id)
+    game = _game_for_guild(game_id, request["guild_id"])
     if game is None:
         return web.json_response({"error": "not_found"}, status=404)
     player = bunker_db.get_player(game_id, user_id)
@@ -219,6 +226,8 @@ async def bunker_apply_ability(request: web.Request) -> web.Response:
         announcement_id = int(request.match_info["announcement_id"])
     except ValueError:
         return web.json_response({"error": "invalid_id"}, status=400)
+    if _game_for_guild(game_id, request["guild_id"]) is None:
+        return web.json_response({"error": "not_found"}, status=404)
     announcement = bunker_db.get_ability_announcement(announcement_id)
     if announcement is None or announcement["game_id"] != game_id:
         return web.json_response({"error": "not_found"}, status=404)

@@ -147,6 +147,13 @@ const activity: Record<string, string> = {
   'economy.dailyBase': 'Base (day 1)',
   'economy.dailyGrowth': 'Growth per day',
   'economy.dailyMaxDays': 'Plateau on day (1–365)',
+  'economy.weeklyReport': '📊 Weekly report',
+  'economy.weeklyHint':
+    'On Mondays (MSK) the bot posts a top earners/spenders report to the channel. Preview for the current period is below.',
+  'economy.weeklyChannel': 'Report channel ID',
+  'economy.weeklyChannelPlaceholder': 'Text channel ID',
+  'economy.weeklyDays': 'Period, days (1–30)',
+  'economy.weeklyEmpty': 'No activity for the selected period yet.',
   'economy.shop': '🛒 Shop — /shop, /cosmetics',
   'economy.shopHint':
     'Up to 25 items of three types. Role is granted in Discord immediately; card frame and title are cosmetics for the /rank card, chosen via /cosmetics. Coins are deducted immediately; if the role cannot be granted — refunded automatically.',

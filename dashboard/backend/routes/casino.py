@@ -91,15 +91,15 @@ async def casino_leaderboard(request: web.Request) -> web.Response:
         page = 1
     page = max(1, page)
     
+    guild_id = request["guild_id"]
     limit = 1000
-    all_rows = casino_db.leaderboard(mode, stat_type, limit)
+    all_rows = casino_db.leaderboard(guild_id, mode, stat_type, limit)
     
     page_size = 50
     total = len(all_rows)
     start = (page - 1) * page_size
     entries = all_rows[start:start+page_size]
     
-    guild_id = request["guild_id"]
     guild = request.app["bot"].get_guild(guild_id)
     
     results = []

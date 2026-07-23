@@ -84,6 +84,17 @@ def has(guild_id: int, module: str) -> bool:
     return row is not None
 
 
+def iter_module(module: str):
+    """Yield (guild_id, data) for every guild that has this module stored."""
+    with closing(connect()) as conn:
+        rows = conn.execute(
+            "SELECT guild_id, data FROM module_settings WHERE module = ?",
+            (module,),
+        ).fetchall()
+    for row in rows:
+        yield int(row["guild_id"]), json.loads(row["data"])
+
+
 # ───────────────────────── Мета сервера (Фаза 2.4) ─────────────────────────
 # Флаг активности сервера: on_guild_remove помечает неактивным (не удаляя настройки),
 # on_guild_join — снова активным. Хранится отдельным зарезервированным «модулем».

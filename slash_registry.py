@@ -54,6 +54,10 @@ SLASH_KEYS: tuple[str, ...] = (
     "coins_top",
     "shop",
     "cosmetics",
+    "economy_weekly",
+    "timed_role",
+    "birthday_set_self",
+    "poll_create",
     "warn_group",
     "warn_add",
     "warn_list",
@@ -179,6 +183,19 @@ def register_economy(cog) -> None:
     _cmd(cog.top_command, "coins_top")
     _cmd(cog.shop_command, "shop")
     _cmd(cog.cosmetics_command, "cosmetics")
+    _cmd(cog.weekly_command, "economy_weekly")
+
+
+def register_timed_roles(cog) -> None:
+    _cmd(cog.timed_role_command, "timed_role")
+
+
+def register_birthdays(cog) -> None:
+    _cmd(cog.set_birthday_command, "birthday_set_self")
+
+
+def register_polls(cog) -> None:
+    _cmd(cog.poll_command, "poll_create")
 
 
 def register_automod(cog) -> None:

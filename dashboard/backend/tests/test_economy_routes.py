@@ -5,6 +5,8 @@ import settings_db
 from dashboard.backend.routes.economy import routes as economy_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
+GUILD_ID = 1
+
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
@@ -125,7 +127,7 @@ async def test_top_returns_names(aiohttp_client):
     client = await aiohttp_client(app)
     await force_login(client, 10)
 
-    economy_db.add(20, 300, "seed")
+    economy_db.add(GUILD_ID, 20, 300, "seed")
     resp = await client.get("/api/economy/top")
     assert resp.status == 200
     body = await resp.json()
@@ -140,7 +142,7 @@ async def test_set_balance(aiohttp_client):
 
     resp = await client.put("/api/economy/balance", json={"user_id": "20", "balance": 5000})
     assert resp.status == 200
-    assert economy_db.get_balance(20) == 5000
+    assert economy_db.get_balance(GUILD_ID, 20) == 5000
 
     resp = await client.put("/api/economy/balance", json={"user_id": "20", "balance": -5})
     assert resp.status == 400

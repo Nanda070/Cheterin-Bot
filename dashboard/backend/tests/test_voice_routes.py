@@ -150,11 +150,13 @@ async def test_delete_room_not_found(aiohttp_client):
 @pytest.mark.asyncio
 async def test_panel_publish(aiohttp_client):
     class FakePanelCog:
-        async def publish_panel(self):
+        async def publish_panel(self, guild_id: int):
+            self.guild_id = guild_id
             return 42
 
     bot, app = build()
-    bot.get_cog = lambda name: FakePanelCog() if name == "PanelManager" else None
+    cog = FakePanelCog()
+    bot.get_cog = lambda name: cog if name == "PanelManager" else None
 
     client = await aiohttp_client(app)
     await force_login(client, 10)
@@ -162,6 +164,7 @@ async def test_panel_publish(aiohttp_client):
     resp = await client.post("/api/voice/panel/publish")
     assert resp.status == 200
     assert await resp.json() == {"ok": True, "message_id": "42"}
+    assert cog.guild_id == 1
 
 
 @pytest.mark.asyncio

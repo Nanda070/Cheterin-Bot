@@ -58,6 +58,9 @@ def get_subscriptions(guild_id: int) -> list[dict]:
             "keywords": [str(k) for k in sub.get("keywords", [])],
             "keyword_mode": sub.get("keyword_mode") or "any",
             "min_interval_minutes": int(sub.get("min_interval_minutes", 0)),
+            "mention_everyone": bool(sub.get("mention_everyone", False)),
+            "use_embed": bool(sub.get("use_embed", True)),
+            "embed_color": str(sub.get("embed_color") or ""),
             "last_notified_ts": int(sub.get("last_notified_ts", 0)),
             "last_stream_id": str(sub.get("last_stream_id") or ""),
         })
@@ -386,13 +389,35 @@ class Streams(commands.Cog):
         channel = self.bot.get_channel(int(sub["channel_id"]))
         if channel is None:
             return
-        if sub["ping_role_id"]:
-            content = f"<@&{sub['ping_role_id']}>\n{content}"
-            allowed = discord.AllowedMentions(roles=[discord.Object(id=int(sub["ping_role_id"]))])
+        # Optional custom embed color (#RRGGBB)
+        raw_color = (sub.get("embed_color") or "").strip()
+        if raw_color.startswith("#") and len(raw_color) == 7:
+            try:
+                embed.color = discord.Color(int(raw_color[1:], 16))
+            except ValueError:
+                pass
+
+        mentions = []
+        allowed_roles = []
+        allowed_everyone = False
+        if sub.get("ping_role_id"):
+            mentions.append(f"<@&{sub['ping_role_id']}>")
+            allowed_roles.append(discord.Object(id=int(sub["ping_role_id"])))
+        if sub.get("mention_everyone"):
+            mentions.append("@everyone")
+            allowed_everyone = True
+        if mentions:
+            content = "\n".join(mentions) + ("\n" + content if content else "")
+            allowed = discord.AllowedMentions(roles=allowed_roles, everyone=allowed_everyone)
         else:
             allowed = discord.AllowedMentions.none()
+        use_embed = bool(sub.get("use_embed", True))
         try:
-            await channel.send(content=content or None, embed=embed, allowed_mentions=allowed)
+            await channel.send(
+                content=content or None,
+                embed=embed if use_embed else None,
+                allowed_mentions=allowed,
+            )
         except discord.HTTPException as exc:
             logger.warning("Не удалось отправить стрим-уведомление %s: %s", sub["id"], exc)
 

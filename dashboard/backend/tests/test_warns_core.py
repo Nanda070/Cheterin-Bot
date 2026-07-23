@@ -61,6 +61,14 @@ def test_remove_warn():
     assert fetched["removed_by"] == "5"
 
 
+def test_remove_warn_guild_scoped():
+    warn = warns_core.add_warn(1, 100, "Причина", None)
+    assert warns_core.remove_warn(warn["id"], 5, guild_id=999) is False
+    assert warns_core.get_warn(warn["id"])["removed"] is False
+    assert warns_core.remove_warn(warn["id"], 5, guild_id=1) is True
+    assert warns_core.get_warn(warn["id"])["removed"] is True
+
+
 def test_get_warns_scoped_by_guild_and_user():
     warns_core.add_warn(1, 100, "guild1-user100", None)
     warns_core.add_warn(2, 100, "guild2-user100", None)

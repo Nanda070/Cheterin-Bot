@@ -222,9 +222,9 @@ async def disable_share(request: web.Request) -> web.Response:
 
 @routes.get("/api/public/brackets/{token}")
 async def get_public_bracket(request: web.Request) -> web.Response:
-    data = brackets.load_brackets(request["guild_id"])
     token = request.match_info["token"]
-    bracket = next((b for b in data.values() if b.get("share_token") == token), None)
-    if bracket is None:
+    found = brackets.find_by_share_token(token)
+    if found is None:
         return web.json_response({"error": "bracket_not_found"}, status=404)
+    _guild_id, bracket = found
     return web.json_response(serialize_bracket_detail(bracket))

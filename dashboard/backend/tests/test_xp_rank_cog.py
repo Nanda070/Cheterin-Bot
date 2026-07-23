@@ -10,6 +10,8 @@ import xp_core
 from xp import XPCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
+GUILD_ID = 1
+
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
@@ -80,10 +82,10 @@ async def test_rank_command_without_cosmetics_passes_none(monkeypatch):
 async def test_rank_command_passes_equipped_frame_and_title(monkeypatch):
     cog, guild, member = build()
     stats_db.xp_add_text(1, member.id, 100, 1000)
-    economy_db.grant_cosmetic(member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
-    economy_db.set_equipped(member.id, "frame_color", "frame1")
-    economy_db.grant_cosmetic(member.id, "title1", "title", "Легенда", "Титул «Легенда»")
-    economy_db.set_equipped(member.id, "title", "title1")
+    economy_db.grant_cosmetic(GUILD_ID, member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
+    economy_db.set_equipped(GUILD_ID, member.id, "frame_color", "frame1")
+    economy_db.grant_cosmetic(GUILD_ID, member.id, "title1", "title", "Легенда", "Титул «Легенда»")
+    economy_db.set_equipped(GUILD_ID, member.id, "title", "title1")
 
     captured = {}
 
@@ -104,7 +106,7 @@ async def test_rank_command_passes_equipped_frame_and_title(monkeypatch):
 async def test_rank_command_ignores_unequipped_owned_cosmetics(monkeypatch):
     cog, guild, member = build()
     stats_db.xp_add_text(1, member.id, 100, 1000)
-    economy_db.grant_cosmetic(member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")  # куплено, но не надето
+    economy_db.grant_cosmetic(GUILD_ID, member.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")  # куплено, но не надето
 
     captured = {}
     monkeypatch.setattr(xp_card, "render_rank_card", lambda *a, **k: captured.update(k) or b"PNG")

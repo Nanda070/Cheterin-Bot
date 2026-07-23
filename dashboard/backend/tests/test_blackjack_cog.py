@@ -13,6 +13,8 @@ import settings_db
 from blackjack import BlackjackCog, BlackjackView
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
+GUILD_ID = 1
+
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
@@ -98,31 +100,47 @@ async def test_requires_economy():
 @pytest.mark.asyncio
 async def test_active_game_blocks_second():
     cog, player, guild = build()
-    cog._games[player.id] = make_game(["10♠", "7♦"], ["9♣", "5♥"])
+    cog._games[(guild.id, player.id)] = make_game(["10♠", "7♦"], ["9♣", "5♥"])
     interaction = FakeInteraction(player, guild)
     await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
     assert "уже идёт партия" in interaction.response.messages[0]["content"]
 
 
 @pytest.mark.asyncio
+async def test_active_game_is_isolated_per_guild(monkeypatch):
+    cog, player, guild = build()
+    other_guild_id = 999
+    cog._games[(other_guild_id, player.id)] = make_game(["10♠", "7♦"], ["9♣", "5♥"])
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
+    monkeypatch.setattr(bj, "new_game", lambda bet: make_game(["10♠", "7♦"], ["9♣", "5♥"], deck=["2♠"], bet=bet))
+    interaction = FakeInteraction(player, guild)
+
+    assert not cog.has_active_game(guild.id, player.id)
+    assert cog.has_active_game(other_guild_id, player.id)
+
+    await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
+    assert isinstance(interaction.response.messages[0]["view"], BlackjackView)
+    assert cog.has_active_game(guild.id, player.id)
+    assert cog.has_active_game(other_guild_id, player.id)
+@pytest.mark.asyncio
 async def test_cooldown_blocks_new_game():
     cog, player, guild = build(cooldown_sec=30)
-    economy_db.add(player.id, 1000, "seed")
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
     cog._cooldowns[player.id] = time.monotonic() + 30
     interaction = FakeInteraction(player, guild)
     await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
     assert "отдыхает" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 1000
+    assert economy_db.get_balance(GUILD_ID, player.id) == 1000
 
 
 @pytest.mark.asyncio
 async def test_bet_below_min_rejected():
     cog, player, guild = build(min_bet=10)
-    economy_db.add(player.id, 1000, "seed")
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
     interaction = FakeInteraction(player, guild)
     await BlackjackCog.blackjack_command.callback(cog, interaction, 1)
     assert "Минимальная" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 1000
+    assert economy_db.get_balance(GUILD_ID, player.id) == 1000
 
 
 # ────────────────────────── Старт партии ──────────────────────────
@@ -130,85 +148,85 @@ async def test_bet_below_min_rejected():
 @pytest.mark.asyncio
 async def test_game_starts_deducts_bet_and_sends_view(monkeypatch):
     cog, player, guild = build()
-    economy_db.add(player.id, 1000, "seed")
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
     monkeypatch.setattr(bj, "new_game", lambda bet: make_game(["10♠", "7♦"], ["9♣", "5♥"], deck=["2♠"], bet=bet))
     interaction = FakeInteraction(player, guild)
 
     await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
 
-    assert economy_db.get_balance(player.id) == 900
+    assert economy_db.get_balance(GUILD_ID, player.id) == 900
     msg = interaction.response.messages[0]
     assert msg["embed"] is not None
     assert isinstance(msg["view"], BlackjackView)
-    assert cog.has_active_game(player.id)
+    assert cog.has_active_game(guild.id, player.id)
 
 
 @pytest.mark.asyncio
 async def test_natural_blackjack_pays_and_records_stats(monkeypatch):
     cog, player, guild = build(house_edge_percent=0)
-    economy_db.add(player.id, 1000, "seed")
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
     monkeypatch.setattr(bj, "new_game", lambda bet: make_game(["A♠", "K♦"], ["9♣", "5♥"], deck=["2♠", "3♠"], bet=bet))
     interaction = FakeInteraction(player, guild)
 
     await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
 
     # ×2.5: −100 ставка, +250 приз
-    assert economy_db.get_balance(player.id) == 1150
-    assert casino_db.get_stats(player.id)["bj_wins"] == 1
-    assert not cog.has_active_game(player.id)
+    assert economy_db.get_balance(GUILD_ID, player.id) == 1150
+    assert casino_db.get_stats(guild.id, player.id)["bj_wins"] == 1
+    assert not cog.has_active_game(guild.id, player.id)
     assert cog.cooldown_ready_at(player.id) > time.monotonic()
 
 
 # ────────────────────────── Кнопки ──────────────────────────
 
-def start_view_game(cog, player, player_cards, dealer_cards, deck):
+def start_view_game(cog, player, guild, player_cards, dealer_cards, deck):
     game = make_game(player_cards, dealer_cards, deck=deck)
-    cog._games[player.id] = game
-    view = BlackjackView(cog=cog, player=player)
+    cog._games[(guild.id, player.id)] = game
+    view = BlackjackView(cog=cog, player=player, guild_id=guild.id)
     return game, view
 
 
 @pytest.mark.asyncio
 async def test_stand_dealer_loses_pays_double():
     cog, player, guild = build(house_edge_percent=0)
-    economy_db.add(player.id, 900, "seed")  # ставка 100 уже «списана»
-    game, view = start_view_game(cog, player, ["10♠", "9♦"], ["10♣", "7♥"], deck=["2♠"])
+    economy_db.add(GUILD_ID, player.id, 900, "seed")  # ставка 100 уже «списана»
+    game, view = start_view_game(cog, player, guild, ["10♠", "9♦"], ["10♣", "7♥"], deck=["2♠"])
     interaction = FakeInteraction(player, guild)
 
     await view.stand_button.callback(interaction)
 
     # 19 против 17 → WIN ×2
-    assert economy_db.get_balance(player.id) == 900 + 200
-    assert casino_db.get_stats(player.id)["bj_wins"] == 1
-    assert not cog.has_active_game(player.id)
+    assert economy_db.get_balance(GUILD_ID, player.id) == 900 + 200
+    assert casino_db.get_stats(guild.id, player.id)["bj_wins"] == 1
+    assert not cog.has_active_game(guild.id, player.id)
     assert interaction.response.edits[0]["embed"] is not None
 
 
 @pytest.mark.asyncio
 async def test_hit_bust_loses_and_records():
     cog, player, guild = build()
-    economy_db.add(player.id, 900, "seed")
-    game, view = start_view_game(cog, player, ["10♠", "9♦"], ["10♣", "7♥"], deck=["5♣"])
+    economy_db.add(GUILD_ID, player.id, 900, "seed")
+    game, view = start_view_game(cog, player, guild, ["10♠", "9♦"], ["10♣", "7♥"], deck=["5♣"])
     interaction = FakeInteraction(player, guild)
 
     await view.hit_button.callback(interaction)
 
     # 10+9+5=24 — перебор
-    assert economy_db.get_balance(player.id) == 900
-    assert casino_db.get_stats(player.id)["bj_losses"] == 1
-    assert not cog.has_active_game(player.id)
+    assert economy_db.get_balance(GUILD_ID, player.id) == 900
+    assert casino_db.get_stats(guild.id, player.id)["bj_losses"] == 1
+    assert not cog.has_active_game(guild.id, player.id)
 
 
 @pytest.mark.asyncio
 async def test_hit_without_bust_continues_game():
     cog, player, guild = build()
-    economy_db.add(player.id, 900, "seed")
-    game, view = start_view_game(cog, player, ["5♠", "9♦"], ["10♣", "7♥"], deck=["2♣"])
+    economy_db.add(GUILD_ID, player.id, 900, "seed")
+    game, view = start_view_game(cog, player, guild, ["5♠", "9♦"], ["10♣", "7♥"], deck=["2♣"])
     interaction = FakeInteraction(player, guild)
 
     await view.hit_button.callback(interaction)
 
-    assert cog.has_active_game(player.id)
+    assert cog.has_active_game(guild.id, player.id)
     assert game.player == ["5♠", "9♦", "2♣"]
     assert interaction.response.edits[0]["embed"] is not None
 
@@ -216,36 +234,36 @@ async def test_hit_without_bust_continues_game():
 @pytest.mark.asyncio
 async def test_double_spends_second_bet_and_finishes():
     cog, player, guild = build(house_edge_percent=0)
-    economy_db.add(player.id, 900, "seed")
-    game, view = start_view_game(cog, player, ["5♠", "6♦"], ["10♥", "8♣"], deck=["10♣"])
+    economy_db.add(GUILD_ID, player.id, 900, "seed")
+    game, view = start_view_game(cog, player, guild, ["5♠", "6♦"], ["10♥", "8♣"], deck=["10♣"])
     interaction = FakeInteraction(player, guild)
 
     await view.double_button.callback(interaction)
 
     # 11 + 10♣ = 21 против 18 → WIN; ставка удвоена до 200, приз 400
     assert game.doubled is True
-    assert economy_db.get_balance(player.id) == 900 - 100 + 400
-    assert not cog.has_active_game(player.id)
+    assert economy_db.get_balance(GUILD_ID, player.id) == 900 - 100 + 400
+    assert not cog.has_active_game(guild.id, player.id)
 
 
 @pytest.mark.asyncio
 async def test_double_rejected_without_funds():
     cog, player, guild = build()
-    economy_db.add(player.id, 50, "seed")  # на вторую ставку 100 не хватает
-    game, view = start_view_game(cog, player, ["5♠", "6♦"], ["10♥", "8♣"], deck=["10♣"])
+    economy_db.add(GUILD_ID, player.id, 50, "seed")  # на вторую ставку 100 не хватает
+    game, view = start_view_game(cog, player, guild, ["5♠", "6♦"], ["10♥", "8♣"], deck=["10♣"])
     interaction = FakeInteraction(player, guild)
 
     await view.double_button.callback(interaction)
 
     assert "Недостаточно средств" in interaction.response.messages[0]["content"]
-    assert cog.has_active_game(player.id)  # партия продолжается
+    assert cog.has_active_game(guild.id, player.id)  # партия продолжается
 
 
 @pytest.mark.asyncio
 async def test_interaction_check_rejects_other_user():
     cog, player, guild = build()
     stranger = FakeMember(30, name="stranger")
-    view = BlackjackView(cog=cog, player=player)
+    view = BlackjackView(cog=cog, player=player, guild_id=guild.id)
     interaction = FakeInteraction(stranger, guild)
 
     allowed = await view.interaction_check(interaction)

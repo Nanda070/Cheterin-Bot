@@ -45,7 +45,7 @@ describe('FunPage', () => {
 
     renderWithLanguage(<FunPage />)
     fireEvent.click(await screen.findByLabelText('Модуль выключен'))
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить развлечения' }))
 
     await waitFor(() => expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })))
     expect(await screen.findByText('Сохранено')).toBeInTheDocument()
@@ -60,7 +60,7 @@ describe('FunPage', () => {
 
     fireEvent.change(await screen.findByLabelText(/Таймаут проигравшему/), { target: { value: '10' } })
     fireEvent.change(screen.getByLabelText(/Кулдаун на игрока/), { target: { value: '120' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить развлечения' }))
 
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('FunPage', () => {
     expect(await screen.findByText('✨ Авто-Эмодзи')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Выключено'))
     fireEvent.change(screen.getByLabelText(/Шанс на сообщение/), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить развлечения' }))
 
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(
@@ -101,13 +101,35 @@ describe('FunPage', () => {
     fireEvent.click(screen.getByLabelText('Вордл выключен'))
     fireEvent.change(screen.getByLabelText(/ID канала для анонсов/), { target: { value: '555' } })
     fireEvent.change(screen.getByLabelText(/Время ежедневного анонса/), { target: { value: '18:30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить Вордл' }))
 
     await waitFor(() =>
       expect(wordleSpy).toHaveBeenCalledWith(
         expect.objectContaining({ enabled: true, channel_id: '555', announce_time: '18:30' }),
       ),
     )
+  })
+
+  it('saves fun without requiring wordle save', async () => {
+    vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    mockWordle()
+    const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue({ ...emptySettings, enabled: true })
+    const wordleSpy = vi.spyOn(client, 'updateWordleSettings')
+    renderWithLanguage(<FunPage />)
+
+    fireEvent.click(await screen.findByLabelText('Модуль выключен'))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить развлечения' }))
+
+    await waitFor(() => expect(updateSpy).toHaveBeenCalled())
+    expect(wordleSpy).not.toHaveBeenCalled()
+  })
+
+  it('loads fun even when wordle fails', async () => {
+    vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
+    vi.spyOn(client, 'fetchWordleSettings').mockRejectedValue(new Error('fail'))
+    renderWithLanguage(<FunPage />)
+    expect(await screen.findByText(/Русская рулетка/)).toBeInTheDocument()
+    expect(await screen.findByText(/Не удалось/)).toBeInTheDocument()
   })
 
   it('shows an error when loading fails', async () => {

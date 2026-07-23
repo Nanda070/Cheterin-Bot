@@ -4,6 +4,7 @@ import { fetchCurrentUser, type DashboardUser } from '../api/client'
 interface AuthContextValue {
   user: DashboardUser | null
   isLoading: boolean
+  accessDenied: boolean
   refresh: () => Promise<void>
 }
 
@@ -12,14 +13,22 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<DashboardUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [accessDenied, setAccessDenied] = useState(false)
 
   const refresh = async () => {
     setIsLoading(true)
     try {
       setUser(await fetchCurrentUser())
+      setAccessDenied(false)
     } catch (error) {
-      console.error('Failed to refresh user session:', error)
-      setUser(null)
+      if (error instanceof Error && error.name === 'AccessDeniedError') {
+        setAccessDenied(true)
+        setUser(null)
+      } else {
+        console.error('Failed to refresh user session:', error)
+        setAccessDenied(false)
+        setUser(null)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -29,7 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh()
   }, [])
 
-  return <AuthContext.Provider value={{ user, isLoading, refresh }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, isLoading, accessDenied, refresh }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth(): AuthContextValue {

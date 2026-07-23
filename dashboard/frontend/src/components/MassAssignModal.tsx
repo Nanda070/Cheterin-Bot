@@ -9,6 +9,8 @@ import {
   type MemberSummary,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
+import { useT } from '../context/LanguageContext'
 import { Button } from './ui/Button'
 import { Checkbox } from './ui/Checkbox'
 import { Modal } from './ui/Modal'
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export function MassAssignModal({ open, onClose }: Props) {
+  const t = useT()
   const [roles, setRoles] = useState<RoleInfo[]>([])
   const [roleId, setRoleId] = useState('')
   const [target, setTarget] = useState<MassAssignTarget>('all_except_bots')
@@ -32,8 +35,11 @@ export function MassAssignModal({ open, onClose }: Props) {
   const [starting, setStarting] = useState(false)
 
   useEffect(() => {
-    if (open) fetchRoles().then(setRoles).catch(() => {})
-  }, [open])
+    if (!open) return
+    fetchRoles()
+      .then(setRoles)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadRoles')))
+  }, [open, t])
 
   useEffect(() => {
     if (!open || target !== 'selected' || !search) {

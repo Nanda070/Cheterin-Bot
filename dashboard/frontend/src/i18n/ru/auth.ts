@@ -8,6 +8,9 @@ const auth: TranslationDict = {
   'login.feature.supply': 'Сборы на поставку с резервом и напоминаниями',
   'login.feature.voice': 'Приватные голосовые комнаты',
   'login.footer': 'Доступ только для модераторов и администраторов сервера',
+  'login.error.denied': 'Вход отменён. Разрешите доступ приложению Discord, чтобы продолжить.',
+  'login.error.stateMismatch': 'Сессия входа устарела. Попробуйте войти ещё раз.',
+  'login.error.oauthFailed': 'Не удалось войти через Discord. Попробуйте снова.',
 
   'accessDenied.title': 'Доступ запрещён',
   'accessDenied.body':

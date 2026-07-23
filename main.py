@@ -108,6 +108,14 @@ class ChetBot(commands.Bot):
         await self.load_extension("blackjack")
         await self.load_extension("antiraid")
         await self.load_extension("verification")
+        await self.load_extension("custom_commands")
+        await self.load_extension("scheduled_messages")
+        await self.load_extension("invites")
+        await self.load_extension("timed_roles")
+        await self.load_extension("birthdays")
+        await self.load_extension("polls")
+        await self.load_extension("sticky")
+        await self.load_extension("owner_alerts")
 
         # Синхронизация команд вынесена в on_ready: для режима per_guild нужен уже
         # заполненный список self.guilds (в setup_hook он ещё пуст).

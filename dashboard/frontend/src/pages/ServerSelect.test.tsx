@@ -116,4 +116,27 @@ describe('ServerSelectPage', () => {
       expect(screen.getByText('Нет серверов, которыми вы можете управлять.')).toBeInTheDocument(),
     )
   })
+
+  it('shows docs, terms, privacy and support server links', async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me')) {
+        return Promise.resolve(jsonResponse({ id: '1', is_super_admin: false, active_guild_id: null }))
+      }
+      if (url.endsWith('/api/auth/guilds')) {
+        return Promise.resolve(jsonResponse({ guilds: [] }))
+      }
+      return Promise.resolve(jsonResponse({}, 404))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Документация' })).toBeInTheDocument())
+    expect(screen.getByRole('link', { name: 'Условия' })).toHaveAttribute('href', '/terms')
+    expect(screen.getByRole('link', { name: 'Приватность' })).toHaveAttribute('href', '/privacy')
+    const support = screen.getByRole('link', { name: 'Сервер поддержки' })
+    expect(support).toHaveAttribute('href', 'https://discord.gg/cheterin')
+    expect(support).toHaveAttribute('target', '_blank')
+  })
 })

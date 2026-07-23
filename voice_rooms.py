@@ -16,9 +16,8 @@ MODULE_NAME = "voice_panel"  # должно совпадать с ключом �
 
 
 def _main_guild_id() -> int:
-    """Панель управления комнатами публикуется один раз на весь процесс бота
-    (не per-guild), поэтому её настройки читаем с мейн-сервера через GUILD_ID —
-    полноценный per-guild выбор см. Фазу 2.4 MULTIGUILD_PLAN.md."""
+    """Legacy helper for one-off migrations that still need GUILD_ID.
+    Do not use as a runtime default for panel publish or per-guild config."""
     return int(os.getenv("GUILD_ID", "0") or 0)
 
 
@@ -30,14 +29,13 @@ def _config_channel_id(guild_id: int, key: str) -> int:
         return 0
 
 
-def load_panel_state() -> dict:
-    """Состояние панели (id сообщения/канала) — синглтон мейн-сервера в settings_db
-    (Фаза 2.2б MULTIGUILD_PLAN.md)."""
-    return settings_db.get(_main_guild_id(), MODULE_NAME)
+def load_panel_state(guild_id: int) -> dict:
+    """Состояние панели (id сообщения/канала) — per-guild в settings_db."""
+    return settings_db.get(guild_id, MODULE_NAME)
 
 
-def save_panel_state(data: dict) -> None:
-    settings_db.put(_main_guild_id(), MODULE_NAME, data)
+def save_panel_state(data: dict, guild_id: int) -> None:
+    settings_db.put(guild_id, MODULE_NAME, data)
 
 
 async def set_open_state(channel: discord.VoiceChannel):
@@ -160,7 +158,7 @@ async def select_member_ephemeral(interaction: discord.Interaction, bot: command
     return member
 
 
-def build_embed(lang: str) -> discord.Embed:
+def build_embed(lang: str, guild_id: int) -> discord.Embed:
     embed = discord.Embed(
         title=i18n.t("voice_rooms.panel.title", lang),
         description=i18n.t("voice_rooms.panel.description", lang),
@@ -194,7 +192,7 @@ def build_embed(lang: str) -> discord.Embed:
         ),
         inline=False
     )
-    thumb = bot_config.get(_main_guild_id(), "VOICE_PANEL_THUMB_URL")
+    thumb = bot_config.get(guild_id, "VOICE_PANEL_THUMB_URL")
     if thumb:
         embed.set_thumbnail(url=thumb)
     return embed
@@ -266,7 +264,7 @@ class ChannelControlView(View):
     def __init__(self, bot: commands.Bot, lang: str | None = None):
         super().__init__(timeout=None)
         self.bot = bot
-        self.lang = lang or i18n.lang_for(_main_guild_id())
+        self.lang = lang or i18n.DEFAULT_LANGUAGE
         self._add_buttons()
 
     def _add_buttons(self):
@@ -620,15 +618,15 @@ class VoiceManager(commands.Cog):
                 await logs.log_error(self.bot, guild.id, f"recover_private_rooms.restore:{channel.id}", exc)
 
         logger.info("Recovery finished. Restored=%s Removed=%s", restored, removed)
-        guild_id = row["guild_id"] if rows else _main_guild_id()
-        lang = i18n.lang_for(guild_id)
-        await logs.send_log_embed(
-            self.bot,
-            guild_id,
-            title=i18n.t("voice_rooms.log.recovery_title", lang),
-            description=i18n.t("voice_rooms.log.recovery_body", lang, restored=restored, removed=removed),
-            color=VCTheme.SUCCESS if restored or removed == 0 else VCTheme.WARN
-        )
+        for guild_id in {int(r["guild_id"]) for r in rows}:
+            lang = i18n.lang_for(guild_id)
+            await logs.send_log_embed(
+                self.bot,
+                guild_id,
+                title=i18n.t("voice_rooms.log.recovery_title", lang),
+                description=i18n.t("voice_rooms.log.recovery_body", lang, restored=restored, removed=removed),
+                color=VCTheme.SUCCESS if restored or removed == 0 else VCTheme.WARN
+            )
 
 
 class PanelManager(commands.Cog):
@@ -641,33 +639,34 @@ class PanelManager(commands.Cog):
         if self._panel_published:
             return
         self._panel_published = True
-        lang = i18n.lang_for(_main_guild_id())
-        self.bot.add_view(ChannelControlView(self.bot, lang))
-        await self.publish_panel()
+        # Persistent view is registered once (custom_ids); labels/lang are set per publish.
+        self.bot.add_view(ChannelControlView(self.bot, i18n.DEFAULT_LANGUAGE))
+        for guild in self.bot.guilds:
+            await self.publish_panel(guild.id)
 
-    async def publish_panel(self) -> int | None:
-        """Публикует (или обновляет) панель управления. Возвращает id сообщения панели."""
-        channel = self.bot.get_channel(_config_channel_id(_main_guild_id(), "VOICE_PANEL_CHANNEL_ID"))
+    async def publish_panel(self, guild_id: int) -> int | None:
+        """Публикует (или обновляет) панель управления для guild_id. Возвращает id сообщения."""
+        channel = self.bot.get_channel(_config_channel_id(guild_id, "VOICE_PANEL_CHANNEL_ID"))
         if not channel:
-            logger.warning("Voice panel text channel not found")
+            logger.warning("Voice panel text channel not found for guild %s", guild_id)
             return None
 
-        lang = i18n.lang_for(_main_guild_id())
-        embed = build_embed(lang)
-        state = load_panel_state()
+        lang = i18n.lang_for(guild_id)
+        embed = build_embed(lang, guild_id)
+        state = load_panel_state(guild_id)
         panel_msg_id = int(state.get("message_id") or 0)
         if panel_msg_id:
             try:
                 msg = await channel.fetch_message(panel_msg_id)
                 await msg.edit(embed=embed, view=ChannelControlView(self.bot, lang))
-                logger.info("Panel updated: %s", msg.id)
+                logger.info("Panel updated: %s (guild %s)", msg.id, guild_id)
                 return msg.id
             except discord.NotFound:
                 pass
 
         msg = await channel.send(embed=embed, view=ChannelControlView(self.bot, lang))
-        save_panel_state({"message_id": msg.id, "channel_id": channel.id})
-        logger.info("Panel created: %s", msg.id)
+        save_panel_state({"message_id": msg.id, "channel_id": channel.id}, guild_id)
+        logger.info("Panel created: %s (guild %s)", msg.id, guild_id)
         return msg.id
 
 

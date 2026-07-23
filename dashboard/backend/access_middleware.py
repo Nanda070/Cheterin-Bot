@@ -18,11 +18,11 @@ def _has_legacy_role_access(member, allowed_role_ids: frozenset) -> bool:
 def require_dashboard_access(handler):
     """Гейт доступа к серверу (Фаза 2.3): сессия → активный сервер → Manage Server.
 
-    Активный сервер берётся из `session["active_guild_id"]` (выбор в дашборде),
-    иначе — из дефолта приложения (`request["guild_id"]`, выставленного
-    guild_context_middleware). Доступ = Manage Server/Administrator на этом сервере
-    (плюс переходный грант по роли). Резолвнутый участник кладётся в
-    `request["moderator"]`, а активная гильдия — в `request["guild_id"]`.
+    Активный сервер берётся только из `session["active_guild_id"]` (выбор в дашборде).
+    Без выбора — 400 `no_guild_selected` (без фолбэка на мейн-сервер приложения).
+    Доступ = Manage Server/Administrator на этом сервере (плюс переходный грант по роли).
+    Резолвнутый участник кладётся в `request["moderator"]`, а активная гильдия —
+    в `request["guild_id"]`.
     """
 
     @functools.wraps(handler)
@@ -35,7 +35,7 @@ def require_dashboard_access(handler):
         config = request.app["dashboard_config"]
         bot = request.app["bot"]
 
-        active_guild_id = session.get("active_guild_id") or request.get("guild_id") or request.app.get("guild_id")
+        active_guild_id = session.get("active_guild_id")
         if active_guild_id is None:
             return web.json_response({"error": "no_guild_selected"}, status=400)
         guild_id = int(active_guild_id)

@@ -4,7 +4,7 @@ import { fetchPublicMafia, submitMafiaAction, submitMafiaVote, type MafiaPublicS
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
-import { useLanguage, useT } from '../context/LanguageContext'
+import { translate, type Lang } from '../i18n'
 
 function useCountdown(deadlineTs: number | null): number {
   const [now, setNow] = useState(() => Date.now())
@@ -18,17 +18,17 @@ function useCountdown(deadlineTs: number | null): number {
 }
 
 export function PublicMafiaActionPage() {
-  const { setLang } = useLanguage()
-  const t = useT()
   const { token } = useParams<{ token: string }>()
+  const [pageLang, setPageLang] = useState<Lang>('ru')
+  const t = (key: string, params?: Record<string, string | number>) => translate(pageLang, key, params)
   const [state, setState] = useState<MafiaPublicState | null>(null)
   const [error, setError] = useState('')
   const [target, setTarget] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
 
-  const roleLabel = (role: string) => t(`publicMafia.role.${role}` as const)
-  const phaseLabel = (phase: string) => t(`publicMafia.phase.${phase}` as const)
+  const roleLabel = (role: string) => t(`publicMafia.role.${role}`)
+  const phaseLabel = (phase: string) => t(`publicMafia.phase.${phase}`)
 
   useEffect(() => {
     if (!token) return
@@ -37,14 +37,15 @@ export function PublicMafiaActionPage() {
         .then((s) => {
           setState(s)
           setError('')
-          if (s.language) setLang(s.language)
+          if (s.language === 'en' || s.language === 'ru') setPageLang(s.language)
         })
         .catch(() => setError(t('publicMafia.errorInvalid')))
     }
     load()
     const timer = setInterval(load, 4000)
     return () => clearInterval(timer)
-  }, [token, t, setLang])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- poll by token; error text uses pageLang
+  }, [token, pageLang])
 
   const remaining = useCountdown(state?.phase_deadline_ts ?? null)
 
@@ -52,7 +53,7 @@ export function PublicMafiaActionPage() {
     if (!state) return []
     const options = state.alive_players.map((p) => ({ id: p.user_id, name: p.display_name }))
     return [{ id: '', name: t('game.skip') }, ...options]
-  }, [state, t])
+  }, [state, pageLang])
 
   const isVotePhase = state?.phase === 'day_vote'
 
@@ -116,7 +117,7 @@ export function PublicMafiaActionPage() {
             {state.your_role ? roleLabel(state.your_role) : t('common.none')}
           </p>
           <p className="text-sm text-muted">
-            {state.your_role ? t(`publicMafia.roleHint.${state.your_role}` as const) : ''}
+            {state.your_role ? t(`publicMafia.roleHint.${state.your_role}`) : ''}
           </p>
           {!state.your_alive && <p className="text-sm text-danger">{t('game.eliminated')}</p>}
           {state.game_status !== 'active' && (

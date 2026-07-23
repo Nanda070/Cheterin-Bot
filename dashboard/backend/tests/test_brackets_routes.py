@@ -356,6 +356,19 @@ async def test_public_bracket_returns_data_with_no_auth(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_public_bracket_finds_token_on_other_guild(aiohttp_client):
+    bracket = brackets.create_bracket("OtherGuild", ["A", "B"], None, 10)
+    bracket["share_token"] = "cross-guild-token"
+    brackets.save_brackets(999, {bracket["id"]: bracket})
+    app = build()
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/api/public/brackets/cross-guild-token")
+    assert resp.status == 200
+    assert (await resp.json())["title"] == "OtherGuild"
+
+
+@pytest.mark.asyncio
 async def test_public_bracket_404s_on_unknown_token(aiohttp_client):
     app = build()
     client = await aiohttp_client(app)

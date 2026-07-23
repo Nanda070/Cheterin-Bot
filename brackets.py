@@ -13,11 +13,22 @@ import i18n
 def load_brackets(guild_id: int) -> dict:
     return settings_db.get(guild_id, "brackets", {})
 
-    return {}
-
 
 def save_brackets(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, "brackets", data)
+
+
+def find_by_share_token(token: str) -> tuple[int, dict] | None:
+    """Find a shared bracket by token across all guilds. Returns (guild_id, bracket) or None."""
+    if not token:
+        return None
+    for guild_id, data in settings_db.iter_module("brackets"):
+        if not isinstance(data, dict):
+            continue
+        for bracket in data.values():
+            if isinstance(bracket, dict) and bracket.get("share_token") == token:
+                return guild_id, bracket
+    return None
 
 
 def extract_entries_from_event(ev: dict, guild, lang: str | None = None) -> list[str]:

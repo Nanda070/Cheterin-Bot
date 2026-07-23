@@ -27,6 +27,12 @@ const API_ERROR_KEYS: Record<string, string> = {
   duplicate_emoji: 'apiError.duplicate_emoji',
   message_not_found: 'apiError.message_not_found',
   channel_required: 'apiError.channel_required',
+  bot_not_in_guild: 'apiError.bot_not_in_guild',
+  no_guild_selected: 'apiError.no_guild_selected',
+  invalid_language: 'apiError.invalid_language',
+  upload_failed: 'apiError.upload_failed',
+  invalid_size: 'apiError.invalid_size',
+  invalid_format: 'apiError.invalid_format',
 }
 
 /**
@@ -55,4 +61,8 @@ export function formatApiError(err: unknown, t: Translate, fallbackKey: string):
 
   // Unknown machine code: keep the generic line and append the code for support/debug.
   return `${t(fallbackKey)} (${code})`
+}
+
+export function isForbiddenError(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 403 || err.message === 'forbidden')
 }

@@ -44,7 +44,7 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
     if not loss_roles:
         return
 
-    stats = casino_db.get_stats(user.id)
+    stats = casino_db.get_stats(interaction.guild.id, user.id)
     total_losses = stats["slots_losses"] + stats["bj_losses"]
 
     roles_to_add = []
@@ -102,7 +102,11 @@ class CasinoCog(commands.Cog):
             return settings, econ, i18n.t("error.economy_disabled_casino", lang), lang
 
         bj_cog = self.bot.cogs.get("BlackjackCog")
-        if bj_cog is not None and bj_cog.has_active_game(interaction.user.id):
+        if (
+            bj_cog is not None
+            and interaction.guild_id is not None
+            and bj_cog.has_active_game(interaction.guild_id, interaction.user.id)
+        ):
             return settings, econ, i18n.t("casino.bj_active_first", lang), lang
 
         now = time.monotonic()
@@ -125,7 +129,7 @@ class CasinoCog(commands.Cog):
         if error:
             return await interaction.response.send_message(error, ephemeral=True)
 
-        balance = economy_db.get_balance(interaction.user.id)
+        balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
         balance_display = economy_core.format_amount(balance, econ)
         bet_problem = casino_core.bet_error(
             ставка, balance, settings, lang=lang, balance_display=balance_display,
@@ -133,7 +137,7 @@ class CasinoCog(commands.Cog):
         if bet_problem:
             return await interaction.response.send_message(bet_problem, ephemeral=True)
 
-        if not economy_db.try_spend(interaction.user.id, ставка, "slots_bet"):
+        if not economy_db.try_spend(interaction.guild.id, interaction.user.id, ставка, "slots_bet"):
             return await interaction.response.send_message(
                 i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
             )
@@ -144,9 +148,9 @@ class CasinoCog(commands.Cog):
         reels_text = " ".join(reels)
 
         if multiplier <= 0:
-            casino_db.record_slots(interaction.user.id, won=False)
+            casino_db.record_slots(interaction.guild.id, interaction.user.id, won=False)
             await check_loss_roles(interaction, settings)
-            balance = economy_db.get_balance(interaction.user.id)
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t(
                     "casino.slots.miss",
@@ -157,9 +161,9 @@ class CasinoCog(commands.Cog):
                 )
             )
 
-        casino_db.record_slots(interaction.user.id, won=True)
+        casino_db.record_slots(interaction.guild.id, interaction.user.id, won=True)
         payout = casino_core.payout_amount(ставка, multiplier, settings["house_edge_percent"])
-        balance = economy_db.add(interaction.user.id, payout, "slots_win")
+        balance = economy_db.add(interaction.guild.id, interaction.user.id, payout, "slots_win")
         kind_key = (
             "casino.slots.kind.jackpot" if reels[0] == reels[1] == reels[2]
             else "casino.slots.kind.match"
@@ -186,7 +190,7 @@ class CasinoCog(commands.Cog):
         if error:
             return await interaction.response.send_message(error, ephemeral=True)
 
-        balance = economy_db.get_balance(interaction.user.id)
+        balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
         balance_display = economy_core.format_amount(balance, econ)
         bet_problem = casino_core.bet_error(
             ставка, balance, settings, lang=lang, balance_display=balance_display,
@@ -194,7 +198,7 @@ class CasinoCog(commands.Cog):
         if bet_problem:
             return await interaction.response.send_message(bet_problem, ephemeral=True)
 
-        if not economy_db.try_spend(interaction.user.id, ставка, "coinflip_bet"):
+        if not economy_db.try_spend(interaction.guild.id, interaction.user.id, ставка, "coinflip_bet"):
             return await interaction.response.send_message(
                 i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
             )
@@ -205,9 +209,9 @@ class CasinoCog(commands.Cog):
         label = _coinflip_label(result, lang)
 
         if result != сторона.value:
-            casino_db.record_slots(interaction.user.id, won=False)
+            casino_db.record_slots(interaction.guild.id, interaction.user.id, won=False)
             await check_loss_roles(interaction, settings)
-            balance = economy_db.get_balance(interaction.user.id)
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t(
                     "casino.coinflip.loss",
@@ -219,9 +223,9 @@ class CasinoCog(commands.Cog):
                 )
             )
 
-        casino_db.record_slots(interaction.user.id, won=True)
+        casino_db.record_slots(interaction.guild.id, interaction.user.id, won=True)
         payout = casino_core.payout_amount(ставка, casino_core.COINFLIP_MULTIPLIER, settings["house_edge_percent"])
-        balance = economy_db.add(interaction.user.id, payout, "coinflip_win")
+        balance = economy_db.add(interaction.guild.id, interaction.user.id, payout, "coinflip_win")
         await interaction.response.send_message(
             i18n.t(
                 "casino.coinflip.win",
@@ -263,7 +267,7 @@ class CasinoLeaderboardView(discord.ui.View):
         self.btn_mode_total.style = discord.ButtonStyle.primary if self.mode == "total" else discord.ButtonStyle.secondary
 
     def build_embed(self, guild: discord.Guild) -> discord.Embed:
-        all_rows = casino_db.leaderboard(self.mode, self.stat_type, limit=1000)
+        all_rows = casino_db.leaderboard(guild.id, self.mode, self.stat_type, limit=1000)
         total_pages = max(1, (len(all_rows) + self.per_page - 1) // self.per_page)
         self.page = min(self.page, total_pages)
         self.page = max(1, self.page)

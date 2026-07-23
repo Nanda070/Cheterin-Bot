@@ -2,6 +2,7 @@ import os
 
 from aiohttp import web
 
+import i18n
 import stats_db
 import xp_core
 
@@ -124,7 +125,7 @@ async def xp_put(request: web.Request) -> web.Response:
     guild_id = request["guild_id"]
     xp_core.save_config(guild_id, {
         "enabled": body.get("enabled", False),
-        "public_leaderboard": body.get("public_leaderboard", True),
+        "public_leaderboard": body.get("public_leaderboard", False),
         "reset_on_leave": body.get("reset_on_leave", False),
         "text": {
             "enabled": body["text"].get("enabled", True),
@@ -314,6 +315,8 @@ def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
         return web.json_response({"error": "not_found"}, status=404)
 
     guild = bot.get_guild(guild_id)
+    lang = i18n.lang_for(guild_id)
+    left_label = i18n.t("xp.leaderboard.left_server", lang)
     rows = stats_db.xp_leaderboard(guild_id, limit=100)
     entries = []
     for i, row in enumerate(rows):
@@ -321,7 +324,7 @@ def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
         level, into, step = xp_core.level_progress(row["xp"])
         entries.append({
             "rank": i + 1,
-            "display": member.display_name if member else "Покинул сервер",
+            "display": member.display_name if member else left_label,
             "avatar": str(member.display_avatar.url) if member else None,
             "level": level,
             "xp": row["xp"],
@@ -336,8 +339,22 @@ def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
 
 @routes.get("/api/public/leaderboard")
 async def xp_public_leaderboard(request: web.Request) -> web.Response:
-    """Legacy: top for the main guild (app default). Prefer /api/public/leaderboard/{guild_id}."""
-    payload = _public_leaderboard_payload(request.app["bot"], request["guild_id"])
+    """Legacy URL: require guild_id query param. Prefer /api/public/leaderboard/{guild_id}."""
+    raw = request.rel_url.query.get("guild_id")
+    if raw is None or raw == "":
+        return web.json_response(
+            {
+                "error": "guild_id_required",
+                "hint": "Use /api/public/leaderboard/{guild_id}",
+            },
+            status=400,
+        )
+    try:
+        guild_id = int(raw)
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    payload = _public_leaderboard_payload(request.app["bot"], guild_id)
     if isinstance(payload, web.Response):
         return payload
     return web.json_response(payload)

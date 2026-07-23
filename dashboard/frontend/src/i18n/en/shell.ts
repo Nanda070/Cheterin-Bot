@@ -1,8 +1,8 @@
 import type { TranslationDict } from '../types'
 
 const shell: TranslationDict = {
-  'lang.ru': 'RU',
-  'lang.en': 'EN',
+  'lang.ru': 'Russian',
+  'lang.en': 'English',
   'lang.switch': 'Interface language',
 
   'nav.docs': 'Documentation',
@@ -13,6 +13,9 @@ const shell: TranslationDict = {
   'nav.logout': 'Log out',
   'nav.loggingOut': 'Logging out…',
   'nav.selectServer': 'Select server',
+  'nav.menu': 'Menu',
+  'nav.openMenu': 'Open menu',
+  'nav.closeMenu': 'Close menu',
 
   'nav.group.activity': 'Activity',
   'nav.group.gta5rp': 'GTA5RP',
@@ -37,6 +40,14 @@ const shell: TranslationDict = {
   'nav.reactionRoles': 'Buttons & embeds',
   'nav.streams': 'Streams & subscriptions',
   'nav.dailyTopic': 'Daily topic',
+  'nav.customCommands': 'Custom commands',
+  'nav.scheduledMessages': 'Scheduled messages',
+  'nav.polls': 'Polls',
+  'nav.sticky': 'Sticky messages',
+  'nav.birthdays': 'Birthdays',
+  'nav.preview': 'Command preview',
+  'nav.invites': 'Invite tracker',
+  'nav.timedRoles': 'Timed roles',
   'nav.serverlog': 'Logging',
   'nav.lockdown': 'Moderation',
   'nav.automod': 'Automod',
@@ -62,6 +73,8 @@ const shell: TranslationDict = {
   'servers.errorSelect': 'Failed to select server — check that you have Manage Server permission.',
   'servers.errorInvite': 'Failed to get invite link.',
   'servers.discordLogin': 'Signed in with Discord',
+  'servers.support': 'Support server',
+  'servers.footerLinks': 'Docs and support',
 
   'settings.title': 'Server settings',
   'settings.intro': 'General settings for the current server. Bot language affects Discord messages and command replies on this server.',

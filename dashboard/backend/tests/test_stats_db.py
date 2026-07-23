@@ -150,6 +150,19 @@ def test_audit_list_orders_desc_and_filters_by_moderator():
     only_1 = stats_db.audit_list(MAIN, moderator_id=1)
     assert {r["moderator_id"] for r in only_1} == {1}
     assert stats_db.audit_count(MAIN, moderator_id=1) == 2
+    mods = stats_db.audit_moderators(MAIN)
+    assert {(m["moderator_id"], m["moderator_name"]) for m in mods} == {(1, "a"), (2, "b")}
+
+
+def test_audit_list_and_count_filter_by_search():
+    stats_db.audit_add(MAIN, 1000, 1, "Alice", "POST", "/api/fun", "audit.action.fun", 200, "roulette")
+    stats_db.audit_add(MAIN, 2000, 2, "Bob", "PUT", "/api/wordle", "audit.action.wordle", 200, "channel")
+    assert stats_db.audit_count(MAIN, search="Alice") == 1
+    assert stats_db.audit_count(MAIN, search="wordle") == 1
+    assert stats_db.audit_count(MAIN, search="roulette") == 1
+    assert stats_db.audit_count(MAIN, search="missing") == 0
+    rows = stats_db.audit_list(MAIN, search="fun")
+    assert len(rows) == 1 and rows[0]["moderator_name"] == "Alice"
 
 
 # ────────────────────────── Миграция старой (глобальной) схемы ──────────────────────────

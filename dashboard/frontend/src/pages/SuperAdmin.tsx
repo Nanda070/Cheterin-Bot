@@ -1,19 +1,39 @@
 import { Crown } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
-import { fetchSuperAdminGuilds, type SuperAdminGuild } from '../api/client'
+import { useNavigate } from 'react-router-dom'
+import { fetchSuperAdminGuilds, selectGuild, type SuperAdminGuild } from '../api/client'
+import { formatApiError } from '../api/errors'
+import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 
 export function SuperAdminPage() {
   const t = useT()
+  const navigate = useNavigate()
+  const { refresh } = useAuth()
   const [guilds, setGuilds] = useState<SuperAdminGuild[] | null>(null)
   const [error, setError] = useState('')
+  const [pendingId, setPendingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchSuperAdminGuilds()
       .then(setGuilds)
-      .catch(() => setError(t('superadmin.errorLoad')))
+      .catch((err) => setError(formatApiError(err, t, 'superadmin.errorLoad')))
   }, [t])
+
+  const openGuild = async (guild: SuperAdminGuild) => {
+    setPendingId(guild.id)
+    setError('')
+    try {
+      await selectGuild(guild.id)
+      await refresh()
+      navigate('/', { replace: true })
+    } catch (err) {
+      setError(formatApiError(err, t, 'superadmin.errorOpen'))
+      setPendingId(null)
+    }
+  }
 
   return (
     <div className="flex max-w-3xl flex-col gap-5">
@@ -44,6 +64,14 @@ export function SuperAdminPage() {
                 {guild.owner_id && t('superadmin.owner', { ownerId: guild.owner_id })}
               </p>
             </div>
+            <Button
+              variant="secondary"
+              disabled={pendingId === guild.id}
+              onClick={() => openGuild(guild)}
+              className="shrink-0"
+            >
+              {pendingId === guild.id ? t('superadmin.opening') : t('superadmin.open')}
+            </Button>
           </Card>
         ))}
       </div>

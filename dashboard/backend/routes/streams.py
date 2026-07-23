@@ -6,7 +6,10 @@ from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()
 
-EDITABLE_FIELDS = {"enabled", "channel_id", "ping_role_id", "template", "keywords", "keyword_mode", "min_interval_minutes"}
+EDITABLE_FIELDS = {
+    "enabled", "channel_id", "ping_role_id", "template", "keywords",
+    "keyword_mode", "min_interval_minutes", "mention_everyone", "use_embed", "embed_color",
+}
 
 
 def _public_sub(sub: dict) -> dict:
@@ -75,6 +78,9 @@ async def streams_create(request: web.Request) -> web.Response:
         "keywords": [],
         "keyword_mode": "any",
         "min_interval_minutes": 0,
+        "mention_everyone": False,
+        "use_embed": True,
+        "embed_color": "",
         "last_notified_ts": 0,
         "last_stream_id": "",
     })
@@ -115,6 +121,12 @@ async def streams_update(request: web.Request) -> web.Response:
         elif key == "min_interval_minutes":
             if not isinstance(value, int) or not 0 <= value <= 10080:
                 return web.json_response({"error": "invalid_interval"}, status=400)
+        elif key in ("mention_everyone", "use_embed"):
+            if not isinstance(value, bool):
+                return web.json_response({"error": f"invalid_{key}"}, status=400)
+        elif key == "embed_color":
+            if not isinstance(value, str) or (value and not (value.startswith("#") and len(value) == 7)):
+                return web.json_response({"error": "invalid_embed_color"}, status=400)
         fields[key] = value
 
     updated = streams.update_subscription(request["guild_id"], sub_id, **fields)

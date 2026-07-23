@@ -11,6 +11,7 @@ import {
   type Supply,
   type SupplyOverview,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -117,8 +118,8 @@ export function SupplyPage() {
     reload()
     fetchChannels()
       .then(setChannels)
-      .catch(() => setChannels([]))
-  }, [])
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadChannels')))
+  }, [t])
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)

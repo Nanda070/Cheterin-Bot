@@ -178,6 +178,34 @@ async def test_put_settings_rejects_bad_voice_base_and_multipliers(aiohttp_clien
 
 
 @pytest.mark.asyncio
+async def test_public_leaderboard_legacy_requires_guild_id(aiohttp_client):
+    _, app = build([])
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/leaderboard")
+    assert resp.status == 400
+    body = await resp.json()
+    assert body["error"] == "guild_id_required"
+
+
+@pytest.mark.asyncio
+async def test_public_leaderboard_legacy_with_query_param(aiohttp_client):
+    member = FakeMember(20, name="alice", display_name="Alice")
+    _, app = build([member])
+    stats_db.xp_add_text(1, 20, 500, 1000)
+    settings = xp_core.get_settings(1)
+    settings["enabled"] = True
+    settings["public_leaderboard"] = True
+    xp_core.save_config(1, settings)
+
+    client = await aiohttp_client(app)
+    resp = await client.get("/api/public/leaderboard?guild_id=1")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["guild_id"] == "1"
+    assert body["entries"][0]["xp"] == 500
+
+
+@pytest.mark.asyncio
 async def test_public_leaderboard_for_guild_id(aiohttp_client):
     member = FakeMember(20, name="alice", display_name="Alice")
     _, app = build([member])

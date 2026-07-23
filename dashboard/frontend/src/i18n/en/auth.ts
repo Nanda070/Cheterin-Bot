@@ -8,6 +8,9 @@ const auth: TranslationDict = {
   'login.feature.supply': 'Supply runs with reserve and reminders',
   'login.feature.voice': 'Private voice rooms',
   'login.footer': 'Access is limited to server moderators and administrators',
+  'login.error.denied': 'Sign-in was cancelled. Allow Discord access to continue.',
+  'login.error.stateMismatch': 'Your sign-in session expired. Please try again.',
+  'login.error.oauthFailed': 'Discord sign-in failed. Please try again.',
 
   'accessDenied.title': 'Access denied',
   'accessDenied.body':

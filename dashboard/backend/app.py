@@ -8,8 +8,12 @@ from aiohttp import web
 import bunker_db
 import casino_db
 import family_db
+import invites_db
 import mafia_db
+import polls_db
 import stats_db
+import timed_roles_db
+import birthdays_db
 import warns_db
 
 from .auth import routes as auth_routes
@@ -50,6 +54,15 @@ from .routes.economy import routes as economy_routes
 from .routes.casino import routes as casino_routes
 from .routes.antiraid import routes as antiraid_routes
 from .routes.verification import routes as verification_routes
+from .routes.custom_commands import routes as custom_commands_routes
+from .routes.scheduled_messages import routes as scheduled_messages_routes
+from .routes.invites import routes as invites_routes
+from .routes.timed_roles import routes as timed_roles_routes
+from .routes.birthdays import routes as birthdays_routes
+from .routes.polls import routes as polls_routes
+from .routes.sticky import routes as sticky_routes
+from .routes.owner_alerts import routes as owner_alerts_routes
+from .routes.preview import routes as preview_routes
 from .audit_middleware import audit_middleware
 from .guild_context import guild_context_middleware
 from .session import setup_session
@@ -81,6 +94,10 @@ def create_app(
     mafia_db.init()
     warns_db.db_init()
     bunker_db.init()
+    timed_roles_db.init()
+    birthdays_db.init()
+    polls_db.init()
+    invites_db.init()
 
     app = web.Application(middlewares=[json_error_middleware, guild_context_middleware, audit_middleware])
     app["bot"] = bot
@@ -125,6 +142,15 @@ def create_app(
     app.add_routes(casino_routes)
     app.add_routes(antiraid_routes)
     app.add_routes(verification_routes)
+    app.add_routes(custom_commands_routes)
+    app.add_routes(scheduled_messages_routes)
+    app.add_routes(invites_routes)
+    app.add_routes(timed_roles_routes)
+    app.add_routes(birthdays_routes)
+    app.add_routes(polls_routes)
+    app.add_routes(sticky_routes)
+    app.add_routes(owner_alerts_routes)
+    app.add_routes(preview_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

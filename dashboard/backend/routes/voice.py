@@ -75,7 +75,7 @@ async def voice_panel_publish(request: web.Request) -> web.Response:
     if cog is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
-    message_id = await cog.publish_panel()
+    message_id = await cog.publish_panel(request["guild_id"])
     if message_id is None:
         return web.json_response({"error": "panel_channel_not_configured"}, status=409)
     return web.json_response({"ok": True, "message_id": str(message_id)})

@@ -154,6 +154,64 @@ async def test_games_list(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_games_list_filters_by_guild(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    ours = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+
+    resp = await client.get("/api/bunker/games")
+    assert resp.status == 200
+    ids = {g["id"] for g in (await resp.json())["games"]}
+    assert ours["id"] in ids
+    assert foreign["id"] not in ids
+
+
+@pytest.mark.asyncio
+async def test_game_detail_rejects_other_guild(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+    resp = await client.get(f"/api/bunker/games/{foreign['id']}")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_patch_player_rejects_other_guild(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+    bunker_db.add_player(foreign["id"], 20)
+    bunker_db.assign_character(foreign["id"], 20, _sample_character(), "tok-20")
+
+    resp = await client.patch(
+        f"/api/bunker/games/{foreign['id']}/players/20",
+        json={"character": {"gender": "Женский"}},
+    )
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_apply_ability_rejects_other_guild(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+    announcement = bunker_db.create_ability_announcement(foreign["id"], 1, 20, 1, "Джокер", None, "")
+
+    resp = await client.post(f"/api/bunker/games/{foreign['id']}/ability/{announcement['id']}/apply")
+    assert resp.status == 404
+    assert bunker_db.get_ability_announcement(announcement["id"])["applied"] == 0
+
+
+@pytest.mark.asyncio
 async def test_card_pools_endpoint_returns_reference_data(aiohttp_client):
     _, _, app = build()
     client = await aiohttp_client(app)

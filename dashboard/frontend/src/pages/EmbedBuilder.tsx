@@ -79,10 +79,14 @@ export function EmbedBuilderPage() {
   const [templateNotice, setTemplateNotice] = useState('')
 
   useEffect(() => {
-    fetchChannels().then(setChannels).catch(() => {})
-    fetchRoles().then(setRoles).catch(() => {})
+    fetchChannels()
+      .then(setChannels)
+      .catch((err) => setError(formatApiError(err, t, 'embedBuilder.error.loadChannels')))
+    fetchRoles()
+      .then(setRoles)
+      .catch((err) => setError(formatApiError(err, t, 'embedBuilder.error.loadRoles')))
     fetchEmbedTemplates().then(setTemplates).catch(() => {})
-  }, [])
+  }, [t])
 
   const applyTemplate = (id: string) => {
     const template = templates.find((t) => t.id === id)

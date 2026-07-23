@@ -43,6 +43,9 @@ def build_app():
     async def test_login(request):
         session = await new_session(request)
         session["discord_user_id"] = request.query["user_id"]
+        active_guild_id = request.query.get("active_guild_id")
+        if active_guild_id:
+            session["active_guild_id"] = active_guild_id
         return web.json_response({"ok": True})
 
     app.router.add_get("/test/login", test_login)
@@ -50,9 +53,18 @@ def build_app():
 
 
 def test_describe_action_known_and_fallback():
-    assert describe_action("PUT", "/api/config") == "Изменение конфигурации"
-    assert describe_action("POST", "/api/xp/reset-all") == "Полный сброс рейтинга"
-    assert describe_action("POST", "/api/unknown") == "POST /api/unknown"
+    assert describe_action("PUT", "/api/config") == "audit.action.config"
+    assert describe_action("POST", "/api/xp/reset-all") == "audit.action.xp_reset_all"
+    assert describe_action("PUT", "/api/wordle") == "audit.action.wordle"
+    assert describe_action("POST", "/api/unknown") == "audit.action.other"
+
+
+def test_normalize_stored_action_maps_legacy_raw_paths():
+    from dashboard.backend.audit_middleware import normalize_stored_action
+
+    assert normalize_stored_action("PUT /api/wordle") == "audit.action.wordle"
+    assert normalize_stored_action("audit.action.fun") == "audit.action.fun"
+    assert normalize_stored_action("POST /api/something-new") == "audit.action.other"
 
 
 @pytest.mark.asyncio
@@ -68,10 +80,11 @@ async def test_successful_mutation_is_audited(aiohttp_client):
     body = await resp.json()
     assert body["total"] == 1
     entry = body["entries"][0]
-    assert entry["action"] == "Изменение конфигурации"
+    assert entry["action"] == "audit.action.config"
     assert entry["moderator_name"] == "Mod"
     assert entry["moderator_id"] == "10"
     assert abs(entry["ts"] - int(time.time())) < 60
+    assert body["moderators"] == [{"id": "10", "name": "Mod"}]
 
 
 @pytest.mark.asyncio
@@ -112,3 +125,21 @@ async def test_filter_by_moderator(aiohttp_client):
 
     resp = await client.get("/api/audit?moderator=abc")
     assert resp.status == 400
+
+
+@pytest.mark.asyncio
+async def test_filter_by_search_q(aiohttp_client):
+    client = await aiohttp_client(build_app())
+    await force_login(client, 10)
+    await client.put("/api/config", json={})
+
+    resp = await client.get("/api/audit?q=config")
+    body = await resp.json()
+    assert resp.status == 200
+    assert body["total"] == 1
+
+    resp = await client.get("/api/audit?q=Mod")
+    assert (await resp.json())["total"] == 1
+
+    resp = await client.get("/api/audit?q=zzznomatch")
+    assert (await resp.json())["total"] == 0

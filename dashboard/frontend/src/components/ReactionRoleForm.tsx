@@ -11,6 +11,8 @@ import {
   type ReactionRolePair,
   type RoleInfo,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
+import { useT } from '../context/LanguageContext'
 import { Button } from './ui/Button'
 import { Modal } from './ui/Modal'
 import { Select } from './ui/Select'
@@ -28,6 +30,7 @@ function hasDuplicateEmoji(pairs: ReactionRolePair[]): boolean {
 }
 
 export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
+  const t = useT()
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
   const [emojis, setEmojis] = useState<CustomEmoji[]>([])
@@ -39,8 +42,13 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
 
   useEffect(() => {
     if (!open) return
-    fetchChannels().then(setChannels).catch(() => {})
-    fetchRoles().then(setRoles).catch(() => {})
+    setError('')
+    fetchChannels()
+      .then(setChannels)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadChannels')))
+    fetchRoles()
+      .then(setRoles)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadRoles')))
     fetchEmojis().then(setEmojis).catch(() => {})
     if (editing) {
       setChannelId(editing.channel_id)
@@ -51,8 +59,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
       setMessageId('')
       setPairs([{ emoji: '', role_id: '' }])
     }
-    setError('')
-  }, [open, editing])
+  }, [open, editing, t])
 
   const updatePair = (index: number, patch: Partial<ReactionRolePair>) => {
     setPairs((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))

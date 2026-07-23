@@ -11,6 +11,7 @@ MAX_ERRORS = 20
 class MassAssignJob:
     status: str  # "running" | "completed" | "failed"
     total: int
+    guild_id: int = 0
     processed: int = 0
     succeeded: int = 0
     skipped: int = 0
@@ -19,6 +20,10 @@ class MassAssignJob:
 
 
 JOBS: dict[str, MassAssignJob] = {}
+
+
+def has_running_job(guild_id: int) -> bool:
+    return any(job.status == "running" and int(job.guild_id) == int(guild_id) for job in JOBS.values())
 
 
 async def run_mass_assign(

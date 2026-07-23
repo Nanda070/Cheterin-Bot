@@ -46,7 +46,11 @@ def add_warn(
     return _serialize(row)
 
 
-def remove_warn(warn_id: int, removed_by: int | None) -> bool:
+def remove_warn(warn_id: int, removed_by: int | None, *, guild_id: int | None = None) -> bool:
+    if guild_id is not None:
+        warn = get_warn(warn_id)
+        if warn is None or int(warn["guild_id"]) != int(guild_id):
+            return False
     return warns_db.remove_warn(warn_id, removed_by)
 
 

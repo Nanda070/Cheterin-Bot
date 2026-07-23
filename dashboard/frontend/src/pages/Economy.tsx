@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import {
   fetchEconomySettings,
   fetchEconomyTop,
+  fetchEconomyWeeklyReport,
   setEconomyBalance,
   updateEconomySettings,
   type EconomySettings,
   type EconomyTopEntry,
+  type EconomyWeeklyReportRow,
 } from '../api/client'
 import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
@@ -21,6 +23,7 @@ export function EconomyPage() {
   const t = useT()
   const [settings, setSettings] = useState<EconomySettings | null>(null)
   const [top, setTop] = useState<EconomyTopEntry[] | null>(null)
+  const [weeklyRows, setWeeklyRows] = useState<EconomyWeeklyReportRow[] | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
@@ -32,11 +35,25 @@ export function EconomyPage() {
       .catch(() => setTop([]))
   }
 
+  const reloadWeekly = () => {
+    fetchEconomyWeeklyReport()
+      .then((r) => setWeeklyRows(r.rows))
+      .catch(() => setWeeklyRows([]))
+  }
+
   useEffect(() => {
     fetchEconomySettings()
-      .then(setSettings)
+      .then((s) =>
+        setSettings({
+          ...s,
+          weekly_report_enabled: s.weekly_report_enabled ?? false,
+          weekly_report_channel_id: s.weekly_report_channel_id ?? '',
+          weekly_report_days: s.weekly_report_days ?? 7,
+        }),
+      )
       .catch(() => setError(t('economy.errorLoad')))
     reloadTop()
+    reloadWeekly()
   }, [t])
 
   if (!settings) {
@@ -254,6 +271,67 @@ export function EconomyPage() {
             />
           </div>
         </div>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">{t('economy.weeklyReport')}</h2>
+          <Toggle
+            checked={settings.weekly_report_enabled}
+            onChange={(v) => setSettings({ ...settings, weekly_report_enabled: v })}
+            label={settings.weekly_report_enabled ? t('economy.enabled') : t('economy.disabled')}
+          />
+        </div>
+        <p className="text-sm text-muted">{t('economy.weeklyHint')}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="eco-weekly-channel">
+              {t('economy.weeklyChannel')}
+            </label>
+            <input
+              id="eco-weekly-channel"
+              type="text"
+              inputMode="numeric"
+              placeholder={t('economy.weeklyChannelPlaceholder')}
+              value={settings.weekly_report_channel_id}
+              onChange={(e) =>
+                setSettings({ ...settings, weekly_report_channel_id: e.target.value.replace(/\D/g, '') })
+              }
+              className={inputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="eco-weekly-days">
+              {t('economy.weeklyDays')}
+            </label>
+            <input
+              id="eco-weekly-days"
+              type="number"
+              min={1}
+              max={30}
+              value={settings.weekly_report_days}
+              onChange={(e) => setSettings({ ...settings, weekly_report_days: Number(e.target.value) })}
+              className={inputClass}
+            />
+          </div>
+        </div>
+        {weeklyRows === null && <p className="text-sm text-muted">{t('common.loading')}</p>}
+        {weeklyRows !== null && weeklyRows.length === 0 && (
+          <p className="text-sm text-muted">{t('economy.weeklyEmpty')}</p>
+        )}
+        {weeklyRows !== null && weeklyRows.length > 0 && (
+          <ul className="flex flex-col gap-1 text-sm">
+            {weeklyRows.slice(0, 15).map((row) => (
+              <li key={row.user_id} className="flex justify-between gap-2 border-t border-border pt-1 first:border-t-0 first:pt-0">
+                <span className="truncate text-foreground">{row.display_name}</span>
+                <span className="shrink-0 text-muted">
+                  +{row.earned} / −{row.spent} ({row.net >= 0 ? '+' : ''}
+                  {row.net})
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card className="flex flex-col gap-3">

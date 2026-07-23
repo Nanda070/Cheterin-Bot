@@ -11,6 +11,8 @@ import settings_db
 from fun import FunCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
+GUILD_ID = 1
+
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
@@ -30,10 +32,10 @@ class FakeResponse:
 
 
 class FakeInteraction:
-    guild_id = 1
     def __init__(self, user, guild):
         self.user = user
         self.guild = guild
+        self.guild_id = guild.id
         self.response = FakeResponse()
 
 
@@ -325,29 +327,47 @@ async def test_roulette_empty_cylinder_survives_all_six(monkeypatch):
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     for _ in range(5):
         await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
-    assert cog._roulette_clicks[player.id] == 5
-    assert cog._roulette_empty[player.id] is True
+    assert cog._roulette_clicks[(guild.id, player.id)] == 5
+    assert cog._roulette_empty[(guild.id, player.id)] is True
 
     sixth = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, sixth)
-    assert cog._roulette_clicks[player.id] == 0
-    assert player.id not in cog._roulette_empty
+    assert cog._roulette_clicks[(guild.id, player.id)] == 0
+    assert (guild.id, player.id) not in cog._roulette_empty
     assert "пустой" in sixth.response.messages[0]["content"].lower() or "empty" in sixth.response.messages[0]["content"].lower() or "6/6" in sixth.response.messages[0]["content"]
 
 
 @pytest.mark.asyncio
 async def test_roulette_click_counter_grows_and_resets(monkeypatch):
     cog, player, guild = build()
+    key = (guild.id, player.id)
     monkeypatch.setattr(fun_core, "roll_empty_cylinder", lambda: False)
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
-    assert cog._roulette_clicks[player.id] == 2
+    assert cog._roulette_clicks[key] == 2
 
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
     await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
-    assert cog._roulette_clicks[player.id] == 0
-    assert player.id not in cog._roulette_empty
+    assert cog._roulette_clicks[key] == 0
+    assert key not in cog._roulette_empty
+
+
+@pytest.mark.asyncio
+async def test_roulette_state_is_isolated_per_guild(monkeypatch):
+    monkeypatch.setattr(fun_core, "roll_empty_cylinder", lambda: False)
+    monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
+    cog, player, guild = build()
+    other = FakeGuild(members=[player], guild_id=999)
+    fun_core.save_config(other.id, {"enabled": True, "roulette_timeout_minutes": 0, "roulette_cooldown_sec": 0})
+
+    await FunCog.russian_roulette.callback(cog, FakeInteraction(player, guild))
+    assert cog._roulette_clicks[(guild.id, player.id)] == 1
+    assert (other.id, player.id) not in cog._roulette_clicks
+
+    await FunCog.russian_roulette.callback(cog, FakeInteraction(player, other))
+    assert cog._roulette_clicks[(guild.id, player.id)] == 1
+    assert cog._roulette_clicks[(other.id, player.id)] == 1
 
 
 @pytest.mark.asyncio
@@ -379,13 +399,13 @@ async def test_roulette_bet_requires_economy(monkeypatch):
 async def test_roulette_bet_survive_doubles(monkeypatch):
     cog, player, guild = build()
     enable_economy(guild.id)
-    economy_db.add(player.id, 100, "seed")
+    economy_db.add(GUILD_ID, player.id, 100, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
 
-    assert economy_db.get_balance(player.id) == 140  # -40 ставка, +80 выигрыш
+    assert economy_db.get_balance(GUILD_ID, player.id) == 140  # -40 ставка, +80 выигрыш
     assert "Ставка сыграла" in interaction.response.messages[0]["content"]
 
 
@@ -393,13 +413,13 @@ async def test_roulette_bet_survive_doubles(monkeypatch):
 async def test_roulette_bet_death_burns(monkeypatch):
     cog, player, guild = build(timeout_minutes=0)
     enable_economy(guild.id)
-    economy_db.add(player.id, 100, "seed")
+    economy_db.add(GUILD_ID, player.id, 100, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: True)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=40)
 
-    assert economy_db.get_balance(player.id) == 60
+    assert economy_db.get_balance(GUILD_ID, player.id) == 60
     assert "сгорела" in interaction.response.messages[0]["content"]
 
 
@@ -407,14 +427,14 @@ async def test_roulette_bet_death_burns(monkeypatch):
 async def test_roulette_bet_insufficient_funds(monkeypatch):
     cog, player, guild = build(cooldown_sec=30)
     enable_economy(guild.id)
-    economy_db.add(player.id, 5, "seed")
+    economy_db.add(GUILD_ID, player.id, 5, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, interaction, ставка=50)
 
     assert "Недостаточно" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 5
+    assert economy_db.get_balance(GUILD_ID, player.id) == 5
     # ставка отклонена ДО кулдауна — можно сразу сыграть снова
     retry = FakeInteraction(player, guild)
     await FunCog.russian_roulette.callback(cog, retry, ставка=5)
@@ -425,7 +445,7 @@ async def test_roulette_bet_insufficient_funds(monkeypatch):
 async def test_roulette_bet_over_max(monkeypatch):
     cog, player, guild = build()
     enable_economy(guild.id, max_bet=100)
-    economy_db.add(player.id, 5000, "seed")
+    economy_db.add(GUILD_ID, player.id, 5000, "seed")
     monkeypatch.setattr(fun_core, "spin_trigger", lambda clicks=0, empty_cylinder=False: False)
 
     interaction = FakeInteraction(player, guild)

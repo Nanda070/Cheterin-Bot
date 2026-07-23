@@ -1,7 +1,9 @@
 import { BookOpen, DiscordLogo, Headset, Package, ShieldCheck, Sparkle } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { loginUrl } from '../api/client'
+import { LanguageToggle } from '../components/LanguageToggle'
 import { Card } from '../components/ui/Card'
+import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 
 const FEATURE_KEYS = [
@@ -10,14 +12,35 @@ const FEATURE_KEYS = [
   { icon: Headset, key: 'login.feature.voice' as const },
 ]
 
+const AUTH_ERROR_KEYS: Record<string, string> = {
+  denied: 'login.error.denied',
+  state_mismatch: 'login.error.stateMismatch',
+  oauth_failed: 'login.error.oauthFailed',
+}
+
 export function LoginPage() {
   const t = useT()
+  const { user, isLoading } = useAuth()
+  const [params] = useSearchParams()
+  const authError = params.get('auth_error')
+  const errorKey = authError ? AUTH_ERROR_KEYS[authError] : undefined
+
+  if (!isLoading && user) {
+    return <Navigate to={user.active_guild_id ? '/' : '/servers'} replace />
+  }
+
+  if (authError === 'denied') {
+    return <Navigate to="/access-denied" replace />
+  }
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4 py-10">
-      <div className="flex items-center gap-2 text-foreground">
-        <Sparkle size={24} weight="fill" className="text-primary" />
-        <span className="text-lg font-semibold">Cheterin</span>
+      <div className="flex w-full max-w-sm items-center justify-between">
+        <div className="flex items-center gap-2 text-foreground">
+          <Sparkle size={24} weight="fill" className="text-primary" />
+          <span className="text-lg font-semibold">Cheterin</span>
+        </div>
+        <LanguageToggle />
       </div>
 
       <Card className="animate-fade-in-up flex w-full max-w-sm flex-col items-center gap-6 text-center">
@@ -29,6 +52,12 @@ export function LoginPage() {
           <h1 className="text-xl font-semibold text-foreground">{t('login.title')}</h1>
           <p className="text-sm text-muted">{t('login.subtitle')}</p>
         </div>
+
+        {errorKey && (
+          <p className="w-full rounded-control border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+            {t(errorKey)}
+          </p>
+        )}
 
         <a
           href={loginUrl()}

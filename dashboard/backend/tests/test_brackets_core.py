@@ -24,6 +24,19 @@ def test_save_then_load_round_trip():
     assert brackets.load_brackets(1) == data
 
 
+def test_find_by_share_token_across_guilds():
+    bracket = brackets.create_bracket("Shared", ["A", "B"], None, 10)
+    bracket["share_token"] = "tok-xyz"
+    brackets.save_brackets(777, {bracket["id"]: bracket})
+
+    found = brackets.find_by_share_token("tok-xyz")
+    assert found is not None
+    guild_id, loaded = found
+    assert guild_id == 777
+    assert loaded["title"] == "Shared"
+    assert brackets.find_by_share_token("missing") is None
+
+
 class _FakeMember:
     def __init__(self, member_id, display_name):
         self.id = member_id

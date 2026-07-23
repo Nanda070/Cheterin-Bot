@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { DiscordLogo, Plus, SignOut, Sparkle } from '@phosphor-icons/react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BookOpen, DiscordLogo, Plus, SignOut, Sparkle } from '@phosphor-icons/react'
 import {
   fetchInviteUrl,
   fetchManageableGuilds,
@@ -8,10 +8,13 @@ import {
   selectGuild,
   type ManageableGuild,
 } from '../api/client'
-import { formatApiError } from '../api/errors'
+import { formatApiError, isForbiddenError } from '../api/errors'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+import { LanguageToggle } from '../components/LanguageToggle'
 import { Card } from '../components/ui/Card'
+
+const SUPPORT_INVITE = 'https://discord.gg/cheterin'
 
 function guildIconUrl(guild: ManageableGuild): string | null {
   if (!guild.icon) return null
@@ -25,20 +28,51 @@ export function ServerSelectPage() {
   const [guilds, setGuilds] = useState<ManageableGuild[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [awaitingInviteReturn, setAwaitingInviteReturn] = useState(false)
+
+  const loadGuilds = useCallback(
+    (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setError(null)
+      return fetchManageableGuilds()
+        .then((data) => {
+          setGuilds(data)
+          return data
+        })
+        .catch((err) => {
+          setError(formatApiError(err, t, 'servers.errorLoad'))
+          return null
+        })
+    },
+    [t],
+  )
 
   useEffect(() => {
     let cancelled = false
-    fetchManageableGuilds()
-      .then((data) => {
-        if (!cancelled) setGuilds(data)
-      })
-      .catch(() => {
-        if (!cancelled) setError(t('servers.errorLoad'))
-      })
+    loadGuilds().then(() => {
+      if (cancelled) return
+    })
     return () => {
       cancelled = true
     }
-  }, [t])
+  }, [loadGuilds])
+
+  useEffect(() => {
+    if (!awaitingInviteReturn) return
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible') {
+        void loadGuilds({ silent: true }).then(() => setAwaitingInviteReturn(false))
+      }
+    }
+    const onFocus = () => {
+      void loadGuilds({ silent: true }).then(() => setAwaitingInviteReturn(false))
+    }
+    document.addEventListener('visibilitychange', refreshOnReturn)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', refreshOnReturn)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [awaitingInviteReturn, loadGuilds])
 
   const handleSelect = async (guild: ManageableGuild) => {
     setPendingId(guild.id)
@@ -48,6 +82,10 @@ export function ServerSelectPage() {
       await refresh()
       navigate('/', { replace: true })
     } catch (err) {
+      if (isForbiddenError(err)) {
+        navigate('/access-denied', { replace: true })
+        return
+      }
       setError(formatApiError(err, t, 'servers.errorSelect'))
       setPendingId(null)
     }
@@ -58,6 +96,7 @@ export function ServerSelectPage() {
     try {
       const url = await fetchInviteUrl(guild.id)
       window.open(url, '_blank', 'noopener,noreferrer')
+      setAwaitingInviteReturn(true)
     } catch (err) {
       setError(formatApiError(err, t, 'servers.errorInvite'))
     } finally {
@@ -71,6 +110,7 @@ export function ServerSelectPage() {
     try {
       const url = await fetchInviteUrl()
       window.open(url, '_blank', 'noopener,noreferrer')
+      setAwaitingInviteReturn(true)
     } catch (err) {
       setError(formatApiError(err, t, 'servers.errorInvite'))
     } finally {
@@ -86,19 +126,22 @@ export function ServerSelectPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center gap-8 px-4 py-10">
-      <div className="flex w-full max-w-2xl items-center justify-between">
+      <div className="flex w-full max-w-2xl items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-foreground">
           <Sparkle size={22} weight="fill" className="text-primary" />
           <span className="text-lg font-semibold">Cheterin</span>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
-        >
-          <SignOut size={16} />
-          {t('nav.logout')}
-        </button>
+        <div className="flex items-center gap-3">
+          <LanguageToggle />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+          >
+            <SignOut size={16} />
+            {t('nav.logout')}
+          </button>
+        </div>
       </div>
 
       <div className="flex w-full max-w-2xl flex-col gap-2 text-center">
@@ -165,9 +208,35 @@ export function ServerSelectPage() {
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted">
-        <DiscordLogo size={14} weight="fill" />
-        {t('servers.discordLogin')}
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted">
+          <DiscordLogo size={14} weight="fill" />
+          {t('servers.discordLogin')}
+        </div>
+        <nav
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm"
+          aria-label={t('servers.footerLinks')}
+        >
+          <Link to="/docs" className="flex items-center gap-1 text-muted transition-colors hover:text-foreground">
+            <BookOpen size={16} />
+            {t('nav.docs')}
+          </Link>
+          <Link to="/terms" className="text-muted transition-colors hover:text-foreground">
+            {t('nav.terms')}
+          </Link>
+          <Link to="/privacy" className="text-muted transition-colors hover:text-foreground">
+            {t('nav.privacy')}
+          </Link>
+          <a
+            href={SUPPORT_INVITE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-muted transition-colors hover:text-foreground"
+          >
+            <DiscordLogo size={16} weight="fill" />
+            {t('servers.support')}
+          </a>
+        </nav>
       </div>
     </div>
   )

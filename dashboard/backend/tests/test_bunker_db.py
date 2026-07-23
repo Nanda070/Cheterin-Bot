@@ -123,6 +123,14 @@ def test_list_active_games_excludes_finished_and_cancelled():
     assert b["id"] not in active_ids
 
 
+def test_list_active_games_filters_by_guild():
+    a = _make_game(channel_id=300)
+    foreign = bunker_db.create_game(999, 400, 10, 4, 12, 180, 90)
+    ids = {g["id"] for g in bunker_db.list_active_games(guild_id=a["guild_id"])}
+    assert a["id"] in ids
+    assert foreign["id"] not in ids
+
+
 def test_add_player_rejects_duplicate():
     game = _make_game()
     assert bunker_db.add_player(game["id"], 20) is True

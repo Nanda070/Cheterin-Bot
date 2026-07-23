@@ -222,20 +222,53 @@ def audit_add(guild_id: int, ts: int, moderator_id: int, moderator_name: str, me
         )
 
 
-def audit_list(guild_id: int, limit: int = 50, offset: int = 0, moderator_id: int | None = None):
+def audit_list(
+    guild_id: int,
+    limit: int = 50,
+    offset: int = 0,
+    moderator_id: int | None = None,
+    search: str | None = None,
+):
     query = "SELECT * FROM audit_log WHERE guild_id = ?"
     params: list = [guild_id]
     if moderator_id is not None:
         query += " AND moderator_id = ?"
         params.append(moderator_id)
+    if search:
+        like = f"%{search}%"
+        query += " AND (moderator_name LIKE ? OR action LIKE ? OR details LIKE ? OR path LIKE ?)"
+        params.extend([like, like, like, like])
     query += " ORDER BY ts DESC, id DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
     with closing(connect()) as conn:
         return conn.execute(query, params).fetchall()
 
 
-def audit_count(guild_id: int, moderator_id: int | None = None) -> int:
+def audit_count(guild_id: int, moderator_id: int | None = None, search: str | None = None) -> int:
+    query = "SELECT COUNT(*) AS c FROM audit_log WHERE guild_id = ?"
+    params: list = [guild_id]
+    if moderator_id is not None:
+        query += " AND moderator_id = ?"
+        params.append(moderator_id)
+    if search:
+        like = f"%{search}%"
+        query += " AND (moderator_name LIKE ? OR action LIKE ? OR details LIKE ? OR path LIKE ?)"
+        params.extend([like, like, like, like])
     with closing(connect()) as conn:
-        if moderator_id is not None:
-            return conn.execute("SELECT COUNT(*) AS c FROM audit_log WHERE guild_id = ? AND moderator_id = ?", (guild_id, moderator_id)).fetchone()["c"]
-        return conn.execute("SELECT COUNT(*) AS c FROM audit_log WHERE guild_id = ?", (guild_id,)).fetchone()["c"]
+        return conn.execute(query, params).fetchone()["c"]
+
+
+def audit_moderators(guild_id: int) -> list:
+    """Distinct moderators who have audit entries for this guild (newest name wins)."""
+    with closing(connect()) as conn:
+        return conn.execute(
+            """
+            SELECT moderator_id, moderator_name
+            FROM audit_log
+            WHERE guild_id = ? AND id IN (
+                SELECT MAX(id) FROM audit_log WHERE guild_id = ? GROUP BY moderator_id
+            )
+            ORDER BY moderator_name COLLATE NOCASE
+            """,
+            (guild_id, guild_id),
+        ).fetchall()

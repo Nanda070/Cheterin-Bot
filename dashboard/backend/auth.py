@@ -22,6 +22,7 @@ from .discord_oauth import (
 )
 from .access import has_super_admin_access, has_manage_server, manageable_guilds
 from .member_lookup import resolve_guild_member
+from .session import cookie_secure_flag
 
 routes = web.RouteTableDef()
 
@@ -66,7 +67,14 @@ async def login(request: web.Request) -> web.Response:
         f"&response_type=code&scope={urllib.parse.quote(OAUTH_SCOPE)}&state={state}"
     )
     response = web.HTTPFound(authorize_url)
-    response.set_cookie(STATE_COOKIE_NAME, state, httponly=True, max_age=600)
+    response.set_cookie(
+        STATE_COOKIE_NAME,
+        state,
+        httponly=True,
+        max_age=600,
+        secure=cookie_secure_flag(),
+        samesite="Lax",
+    )
     return response
 
 

@@ -2,9 +2,11 @@ import type { TranslationDict } from '../types'
 
 /** Navigation, servers, settings, public layout — Phase 3.1 shell strings. */
 const shell: TranslationDict = {
-  'lang.ru': 'RU',
-  'lang.en': 'EN',
+  'lang.ru': 'Русский',
+  'lang.en': 'English',
   'lang.switch': 'Язык интерфейса',
+  'nav.openMenu': 'Открыть меню',
+  'nav.closeMenu': 'Закрыть меню',
 
   'nav.docs': 'Документация',
   'nav.terms': 'Условия',
@@ -14,6 +16,7 @@ const shell: TranslationDict = {
   'nav.logout': 'Выйти',
   'nav.loggingOut': 'Выходим…',
   'nav.selectServer': 'Выбрать сервер',
+  'nav.menu': 'Меню',
 
   'nav.group.activity': 'Активность',
   'nav.group.gta5rp': 'GTA5RP',
@@ -38,6 +41,14 @@ const shell: TranslationDict = {
   'nav.reactionRoles': 'Кнопки и эмбеды',
   'nav.streams': 'Публикации и подписки',
   'nav.dailyTopic': 'Ежедневная рубрика',
+  'nav.customCommands': 'Кастомные команды',
+  'nav.scheduledMessages': 'Отложенные сообщения',
+  'nav.polls': 'Опросы',
+  'nav.sticky': 'Закреплённые сообщения',
+  'nav.birthdays': 'Дни рождения',
+  'nav.preview': 'Превью команд',
+  'nav.invites': 'Трекер инвайтов',
+  'nav.timedRoles': 'Временные роли',
   'nav.serverlog': 'Логирование',
   'nav.lockdown': 'Модерация',
   'nav.automod': 'Автомодерация',
@@ -63,6 +74,8 @@ const shell: TranslationDict = {
   'servers.errorSelect': 'Не удалось выбрать сервер — проверьте, что у вас есть право «Управление сервером».',
   'servers.errorInvite': 'Не удалось получить ссылку приглашения.',
   'servers.discordLogin': 'Вход выполнен через Discord',
+  'servers.support': 'Сервер поддержки',
+  'servers.footerLinks': 'Документы и поддержка',
 
   'settings.title': 'Настройки сервера',
   'settings.intro': 'Общие параметры текущего сервера. Язык бота влияет на сообщения и команды в Discord для этого сервера.',

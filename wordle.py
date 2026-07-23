@@ -163,8 +163,9 @@ class WordleCog(commands.Cog):
 
         day_no = wordle_core.day_number()
         answer = wordle_core.word_for_day(day_no)
-        game = wordle_db.get_daily_game(interaction.user.id, day_no) or wordle_db.start_daily_game(
-            interaction.user.id, day_no
+        guild_id = interaction.guild.id
+        game = wordle_db.get_daily_game(guild_id, interaction.user.id, day_no) or wordle_db.start_daily_game(
+            guild_id, interaction.user.id, day_no
         )
         states = [wordle_core.evaluate(g, answer) for g in game["guesses"]]
         finished = bool(game["finished"])
@@ -191,8 +192,9 @@ class WordleCog(commands.Cog):
 
         day_no = wordle_core.day_number()
         answer = wordle_core.word_for_day(day_no)
-        game = wordle_db.get_daily_game(interaction.user.id, day_no) or wordle_db.start_daily_game(
-            interaction.user.id, day_no
+        guild_id = interaction.guild.id
+        game = wordle_db.get_daily_game(guild_id, interaction.user.id, day_no) or wordle_db.start_daily_game(
+            guild_id, interaction.user.id, day_no
         )
         if game["finished"] or len(game["guesses"]) >= wordle_core.MAX_ATTEMPTS:
             return await interaction.response.send_message(
@@ -207,11 +209,11 @@ class WordleCog(commands.Cog):
         state = wordle_core.evaluate(word, answer)
         won = wordle_core.is_win(state)
         finished = won or len(game["guesses"]) + 1 >= wordle_core.MAX_ATTEMPTS
-        game = wordle_db.add_guess(interaction.user.id, day_no, word, finished, won)
+        game = wordle_db.add_guess(guild_id, interaction.user.id, day_no, word, finished, won)
         states = [wordle_core.evaluate(g, answer) for g in game["guesses"]]
 
         if finished:
-            wordle_db.record_result(interaction.user.id, day_no, won, len(game["guesses"]))
+            wordle_db.record_result(guild_id, interaction.user.id, day_no, won, len(game["guesses"]))
 
         embed = build_board_embed(
             i18n.t("wordle.daily.title", lang, day_no=day_no),
@@ -267,7 +269,7 @@ class WordleCog(commands.Cog):
         if channel is None or not hasattr(channel, "send"):
             return
         message = await channel.send(content=content, file=_card_file(png))
-        wordle_db.set_live_message(interaction.user.id, day_no, channel.id, message.id)
+        wordle_db.set_live_message(interaction.guild.id, interaction.user.id, day_no, channel.id, message.id)
 
     async def handle_training_guess(self, interaction: discord.Interaction, raw_word: str):
         lang = i18n.lang_for(interaction.guild_id)
@@ -333,7 +335,7 @@ class WordleCog(commands.Cog):
                 i18n.module_disabled(lang, "wordle"), ephemeral=True,
             )
 
-        stats = wordle_db.get_stats(interaction.user.id)
+        stats = wordle_db.get_stats(interaction.guild.id, interaction.user.id)
         if stats["played"] == 0:
             return await interaction.response.send_message(
                 i18n.t("wordle.stats.empty", lang), ephemeral=True,
@@ -372,7 +374,7 @@ class WordleCog(commands.Cog):
                 i18n.module_disabled(lang, "wordle"), ephemeral=True,
             )
 
-        top = wordle_db.top_players(10)
+        top = wordle_db.top_players(interaction.guild.id, 10)
         if not top:
             return await interaction.response.send_message(i18n.t("wordle.top.empty", lang), ephemeral=True)
 
@@ -400,12 +402,12 @@ class WordleCog(commands.Cog):
     async def announce_loop(self):
         try:
             day_no = wordle_core.day_number()
-            if wordle_db.get_last_announced_day() >= day_no:
-                return
-
             now = datetime.now(wordle_core.MSK)
 
             for guild in self.bot.guilds:
+                if wordle_db.get_last_announced_day(guild.id) >= day_no:
+                    continue
+
                 settings = wordle_core.get_settings(guild.id)
                 if not settings["enabled"] or not settings["channel_id"]:
                     continue
@@ -422,7 +424,7 @@ class WordleCog(commands.Cog):
 
                 try:
                     await self.post_daily_announce(channel, day_no)
-                    wordle_db.set_last_announced_day(day_no)
+                    wordle_db.set_last_announced_day(guild.id, day_no)
                 except Exception:
                     logger.exception("announce_loop: не удалось опубликовать анонс для guild %s", guild.id)
         except Exception:
@@ -438,11 +440,12 @@ class WordleCog(commands.Cog):
         await self.bot.wait_until_ready()
 
     async def post_daily_announce(self, channel, day_no: int):
-        lang = i18n.lang_for(channel.guild.id if channel.guild else None)
+        guild_id = channel.guild.id if channel.guild else 0
+        lang = i18n.lang_for(guild_id or None)
         yesterday = day_no - 1
-        games = [g for g in wordle_db.list_day_games(yesterday) if g["finished"]]
+        games = [g for g in wordle_db.list_day_games(guild_id, yesterday) if g["finished"]]
         winners = sorted((g for g in games if g["won"]), key=lambda g: len(g["guesses"]))
-        streak = wordle_db.update_group_streak(yesterday, bool(winners))
+        streak = wordle_db.update_group_streak(guild_id, yesterday, bool(winners))
 
         lines = []
         if not games:

@@ -316,7 +316,7 @@ class AutoMod(commands.Cog):
     async def warn_remove(self, interaction: discord.Interaction, warn_id: int):
         lang = i18n.lang_for(interaction.guild_id)
         await interaction.response.defer(ephemeral=True)
-        ok = warns_core.remove_warn(warn_id, interaction.user.id)
+        ok = warns_core.remove_warn(warn_id, interaction.user.id, guild_id=interaction.guild.id)
         if not ok:
             return await interaction.followup.send(i18n.t("automod.warn.remove_not_found", lang), ephemeral=True)
         await interaction.followup.send(i18n.t("automod.warn.remove_success", lang, id=warn_id), ephemeral=True)

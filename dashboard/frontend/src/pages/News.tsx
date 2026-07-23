@@ -24,13 +24,13 @@ export function NewsPage() {
   const [botIdsRaw, setBotIdsRaw] = useState('')
 
   useEffect(() => {
-    Promise.all([fetchNewsSettings(), fetchChannels().catch(() => [] as ChannelInfo[])])
+    Promise.all([fetchNewsSettings(), fetchChannels()])
       .then(([s, ch]) => {
         setSettings(s)
         setBotIdsRaw(s.source_bot_ids.join(', '))
         setChannels(ch)
       })
-      .catch(() => setError(t('news.errorLoad')))
+      .catch((err) => setError(formatApiError(err, t, 'news.errorLoad')))
   }, [t])
 
   if (!settings) {

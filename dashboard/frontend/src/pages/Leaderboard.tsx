@@ -17,6 +17,10 @@ export function LeaderboardPage() {
   useEffect(() => {
     setEntries(null)
     setError('')
+    if (!guildId) {
+      setError(t('leaderboard.error'))
+      return
+    }
     fetchPublicLeaderboard(guildId)
       .then((data) => {
         setEntries(data.entries)

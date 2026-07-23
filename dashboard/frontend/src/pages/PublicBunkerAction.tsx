@@ -13,7 +13,7 @@ import {
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
-import { useLanguage, useT } from '../context/LanguageContext'
+import { translate, type Lang } from '../i18n'
 
 function useCountdown(deadlineTs: number | null): number {
   const [now, setNow] = useState(() => Date.now())
@@ -27,9 +27,9 @@ function useCountdown(deadlineTs: number | null): number {
 }
 
 export function PublicBunkerActionPage() {
-  const { setLang } = useLanguage()
-  const t = useT()
   const { token } = useParams<{ token: string }>()
+  const [pageLang, setPageLang] = useState<Lang>('ru')
+  const t = (key: string, params?: Record<string, string | number>) => translate(pageLang, key, params)
   const [state, setState] = useState<BunkerPublicState | null>(null)
   const [error, setError] = useState('')
   const [voteTarget, setVoteTarget] = useState('')
@@ -42,8 +42,8 @@ export function PublicBunkerActionPage() {
   const [abilityBusy, setAbilityBusy] = useState(false)
   const [abilityMessage, setAbilityMessage] = useState('')
 
-  const fieldLabel = (key: BunkerFieldKey) => t(`publicBunker.field.${key}` as const)
-  const phaseLabel = (phase: string) => t(`publicBunker.phase.${phase}` as const)
+  const fieldLabel = (key: BunkerFieldKey) => t(`publicBunker.field.${key}`)
+  const phaseLabel = (phase: string) => t(`publicBunker.phase.${phase}`)
 
   const fieldValue = (key: BunkerFieldKey, character: BunkerCharacter): string => {
     switch (key) {
@@ -86,14 +86,15 @@ export function PublicBunkerActionPage() {
         .then((s) => {
           setState(s)
           setError('')
-          if (s.language) setLang(s.language)
+          if (s.language === 'en' || s.language === 'ru') setPageLang(s.language)
         })
         .catch(() => setError(t('publicBunker.errorInvalid')))
     }
     load()
     const timer = setInterval(load, 4000)
     return () => clearInterval(timer)
-  }, [token, t, setLang])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- poll by token; error text uses pageLang
+  }, [token, pageLang])
 
   const remaining = useCountdown(state?.phase_deadline_ts ?? null)
 
@@ -101,7 +102,7 @@ export function PublicBunkerActionPage() {
     if (!state) return []
     const options = state.alive_players.map((p) => ({ id: p.user_id, name: p.display_name }))
     return [{ id: '', name: t('game.skip') }, ...options]
-  }, [state, t])
+  }, [state, pageLang])
 
   const abilityTargetOptions = useMemo(() => {
     if (!state) return []
@@ -110,7 +111,7 @@ export function PublicBunkerActionPage() {
       name: `${p.display_name}${p.alive ? '' : t('publicBunker.eliminatedSuffix')}`,
     }))
     return [{ id: '', name: t('publicBunker.noTarget') }, ...options]
-  }, [state, t])
+  }, [state, pageLang])
 
   const submitVote = async () => {
     if (!token) return

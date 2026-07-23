@@ -25,6 +25,7 @@ MESSAGES: dict[str, str] = {
     ),
     "xp.leaderboard.btn_xp": "\U0001f3c6 XP",
     "xp.leaderboard.btn_voice": "\U0001f5e3\ufe0f Voice",
+    "xp.leaderboard.left_server": "Left the server",
     "xp.level_up.description": (
         "Congratulations {mention}\U0001f929!\n"
         "You reached level **{level}**. "

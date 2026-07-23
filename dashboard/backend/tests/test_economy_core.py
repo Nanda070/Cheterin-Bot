@@ -51,14 +51,14 @@ def test_coins_from_xp():
 
 def test_award_for_xp_disabled_gives_nothing():
     assert economy_core.award_for_xp(GUILD_ID, 1, 100, "text") == 0
-    assert economy_db.get_balance(1) == 0
+    assert economy_db.get_balance(GUILD_ID, 1) == 0
 
 
 def test_award_for_xp_uses_kind_rate():
     economy_core.save_config(GUILD_ID, {"enabled": True, "text_rate_percent": 100, "voice_rate_percent": 10})
     assert economy_core.award_for_xp(GUILD_ID, 1, 10, "text") == 10
     assert economy_core.award_for_xp(GUILD_ID, 1, 10, "voice") == 1
-    assert economy_db.get_balance(1) == 11
+    assert economy_db.get_balance(GUILD_ID, 1) == 11
 
 
 def test_transfer_fee_rounds_up():

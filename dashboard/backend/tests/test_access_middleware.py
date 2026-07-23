@@ -33,6 +33,17 @@ async def test_no_session_returns_401(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_no_active_guild_returns_400(aiohttp_client):
+    moderator = FakeMember(10, role_ids=[111])
+    app = make_client_app(FakeBot(FakeGuild(members=[moderator])))
+    client = await aiohttp_client(app)
+    await force_login(client, 10, active_guild_id=None)
+    resp = await client.get("/test/protected")
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "no_guild_selected"
+
+
+@pytest.mark.asyncio
 async def test_member_with_access_reaches_handler(aiohttp_client):
     moderator = FakeMember(10, role_ids=[111])
     app = make_client_app(FakeBot(FakeGuild(members=[moderator])))

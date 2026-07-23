@@ -64,7 +64,7 @@ export function EmbedEditor({
         {placeholderHint && <p className="text-xs text-muted">{placeholderHint}</p>}
         {showContent && onContentChange && (
           <>
-            <label className="text-sm text-muted">{t('embedBuilder.field.content')}</label>
+            <label className="text-sm text-muted">{t('embedBuilder.field.messageContent')}</label>
             <textarea
               value={content}
               onChange={(e) => onContentChange(e.target.value)}

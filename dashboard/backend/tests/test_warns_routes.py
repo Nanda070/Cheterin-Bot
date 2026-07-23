@@ -111,6 +111,18 @@ async def test_delete_warn(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_delete_warn_rejects_other_guild(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = warns_core.add_warn(999, 100, "Чужой варн", 10)
+    resp = await client.delete(f"/api/warns/{foreign['id']}")
+    assert resp.status == 404
+    assert warns_core.get_warn(foreign["id"])["removed"] is False
+
+
+@pytest.mark.asyncio
 async def test_requires_auth(aiohttp_client):
     _, _, app = build()
     client = await aiohttp_client(app)

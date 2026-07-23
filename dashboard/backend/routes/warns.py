@@ -80,6 +80,6 @@ async def warn_delete(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_warn_id"}, status=400)
 
     moderator = request["moderator"]
-    if not warns_core.remove_warn(warn_id, moderator.id):
+    if not warns_core.remove_warn(warn_id, moderator.id, guild_id=request["guild_id"]):
         return web.json_response({"error": "not_found"}, status=404)
     return web.json_response({"ok": True})

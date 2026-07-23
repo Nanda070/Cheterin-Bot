@@ -1,4 +1,4 @@
-export interface DashboardUser {
+﻿export interface DashboardUser {
   id: string
   username?: string
   avatar?: string | null
@@ -12,8 +12,13 @@ export interface DashboardUser {
 
 export async function fetchCurrentUser(): Promise<DashboardUser | null> {
   const response = await fetch('/api/auth/me', { credentials: 'include' })
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     return null
+  }
+  if (response.status === 403) {
+    const err = new Error('access_denied')
+    err.name = 'AccessDeniedError'
+    throw err
   }
   if (!response.ok) {
     throw new Error(`Failed to fetch current user: ${response.status}`)
@@ -550,7 +555,7 @@ export function updateConfig(config: BotConfig): Promise<BotConfig> {
   return apiFetch('/api/config', jsonInit('PUT', config))
 }
 
-// CTD — привилегия основного сервера (Фаза 2b): отдельный роут, доступен только на мейне.
+// CTD â€” Ð¿Ñ€Ð¸Ð²Ð¸Ð»ÐµÐ³Ð¸Ñ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ð³Ð¾ ÑÐµÑ€Ð²ÐµÑ€Ð° (Ð¤Ð°Ð·Ð° 2b): Ð¾Ñ‚Ð´ÐµÐ»ÑŒÐ½Ñ‹Ð¹ Ñ€Ð¾ÑƒÑ‚, Ð´Ð¾ÑÑ‚ÑƒÐ¿ÐµÐ½ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð½Ð° Ð¼ÐµÐ¹Ð½Ðµ.
 export interface CtdConfig {
   CTD_ROLE_ID: string
   CTD_CHANNEL_ID: string
@@ -830,7 +835,7 @@ export function updateAutoRoles(roleIds: string[]): Promise<AutoRolesSettings> {
   return apiFetch('/api/auto-roles', jsonInit('PUT', { role_ids: roleIds }))
 }
 
-// ────────────────────────── Логирование событий ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð›Ð¾Ð³Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ð¹ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ServerLogEventConfig {
   enabled: boolean
@@ -850,7 +855,7 @@ export function updateServerLog(events: Record<string, ServerLogEventConfig>): P
   return apiFetch('/api/serverlog', jsonInit('PUT', { events }))
 }
 
-// ────────────────────────── Система уровней ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð° ÑƒÑ€Ð¾Ð²Ð½ÐµÐ¹ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface XpScopeSettings {
   enabled: boolean
@@ -948,7 +953,16 @@ export async function resetAllXp(): Promise<void> {
 
 export async function uploadCardBg(file: Blob): Promise<void> {
   const response = await fetch('/api/xp/card-bg', { method: 'POST', credentials: 'include', body: file })
-  if (!response.ok) throw new ApiError(response.status, 'upload_failed')
+  if (!response.ok) {
+    let code = 'upload_failed'
+    try {
+      const body = (await response.json()) as { error?: string }
+      if (body?.error) code = body.error
+    } catch {
+      /* keep fallback */
+    }
+    throw new ApiError(response.status, code)
+  }
 }
 
 export async function deleteCardBg(): Promise<void> {
@@ -970,14 +984,11 @@ export interface PublicLeaderboardResponse {
   entries: PublicLeaderboardEntry[]
 }
 
-export function fetchPublicLeaderboard(guildId?: string): Promise<PublicLeaderboardResponse> {
-  const path = guildId
-    ? `/api/public/leaderboard/${encodeURIComponent(guildId)}`
-    : '/api/public/leaderboard'
-  return apiFetch(path)
+export function fetchPublicLeaderboard(guildId: string): Promise<PublicLeaderboardResponse> {
+  return apiFetch(`/api/public/leaderboard/${encodeURIComponent(guildId)}`)
 }
 
-// ────────────────────────── Статистика войса ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¡Ñ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÐ° Ð²Ð¾Ð¹ÑÐ° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface VoiceStats {
   days: number
@@ -995,7 +1006,7 @@ export function fetchVoiceStats(days: number): Promise<VoiceStats> {
   return apiFetch(`/api/voice-stats?days=${days}`)
 }
 
-// ────────────────────────── Аудит ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐÑƒÐ´Ð¸Ñ‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface AuditEntry {
   ts: number
@@ -1008,20 +1019,27 @@ export interface AuditEntry {
   details: string
 }
 
+export interface AuditModerator {
+  id: string
+  name: string
+}
+
 export interface AuditPage {
   total: number
   page: number
   page_size: number
   entries: AuditEntry[]
+  moderators: AuditModerator[]
 }
 
-export function fetchAudit(page: number, moderator?: string): Promise<AuditPage> {
+export function fetchAudit(page: number, moderator?: string, q?: string): Promise<AuditPage> {
   const params = new URLSearchParams({ page: String(page) })
   if (moderator) params.set('moderator', moderator)
+  if (q?.trim()) params.set('q', q.trim())
   return apiFetch(`/api/audit?${params}`)
 }
 
-// ────────────────────────── Стрим-уведомления ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¡Ñ‚Ñ€Ð¸Ð¼-ÑƒÐ²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface StreamSubscription {
   id: string
@@ -1036,6 +1054,9 @@ export interface StreamSubscription {
   keywords: string[]
   keyword_mode: 'any' | 'all'
   min_interval_minutes: number
+  mention_everyone: boolean
+  use_embed: boolean
+  embed_color: string
   last_stream_id: string
 }
 
@@ -1053,7 +1074,21 @@ export function createStreamSubscription(input: {
 
 export function updateStreamSubscription(
   id: string,
-  fields: Partial<Pick<StreamSubscription, 'enabled' | 'channel_id' | 'ping_role_id' | 'template' | 'keywords' | 'keyword_mode' | 'min_interval_minutes'>>,
+  fields: Partial<
+    Pick<
+      StreamSubscription,
+      | 'enabled'
+      | 'channel_id'
+      | 'ping_role_id'
+      | 'template'
+      | 'keywords'
+      | 'keyword_mode'
+      | 'min_interval_minutes'
+      | 'mention_everyone'
+      | 'use_embed'
+      | 'embed_color'
+    >
+  >,
 ): Promise<StreamSubscription> {
   return apiFetch(`/api/streams/${id}`, jsonInit('PATCH', fields))
 }
@@ -1062,7 +1097,7 @@ export async function deleteStreamSubscription(id: string): Promise<void> {
   await apiFetch(`/api/streams/${id}`, { method: 'DELETE' })
 }
 
-// ────────────────────────── Шаблоны эмбедов ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¨Ð°Ð±Ð»Ð¾Ð½Ñ‹ ÑÐ¼Ð±ÐµÐ´Ð¾Ð² â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface EmbedTemplate {
   id: string
@@ -1090,7 +1125,7 @@ export async function deleteEmbedTemplate(id: string): Promise<void> {
   await apiFetch(`/api/embed-templates/${id}`, { method: 'DELETE' })
 }
 
-// ────────────────────────── Семья ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¡ÐµÐ¼ÑŒÑ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface FamilyTargetRole {
   label: string
@@ -1197,7 +1232,7 @@ export async function deleteFamilyBirthday(userId: string): Promise<void> {
   await apiFetch(`/api/family/birthdays/${userId}`, { method: 'DELETE' })
 }
 
-// ────────────────────────── Мафия ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐœÐ°Ñ„Ð¸Ñ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface MafiaSettings {
   enabled: boolean
@@ -1287,7 +1322,7 @@ export async function submitMafiaVote(token: string, targetUserId: string | null
   await apiFetch(`/api/public/mafia/${token}/vote`, jsonInit('POST', { target_user_id: targetUserId }))
 }
 
-// ────────────────────────── Супер-админ ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð¡ÑƒÐ¿ÐµÑ€-Ð°Ð´Ð¼Ð¸Ð½ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface SuperAdminGuild {
   id: string
@@ -1302,7 +1337,7 @@ export async function fetchSuperAdminGuilds(): Promise<SuperAdminGuild[]> {
   return body.guilds
 }
 
-// ────────────────────────── Розыгрыши (Giveaways) ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð Ð¾Ð·Ñ‹Ð³Ñ€Ñ‹ÑˆÐ¸ (Giveaways) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface GiveawayEntrant {
   id: string
@@ -1353,7 +1388,7 @@ export async function endGiveaway(id: string): Promise<void> {
   await apiFetch(`/api/giveaways/${id}/end`, jsonInit('POST'))
 }
 
-// ────────────────────────── Ежедневная рубрика ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð•Ð¶ÐµÐ´Ð½ÐµÐ²Ð½Ð°Ñ Ñ€ÑƒÐ±Ñ€Ð¸ÐºÐ° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface DailyTopic {
   id: string
@@ -1395,7 +1430,7 @@ export function postDailyTopicNow(): Promise<{ ok: boolean; topic: DailyTopic }>
   return apiFetch('/api/daily-topic/post-now', jsonInit('POST'))
 }
 
-// ────────────────────────── Автомодерация ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐÐ²Ñ‚Ð¾Ð¼Ð¾Ð´ÐµÑ€Ð°Ñ†Ð¸Ñ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type AutomodPunishment = 'none' | 'warn' | 'mute' | 'kick' | 'ban'
 export type EscalationAction = 'mute' | 'kick' | 'ban'
@@ -1471,7 +1506,7 @@ export async function deleteEscalationRule(id: string): Promise<void> {
   await apiFetch(`/api/automod/escalation/${id}`, { method: 'DELETE' })
 }
 
-// ────────────────────────── Предупреждения (варны) ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐŸÑ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ñ (Ð²Ð°Ñ€Ð½Ñ‹) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface Warn {
   id: number
@@ -1499,7 +1534,7 @@ export async function deleteWarn(warnId: number): Promise<void> {
   await apiFetch(`/api/warns/${warnId}`, { method: 'DELETE' })
 }
 
-// ────────────────────────── Бункер ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð‘ÑƒÐ½ÐºÐµÑ€ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface BunkerSettings {
   enabled: boolean
@@ -1760,7 +1795,7 @@ export async function announceBunkerAbility(
   }))
 }
 
-// ────────────────────────── Развлечения ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð Ð°Ð·Ð²Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface FunSettings {
   enabled: boolean
@@ -1782,7 +1817,7 @@ export function updateFunSettings(settings: FunSettings): Promise<FunSettings> {
 
 export interface WordleSettings {
   enabled: boolean
-  // Строка, не число: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+  // Ð¡Ñ‚Ñ€Ð¾ÐºÐ°, Ð½Ðµ Ñ‡Ð¸ÑÐ»Ð¾: Discord ID (snowflake) Ð¿Ñ€ÐµÐ²Ñ‹ÑˆÐ°ÐµÑ‚ Number.MAX_SAFE_INTEGER
   channel_id: string
   announce_time: string
 }
@@ -1795,7 +1830,7 @@ export function updateWordleSettings(settings: WordleSettings): Promise<WordleSe
   return apiFetch('/api/wordle', jsonInit('PUT', settings))
 }
 
-// ────────────────────────── Экономика ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð­ÐºÐ¾Ð½Ð¾Ð¼Ð¸ÐºÐ° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type ShopItemType = 'role' | 'frame_color' | 'title'
 
@@ -1824,6 +1859,25 @@ export interface EconomySettings {
   daily_growth_per_day: number
   daily_max_streak_days: number
   shop_items: ShopItem[]
+  weekly_report_enabled: boolean
+  weekly_report_channel_id: string
+  weekly_report_days: number
+  last_weekly_report_date?: string
+}
+
+export interface EconomyWeeklyReportRow {
+  user_id: string
+  display_name: string
+  earned: number
+  spent: number
+  net: number
+}
+
+export interface EconomyWeeklyReport {
+  days: number
+  weekly_report_enabled: boolean
+  weekly_report_channel_id: string
+  rows: EconomyWeeklyReportRow[]
 }
 
 export interface EconomyTopEntry {
@@ -1844,11 +1898,15 @@ export function fetchEconomyTop(): Promise<EconomyTopEntry[]> {
   return apiFetch('/api/economy/top')
 }
 
+export function fetchEconomyWeeklyReport(): Promise<EconomyWeeklyReport> {
+  return apiFetch('/api/economy/weekly-report')
+}
+
 export function setEconomyBalance(userId: string, balance: number): Promise<{ user_id: string; balance: number }> {
   return apiFetch('/api/economy/balance', jsonInit('PUT', { user_id: userId, balance }))
 }
 
-// ────────────────────────── Казино ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐšÐ°Ð·Ð¸Ð½Ð¾ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CasinoLossRole {
   game: 'slots' | 'bj' | 'total'
@@ -1894,7 +1952,7 @@ export function fetchCasinoLeaderboard(mode: 'slots' | 'bj' | 'total', type: 'wi
   return apiFetch(`/api/casino/leaderboard?mode=${mode}&type=${type}&page=${page}`)
 }
 
-// ────────────────────────── Антирейд ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐÐ½Ñ‚Ð¸Ñ€ÐµÐ¹Ð´ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface AntiRaidSettings {
   enabled: boolean
@@ -1928,11 +1986,11 @@ export function updateSpamSettings(settings: SpamSettings): Promise<SpamSettings
   return apiFetch('/api/spam-settings', jsonInit('PUT', settings))
 }
 
-// ────────────────────────── Верификация ──────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð’ÐµÑ€Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ñ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface VerificationSettings {
   enabled: boolean
-  // Строки, не числа: Discord ID (snowflake) превышает Number.MAX_SAFE_INTEGER
+  // Ð¡Ñ‚Ñ€Ð¾ÐºÐ¸, Ð½Ðµ Ñ‡Ð¸ÑÐ»Ð°: Discord ID (snowflake) Ð¿Ñ€ÐµÐ²Ñ‹ÑˆÐ°ÐµÑ‚ Number.MAX_SAFE_INTEGER
   unverified_role_id: string
   verified_role_id: string
   welcome_text: string
@@ -1944,4 +2002,264 @@ export function fetchVerificationSettings(): Promise<VerificationSettings> {
 
 export function updateVerificationSettings(settings: VerificationSettings): Promise<VerificationSettings> {
   return apiFetch('/api/verification', jsonInit('PUT', settings))
+}
+
+// ────────────────────────── New modules ──────────────────────────
+
+export interface CustomCommand {
+  id: string
+  trigger: string
+  match: 'exact' | 'contains'
+  reply_text: string
+  embed: Record<string, unknown> | null
+  enabled: boolean
+}
+
+export interface CustomCommandsSettings {
+  enabled: boolean
+  commands: CustomCommand[]
+}
+
+export function fetchCustomCommands(): Promise<CustomCommandsSettings> {
+  return apiFetch('/api/custom-commands')
+}
+
+export function setCustomCommandsEnabled(enabled: boolean): Promise<CustomCommandsSettings> {
+  return apiFetch('/api/custom-commands/settings', jsonInit('PUT', { enabled }))
+}
+
+export function createCustomCommand(input: {
+  trigger: string
+  match?: 'exact' | 'contains'
+  reply_text?: string
+  embed?: Record<string, unknown> | null
+  enabled?: boolean
+}): Promise<CustomCommand> {
+  return apiFetch('/api/custom-commands', jsonInit('POST', input))
+}
+
+export function updateCustomCommand(
+  id: string,
+  fields: Partial<Pick<CustomCommand, 'trigger' | 'match' | 'reply_text' | 'embed' | 'enabled'>>,
+): Promise<CustomCommand> {
+  return apiFetch(`/api/custom-commands/${id}`, jsonInit('PATCH', fields))
+}
+
+export async function deleteCustomCommand(id: string): Promise<void> {
+  await apiFetch(`/api/custom-commands/${id}`, { method: 'DELETE' })
+}
+
+export interface ScheduledMessage {
+  id: string
+  channel_id: string
+  content: string
+  schedule_type: 'once' | 'daily'
+  run_at: string
+  daily_time: string
+  enabled: boolean
+  last_posted_date: string
+  posted: boolean
+}
+
+export interface ScheduledMessagesSettings {
+  enabled: boolean
+  messages: ScheduledMessage[]
+}
+
+export function fetchScheduledMessages(): Promise<ScheduledMessagesSettings> {
+  return apiFetch('/api/scheduled-messages')
+}
+
+export function setScheduledMessagesEnabled(enabled: boolean): Promise<ScheduledMessagesSettings> {
+  return apiFetch('/api/scheduled-messages/settings', jsonInit('PUT', { enabled }))
+}
+
+export function createScheduledMessage(input: {
+  channel_id: string
+  content: string
+  schedule_type: 'once' | 'daily'
+  run_at?: string
+  daily_time?: string
+  enabled?: boolean
+}): Promise<ScheduledMessage> {
+  return apiFetch('/api/scheduled-messages', jsonInit('POST', input))
+}
+
+export function updateScheduledMessage(
+  id: string,
+  fields: Partial<Pick<ScheduledMessage, 'channel_id' | 'content' | 'schedule_type' | 'run_at' | 'daily_time' | 'enabled'>>,
+): Promise<ScheduledMessage> {
+  return apiFetch(`/api/scheduled-messages/${id}`, jsonInit('PATCH', fields))
+}
+
+export async function deleteScheduledMessage(id: string): Promise<void> {
+  await apiFetch(`/api/scheduled-messages/${id}`, { method: 'DELETE' })
+}
+
+export interface InvitesSettings {
+  enabled: boolean
+  welcome_mention: boolean
+  log_channel_id: string
+  stats: { inviter_id: string; joins: number }[]
+  recent_joins: {
+    invitee_id: string
+    inviter_id: string | null
+    code: string | null
+    joined_at: string
+  }[]
+}
+
+export function fetchInvites(): Promise<InvitesSettings> {
+  return apiFetch('/api/invites')
+}
+
+export function updateInvitesSettings(input: {
+  enabled: boolean
+  welcome_mention: boolean
+  log_channel_id: string
+}): Promise<{ enabled: boolean; welcome_mention: boolean; log_channel_id: string }> {
+  return apiFetch('/api/invites', jsonInit('PUT', input))
+}
+
+export interface TimedRoleEntry {
+  id: number
+  user_id: string
+  display_name: string
+  role_id: string
+  role_name: string
+  expires_at: string
+  created_at: string
+}
+
+export function fetchTimedRoles(): Promise<{ timed_roles: TimedRoleEntry[] }> {
+  return apiFetch('/api/timed-roles')
+}
+
+export async function deleteTimedRole(id: number): Promise<void> {
+  await apiFetch(`/api/timed-roles/${id}`, { method: 'DELETE' })
+}
+
+export interface BirthdayEntry {
+  user_id: string
+  display_name: string
+  mm_dd: string
+}
+
+export interface BirthdaysPayload {
+  enabled: boolean
+  channel_id: string
+  ping_role_id: string
+  last_announced_date: string
+  birthdays: BirthdayEntry[]
+}
+
+export function fetchBirthdays(): Promise<BirthdaysPayload> {
+  return apiFetch('/api/birthdays')
+}
+
+export function updateBirthdaySettings(input: {
+  enabled: boolean
+  channel_id: string
+  ping_role_id: string
+}): Promise<{ enabled: boolean; channel_id: string; ping_role_id: string; last_announced_date: string }> {
+  return apiFetch('/api/birthdays/settings', jsonInit('PUT', input))
+}
+
+export function setBirthday(userId: string, mmDd: string): Promise<{ user_id: string; mm_dd: string }> {
+  return apiFetch(`/api/birthdays/${userId}`, jsonInit('PUT', { mm_dd: mmDd }))
+}
+
+export async function deleteBirthday(userId: string): Promise<void> {
+  await apiFetch(`/api/birthdays/${userId}`, { method: 'DELETE' })
+}
+
+export interface PollEntry {
+  id: number
+  guild_id: string
+  channel_id: string
+  message_id: string | null
+  question: string
+  options: string[]
+  ends_at: string
+  ended: boolean
+  created_by: string | null
+  created_at: string
+  tallies: number[]
+  total_votes: number
+}
+
+export function fetchPolls(): Promise<{ polls: PollEntry[] }> {
+  return apiFetch('/api/polls')
+}
+
+export function endPoll(id: number): Promise<PollEntry> {
+  return apiFetch(`/api/polls/${id}/end`, jsonInit('POST', {}))
+}
+
+export interface StickyEntry {
+  id: string
+  channel_id: string
+  content: string
+  message_id: string
+  enabled: boolean
+}
+
+export interface StickySettings {
+  enabled: boolean
+  stickies: StickyEntry[]
+}
+
+export function fetchSticky(): Promise<StickySettings> {
+  return apiFetch('/api/sticky')
+}
+
+export function setStickyEnabled(enabled: boolean): Promise<StickySettings> {
+  return apiFetch('/api/sticky/settings', jsonInit('PUT', { enabled }))
+}
+
+export function upsertSticky(input: {
+  channel_id: string
+  content: string
+  enabled?: boolean
+  id?: string
+}): Promise<StickyEntry> {
+  return apiFetch('/api/sticky', jsonInit('POST', input))
+}
+
+export async function deleteSticky(id: string): Promise<void> {
+  await apiFetch(`/api/sticky/${id}`, { method: 'DELETE' })
+}
+
+export interface OwnerAlertsSettings {
+  enabled: boolean
+  notify_dm: boolean
+  channel_id: string
+  mass_ban_threshold: number
+  mass_ban_window_sec: number
+  module_error_threshold: number
+  alert_missing_perms: boolean
+  alert_mass_ban: boolean
+  alert_module_errors: boolean
+}
+
+export function fetchOwnerAlerts(): Promise<OwnerAlertsSettings> {
+  return apiFetch('/api/owner-alerts')
+}
+
+export function updateOwnerAlerts(settings: OwnerAlertsSettings): Promise<OwnerAlertsSettings> {
+  return apiFetch('/api/owner-alerts', jsonInit('PUT', settings))
+}
+
+export interface TemplatePreviewResult {
+  content?: string
+  embed?: Record<string, unknown>
+  variables?: Record<string, string>
+}
+
+export function previewTemplate(input: {
+  content?: string
+  embed?: Record<string, unknown>
+  variables?: Record<string, string>
+}): Promise<TemplatePreviewResult> {
+  return apiFetch('/api/preview/template', jsonInit('POST', input))
 }

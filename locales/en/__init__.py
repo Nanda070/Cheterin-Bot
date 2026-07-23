@@ -18,6 +18,7 @@ from locales.en.lockdown import MESSAGES as lockdown_messages
 from locales.en.mafia import MESSAGES as mafia_messages
 from locales.en.moderation import MESSAGES as moderation_messages
 from locales.en.news import MESSAGES as news_messages
+from locales.en.new_modules import MESSAGES as new_modules_messages
 from locales.en.reaction_roles import MESSAGES as reaction_roles_messages
 from locales.en.serverlog import MESSAGES as serverlog_messages
 from locales.en.slash import MESSAGES as slash_messages
@@ -56,6 +57,7 @@ MESSAGES = merge_messages(
     button_messages,
     ctd_messages,
     news_messages,
+    new_modules_messages,
     brackets_messages,
     reaction_roles_messages,
     events_messages,

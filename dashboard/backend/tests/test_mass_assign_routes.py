@@ -120,10 +120,37 @@ async def test_mass_assign_rejects_second_job_while_running(aiohttp_client):
     role = FakeRole(7, name="VIP", position=5)
     client = await aiohttp_client(build(roles=[role]))
     await force_login(client, 10)
-    mass_role_jobs.JOBS["already-running"] = mass_role_jobs.MassAssignJob(status="running", total=5)
+    mass_role_jobs.JOBS["already-running"] = mass_role_jobs.MassAssignJob(
+        status="running", total=5, guild_id=1
+    )
 
     resp = await client.post("/api/roles/7/mass-assign", json={"target": "all"})
     assert resp.status == 409
+
+
+@pytest.mark.asyncio
+async def test_mass_assign_allows_job_when_other_guild_running(aiohttp_client):
+    role = FakeRole(7, name="VIP", position=5)
+    client = await aiohttp_client(build(roles=[role]))
+    await force_login(client, 10)
+    mass_role_jobs.JOBS["other-guild"] = mass_role_jobs.MassAssignJob(
+        status="running", total=5, guild_id=999
+    )
+
+    resp = await client.post("/api/roles/7/mass-assign", json={"target": "all"})
+    assert resp.status == 202
+
+
+@pytest.mark.asyncio
+async def test_mass_assign_status_rejects_other_guild_job(aiohttp_client):
+    client = await aiohttp_client(build())
+    await force_login(client, 10)
+    mass_role_jobs.JOBS["foreign-job"] = mass_role_jobs.MassAssignJob(
+        status="completed", total=1, guild_id=999
+    )
+
+    resp = await client.get("/api/roles/mass-assign/foreign-job")
+    assert resp.status == 404
 
 
 @pytest.mark.asyncio

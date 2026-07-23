@@ -125,6 +125,7 @@ def test_format_voice_time():
 def test_settings_defaults():
     settings = xp_core.get_settings(404)
     assert settings["enabled"] is False  # выключено по умолчанию
+    assert settings["public_leaderboard"] is False
     assert settings["text"]["multiplier"] == 100
     assert settings["voice"]["multiplier"] == 100
     assert settings["level_rewards"] == []

@@ -26,7 +26,13 @@ async def economy_put(request: web.Request) -> web.Response:
     if not isinstance(body, dict):
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    for key in ("enabled", "transfer_enabled", "roulette_bets_enabled", "daily_bonus_enabled"):
+    for key in (
+        "enabled",
+        "transfer_enabled",
+        "roulette_bets_enabled",
+        "daily_bonus_enabled",
+        "weekly_report_enabled",
+    ):
         if not isinstance(body.get(key, False), bool):
             return web.json_response({"error": f"invalid_{key}"}, status=400)
 
@@ -112,6 +118,10 @@ async def economy_put(request: web.Request) -> web.Response:
         "daily_bonus_enabled": body.get("daily_bonus_enabled", True),
         **int_values,
         "shop_items": shop_items,
+        "weekly_report_enabled": bool(body.get("weekly_report_enabled", False)),
+        "weekly_report_channel_id": str(body.get("weekly_report_channel_id") or ""),
+        "weekly_report_days": max(1, min(30, int(body.get("weekly_report_days") or 7))),
+        "last_weekly_report_date": economy_core.get_settings(guild_id).get("last_weekly_report_date", ""),
     })
     return web.json_response(economy_core.get_settings(guild_id))
 
@@ -120,9 +130,10 @@ async def economy_put(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def economy_top(request: web.Request) -> web.Response:
     economy_db.init()
-    guild = request.app["bot"].get_guild(request["guild_id"])
+    guild_id = request["guild_id"]
+    guild = request.app["bot"].get_guild(guild_id)
     result = []
-    for row in economy_db.top(25):
+    for row in economy_db.top(guild_id, 25):
         member = guild.get_member(row["user_id"]) if guild else None
         result.append({
             "user_id": str(row["user_id"]),
@@ -130,6 +141,32 @@ async def economy_top(request: web.Request) -> web.Response:
             "balance": row["balance"],
         })
     return web.json_response(result)
+
+
+@routes.get("/api/economy/weekly-report")
+@require_dashboard_access
+async def economy_weekly_report(request: web.Request) -> web.Response:
+    economy_db.init()
+    guild_id = request["guild_id"]
+    settings = economy_core.get_settings(guild_id)
+    days = max(1, min(30, int(settings.get("weekly_report_days") or 7)))
+    guild = request.app["bot"].get_guild(guild_id)
+    rows = []
+    for row in economy_db.weekly_report(guild_id, days=days):
+        member = guild.get_member(row["user_id"]) if guild else None
+        rows.append({
+            "user_id": str(row["user_id"]),
+            "display_name": member.display_name if member else str(row["user_id"]),
+            "earned": row["earned"],
+            "spent": row["spent"],
+            "net": row["net"],
+        })
+    return web.json_response({
+        "days": days,
+        "weekly_report_enabled": settings["weekly_report_enabled"],
+        "weekly_report_channel_id": settings["weekly_report_channel_id"],
+        "rows": rows,
+    })
 
 
 @routes.put("/api/economy/balance")
@@ -153,5 +190,5 @@ async def economy_set_balance(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_balance"}, status=400)
 
     economy_db.init()
-    economy_db.set_balance(user_id, balance, "dashboard_adjust")
+    economy_db.set_balance(request["guild_id"], user_id, balance, "dashboard_adjust")
     return web.json_response({"user_id": str(user_id), "balance": balance})

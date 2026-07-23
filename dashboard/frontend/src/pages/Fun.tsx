@@ -21,37 +21,54 @@ export function FunPage() {
   const t = useT()
   const [settings, setSettings] = useState<FunSettings | null>(null)
   const [wordle, setWordle] = useState<WordleSettings | null>(null)
+  const [wordleError, setWordleError] = useState('')
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
+  const [wordleSaved, setWordleSaved] = useState('')
   const [busy, setBusy] = useState(false)
+  const [wordleBusy, setWordleBusy] = useState(false)
 
   useEffect(() => {
     fetchFunSettings()
       .then(setSettings)
-      .catch(() => setError(t('fun.errorLoad')))
+      .catch((err) => setError(formatApiError(err, t, 'fun.errorLoad')))
     fetchWordleSettings()
       .then(setWordle)
-      .catch(() => setError(t('fun.errorLoadWordle')))
+      .catch((err) => setWordleError(formatApiError(err, t, 'fun.errorLoadWordle')))
   }, [t])
 
-  if (!settings || !wordle) {
+  if (!settings) {
     return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
-  const save = async () => {
+  const saveFun = async () => {
     setBusy(true)
     setError('')
     setSaved('')
     try {
       const updated = await updateFunSettings(settings)
       setSettings(updated)
-      const updatedWordle = await updateWordleSettings(wordle)
-      setWordle(updatedWordle)
       setSaved(t('common.saved'))
     } catch (err) {
       setError(formatApiError(err, t, 'fun.errorSave'))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const saveWordle = async () => {
+    if (!wordle) return
+    setWordleBusy(true)
+    setWordleError('')
+    setWordleSaved('')
+    try {
+      const updatedWordle = await updateWordleSettings(wordle)
+      setWordle(updatedWordle)
+      setWordleSaved(t('common.saved'))
+    } catch (err) {
+      setWordleError(formatApiError(err, t, 'fun.errorSaveWordle'))
+    } finally {
+      setWordleBusy(false)
     }
   }
 
@@ -71,6 +88,7 @@ export function FunPage() {
       <p className="text-sm text-muted">{t('fun.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
+      {saved && <p className="text-sm text-primary">{saved}</p>}
 
       <Card className="flex flex-col gap-3">
         <h2 className="font-semibold text-foreground">{t('fun.roulette.title')}</h2>
@@ -169,54 +187,67 @@ export function FunPage() {
         </div>
       </Card>
 
+      <div>
+        <Button variant="primary" onClick={saveFun} disabled={busy}>
+          {busy ? t('common.saving') : t('fun.saveFun')}
+        </Button>
+      </div>
+
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">{t('fun.wordle.title')}</h2>
-          <Toggle
-            checked={wordle.enabled}
-            onChange={(v) => setWordle({ ...wordle, enabled: v })}
-            label={wordle.enabled ? t('fun.wordle.enabled') : t('fun.wordle.disabled')}
-          />
+          {wordle && (
+            <Toggle
+              checked={wordle.enabled}
+              onChange={(v) => setWordle({ ...wordle, enabled: v })}
+              label={wordle.enabled ? t('fun.wordle.enabled') : t('fun.wordle.disabled')}
+            />
+          )}
         </div>
         <p className="text-sm text-muted">{t('fun.wordle.desc')}</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="wordle-channel">
-              {t('fun.wordle.channel')}
-            </label>
-            <input
-              id="wordle-channel"
-              type="text"
-              inputMode="numeric"
-              placeholder={t('fun.wordle.channelPlaceholder')}
-              value={wordle.channel_id}
-              onChange={(e) => setWordle({ ...wordle, channel_id: e.target.value.replace(/\D/g, '') })}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="wordle-time">
-              {t('fun.wordle.time')}
-            </label>
-            <input
-              id="wordle-time"
-              type="text"
-              placeholder="09:00"
-              value={wordle.announce_time}
-              onChange={(e) => setWordle({ ...wordle, announce_time: e.target.value })}
-              className={inputClass}
-            />
-          </div>
-        </div>
-        <p className="text-xs text-muted">{t('fun.wordle.hint')}</p>
+        {wordleError && <p className="text-sm text-danger">{wordleError}</p>}
+        {wordleSaved && <p className="text-sm text-primary">{wordleSaved}</p>}
+        {!wordle && !wordleError && <p className="text-sm text-muted">{t('common.loading')}</p>}
+        {wordle && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted" htmlFor="wordle-channel">
+                  {t('fun.wordle.channel')}
+                </label>
+                <input
+                  id="wordle-channel"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t('fun.wordle.channelPlaceholder')}
+                  value={wordle.channel_id}
+                  onChange={(e) => setWordle({ ...wordle, channel_id: e.target.value.replace(/\D/g, '') })}
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-muted" htmlFor="wordle-time">
+                  {t('fun.wordle.time')}
+                </label>
+                <input
+                  id="wordle-time"
+                  type="text"
+                  placeholder="09:00"
+                  value={wordle.announce_time}
+                  onChange={(e) => setWordle({ ...wordle, announce_time: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted">{t('fun.wordle.hint')}</p>
+            <div>
+              <Button variant="primary" onClick={saveWordle} disabled={wordleBusy}>
+                {wordleBusy ? t('common.saving') : t('fun.saveWordle')}
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
-
-      {saved && <p className="text-sm text-primary">{saved}</p>}
-      <div>
-        <Button variant="primary" onClick={save} disabled={busy}>
-          {busy ? t('common.saving') : t('common.save')}
-        </Button>
-      </div>
     </div>
   )
 }

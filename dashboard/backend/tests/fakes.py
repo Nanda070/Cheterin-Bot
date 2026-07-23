@@ -530,7 +530,12 @@ def make_moderation_app(bot, routes_tables, config=TEST_CONFIG):
     return app
 
 
-async def force_login(client, user_id, active_guild_id=None):
+async def force_login(client, user_id, active_guild_id=1):
+    """Log in for dashboard tests. Default active guild is 1 (app main).
+
+    Pass ``active_guild_id=None`` to leave the session without a selected guild
+    (exercises ``no_guild_selected``).
+    """
     url = f"/test/login?user_id={user_id}"
     if active_guild_id is not None:
         url += f"&active_guild_id={active_guild_id}"

@@ -21,7 +21,7 @@ describe('EmbedBuilderPage', () => {
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
     fireEvent.click(await screen.findByRole('option', { name: 'general' }))
-    fireEvent.change(screen.getByLabelText(/^Title/), { target: { value: 'Hello' } })
+    fireEvent.change(screen.getByLabelText(/^Заголовок/), { target: { value: 'Hello' } })
     fireEvent.click(screen.getByText('Отправить'))
 
     await waitFor(() =>
@@ -90,7 +90,7 @@ describe('EmbedBuilderPage', () => {
     fireEvent.change(screen.getByPlaceholderText('ID существующего сообщения'), { target: { value: '999' } })
     fireEvent.click(screen.getByText('Загрузить'))
 
-    await waitFor(() => expect(screen.getByLabelText(/^Title/)).toHaveValue('Existing title'))
+    await waitFor(() => expect(screen.getByLabelText(/^Заголовок/)).toHaveValue('Existing title'))
     expect(screen.getByLabelText('Текст сообщения')).toHaveValue('existing content')
   })
 
@@ -100,7 +100,7 @@ describe('EmbedBuilderPage', () => {
 
     renderWithLanguage(<EmbedBuilderPage />)
 
-    fireEvent.change(await screen.findByLabelText(/^Title/), { target: { value: 'Preview Title' } })
+    fireEvent.change(await screen.findByLabelText(/^Заголовок/), { target: { value: 'Preview Title' } })
     await waitFor(() => expect(screen.getByText('Preview Title')).toBeInTheDocument())
   })
 
@@ -114,8 +114,8 @@ describe('EmbedBuilderPage', () => {
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
     fireEvent.click(await screen.findByRole('option', { name: 'general' }))
-    fireEvent.change(screen.getByLabelText(/^Description/), { target: { value: 'x'.repeat(4096) } })
-    fireEvent.change(screen.getByLabelText(/^Footer/), { target: { value: 'y'.repeat(1905) } })
+    fireEvent.change(screen.getByLabelText(/^Описание/), { target: { value: 'x'.repeat(4096) } })
+    fireEvent.change(screen.getByLabelText(/^Подвал/), { target: { value: 'y'.repeat(1905) } })
     fireEvent.click(screen.getByText('Отправить'))
 
     expect(await screen.findByText(/Суммарная длина/)).toBeInTheDocument()

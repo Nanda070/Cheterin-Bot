@@ -390,8 +390,8 @@ class XPCog(commands.Cog):
         except discord.HTTPException:
             pass
 
-        frame = economy_db.get_equipped(target.id, "frame_color")
-        title = economy_db.get_equipped(target.id, "title")
+        frame = economy_db.get_equipped(interaction.guild.id, target.id, "frame_color")
+        title = economy_db.get_equipped(interaction.guild.id, target.id, "title")
 
         png = await asyncio.to_thread(
             xp_card.render_rank_card,

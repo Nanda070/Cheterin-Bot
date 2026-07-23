@@ -185,13 +185,19 @@ def update_game(game_id: int, **fields) -> dict | None:
     return get_game(game_id)
 
 
-def list_active_games() -> list[dict]:
+def list_active_games(guild_id: int | None = None) -> list[dict]:
     with closing(connect()) as conn:
         placeholders = ",".join("?" * len(ACTIVE_STATUSES))
-        rows = conn.execute(
-            f"SELECT * FROM games WHERE status IN ({placeholders}) ORDER BY created_at DESC",
-            ACTIVE_STATUSES,
-        ).fetchall()
+        if guild_id is None:
+            rows = conn.execute(
+                f"SELECT * FROM games WHERE status IN ({placeholders}) ORDER BY created_at DESC",
+                ACTIVE_STATUSES,
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                f"SELECT * FROM games WHERE guild_id = ? AND status IN ({placeholders}) ORDER BY created_at DESC",
+                (guild_id, *ACTIVE_STATUSES),
+            ).fetchall()
         return [dict(r) for r in rows]
 
 

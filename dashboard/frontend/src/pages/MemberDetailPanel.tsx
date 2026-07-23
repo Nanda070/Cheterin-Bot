@@ -14,6 +14,7 @@ import {
   type RoleInfo,
   type Warn,
 } from '../api/client'
+import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
@@ -55,8 +56,12 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
   )
 
   const reload = () => {
-    fetchMemberDetail(memberId).then(setDetail).catch(() => setError(t('members.detail.errorLoad')))
-    fetchRoles().then(setAssignable).catch(() => {})
+    fetchMemberDetail(memberId)
+      .then(setDetail)
+      .catch((err) => setError(formatApiError(err, t, 'members.detail.errorLoad')))
+    fetchRoles()
+      .then(setAssignable)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadRoles')))
     reloadWarns()
   }
 

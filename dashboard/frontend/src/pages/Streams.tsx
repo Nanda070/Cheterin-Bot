@@ -234,6 +234,32 @@ export function StreamsPage() {
                     />
                   </div>
                 </div>
+                <div className="flex flex-wrap gap-4 pt-1">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Toggle
+                      checked={Boolean(sub.mention_everyone)}
+                      onChange={(v) => patchSub(sub.id, { mention_everyone: v })}
+                    />
+                    {t('streams.field.mentionEveryone')}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Toggle
+                      checked={sub.use_embed !== false}
+                      onChange={(v) => patchSub(sub.id, { use_embed: v })}
+                    />
+                    {t('streams.field.useEmbed')}
+                  </label>
+                  <input
+                    className={`${inputClass} w-32`}
+                    defaultValue={sub.embed_color || ''}
+                    placeholder="#9146FF"
+                    aria-label={t('streams.field.embedColor')}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim()
+                      if (v !== (sub.embed_color || '')) patchSub(sub.id, { embed_color: v })
+                    }}
+                  />
+                </div>
               </div>
             )}
           </Card>

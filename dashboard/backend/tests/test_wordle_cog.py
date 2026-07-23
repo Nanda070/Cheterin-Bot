@@ -91,30 +91,30 @@ async def test_open_daily_board_creates_game_with_button():
     assert msg["ephemeral"] is True
     assert f"Вордл №{DAY}" in msg["embed"].title
     assert msg["view"] is not None
-    assert wordle_db.get_daily_game(player.id, DAY) is not None
+    assert wordle_db.get_daily_game(guild.id, player.id, DAY) is not None
 
 
 @pytest.mark.asyncio
 async def test_daily_guess_rejects_unknown_word():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     interaction = FakeInteraction(player, guild, channel)
 
     await cog.handle_daily_guess(interaction, "бзыкф")
 
     assert "нет в словаре" in interaction.response.messages[0]["content"]
-    assert wordle_db.get_daily_game(player.id, DAY)["guesses"] == []
+    assert wordle_db.get_daily_game(guild.id, player.id, DAY)["guesses"] == []
 
 
 @pytest.mark.asyncio
 async def test_daily_guess_progresses_and_posts_live_card():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     interaction = FakeInteraction(player, guild, channel)
 
     await cog.handle_daily_guess(interaction, "катер")
 
-    game = wordle_db.get_daily_game(player.id, DAY)
+    game = wordle_db.get_daily_game(guild.id, player.id, DAY)
     assert game["guesses"] == ["катер"]
     assert game["finished"] == 0
     # доска обновлена через edit_message
@@ -128,11 +128,11 @@ async def test_daily_guess_progresses_and_posts_live_card():
 @pytest.mark.asyncio
 async def test_daily_guess_edits_existing_live_card():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     interaction = FakeInteraction(player, guild, channel)
 
     await cog.handle_daily_guess(interaction, "катер")
-    message_id = wordle_db.get_daily_game(player.id, DAY)["live_message_id"]
+    message_id = wordle_db.get_daily_game(guild.id, player.id, DAY)["live_message_id"]
     await cog.handle_daily_guess(FakeInteraction(player, guild, channel), "школа")
 
     assert len(channel.send_calls) == 1  # второй раз — edit, не send
@@ -142,14 +142,14 @@ async def test_daily_guess_edits_existing_live_card():
 @pytest.mark.asyncio
 async def test_daily_win_finishes_game_and_records_stats():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     interaction = FakeInteraction(player, guild, channel)
 
     await cog.handle_daily_guess(interaction, ANSWER)
 
-    game = wordle_db.get_daily_game(player.id, DAY)
+    game = wordle_db.get_daily_game(guild.id, player.id, DAY)
     assert game["finished"] == 1 and game["won"] == 1
-    stats = wordle_db.get_stats(player.id)
+    stats = wordle_db.get_stats(guild.id, player.id)
     assert stats["won"] == 1 and stats["streak"] == 1
     assert stats["distribution"][0] == 1
     # финальная доска без кнопки
@@ -160,22 +160,22 @@ async def test_daily_win_finishes_game_and_records_stats():
 @pytest.mark.asyncio
 async def test_daily_six_misses_is_loss():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     wrong = ["катер", "школа", "лодка", "мешок", "рулет"]
     for word in wrong:
         await cog.handle_daily_guess(FakeInteraction(player, guild, channel), word)
     await cog.handle_daily_guess(FakeInteraction(player, guild, channel), "тайга")
 
-    game = wordle_db.get_daily_game(player.id, DAY)
+    game = wordle_db.get_daily_game(guild.id, player.id, DAY)
     assert game["finished"] == 1 and game["won"] == 0
     assert len(game["guesses"]) == 6
-    assert wordle_db.get_stats(player.id)["streak"] == 0
+    assert wordle_db.get_stats(guild.id, player.id)["streak"] == 0
 
 
 @pytest.mark.asyncio
 async def test_finished_game_blocks_more_guesses():
     cog, guild, player, channel = build()
-    wordle_db.start_daily_game(player.id, DAY)
+    wordle_db.start_daily_game(guild.id, player.id, DAY)
     await cog.handle_daily_guess(FakeInteraction(player, guild, channel), ANSWER)
 
     interaction = FakeInteraction(player, guild, channel)
@@ -199,8 +199,8 @@ async def test_training_flow_win_without_stats(monkeypatch):
     assert interaction.response.edits[0]["view"] is None  # победа — кнопки нет
     assert player.id not in cog._training
     # тренировка не пишет ни игр дня, ни статистику
-    assert wordle_db.get_daily_game(player.id, DAY) is None
-    assert wordle_db.get_stats(player.id)["played"] == 0
+    assert wordle_db.get_daily_game(guild.id, player.id, DAY) is None
+    assert wordle_db.get_stats(guild.id, player.id)["played"] == 0
     assert channel.send_calls == []  # и не постит live-карточку
 
 
@@ -221,7 +221,7 @@ async def test_stats_command_empty_and_filled():
     await WordleCog.stats_command.callback(cog, interaction)
     assert "не играли" in interaction.response.messages[0]["content"]
 
-    wordle_db.record_result(player.id, DAY, won=True, attempts=4)
+    wordle_db.record_result(guild.id, player.id, DAY, won=True, attempts=4)
     interaction = FakeInteraction(player, guild, channel)
     await WordleCog.stats_command.callback(cog, interaction)
     embed = interaction.response.messages[0]["embed"]
@@ -231,7 +231,7 @@ async def test_stats_command_empty_and_filled():
 @pytest.mark.asyncio
 async def test_top_command_lists_players():
     cog, guild, player, channel = build()
-    wordle_db.record_result(player.id, DAY, won=True, attempts=4)
+    wordle_db.record_result(guild.id, player.id, DAY, won=True, attempts=4)
     interaction = FakeInteraction(player, guild, channel)
 
     await WordleCog.top_command.callback(cog, interaction)
@@ -255,12 +255,12 @@ async def test_announce_nobody_played():
 @pytest.mark.asyncio
 async def test_announce_nobody_won_reveals_word():
     cog, guild, player, channel = build(channel_id=500)
-    wordle_db.add_guess(player.id, DAY - 1, "школа", True, False)
+    wordle_db.add_guess(guild.id, player.id, DAY - 1, "школа", True, False)
     await cog.post_daily_announce(channel, DAY)
     content = channel.send_calls[0]["content"]
     assert "Никто не отгадал" in content
     assert ANSWER.upper() in content
-    assert wordle_db.get_group_streak() == 0
+    assert wordle_db.get_group_streak(guild.id) == 0
 
 
 @pytest.mark.asyncio
@@ -268,9 +268,9 @@ async def test_announce_with_winner_crowns_best_and_streak():
     cog, guild, player, channel = build(channel_id=500)
     other = FakeMember(21, name="other")
     guild.members.append(other)
-    wordle_db.add_guess(player.id, DAY - 1, "катер", False, False)
-    wordle_db.add_guess(player.id, DAY - 1, ANSWER, True, True)
-    wordle_db.add_guess(other.id, DAY - 1, "школа", True, False)
+    wordle_db.add_guess(guild.id, player.id, DAY - 1, "катер", False, False)
+    wordle_db.add_guess(guild.id, player.id, DAY - 1, ANSWER, True, True)
+    wordle_db.add_guess(guild.id, other.id, DAY - 1, "школа", True, False)
 
     await cog.post_daily_announce(channel, DAY)
 
@@ -279,7 +279,7 @@ async def test_announce_with_winner_crowns_best_and_streak():
     assert f"👑 **2/6**: <@{player.id}>" in content
     assert f"**X/6**: <@{other.id}>" in content
     assert channel.send_calls[0].get("file") is not None  # сводная PNG-карточка
-    assert wordle_db.get_group_streak() == 1
+    assert wordle_db.get_group_streak(guild.id) == 1
 
 
 def test_build_board_embed_finished_loss_reveals_answer():

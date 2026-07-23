@@ -106,12 +106,16 @@ export function FeedbackCategoriesPage() {
   const [publishError, setPublishError] = useState('')
 
   const reload = () => {
-    fetchFeedbackCategories().then(setCategories).catch(() => setError(t('feedback.categories.errorLoad')))
-    fetchChannels().then(setChannels).catch(() => {})
-    fetchRoles().then(setRoles).catch(() => {})
+    fetchFeedbackCategories().then(setCategories).catch((err) => setError(formatApiError(err, t, 'feedback.categories.errorLoad')))
+    fetchChannels()
+      .then(setChannels)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadChannels')))
+    fetchRoles()
+      .then(setRoles)
+      .catch((err) => setError(formatApiError(err, t, 'common.errorLoadRoles')))
   }
 
-  useEffect(reload, [])
+  useEffect(reload, [t])
 
   const channelName = (id: string) => channels.find((c) => c.id === id)?.name ?? id
 

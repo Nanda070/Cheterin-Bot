@@ -8,6 +8,8 @@ import settings_db
 from economy import EconomyCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
 
+GUILD_ID = 1
+
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
@@ -70,7 +72,7 @@ async def test_daily_first_claim(monkeypatch):
 
     await EconomyCog.daily_command.callback(cog, interaction)
 
-    assert economy_db.get_balance(player.id) == 50
+    assert economy_db.get_balance(GUILD_ID, player.id) == 50
     content = interaction.response.messages[0]["content"]
     assert "50" in content
     assert "Стрик: **1** день" in content
@@ -86,7 +88,7 @@ async def test_daily_already_claimed_today(monkeypatch):
     await EconomyCog.daily_command.callback(cog, interaction)
 
     assert "уже получен" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 50  # второй раз не начислено
+    assert economy_db.get_balance(GUILD_ID, player.id) == 50  # второй раз не начислено
 
 
 @pytest.mark.asyncio
@@ -99,7 +101,7 @@ async def test_daily_streak_grows_next_day(monkeypatch):
     interaction = FakeInteraction(player, guild)
     await EconomyCog.daily_command.callback(cog, interaction)
 
-    assert economy_db.get_balance(player.id) == 50 + 75
+    assert economy_db.get_balance(GUILD_ID, player.id) == 50 + 75
     assert "Стрик: **2** дня" in interaction.response.messages[0]["content"]
 
 
@@ -116,7 +118,7 @@ async def test_balance_disabled_module():
 @pytest.mark.asyncio
 async def test_balance_shows_amount_and_rank():
     cog, guild, player, friend = build()
-    economy_db.add(player.id, 250, "seed")
+    economy_db.add(GUILD_ID, player.id, 250, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.balance_command.callback(cog, interaction, None)
@@ -152,30 +154,30 @@ async def test_grant_balance_adds_from_zero():
 
     await EconomyCog.grant_balance_command.callback(cog, interaction, friend, 500)
 
-    assert economy_db.get_balance(friend.id) == 500
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 500
     assert "500" in interaction.response.messages[0]["content"]
 
 
 @pytest.mark.asyncio
 async def test_grant_balance_negative_deducts():
     cog, guild, player, friend = build()
-    economy_db.add(friend.id, 300, "seed")
+    economy_db.add(GUILD_ID, friend.id, 300, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.grant_balance_command.callback(cog, interaction, friend, -100)
 
-    assert economy_db.get_balance(friend.id) == 200
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 200
 
 
 @pytest.mark.asyncio
 async def test_grant_balance_negative_does_not_go_below_zero():
     cog, guild, player, friend = build()
-    economy_db.add(friend.id, 50, "seed")
+    economy_db.add(GUILD_ID, friend.id, 50, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.grant_balance_command.callback(cog, interaction, friend, -500)
 
-    assert economy_db.get_balance(friend.id) == 0
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 0
 
 
 # ────────────────────────── /перевести ──────────────────────────
@@ -183,25 +185,25 @@ async def test_grant_balance_negative_does_not_go_below_zero():
 @pytest.mark.asyncio
 async def test_transfer_moves_coins():
     cog, guild, player, friend = build()
-    economy_db.add(player.id, 100, "seed")
+    economy_db.add(GUILD_ID, player.id, 100, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.transfer_command.callback(cog, interaction, friend, 40)
 
-    assert economy_db.get_balance(player.id) == 60
-    assert economy_db.get_balance(friend.id) == 40
+    assert economy_db.get_balance(GUILD_ID, player.id) == 60
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 40
 
 
 @pytest.mark.asyncio
 async def test_transfer_takes_fee():
     cog, guild, player, friend = build(transfer_fee_percent=10)
-    economy_db.add(player.id, 110, "seed")
+    economy_db.add(GUILD_ID, player.id, 110, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.transfer_command.callback(cog, interaction, friend, 100)
 
-    assert economy_db.get_balance(player.id) == 0  # 100 + 10 комиссии
-    assert economy_db.get_balance(friend.id) == 100
+    assert economy_db.get_balance(GUILD_ID, player.id) == 0  # 100 + 10 комиссии
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 100
     assert "Комиссия" in interaction.response.messages[0]["content"]
 
 
@@ -213,7 +215,7 @@ async def test_transfer_rejects_self_bots_disabled():
     assert "отключены" in interaction.response.messages[0]["content"]
 
     cog, guild, player, friend = build()
-    economy_db.add(player.id, 100, "seed")
+    economy_db.add(GUILD_ID, player.id, 100, "seed")
     interaction = FakeInteraction(player, guild)
     await EconomyCog.transfer_command.callback(cog, interaction, player, 10)
     assert "Себе" in interaction.response.messages[0]["content"]
@@ -227,11 +229,11 @@ async def test_transfer_rejects_self_bots_disabled():
 @pytest.mark.asyncio
 async def test_transfer_insufficient():
     cog, guild, player, friend = build()
-    economy_db.add(player.id, 10, "seed")
+    economy_db.add(GUILD_ID, player.id, 10, "seed")
     interaction = FakeInteraction(player, guild)
     await EconomyCog.transfer_command.callback(cog, interaction, friend, 50)
     assert "Недостаточно" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(friend.id) == 0
+    assert economy_db.get_balance(GUILD_ID, friend.id) == 0
 
 
 # ────────────────────────── /монеты-топ ──────────────────────────
@@ -239,8 +241,8 @@ async def test_transfer_insufficient():
 @pytest.mark.asyncio
 async def test_top_lists_members():
     cog, guild, player, friend = build()
-    economy_db.add(player.id, 300, "seed")
-    economy_db.add(friend.id, 100, "seed")
+    economy_db.add(GUILD_ID, player.id, 300, "seed")
+    economy_db.add(GUILD_ID, friend.id, 100, "seed")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.top_command.callback(cog, interaction)
@@ -286,12 +288,12 @@ async def test_purchase_success_assigns_role_and_spends():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
-    economy_db.add(player.id, 150, "seed")
+    economy_db.add(GUILD_ID, player.id, 150, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "vip")
 
-    assert economy_db.get_balance(player.id) == 50
+    assert economy_db.get_balance(GUILD_ID, player.id) == 50
     assert any(call[0] == "add_roles" for call in player.action_calls)
     assert "Куплено" in interaction.response.messages[0]["content"]
 
@@ -301,13 +303,13 @@ async def test_purchase_insufficient_funds():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
-    economy_db.add(player.id, 10, "seed")
+    economy_db.add(GUILD_ID, player.id, 10, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "vip")
 
     assert "Не хватает" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 10
+    assert economy_db.get_balance(GUILD_ID, player.id) == 10
     assert player.action_calls == []
 
 
@@ -316,7 +318,7 @@ async def test_purchase_refunds_on_role_failure():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, shop_config(price=100))
     guild.roles.append(FakeRole(777, name="VIP"))
-    economy_db.add(player.id, 150, "seed")
+    economy_db.add(GUILD_ID, player.id, 150, "seed")
     import discord
 
     player.action_raises = discord.HTTPException.__new__(discord.HTTPException)
@@ -324,7 +326,7 @@ async def test_purchase_refunds_on_role_failure():
 
     await cog.handle_purchase(interaction, "vip")
 
-    assert economy_db.get_balance(player.id) == 150  # возврат
+    assert economy_db.get_balance(GUILD_ID, player.id) == 150  # возврат
     assert "возвращены" in interaction.response.messages[0]["content"]
 
 
@@ -335,13 +337,13 @@ async def test_purchase_already_owned():
     vip = FakeRole(777, name="VIP")
     guild.roles.append(vip)
     player.roles.append(vip)
-    economy_db.add(player.id, 500, "seed")
+    economy_db.add(GUILD_ID, player.id, 500, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "vip")
 
     assert "уже есть" in interaction.response.messages[0]["content"]
-    assert economy_db.get_balance(player.id) == 500
+    assert economy_db.get_balance(GUILD_ID, player.id) == 500
 
 
 @pytest.mark.asyncio
@@ -369,13 +371,13 @@ def cosmetics_shop_config():
 async def test_purchase_frame_color_grants_cosmetic():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, cosmetics_shop_config())
-    economy_db.add(player.id, 200, "seed")
+    economy_db.add(GUILD_ID, player.id, 200, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "frame1")
 
-    assert economy_db.get_balance(player.id) == 0
-    assert economy_db.owns_cosmetic(player.id, "frame1") is True
+    assert economy_db.get_balance(GUILD_ID, player.id) == 0
+    assert economy_db.owns_cosmetic(GUILD_ID, player.id, "frame1") is True
     assert "Куплено" in interaction.response.messages[0]["content"]
     assert player.action_calls == []  # косметика не выдаёт ролей
 
@@ -384,26 +386,26 @@ async def test_purchase_frame_color_grants_cosmetic():
 async def test_purchase_title_grants_cosmetic():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, cosmetics_shop_config())
-    economy_db.add(player.id, 300, "seed")
+    economy_db.add(GUILD_ID, player.id, 300, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "title1")
 
-    assert economy_db.owns_cosmetic(player.id, "title1") is True
+    assert economy_db.owns_cosmetic(GUILD_ID, player.id, "title1") is True
 
 
 @pytest.mark.asyncio
 async def test_purchase_cosmetic_already_owned():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, cosmetics_shop_config())
-    economy_db.add(player.id, 1000, "seed")
+    economy_db.add(GUILD_ID, player.id, 1000, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "frame1")
-    balance_after_first = economy_db.get_balance(player.id)
+    balance_after_first = economy_db.get_balance(GUILD_ID, player.id)
     await cog.handle_purchase(interaction, "frame1")
 
-    assert economy_db.get_balance(player.id) == balance_after_first  # второй раз не списано
+    assert economy_db.get_balance(GUILD_ID, player.id) == balance_after_first  # второй раз не списано
     assert "уже есть" in interaction.response.messages[-1]["content"]
 
 
@@ -411,13 +413,13 @@ async def test_purchase_cosmetic_already_owned():
 async def test_purchase_cosmetic_insufficient_funds():
     cog, guild, player, friend = build()
     economy_core.save_config(guild.id, cosmetics_shop_config())
-    economy_db.add(player.id, 10, "seed")
+    economy_db.add(GUILD_ID, player.id, 10, "seed")
     interaction = FakeInteraction(player, guild)
 
     await cog.handle_purchase(interaction, "frame1")
 
     assert "Не хватает" in interaction.response.messages[0]["content"]
-    assert economy_db.owns_cosmetic(player.id, "frame1") is False
+    assert economy_db.owns_cosmetic(GUILD_ID, player.id, "frame1") is False
 
 
 # ────────────────────────── /косметика ──────────────────────────
@@ -433,7 +435,7 @@ async def test_cosmetics_command_empty():
 @pytest.mark.asyncio
 async def test_cosmetics_command_lists_owned():
     cog, guild, player, friend = build()
-    economy_db.grant_cosmetic(player.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
+    economy_db.grant_cosmetic(GUILD_ID, player.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.cosmetics_command.callback(cog, interaction)
@@ -444,16 +446,16 @@ async def test_cosmetics_command_lists_owned():
 @pytest.mark.asyncio
 async def test_handle_equip_sets_and_clears():
     cog, guild, player, friend = build()
-    economy_db.grant_cosmetic(player.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
+    economy_db.grant_cosmetic(GUILD_ID, player.id, "frame1", "frame_color", "#FF00AA", "Розовая рамка")
 
     interaction = FakeInteraction(player, guild)
     await cog.handle_equip(interaction, "frame_color", "frame1")
-    assert economy_db.get_equipped(player.id, "frame_color")["item_id"] == "frame1"
+    assert economy_db.get_equipped(GUILD_ID, player.id, "frame_color")["item_id"] == "frame1"
     assert "применён" in interaction.response.messages[0]["content"]
 
     interaction2 = FakeInteraction(player, guild)
     await cog.handle_equip(interaction2, "frame_color", None)
-    assert economy_db.get_equipped(player.id, "frame_color") is None
+    assert economy_db.get_equipped(GUILD_ID, player.id, "frame_color") is None
     assert "снят" in interaction2.response.messages[0]["content"]
 
 
@@ -465,4 +467,4 @@ async def test_handle_equip_rejects_unowned_item():
     await cog.handle_equip(interaction, "title", "not-owned")
 
     assert "не владеете" in interaction.response.messages[0]["content"]
-    assert economy_db.get_equipped(player.id, "title") is None
+    assert economy_db.get_equipped(GUILD_ID, player.id, "title") is None

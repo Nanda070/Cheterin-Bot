@@ -183,4 +183,19 @@ describe('DashboardShell', () => {
     expect(await screen.findByText('Супер-админ')).toBeInTheDocument()
     expect(screen.getByText('Серверы бота')).toBeInTheDocument()
   })
+
+  it('exposes a mobile menu toggle', async () => {
+    vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
+      id: '1',
+      username: 'tester',
+      avatar: null,
+      is_admin: true,
+      is_super_admin: false,
+      active_guild_id: '1',
+    })
+
+    renderShell()
+
+    expect(await screen.findByRole('button', { name: 'Открыть меню' })).toBeInTheDocument()
+  })
 })

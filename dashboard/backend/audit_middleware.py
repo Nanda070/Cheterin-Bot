@@ -1,6 +1,7 @@
 """Аудит действий дашборда: каждое мутирующее действие модератора пишется в stats.db."""
 
 import logging
+import re
 import time
 
 from aiohttp import web
@@ -9,62 +10,131 @@ import stats_db
 
 logger = logging.getLogger("dashboard.audit")
 
-# Порядок важен: первое совпадение по (метод, префикс) даёт подпись
+# Порядок важен: первое совпадение по (метод|*, префикс) даёт ключ i18n (audit.action.*).
+# В БД пишется ключ; UI переводит по языку интерфейса. Никогда не пишем сырой "PUT /api/...".
 ACTION_LABELS: list[tuple[str, str, str]] = [
-    ("PUT", "/api/config", "Изменение конфигурации"),
-    ("PUT", "/api/language", "Язык бота сервера"),
-    ("PUT", "/api/ctd", "Настройки тикетов CTD"),
-    ("POST", "/api/lockdown/activate", "Включение антиспам-режима"),
-    ("POST", "/api/lockdown/deactivate", "Выключение антиспам-режима"),
-    ("POST", "/api/members/", "Действие над участником (бан/кик/роль/варн)"),
-    ("DELETE", "/api/members/", "Снятие роли с участника"),
-    ("POST", "/api/mass-assign", "Массовая выдача ролей"),
-    ("PUT", "/api/welcome-settings", "Настройки приветствий"),
-    ("PUT", "/api/auto-roles", "Настройки авто-ролей"),
-    ("POST", "/api/reaction-roles", "Создание роли по реакции"),
-    ("PUT", "/api/reaction-roles", "Изменение роли по реакции"),
-    ("DELETE", "/api/reaction-roles", "Удаление роли по реакции"),
-    ("POST", "/api/embed-builder", "Отправка/изменение эмбеда"),
-    ("POST", "/api/feedback", "Действие с обратной связью"),
-    ("PUT", "/api/feedback", "Изменение категории обратной связи"),
-    ("DELETE", "/api/feedback", "Удаление категории обратной связи"),
-    ("POST", "/api/events", "Действие с событием"),
-    ("DELETE", "/api/events", "Удаление события"),
-    ("POST", "/api/brackets", "Действие с турнирной сеткой"),
-    ("DELETE", "/api/brackets", "Удаление турнирной сетки"),
-    ("POST", "/api/supply", "Действие с поставкой"),
-    ("DELETE", "/api/voice/rooms", "Удаление приватной комнаты"),
-    ("POST", "/api/voice/panel", "Публикация панели комнат"),
-    ("PUT", "/api/news", "Настройки ретрансляции"),
-    ("PUT", "/api/serverlog", "Настройки логирования"),
-    ("PUT", "/api/xp/members", "Изменение XP участника"),
-    ("POST", "/api/xp/members", "Сброс XP участника"),
-    ("POST", "/api/xp/reset-all", "Полный сброс рейтинга"),
-    ("POST", "/api/xp/card-bg", "Загрузка фона карточки ранга"),
-    ("DELETE", "/api/xp/card-bg", "Удаление фона карточки ранга"),
-    ("PUT", "/api/xp", "Настройки системы уровней"),
-    ("POST", "/api/streams", "Действие с подпиской на стримы"),
-    ("PATCH", "/api/streams", "Изменение подписки на стримы"),
-    ("DELETE", "/api/streams", "Удаление подписки на стримы"),
-    ("PUT", "/api/family", "Настройки модуля «Семья»"),
-    ("POST", "/api/family/tickets/", "Решение по заявке в семью"),
-    ("POST", "/api/family/birthdays", "Установка дня рождения"),
-    ("DELETE", "/api/family/birthdays", "Удаление дня рождения"),
-    ("PUT", "/api/mafia", "Настройки модуля «Мафия»"),
-    ("POST", "/api/giveaways", "Действие с розыгрышем"),
-    ("PUT", "/api/daily-topic/settings", "Настройки ежедневной рубрики"),
-    ("POST", "/api/daily-topic/topics", "Добавление темы дня"),
-    ("PATCH", "/api/daily-topic/topics", "Изменение темы дня"),
-    ("DELETE", "/api/daily-topic/topics", "Удаление темы дня"),
-    ("POST", "/api/daily-topic/post-now", "Публикация темы дня вручную"),
-    ("PUT", "/api/automod/filters/", "Настройка фильтра автомодерации"),
-    ("PUT", "/api/automod/manual-warn-duration", "Настройка срока ручных предупреждений"),
-    ("POST", "/api/automod/escalation", "Добавление порога эскалации варнов"),
-    ("PATCH", "/api/automod/escalation/", "Изменение порога эскалации варнов"),
-    ("DELETE", "/api/automod/escalation/", "Удаление порога эскалации варнов"),
-    ("PUT", "/api/automod", "Включение/выключение автомодерации"),
-    ("DELETE", "/api/warns/", "Снятие предупреждения"),
+    ("PUT", "/api/config", "audit.action.config"),
+    ("PUT", "/api/language", "audit.action.language"),
+    ("PUT", "/api/ctd", "audit.action.ctd"),
+    ("POST", "/api/lockdown/activate", "audit.action.lockdown_on"),
+    ("POST", "/api/lockdown/deactivate", "audit.action.lockdown_off"),
+    ("PUT", "/api/spam-settings", "audit.action.spam_settings"),
+    ("PUT", "/api/tempban-settings", "audit.action.tempban_settings"),
+    ("PUT", "/api/antiraid", "audit.action.antiraid"),
+    ("PUT", "/api/verification", "audit.action.verification"),
+    ("POST", "/api/members/", "audit.action.member"),
+    ("DELETE", "/api/members/", "audit.action.member_role_remove"),
+    ("POST", "/api/roles/", "audit.action.mass_assign"),
+    ("POST", "/api/mass-assign", "audit.action.mass_assign"),
+    ("PUT", "/api/welcome-settings", "audit.action.welcome"),
+    ("PUT", "/api/welcome", "audit.action.welcome"),
+    ("PUT", "/api/auto-roles", "audit.action.auto_roles"),
+    ("POST", "/api/reaction-roles", "audit.action.reaction_roles_create"),
+    ("PUT", "/api/reaction-roles", "audit.action.reaction_roles_update"),
+    ("DELETE", "/api/reaction-roles", "audit.action.reaction_roles_delete"),
+    ("POST", "/api/embed-messages", "audit.action.embed"),
+    ("PUT", "/api/embed-messages", "audit.action.embed"),
+    ("POST", "/api/embed-templates", "audit.action.embed"),
+    ("DELETE", "/api/embed-templates", "audit.action.embed"),
+    ("POST", "/api/embed-builder", "audit.action.embed"),
+    ("POST", "/api/message-templates", "audit.action.message_template"),
+    ("PUT", "/api/message-templates", "audit.action.message_template"),
+    ("DELETE", "/api/message-templates", "audit.action.message_template"),
+    ("POST", "/api/feedback-cases", "audit.action.feedback"),
+    ("POST", "/api/feedback-categories", "audit.action.feedback_update"),
+    ("PUT", "/api/feedback-categories", "audit.action.feedback_update"),
+    ("DELETE", "/api/feedback-categories", "audit.action.feedback_delete"),
+    ("POST", "/api/feedback-panel", "audit.action.feedback"),
+    ("PUT", "/api/feedback-panel-settings", "audit.action.feedback_update"),
+    ("POST", "/api/feedback", "audit.action.feedback"),
+    ("PUT", "/api/feedback", "audit.action.feedback_update"),
+    ("DELETE", "/api/feedback", "audit.action.feedback_delete"),
+    ("POST", "/api/events", "audit.action.events"),
+    ("DELETE", "/api/events", "audit.action.events_delete"),
+    ("POST", "/api/brackets", "audit.action.brackets"),
+    ("DELETE", "/api/brackets", "audit.action.brackets_delete"),
+    ("POST", "/api/supply", "audit.action.supply"),
+    ("DELETE", "/api/voice/rooms", "audit.action.voice_room_delete"),
+    ("POST", "/api/voice/panel", "audit.action.voice_panel"),
+    ("PUT", "/api/voice", "audit.action.voice_settings"),
+    ("PUT", "/api/news", "audit.action.news"),
+    ("PUT", "/api/serverlog", "audit.action.serverlog"),
+    ("PUT", "/api/xp/members", "audit.action.xp_member"),
+    ("POST", "/api/xp/members", "audit.action.xp_member_reset"),
+    ("POST", "/api/xp/reset-all", "audit.action.xp_reset_all"),
+    ("POST", "/api/xp/card-bg", "audit.action.xp_card_bg"),
+    ("DELETE", "/api/xp/card-bg", "audit.action.xp_card_bg_delete"),
+    ("PUT", "/api/xp", "audit.action.xp_settings"),
+    ("POST", "/api/streams", "audit.action.streams"),
+    ("PATCH", "/api/streams", "audit.action.streams_update"),
+    ("DELETE", "/api/streams", "audit.action.streams_delete"),
+    ("PUT", "/api/family", "audit.action.family"),
+    ("POST", "/api/family/tickets/", "audit.action.family_ticket"),
+    ("POST", "/api/family/birthdays", "audit.action.family_birthday"),
+    ("DELETE", "/api/family/birthdays", "audit.action.family_birthday_delete"),
+    ("PUT", "/api/mafia", "audit.action.mafia"),
+    ("PUT", "/api/bunker", "audit.action.bunker"),
+    ("PATCH", "/api/bunker", "audit.action.bunker"),
+    ("POST", "/api/bunker", "audit.action.bunker"),
+    ("PUT", "/api/casino", "audit.action.casino"),
+    ("PUT", "/api/economy/balance", "audit.action.economy_balance"),
+    ("PUT", "/api/economy", "audit.action.economy"),
+    ("PUT", "/api/fun", "audit.action.fun"),
+    ("PUT", "/api/wordle", "audit.action.wordle"),
+    ("POST", "/api/giveaways", "audit.action.giveaways"),
+    ("PUT", "/api/daily-topic/settings", "audit.action.daily_topic"),
+    ("POST", "/api/daily-topic/topics", "audit.action.daily_topic_add"),
+    ("PATCH", "/api/daily-topic/topics", "audit.action.daily_topic_update"),
+    ("DELETE", "/api/daily-topic/topics", "audit.action.daily_topic_delete"),
+    ("POST", "/api/daily-topic/post-now", "audit.action.daily_topic_post"),
+    ("PUT", "/api/automod/filters/", "audit.action.automod_filter"),
+    ("PUT", "/api/automod/manual-warn-duration", "audit.action.automod_warn_duration"),
+    ("POST", "/api/automod/escalation", "audit.action.automod_escalation_add"),
+    ("PATCH", "/api/automod/escalation/", "audit.action.automod_escalation_update"),
+    ("DELETE", "/api/automod/escalation/", "audit.action.automod_escalation_delete"),
+    ("PUT", "/api/automod", "audit.action.automod"),
+    ("DELETE", "/api/warns/", "audit.action.warn_remove"),
 ]
+
+# Path-only fallbacks (any method) for older/unknown verb combinations.
+PATH_LABELS: list[tuple[str, str]] = [
+    ("/api/wordle", "audit.action.wordle"),
+    ("/api/fun", "audit.action.fun"),
+    ("/api/casino", "audit.action.casino"),
+    ("/api/economy", "audit.action.economy"),
+    ("/api/bunker", "audit.action.bunker"),
+    ("/api/mafia", "audit.action.mafia"),
+    ("/api/config", "audit.action.config"),
+    ("/api/language", "audit.action.language"),
+    ("/api/ctd", "audit.action.ctd"),
+    ("/api/spam-settings", "audit.action.spam_settings"),
+    ("/api/tempban-settings", "audit.action.tempban_settings"),
+    ("/api/antiraid", "audit.action.antiraid"),
+    ("/api/verification", "audit.action.verification"),
+    ("/api/welcome", "audit.action.welcome"),
+    ("/api/auto-roles", "audit.action.auto_roles"),
+    ("/api/reaction-roles", "audit.action.reaction_roles_update"),
+    ("/api/embed-", "audit.action.embed"),
+    ("/api/feedback", "audit.action.feedback"),
+    ("/api/events", "audit.action.events"),
+    ("/api/brackets", "audit.action.brackets"),
+    ("/api/supply", "audit.action.supply"),
+    ("/api/voice", "audit.action.voice_settings"),
+    ("/api/news", "audit.action.news"),
+    ("/api/serverlog", "audit.action.serverlog"),
+    ("/api/xp", "audit.action.xp_settings"),
+    ("/api/streams", "audit.action.streams"),
+    ("/api/family", "audit.action.family"),
+    ("/api/giveaways", "audit.action.giveaways"),
+    ("/api/daily-topic", "audit.action.daily_topic"),
+    ("/api/automod", "audit.action.automod"),
+    ("/api/warns", "audit.action.warn_remove"),
+    ("/api/members", "audit.action.member"),
+    ("/api/roles", "audit.action.mass_assign"),
+    ("/api/lockdown", "audit.action.lockdown_on"),
+]
+
+_RAW_ACTION_RE = re.compile(r"^(GET|POST|PUT|PATCH|DELETE)\s+(/api/\S+)$", re.I)
 
 MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
@@ -73,7 +143,20 @@ def describe_action(method: str, path: str) -> str:
     for label_method, prefix, label in ACTION_LABELS:
         if method == label_method and path.startswith(prefix):
             return label
-    return f"{method} {path}"
+    for prefix, label in PATH_LABELS:
+        if path.startswith(prefix):
+            return label
+    return "audit.action.other"
+
+
+def normalize_stored_action(action: str) -> str:
+    """Map legacy 'PUT /api/wordle' (and similar) rows to i18n keys."""
+    if action.startswith("audit.action."):
+        return action
+    match = _RAW_ACTION_RE.match(action.strip())
+    if match:
+        return describe_action(match.group(1).upper(), match.group(2))
+    return action
 
 
 @web.middleware
@@ -84,6 +167,7 @@ async def audit_middleware(request: web.Request, handler):
             request.method in MUTATING_METHODS
             and request.path.startswith("/api/")
             and not request.path.startswith("/api/auth")
+            and not request.path.startswith("/api/public/")
         ):
             moderator = request.get("moderator")
             status = getattr(response, "status", 0)

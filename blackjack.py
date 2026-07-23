@@ -57,6 +57,7 @@ def build_embed(
     player: discord.Member | discord.User,
     econ: dict,
     lang: str,
+    guild_id: int,
     *,
     hide_dealer: bool = True,
     result: bj.GameResult | None = None,
@@ -107,7 +108,7 @@ def build_embed(
                 inline=True,
             )
 
-    balance = economy_db.get_balance(player.id)
+    balance = economy_db.get_balance(guild_id, player.id)
     embed.set_footer(text=i18n.t(
         "casino.bj.balance_footer", lang, balance=economy_core.format_amount(balance, econ),
     ))
@@ -123,15 +124,20 @@ class BlackjackView(discord.ui.View):
         self,
         cog: "BlackjackCog",
         player: discord.Member | discord.User,
+        guild_id: int,
         lang: str | None = None,
     ):
         super().__init__(timeout=300)
         self.cog = cog
         self.player = player
+        self.guild_id = guild_id
         self.lang = lang or i18n.DEFAULT_LANGUAGE
         self._lock = asyncio.Lock()
         self.message: discord.Message | None = None
         self._set_button_labels()
+
+    def _game_key(self) -> tuple[int, int]:
+        return (self.guild_id, self.player.id)
 
     def _set_button_labels(self) -> None:
         for child in self.children:
@@ -153,7 +159,7 @@ class BlackjackView(discord.ui.View):
         return True
 
     async def on_timeout(self) -> None:
-        self.cog._games.pop(self.player.id, None)
+        self.cog._games.pop(self._game_key(), None)
         self._finish_view()
         if self.message is not None:
             try:
@@ -180,7 +186,7 @@ class BlackjackView(discord.ui.View):
         result: bj.GameResult,
     ) -> None:
         if prize > 0:
-            economy_db.add(self.player.id, prize, f"blackjack_{result.name.lower()}")
+            economy_db.add(interaction.guild.id, self.player.id, prize, f"blackjack_{result.name.lower()}")
 
         db_result = "win"
         if result == bj.GameResult.LOSE:
@@ -188,15 +194,15 @@ class BlackjackView(discord.ui.View):
         elif result == bj.GameResult.PUSH:
             db_result = "push"
 
-        casino_db.record_bj(self.player.id, db_result)
+        casino_db.record_bj(interaction.guild.id, self.player.id, db_result)
         await check_loss_roles(interaction, settings)
 
         self.cog._cooldowns[self.player.id] = time.monotonic() + settings["cooldown_sec"]
-        self.cog._games.pop(self.player.id, None)
+        self.cog._games.pop(self._game_key(), None)
 
         self._finish_view()
         embed = build_embed(
-            game, self.player, econ, self.lang,
+            game, self.player, econ, self.lang, interaction.guild.id,
             hide_dealer=False, result=result, prize=prize,
         )
         await interaction.response.edit_message(embed=embed, view=self)
@@ -205,7 +211,7 @@ class BlackjackView(discord.ui.View):
     @discord.ui.button(label="Ещё карту", emoji="🃏", style=discord.ButtonStyle.primary, custom_id="bj_hit")
     async def hit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         async with self._lock:
-            game = self.cog._games.get(self.player.id)
+            game = self.cog._games.get(self._game_key())
             if game is None or game.finished:
                 await interaction.response.defer()
                 return
@@ -222,13 +228,13 @@ class BlackjackView(discord.ui.View):
                 await self._end_game(interaction, game, econ, settings, prize=0, result=result)
             else:
                 self._update_double_button()
-                embed = build_embed(game, self.player, econ, self.lang, hide_dealer=True)
+                embed = build_embed(game, self.player, econ, self.lang, interaction.guild.id, hide_dealer=True)
                 await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Стоп", emoji="✋", style=discord.ButtonStyle.secondary, custom_id="bj_stand")
     async def stand_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         async with self._lock:
-            game = self.cog._games.get(self.player.id)
+            game = self.cog._games.get(self._game_key())
             if game is None or game.finished:
                 await interaction.response.defer()
                 return
@@ -245,7 +251,7 @@ class BlackjackView(discord.ui.View):
     @discord.ui.button(label="Удвоить", emoji="⬆️", style=discord.ButtonStyle.danger, custom_id="bj_double")
     async def double_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         async with self._lock:
-            game = self.cog._games.get(self.player.id)
+            game = self.cog._games.get(self._game_key())
             if game is None or game.finished or not bj.can_double(game.player):
                 await interaction.response.defer()
                 return
@@ -253,7 +259,7 @@ class BlackjackView(discord.ui.View):
             settings = casino_core.get_settings(interaction.guild.id)
             econ = economy_core.get_settings(interaction.guild.id)
 
-            if not economy_db.try_spend(self.player.id, game.bet, "blackjack_double"):
+            if not economy_db.try_spend(interaction.guild.id, self.player.id, game.bet, "blackjack_double"):
                 await interaction.response.send_message(
                     i18n.t("casino.bj.double_insufficient", self.lang), ephemeral=True,
                 )
@@ -280,11 +286,11 @@ class BlackjackView(discord.ui.View):
 class BlackjackCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._games: dict[int, bj.BlackjackGame] = {}
+        self._games: dict[tuple[int, int], bj.BlackjackGame] = {}
         self._cooldowns: dict[int, float] = {}
 
-    def has_active_game(self, user_id: int) -> bool:
-        return user_id in self._games
+    def has_active_game(self, guild_id: int, user_id: int) -> bool:
+        return (guild_id, user_id) in self._games
 
     def cooldown_ready_at(self, user_id: int) -> float:
         return self._cooldowns.get(user_id, 0.0)
@@ -297,6 +303,11 @@ class BlackjackCog(commands.Cog):
     async def blackjack_command(self, interaction: discord.Interaction, ставка: int):
 
         lang = i18n.lang_for(interaction.guild_id)
+        if interaction.guild is None or interaction.guild_id is None:
+            return await interaction.response.send_message(
+                i18n.t("moderation.guild_only", lang), ephemeral=True,
+            )
+
         settings = casino_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(
@@ -309,9 +320,11 @@ class BlackjackCog(commands.Cog):
                 i18n.t("error.economy_disabled_casino", lang), ephemeral=True,
             )
 
+        guild_id = interaction.guild.id
         user_id = interaction.user.id
+        game_key = (guild_id, user_id)
 
-        if self.has_active_game(user_id):
+        if self.has_active_game(guild_id, user_id):
             return await interaction.response.send_message(
                 i18n.t("casino.bj.already_active", lang), ephemeral=True,
             )
@@ -333,7 +346,7 @@ class BlackjackCog(commands.Cog):
                     i18n.t("casino.cooldown", lang, seconds=remaining), ephemeral=True,
                 )
 
-        balance = economy_db.get_balance(user_id)
+        balance = economy_db.get_balance(guild_id, user_id)
         balance_display = economy_core.format_amount(balance, econ)
         bet_problem = casino_core.bet_error(
             ставка, balance, settings, lang=lang, balance_display=balance_display,
@@ -341,13 +354,13 @@ class BlackjackCog(commands.Cog):
         if bet_problem:
             return await interaction.response.send_message(bet_problem, ephemeral=True)
 
-        if not economy_db.try_spend(user_id, ставка, "blackjack_bet"):
+        if not economy_db.try_spend(guild_id, user_id, ставка, "blackjack_bet"):
             return await interaction.response.send_message(
                 i18n.t("error.insufficient_funds_bet", lang), ephemeral=True,
             )
 
         game = bj.new_game(ставка)
-        self._games[user_id] = game
+        self._games[game_key] = game
 
         if bj.is_blackjack(game.player) or bj.is_blackjack(game.dealer):
             game.finished = True
@@ -355,25 +368,25 @@ class BlackjackCog(commands.Cog):
             result = bj.resolve(game)
             prize = bj.payout(game.bet, result, settings["house_edge_percent"])
             if prize > 0:
-                economy_db.add(user_id, prize, f"blackjack_{result.value}")
+                economy_db.add(guild_id, user_id, prize, f"blackjack_{result.value}")
             db_result = "win"
             if result == bj.GameResult.LOSE:
                 db_result = "lose"
             elif result == bj.GameResult.PUSH:
                 db_result = "push"
-            casino_db.record_bj(user_id, db_result)
+            casino_db.record_bj(guild_id, user_id, db_result)
             await check_loss_roles(interaction, settings)
             self._cooldowns[user_id] = time.monotonic() + settings["cooldown_sec"]
-            self._games.pop(user_id, None)
+            self._games.pop(game_key, None)
 
             embed = build_embed(
-                game, interaction.user, econ, lang,
+                game, interaction.user, econ, lang, guild_id,
                 hide_dealer=False, result=result, prize=prize,
             )
             return await interaction.response.send_message(embed=embed)
 
-        view = BlackjackView(cog=self, player=interaction.user, lang=lang)
-        embed = build_embed(game, interaction.user, econ, lang, hide_dealer=True)
+        view = BlackjackView(cog=self, player=interaction.user, guild_id=guild_id, lang=lang)
+        embed = build_embed(game, interaction.user, econ, lang, guild_id, hide_dealer=True)
         await interaction.response.send_message(embed=embed, view=view)
         view.message = await interaction.original_response()
 

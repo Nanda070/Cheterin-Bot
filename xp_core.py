@@ -60,7 +60,7 @@ def get_settings(guild_id: int) -> dict:
     announce_template = str(stored_template) if stored_template else _default_announce_template(guild_id)
     return {
         "enabled": bool(data.get("enabled", False)),
-        "public_leaderboard": bool(data.get("public_leaderboard", True)),
+        "public_leaderboard": bool(data.get("public_leaderboard", False)),
         "reset_on_leave": bool(data.get("reset_on_leave", False)),
         "text": {
             "enabled": bool(text.get("enabled", True)),

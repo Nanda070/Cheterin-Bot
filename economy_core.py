@@ -89,7 +89,32 @@ def get_settings(guild_id: int) -> dict:
         "daily_growth_per_day": int(data.get("daily_growth_per_day", DEFAULT_DAILY_GROWTH_PER_DAY)),
         "daily_max_streak_days": int(data.get("daily_max_streak_days", DEFAULT_DAILY_MAX_STREAK_DAYS)),
         "shop_items": [_normalize_shop_item(i) for i in data.get("shop_items", []) if isinstance(i, dict)],
+        # Weekly report (optional channel + auto-post on Mondays MSK)
+        "weekly_report_enabled": bool(data.get("weekly_report_enabled", False)),
+        "weekly_report_channel_id": str(data.get("weekly_report_channel_id") or ""),
+        "weekly_report_days": int(data.get("weekly_report_days", 7)),
+        "last_weekly_report_date": str(data.get("last_weekly_report_date") or ""),
     }
+
+
+def mark_weekly_report_posted(guild_id: int, date_iso: str) -> None:
+    data = settings_db.get(guild_id, MODULE_NAME)
+    data["last_weekly_report_date"] = date_iso
+    settings_db.put(guild_id, MODULE_NAME, data)
+
+
+def should_post_weekly_report(guild_id: int) -> bool:
+    """True on Monday MSK if enabled, channel set, and not yet posted this ISO week."""
+    settings = get_settings(guild_id)
+    if not settings["enabled"] or not settings["weekly_report_enabled"]:
+        return False
+    if not settings["weekly_report_channel_id"]:
+        return False
+    now = datetime.now(_MSK)
+    if now.weekday() != 0:  # Monday
+        return False
+    week_key = now.strftime("%G-W%V")
+    return settings["last_weekly_report_date"] != week_key
 
 
 def format_amount(amount: int, settings: dict) -> str:
@@ -115,7 +140,7 @@ def award_for_xp(guild_id: int, user_id: int, xp_amount: int, kind: str) -> int:
     rate = settings["text_rate_percent"] if kind == "text" else settings["voice_rate_percent"]
     coins = coins_from_xp(xp_amount, rate)
     if coins > 0:
-        economy_db.add(user_id, coins, f"{kind}_xp")
+        economy_db.add(guild_id, user_id, coins, f"{kind}_xp")
     return coins
 
 
@@ -166,18 +191,18 @@ def claim_daily_bonus(guild_id: int, user_id: int, today: str | None = None) -> 
     """
     today = today or today_msk_date()
     settings = get_settings(guild_id)
-    state = economy_db.get_daily_bonus(user_id)
+    state = economy_db.get_daily_bonus(guild_id, user_id)
 
     if state["last_claim_date"] == today:
         return {
             "claimed": False, "already_claimed": True,
-            "streak": state["streak"], "amount": 0, "balance": economy_db.get_balance(user_id),
+            "streak": state["streak"], "amount": 0, "balance": economy_db.get_balance(guild_id, user_id),
         }
 
     yesterday = (date.fromisoformat(today) - timedelta(days=1)).isoformat()
     streak = state["streak"] + 1 if state["last_claim_date"] == yesterday else 1
     amount = daily_bonus_amount(streak, settings)
-    balance = economy_db.add(user_id, amount, "daily_bonus")
-    economy_db.set_daily_bonus(user_id, streak, today)
+    balance = economy_db.add(guild_id, user_id, amount, "daily_bonus")
+    economy_db.set_daily_bonus(guild_id, user_id, streak, today)
 
     return {"claimed": True, "already_claimed": False, "streak": streak, "amount": amount, "balance": balance}

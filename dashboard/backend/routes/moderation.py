@@ -428,13 +428,14 @@ async def mass_assign_role(request: web.Request) -> web.Response:
     else:
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    if any(job.status == "running" for job in mass_role_jobs.JOBS.values()):
+    if mass_role_jobs.has_running_job(guild.id):
         return web.json_response({"error": "job_already_running"}, status=409)
 
     job_id = str(uuid.uuid4())
     job = mass_role_jobs.MassAssignJob(
         status="running",
         total=len(members) + len(missing_ids),
+        guild_id=guild.id,
         failed=len(missing_ids),
         processed=len(missing_ids),
         errors=[f"Участник {mid}: не найден на сервере" for mid in missing_ids],
@@ -453,7 +454,7 @@ async def mass_assign_role(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def mass_assign_status(request: web.Request) -> web.Response:
     job = mass_role_jobs.JOBS.get(request.match_info["job_id"])
-    if job is None:
+    if job is None or int(job.guild_id) != int(request["guild_id"]):
         return web.json_response({"error": "job_not_found"}, status=404)
     return web.json_response(
         {

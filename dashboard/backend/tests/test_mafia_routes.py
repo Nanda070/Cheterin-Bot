@@ -129,3 +129,19 @@ async def test_games_list(aiohttp_client):
     entry = next(g for g in body["games"] if g["id"] == game["id"])
     assert entry["player_count"] == 2
     assert entry["status"] == "lobby"
+
+
+@pytest.mark.asyncio
+async def test_games_list_filters_by_guild(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    ours = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    foreign = mafia_db.create_game(999, 600, 10, 5, 20, 60, 120, 60)
+
+    resp = await client.get("/api/mafia/games")
+    assert resp.status == 200
+    ids = {g["id"] for g in (await resp.json())["games"]}
+    assert ours["id"] in ids
+    assert foreign["id"] not in ids

@@ -31,9 +31,9 @@ DEATH_COUNT = 8
 class FunCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._roulette_cooldowns: dict[int, float] = {}
-        self._roulette_clicks: dict[int, int] = {}
-        self._roulette_empty: dict[int, bool] = {}
+        self._roulette_cooldowns: dict[tuple[int, int], float] = {}
+        self._roulette_clicks: dict[tuple[int, int], int] = {}
+        self._roulette_empty: dict[tuple[int, int], bool] = {}
         self._auto_emoji_last: dict[int, float] = {}
 
     @commands.Cog.listener()
@@ -80,15 +80,21 @@ class FunCog(commands.Cog):
     @app_commands.describe(ставка="Ставка монет: выжил — удвоил, погиб — потерял (необязательно)")
     async def russian_roulette(self, interaction: discord.Interaction, ставка: int | None = None):
         lang = i18n.lang_for(interaction.guild_id)
+        if interaction.guild is None or interaction.guild_id is None:
+            return await interaction.response.send_message(
+                i18n.t("moderation.guild_only", lang), ephemeral=True
+            )
+
         settings = fun_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(
                 i18n.module_disabled(lang, "fun"), ephemeral=True
             )
 
+        key = (interaction.guild.id, interaction.user.id)
         cooldown = settings["roulette_cooldown_sec"]
         now = time.monotonic()
-        ready_at = self._roulette_cooldowns.get(interaction.user.id, 0.0)
+        ready_at = self._roulette_cooldowns.get(key, 0.0)
         if cooldown > 0 and now < ready_at:
             remaining = int(ready_at - now) + 1
             return await interaction.response.send_message(
@@ -102,22 +108,22 @@ class FunCog(commands.Cog):
                 return await interaction.response.send_message(
                     i18n.t("error.economy_disabled_play_without_bet", lang), ephemeral=True
                 )
-            error = economy_core.bet_error(bet, economy_db.get_balance(interaction.user.id), econ, lang=lang)
+            error = economy_core.bet_error(bet, economy_db.get_balance(interaction.guild.id, interaction.user.id), econ, lang=lang)
             if error:
                 return await interaction.response.send_message(error, ephemeral=True)
-            if not economy_db.try_spend(interaction.user.id, bet, "roulette_bet"):
+            if not economy_db.try_spend(interaction.guild.id, interaction.user.id, bet, "roulette_bet"):
                 return await interaction.response.send_message(
                     i18n.t("error.insufficient_funds_bet", lang), ephemeral=True
                 )
 
-        self._roulette_cooldowns[interaction.user.id] = now + cooldown
+        self._roulette_cooldowns[key] = now + cooldown
 
-        clicks = self._roulette_clicks.get(interaction.user.id, 0)
+        clicks = self._roulette_clicks.get(key, 0)
         if clicks == 0:
             empty = fun_core.roll_empty_cylinder()
-            self._roulette_empty[interaction.user.id] = empty
+            self._roulette_empty[key] = empty
         else:
-            empty = self._roulette_empty.get(interaction.user.id, False)
+            empty = self._roulette_empty.get(key, False)
 
         chamber_text = i18n.t(
             "fun.roulette.chamber",
@@ -131,15 +137,15 @@ class FunCog(commands.Cog):
             next_clicks = clicks + 1
             reload_note = ""
             if next_clicks >= fun_core.ROULETTE_CHAMBERS:
-                self._roulette_clicks[interaction.user.id] = 0
-                self._roulette_empty.pop(interaction.user.id, None)
+                self._roulette_clicks[key] = 0
+                self._roulette_empty.pop(key, None)
                 if empty:
                     reload_note = i18n.t("fun.roulette.empty_reload", lang)
             else:
-                self._roulette_clicks[interaction.user.id] = next_clicks
+                self._roulette_clicks[key] = next_clicks
             win_text = ""
             if bet > 0:
-                balance = economy_db.add(interaction.user.id, bet * 2, "roulette_win")
+                balance = economy_db.add(interaction.guild.id, interaction.user.id, bet * 2, "roulette_win")
                 win_text = i18n.t(
                     "fun.roulette.win_bet",
                     lang,
@@ -159,8 +165,8 @@ class FunCog(commands.Cog):
                 )
             )
 
-        self._roulette_clicks[interaction.user.id] = 0
-        self._roulette_empty.pop(interaction.user.id, None)
+        self._roulette_clicks[key] = 0
+        self._roulette_empty.pop(key, None)
 
         timeout_minutes = settings["roulette_timeout_minutes"]
         death_line = i18n.pick_random("fun.roulette.death", lang, DEATH_COUNT)
@@ -189,7 +195,7 @@ class FunCog(commands.Cog):
 
         bet_text = ""
         if bet > 0:
-            balance = economy_db.get_balance(interaction.user.id)
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             bet_text = i18n.t(
                 "fun.roulette.lost_bet",
                 lang,

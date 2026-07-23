@@ -10,7 +10,7 @@ import logging
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import economy_core
 import economy_db
@@ -108,6 +108,76 @@ class CosmeticsView(discord.ui.View):
 class EconomyCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.weekly_report_loop.start()
+
+    def cog_unload(self):
+        self.weekly_report_loop.cancel()
+
+    def build_weekly_embed(self, guild: discord.Guild, days: int, lang: str) -> discord.Embed:
+        settings = economy_core.get_settings(guild.id)
+        rows = economy_db.weekly_report(guild.id, days=days)[:15]
+        embed = discord.Embed(
+            title=i18n.t("economy.weekly.title", lang, days=days, emoji=settings["currency_emoji"]),
+            color=discord.Color.gold(),
+            timestamp=discord.utils.utcnow(),
+        )
+        if not rows:
+            embed.description = i18n.t("economy.weekly.empty", lang)
+            return embed
+        lines = []
+        for i, row in enumerate(rows, 1):
+            member = guild.get_member(row["user_id"])
+            name = member.display_name if member else str(row["user_id"])
+            lines.append(
+                i18n.t(
+                    "economy.weekly.line",
+                    lang,
+                    rank=i,
+                    name=name,
+                    earned=row["earned"],
+                    spent=row["spent"],
+                    net=row["net"],
+                    emoji=settings["currency_emoji"],
+                )
+            )
+        embed.description = "\n".join(lines)
+        return embed
+
+    async def post_weekly_report(self, guild_id: int) -> bool:
+        settings = economy_core.get_settings(guild_id)
+        channel_id = settings.get("weekly_report_channel_id") or ""
+        if not channel_id:
+            return False
+        channel = self.bot.get_channel(int(channel_id))
+        if channel is None:
+            return False
+        guild = self.bot.get_guild(guild_id)
+        if guild is None:
+            return False
+        lang = i18n.lang_for(guild_id)
+        days = max(1, min(30, int(settings.get("weekly_report_days") or 7)))
+        try:
+            await channel.send(embed=self.build_weekly_embed(guild, days, lang))
+        except discord.HTTPException:
+            logger.warning("Failed to post weekly economy report guild=%s", guild_id)
+            return False
+        from datetime import datetime
+        week_key = datetime.now(economy_core._MSK).strftime("%G-W%V")
+        economy_core.mark_weekly_report_posted(guild_id, week_key)
+        return True
+
+    @tasks.loop(minutes=15)
+    async def weekly_report_loop(self):
+        try:
+            for guild in self.bot.guilds:
+                if economy_core.should_post_weekly_report(guild.id):
+                    await self.post_weekly_report(guild.id)
+        except Exception:
+            logger.exception("weekly_report_loop error")
+
+    @weekly_report_loop.before_loop
+    async def before_weekly_report_loop(self):
+        await self.bot.wait_until_ready()
 
     # ────────────────────────── /daily ──────────────────────────
 
@@ -166,8 +236,8 @@ class EconomyCog(commands.Cog):
                 i18n.t("economy.error.bot_no_wallet", lang), ephemeral=True
             )
 
-        balance = economy_db.get_balance(target.id)
-        rank = economy_db.rank_of(target.id)
+        balance = economy_db.get_balance(interaction.guild.id, target.id)
+        rank = economy_db.rank_of(interaction.guild.id, target.id)
         embed = discord.Embed(
             title=i18n.t(
                 "economy.balance.title",
@@ -206,9 +276,9 @@ class EconomyCog(commands.Cog):
                 i18n.t("economy.error.bot_no_wallet", lang), ephemeral=True
             )
 
-        current = economy_db.get_balance(участник.id)
+        current = economy_db.get_balance(interaction.guild.id, участник.id)
         new_balance = min(economy_core.BALANCE_ADMIN_MAX, max(0, current + количество))
-        economy_db.set_balance(участник.id, new_balance, "admin_grant")
+        economy_db.set_balance(interaction.guild.id, участник.id, new_balance, "admin_grant")
 
         await interaction.response.send_message(
             i18n.t(
@@ -251,8 +321,8 @@ class EconomyCog(commands.Cog):
             )
 
         fee = economy_core.transfer_fee(количество, settings["transfer_fee_percent"])
-        if not economy_db.transfer(interaction.user.id, участник.id, количество, fee):
-            balance = economy_db.get_balance(interaction.user.id)
+        if not economy_db.transfer(interaction.guild.id, interaction.user.id, участник.id, количество, fee):
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t(
                     "economy.transfer.insufficient",
@@ -290,7 +360,7 @@ class EconomyCog(commands.Cog):
                 i18n.module_disabled(lang, "economy"), ephemeral=True
             )
 
-        top = economy_db.top(10)
+        top = economy_db.top(interaction.guild.id, 10)
         if not top:
             return await interaction.response.send_message(
                 i18n.t("economy.top.empty", lang), ephemeral=True
@@ -334,7 +404,7 @@ class EconomyCog(commands.Cog):
                 i18n.t("economy.shop.empty", lang), ephemeral=True
             )
 
-        balance = economy_db.get_balance(interaction.user.id)
+        balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
         lines = [self._shop_item_line(item, interaction.guild, settings, lang) for item in items]
 
         embed = discord.Embed(
@@ -408,8 +478,8 @@ class EconomyCog(commands.Cog):
                 ephemeral=True,
             )
 
-        if not economy_db.try_spend(interaction.user.id, item["price"], f"shop_{item['id']}"):
-            balance = economy_db.get_balance(interaction.user.id)
+        if not economy_db.try_spend(interaction.guild.id, interaction.user.id, item["price"], f"shop_{item['id']}"):
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t(
                     "economy.purchase.insufficient",
@@ -423,13 +493,13 @@ class EconomyCog(commands.Cog):
         try:
             await interaction.user.add_roles(role, reason=f"Покупка в магазине за {item['price']}")
         except discord.HTTPException:
-            economy_db.add(interaction.user.id, item["price"], f"shop_refund_{item['id']}")
+            economy_db.add(interaction.guild.id, interaction.user.id, item["price"], f"shop_refund_{item['id']}")
             logger.warning("Не удалось выдать роль %s покупателю %s — монеты возвращены", role.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t("economy.purchase.role_grant_failed", lang), ephemeral=True
             )
 
-        balance = economy_db.get_balance(interaction.user.id)
+        balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
         await interaction.response.send_message(
             i18n.t(
                 "economy.purchase.role_success",
@@ -444,13 +514,13 @@ class EconomyCog(commands.Cog):
     async def _purchase_cosmetic(
         self, interaction: discord.Interaction, item: dict, settings: dict, lang: str
     ):
-        if economy_db.owns_cosmetic(interaction.user.id, item["id"]):
+        if economy_db.owns_cosmetic(interaction.guild.id, interaction.user.id, item["id"]):
             return await interaction.response.send_message(
                 i18n.t("economy.purchase.cosmetic_already_owned", lang), ephemeral=True
             )
 
-        if not economy_db.try_spend(interaction.user.id, item["price"], f"shop_{item['id']}"):
-            balance = economy_db.get_balance(interaction.user.id)
+        if not economy_db.try_spend(interaction.guild.id, interaction.user.id, item["price"], f"shop_{item['id']}"):
+            balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
             return await interaction.response.send_message(
                 i18n.t(
                     "economy.purchase.insufficient",
@@ -463,9 +533,11 @@ class EconomyCog(commands.Cog):
 
         value = item["color_hex"] if item["type"] == "frame_color" else item["title_text"]
         display_name = item["name"] or (_item_label(item["type"], lang) + f" «{value}»")
-        economy_db.grant_cosmetic(interaction.user.id, item["id"], item["type"], value, display_name)
+        economy_db.grant_cosmetic(
+            interaction.guild.id, interaction.user.id, item["id"], item["type"], value, display_name
+        )
 
-        balance = economy_db.get_balance(interaction.user.id)
+        balance = economy_db.get_balance(interaction.guild.id, interaction.user.id)
         await interaction.response.send_message(
             i18n.t(
                 "economy.purchase.cosmetic_success",
@@ -488,8 +560,8 @@ class EconomyCog(commands.Cog):
                 i18n.module_disabled(lang, "economy"), ephemeral=True
             )
 
-        frames = economy_db.list_owned_cosmetics(interaction.user.id, "frame_color")
-        titles = economy_db.list_owned_cosmetics(interaction.user.id, "title")
+        frames = economy_db.list_owned_cosmetics(interaction.guild.id, interaction.user.id, "frame_color")
+        titles = economy_db.list_owned_cosmetics(interaction.guild.id, interaction.user.id, "title")
         if not frames and not titles:
             return await interaction.response.send_message(
                 i18n.t("economy.cosmetics.empty", lang), ephemeral=True
@@ -504,18 +576,33 @@ class EconomyCog(commands.Cog):
     async def handle_equip(self, interaction: discord.Interaction, kind: str, item_id: str | None):
         lang = i18n.lang_for(interaction.guild_id)
         if item_id is None:
-            economy_db.clear_equipped(interaction.user.id, kind)
+            economy_db.clear_equipped(interaction.guild.id, interaction.user.id, kind)
             key = "economy.equip.frame_removed" if kind == "frame_color" else "economy.equip.title_removed"
             return await interaction.response.send_message(i18n.t(key, lang), ephemeral=True)
 
-        if not economy_db.owns_cosmetic(interaction.user.id, item_id):
+        if not economy_db.owns_cosmetic(interaction.guild.id, interaction.user.id, item_id):
             return await interaction.response.send_message(
                 i18n.t("economy.equip.not_owned", lang), ephemeral=True
             )
 
-        economy_db.set_equipped(interaction.user.id, kind, item_id)
+        economy_db.set_equipped(interaction.guild.id, interaction.user.id, kind, item_id)
         key = "economy.equip.frame_applied" if kind == "frame_color" else "economy.equip.title_applied"
         await interaction.response.send_message(i18n.t(key, lang), ephemeral=True)
+
+    # ────────────────────────── /economy-weekly ──────────────────────────
+
+    @app_commands.command(name="economy-weekly", description="Show the weekly economy report")
+    @app_commands.default_permissions(manage_guild=True)
+    async def weekly_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
+        settings = economy_core.get_settings(interaction.guild.id)
+        if not settings["enabled"]:
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "economy"), ephemeral=True
+            )
+        days = max(1, min(30, int(settings.get("weekly_report_days") or 7)))
+        embed = self.build_weekly_embed(interaction.guild, days, lang)
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot: commands.Bot):
