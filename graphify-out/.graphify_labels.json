@@ -183,17 +183,13 @@
   "181": "test_supply_routes.py",
   "182": "Docs.tsx",
   "183": "auto_roles.py",
-  "184": "ctd.py",
   "185": "resolve_ticket",
   "186": "CustomCommandsCog",
-  "187": "FakeResponse",
   "188": "test_feedback_panel_routes.py",
   "189": "TimedRolesCog",
   "190": "BracketView.tsx",
   "191": "Button.tsx",
-  "192": "pick_bunker_conditions",
   "194": "resolve_ticket",
   "195": "ScheduledMessagesCog",
-  "197": "FakeResponse",
-  "202": "SupplyView"
+  "197": "FakeResponse"
 }

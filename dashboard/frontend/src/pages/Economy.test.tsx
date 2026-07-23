@@ -19,6 +19,9 @@ const emptySettings: client.EconomySettings = {
   daily_growth_per_day: 25,
   daily_max_streak_days: 7,
   shop_items: [],
+  weekly_report_enabled: false,
+  weekly_report_channel_id: '',
+  weekly_report_days: 7,
 }
 
 
