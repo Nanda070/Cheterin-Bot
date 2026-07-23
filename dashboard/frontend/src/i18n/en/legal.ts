@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 /** Privacy policy and terms of service (public pages). */
 const legal: TranslationDict = {
   'privacy.title': 'Privacy Policy',
-  'privacy.lastUpdated': 'Last updated: July 21, 2026',
+  'privacy.lastUpdated': 'Last updated: July 23, 2026',
 
   'privacy.s1.title': '1. General provisions',
   'privacy.s1.p1':
@@ -64,6 +64,39 @@ const legal: TranslationDict = {
   'privacy.table.reactionRoles.module': 'Reaction roles, buttons, embeds',
   'privacy.table.reactionRoles.data': 'Message, channel, and role IDs; form and button text',
   'privacy.table.reactionRoles.retention': 'Until the binding is removed',
+  'privacy.table.economy.module': 'Economy and casino',
+  'privacy.table.economy.data':
+    'Member ID, balance, shop purchases, transfer and bet history, casino game results; optional weekly report channel ID',
+  'privacy.table.economy.retention': 'Until deleted by administration or balance reset',
+  'privacy.table.wordle.module': 'Wordle and fun games',
+  'privacy.table.wordle.data': 'Member ID, daily Wordle progress and streaks; game cooldowns (per server)',
+  'privacy.table.wordle.retention': 'Until deleted by administration',
+  'privacy.table.polls.module': 'Polls',
+  'privacy.table.polls.data': 'Question text, options, voter IDs and choices, end time, status',
+  'privacy.table.polls.retention': 'Until deleted by administration',
+  'privacy.table.sticky.module': 'Sticky messages',
+  'privacy.table.sticky.data': 'Channel ID, sticky text, last posted message ID',
+  'privacy.table.sticky.retention': 'Until the sticky is removed',
+  'privacy.table.customCommands.module': 'Custom commands',
+  'privacy.table.customCommands.data': 'Trigger text, match mode, reply text configured by administration',
+  'privacy.table.customCommands.retention': 'Until the command is deleted',
+  'privacy.table.scheduledMessages.module': 'Scheduled messages',
+  'privacy.table.scheduledMessages.data': 'Channel ID, message content, schedule, last/next run time',
+  'privacy.table.scheduledMessages.retention': 'Until the schedule is deleted',
+  'privacy.table.timedRoles.module': 'Timed roles',
+  'privacy.table.timedRoles.data': 'Member ID, role ID, grant and expiry time',
+  'privacy.table.timedRoles.retention': 'Removed automatically when the role expires or is cancelled',
+  'privacy.table.birthdays.module': 'Server birthdays',
+  'privacy.table.birthdays.data': 'Member ID and birthday date (day/month; year optional)',
+  'privacy.table.birthdays.retention': 'Until deleted by the member or administration',
+  'privacy.table.ownerAlerts.module': 'Owner alerts',
+  'privacy.table.ownerAlerts.data':
+    'Alert thresholds and channel ID; no member message content — only operational signals (missing permissions, mass bans, module errors)',
+  'privacy.table.ownerAlerts.retention': 'Settings — until changed',
+  'privacy.table.games.module': 'Mafia and Bunker',
+  'privacy.table.games.data':
+    'Active game state, participant IDs, roles/traits for the current match; public action tokens for personal links',
+  'privacy.table.games.retention': 'Cleared when the game ends (or after a short cleanup window)',
   'privacy.table.news.module': 'News relay (main server feature)',
   'privacy.table.news.data': 'Source server, bot, and channel IDs; forwarded message content is not stored',
   'privacy.table.news.retention': 'Settings — until changed',
@@ -72,7 +105,7 @@ const legal: TranslationDict = {
   'privacy.table.config.retention': 'Until settings are changed',
   'privacy.s2.p5.label': 'Message content.',
   'privacy.s2.p5.rest':
-    'The bot does not archive chat history. Message content is processed only to the extent required by features explicitly enabled by administration: anti-spam analyzes recent messages in a temporary cache (cleared every few minutes), the news relay module forwards source-bot messages without storing them, and the logging module publishes deleted and edited message content to a Discord log channel if administration enabled that event type. For the level system, message content is not stored — only the fact of a message is recorded for XP.',
+    'The bot does not archive chat history. Message content is processed only to the extent required by features explicitly enabled by administration: anti-spam analyzes recent messages in a temporary cache (cleared every few minutes); sticky, scheduled, and custom-command modules store only the texts configured by administration (not the full channel history); the news relay module forwards source-bot messages without storing them; and the logging module publishes deleted and edited message content to a Discord log channel if administration enabled that event type. For the level system, message content is not stored — only the fact of a message is recorded for XP.',
 
   'privacy.s3.title': '3. What the Service does not do',
   'privacy.s3.li1': 'Does not sell or share data with third parties in any form.',
@@ -83,10 +116,11 @@ const legal: TranslationDict = {
   'privacy.s3.li5': 'Does not install third-party trackers, pixels, or analytics cookies on the website.',
 
   'privacy.s4.title': '4. Processing purposes',
-  'privacy.s4.li1': 'Operating user-requested features: tickets, supply runs, rooms, roles, events.',
+  'privacy.s4.li1':
+    'Operating user-requested features: tickets, supply runs, rooms, roles, events, economy, polls, sticky and scheduled messages, custom commands, timed roles, birthdays, and games.',
   'privacy.s4.li2': 'Verifying dashboard access rights.',
-  'privacy.s4.li3': 'Server moderation and safety (anti-spam, action log).',
-  'privacy.s4.li4': 'Showing statistics (invites, supply run attendance) to administrators and moderators.',
+  'privacy.s4.li3': 'Server moderation and safety (anti-spam, action log, owner alerts).',
+  'privacy.s4.li4': 'Showing statistics (invites, supply run attendance, economy tops) to administrators and moderators.',
 
   'privacy.s5.title': '5. Where and how data is stored',
   'privacy.s5.p1':
@@ -116,10 +150,12 @@ const legal: TranslationDict = {
   'privacy.s8.li3': 'anti-spam cache — every few minutes;',
   'privacy.s8.li4': 'raw voice sessions — after the retention period (aggregated stats remain);',
   'privacy.s8.li5': 'role bindings to deleted messages — on bot startup;',
-  'privacy.s8.li6': 'dashboard session — when you sign out of the panel.',
+  'privacy.s8.li6': 'dashboard session — when you sign out of the panel;',
+  'privacy.s8.li7': 'timed role grants — when they expire or are cancelled;',
+  'privacy.s8.li8': 'finished Mafia/Bunker game state — after the match ends (or a short cleanup window).',
   'privacy.s8.p2.label': 'Deletion on request.',
   'privacy.s8.p2.rest':
-    'You may request deletion of data linked to your account (invite stats, applications, participation history, rating and XP). Contact your server\'s administration (or open a ticket via the CTD panel on the main server) — resetting an individual member\'s rating is available to administration in one click. A server owner may request full deletion of all their server\'s data when removing the bot from the server.',
+    'You may request deletion of data linked to your account (invite stats, applications, participation history, rating and XP, economy balance, birthday entry). Contact your server\'s administration (or open a ticket via the CTD panel on the main server) — resetting an individual member\'s rating or balance is available to administration in the dashboard. A server owner may request full deletion of all their server\'s data when removing the bot from the server.',
 
   'privacy.s9.title': '9. Your rights',
   'privacy.s9.li1': 'find out what data the Service stores about you (request via server administration or a ticket);',
@@ -141,7 +177,7 @@ const legal: TranslationDict = {
     'Questions about data processing: contact your server\'s administration (or open a ticket via the CTD panel on the main server). For bot and hosting questions — developer Nandak070.',
 
   'terms.title': 'Terms of Service',
-  'terms.lastUpdated': 'Last updated: July 21, 2026',
+  'terms.lastUpdated': 'Last updated: July 23, 2026',
 
   'terms.s1.title': '1. Terms and definitions',
   'terms.s1.li1.prefix': '"Service"',
@@ -186,13 +222,22 @@ const legal: TranslationDict = {
   'terms.s3.li4': 'ticket system (CTD) and feedback with categories and resolutions;',
   'terms.s3.li5': 'welcome messages, invite statistics, auto-roles, and reaction roles;',
   'terms.s3.li6': 'embed message builder, templates, and interactive form buttons;',
-  'terms.s3.li7': 'events, polls, and tournament brackets (Single/Double Elimination, Round Robin) with public links;',
+  'terms.s3.li7':
+    'events, dedicated polls, giveaways, and tournament brackets (Single/Double Elimination, Round Robin) with public links;',
   'terms.s3.li8': 'supply runs with a waitlist and reminders;',
   'terms.s3.li9': 'private voice rooms with a control panel;',
-  'terms.s3.li10': 'Twitch stream and YouTube video alerts;',
+  'terms.s3.li10': 'Twitch stream and YouTube video alerts (optional mention settings);',
   'terms.s3.li11': 'message relay from a source server (main server feature);',
   'terms.s3.li12':
-    'web dashboard to manage all of the above, with server selection and moderator action audit.',
+    'economy and casino: server currency, shop, transfers, slots/coinflip/blackjack, optional weekly report;',
+  'terms.s3.li13':
+    'entertainment: Russian roulette, Wordle, Auto-Emoji, and other fun commands;',
+  'terms.s3.li14':
+    'custom commands, scheduled and sticky messages, command preview in the dashboard;',
+  'terms.s3.li15': 'timed roles, server-wide birthday calendar, and owner operational alerts;',
+  'terms.s3.li16': 'role-playing games Mafia and Bunker with personal web action links;',
+  'terms.s3.li17':
+    'web dashboard to manage all of the above, with server selection, RU/EN bot language per server, and moderator action audit.',
   'terms.s3.p2':
     '3.2. Cheterin uses a multi-server model: you can add the bot to your server via an invite link, then select the active server in the dashboard and configure its modules independently of other servers. Modules are disabled by default on a new server.',
   'terms.s3.p3':

@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { useT } from '../context/LanguageContext'
 
-export function PollsPage() {
+export function PollsPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [polls, setPolls] = useState<PollEntry[] | null>(null)
   const [error, setError] = useState('')
@@ -44,10 +44,17 @@ export function PollsPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <ChartBar size={22} className="text-primary" />
-          {t('polls.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <ChartBar size={20} className="text-primary" />
+            {t('polls.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <ChartBar size={22} className="text-primary" />
+            {t('polls.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('polls.intro')}</p>
       </div>
 

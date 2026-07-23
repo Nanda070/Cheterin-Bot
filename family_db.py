@@ -3,7 +3,8 @@
 Все таблицы per-guild (Фаза 2.2б MULTIGUILD_PLAN.md): ростер и список ДР — по одному
 сообщению на сервер, заявки/черновики/дни рождения изолированы между серверами.
 При миграции старой (одно-серверной) схемы существующие строки присваиваются
-мейн-серверу (guild 404) — тот же приём, что в stats_db.py.
+мейн-серверу (GUILD_ID / MAIN_GUILD_ID) — тот же приём, что в economy_db.py.
+Ранний sentinel 404 ремонтируется при init().
 """
 
 import os
@@ -11,7 +12,19 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 
-MAIN_GUILD = 404  # легаси-строки без guild_id при миграции достаются мейн-серверу
+# Ошибочный sentinel первой per-guild миграции (легаси уезжало на guild_id=404).
+_MISATTRIBUTED_GUILD = 404
+
+
+def get_main_guild_id() -> int:
+    """Мейн-сервер для миграции легаси-строк без guild_id."""
+    return int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
+
+
+def __getattr__(name: str):
+    if name == "MAIN_GUILD":
+        return get_main_guild_id()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def get_db_path() -> str:
@@ -38,8 +51,61 @@ def _guild_id_in_pk(conn, table: str) -> bool:
     return False
 
 
+def _move_or_drop_user_rows(conn: sqlite3.Connection, table: str, key_cols: tuple[str, ...], real_main: int) -> None:
+    if table not in {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} \
+            or "guild_id" not in _table_columns(conn, table):
+        return
+    rows = conn.execute(f"SELECT * FROM {table} WHERE guild_id = ?", (_MISATTRIBUTED_GUILD,)).fetchall()
+    for row in rows:
+        where = " AND ".join(f"{c} = ?" for c in key_cols)
+        key_vals = [row[c] for c in key_cols]
+        exists = conn.execute(
+            f"SELECT 1 FROM {table} WHERE guild_id = ? AND {where}",
+            [real_main] + key_vals,
+        ).fetchone()
+        if exists is None:
+            conn.execute(
+                f"UPDATE {table} SET guild_id = ? WHERE guild_id = ? AND {where}",
+                [real_main, _MISATTRIBUTED_GUILD] + key_vals,
+            )
+        else:
+            conn.execute(
+                f"DELETE FROM {table} WHERE guild_id = ? AND {where}",
+                [_MISATTRIBUTED_GUILD] + key_vals,
+            )
+
+
+def _move_or_drop_singleton(conn: sqlite3.Connection, table: str, real_main: int) -> None:
+    if table not in {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")} \
+            or "guild_id" not in _table_columns(conn, table):
+        return
+    row = conn.execute(f"SELECT * FROM {table} WHERE guild_id = ?", (_MISATTRIBUTED_GUILD,)).fetchone()
+    if row is None:
+        return
+    exists = conn.execute(f"SELECT 1 FROM {table} WHERE guild_id = ?", (real_main,)).fetchone()
+    if exists is None:
+        conn.execute(
+            f"UPDATE {table} SET guild_id = ? WHERE guild_id = ?",
+            (real_main, _MISATTRIBUTED_GUILD),
+        )
+    else:
+        conn.execute(f"DELETE FROM {table} WHERE guild_id = ?", (_MISATTRIBUTED_GUILD,))
+
+
+def _repair_misattributed_guild(conn: sqlite3.Connection) -> None:
+    real_main = get_main_guild_id()
+    if real_main == _MISATTRIBUTED_GUILD:
+        return
+    _move_or_drop_singleton(conn, "roster_msg", real_main)
+    _move_or_drop_singleton(conn, "birthday_msg", real_main)
+    _move_or_drop_user_rows(conn, "pending_forms", ("user_id",), real_main)
+    _move_or_drop_user_rows(conn, "tickets", ("user_id",), real_main)
+    _move_or_drop_user_rows(conn, "birthdays", ("user_id",), real_main)
+
+
 def init():
     with closing(connect()) as conn, conn:
+        main_guild = get_main_guild_id()
         # ── roster_msg: id=1 (синглтон) → guild_id (per-guild) ──
         cols = _table_columns(conn, "roster_msg")
         if cols and "guild_id" not in cols:
@@ -53,7 +119,7 @@ def init():
             """)
             conn.execute(
                 "INSERT INTO roster_msg (guild_id, channel_id, message_id) SELECT ?, channel_id, message_id FROM roster_msg_old",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE roster_msg_old")
         else:
@@ -83,7 +149,7 @@ def init():
             conn.execute(
                 "INSERT INTO pending_forms (guild_id, user_id, nickname, game_level, faction_pref, online_timezone) "
                 "SELECT ?, user_id, nickname, game_level, faction_pref, online_timezone FROM pending_forms_old",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE pending_forms_old")
         else:
@@ -102,7 +168,7 @@ def init():
         # ── tickets: user_id PK (guild_id уже есть колонкой) → (guild_id, user_id) PK ──
         cols = _table_columns(conn, "tickets")
         if cols and not _guild_id_in_pk(conn, "tickets"):
-            gid_expr = "guild_id" if "guild_id" in cols else str(MAIN_GUILD)
+            gid_expr = "guild_id" if "guild_id" in cols else str(main_guild)
             conn.execute("ALTER TABLE tickets RENAME TO tickets_old")
             conn.execute("""
                 CREATE TABLE tickets (
@@ -162,7 +228,7 @@ def init():
         # ── birthdays: user_id PK (guild_id уже есть колонкой) → (guild_id, user_id) PK ──
         cols = _table_columns(conn, "birthdays")
         if cols and not _guild_id_in_pk(conn, "birthdays"):
-            gid_expr = "guild_id" if "guild_id" in cols else str(MAIN_GUILD)
+            gid_expr = "guild_id" if "guild_id" in cols else str(main_guild)
             conn.execute("ALTER TABLE birthdays RENAME TO birthdays_old")
             conn.execute("""
                 CREATE TABLE birthdays (
@@ -204,7 +270,7 @@ def init():
             """)
             conn.execute(
                 "INSERT INTO birthday_msg (guild_id, channel_id, message_id) SELECT ?, channel_id, message_id FROM birthday_msg_old",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE birthday_msg_old")
         else:
@@ -215,6 +281,8 @@ def init():
                     message_id INTEGER
                 )
             """)
+
+        _repair_misattributed_guild(conn)
 
 
 # ────────────────────────── Live-ростер ──────────────────────────

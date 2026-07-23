@@ -24,8 +24,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <P>
           Cheterin is a multi-purpose Discord bot with a full web control panel (dashboard). In a single process it
           covers everything a gaming community needs: moderation and raid protection, levels and rankings, full
-          logging, tickets and feedback, welcomes and auto-roles, a message builder, events, tournament brackets in
-          three formats, supply runs, private voice rooms, stream notifications, and news relay.
+          logging, tickets and feedback, welcomes and auto-roles, a message builder, events, polls, tournament brackets,
+          economy and casino, custom commands, scheduled and sticky messages, supply runs, private voice rooms, stream
+          notifications, and news relay.
         </P>
         <P>
           The project philosophy is <strong>minimal chat commands, maximum control in the browser</strong>. Almost
@@ -87,12 +88,20 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events & polls → Giveaways'],
             ['Daily topic', 'Question/topic of the day posted on a schedule to keep chat alive', 'Daily topic'],
             ['Fun', 'Russian roulette, emoji roulette, Auto-Emoji, and Russian Wordle (word of the day)', 'Fun'],
-            ['Economy', 'Server currency: activity payouts, transfers, role shop, roulette bets, casino (slots, coinflip, blackjack)', 'Economy'],
+            ['Economy', 'Server currency: activity payouts, transfers, role shop, roulette bets, casino (slots, coinflip, blackjack), weekly report', 'Economy'],
+            ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Custom commands'],
+            ['Scheduled messages', 'One-shot or recurring posts to a channel on a schedule', 'Scheduled messages'],
+            ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'Sticky messages'],
+            ['Polls', 'Dedicated polls with live tallies and early end from the dashboard', 'Polls'],
+            ['Timed roles', 'Temporary role grants that expire automatically', 'Timed roles'],
+            ['Birthdays', 'Server-wide birthday calendar and announcements', 'Birthdays'],
+            ['Command preview', 'Try bot replies in the dashboard without posting to Discord', 'Command preview'],
+            ['Owner alerts', 'Notify the owner on missing permissions, mass bans, or module errors', 'Server settings'],
             ['AutoMod', '9 message filters with punishments and warn escalation', 'AutoMod'],
             ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins - off by default', 'Moderation → Anti-raid'],
             ['Verification', '“I am not a bot” panel for newcomers before full access - off by default', 'Moderation → Verification'],
             ['Supplies', 'Member sign-ups with reserve list and reminders', 'Supplies'],
-            ['Family', 'Role-based roster, join applications via tickets, birthdays', 'Family'],
+            ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Family'],
             ['Private rooms', 'Personal voice channels with a control panel', 'Private rooms'],
             ['News relay', 'Forward messages from a source server', 'News relay'],
             ['Bulk role assign', 'Background role assignment to many members', 'Members & roles'],
@@ -159,12 +168,19 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Bunker', 'Module toggle, default players and timers, active games, special-ability requests'],
             ['Events & polls', 'Giveaways tab: active and finished draws, create, reroll'],
             ['Fun', 'Module toggle, Russian roulette timeout and cooldown, Auto-Emoji, Wordle'],
-            ['Economy', 'Currency, XP rate, daily bonus, transfers, roulette bets, casino (slots/coinflip/blackjack), role shop, balance top'],
+            ['Economy', 'Currency, XP rate, daily bonus, transfers, roulette bets, casino (slots/coinflip/blackjack), role shop, balance top, weekly report'],
+            ['Custom commands', 'Create trigger → reply rules; module toggle'],
+            ['Scheduled messages', 'Create, edit, enable/disable scheduled channel posts'],
+            ['Sticky messages', 'Per-channel sticky text, refresh/test post'],
+            ['Polls', 'Active and finished polls, end early, vote tallies'],
+            ['Timed roles', 'Grant a role until a set time; list and cancel'],
+            ['Birthdays', 'Member birthday calendar and announce channel'],
+            ['Command preview', 'Dry-run how the bot would reply to a trigger or slash-style input'],
             ['Supplies', 'Active runs, history, top participants, create a run'],
             ['Family', 'Module toggle, role roster, ticket applications, birthdays'],
             ['Private rooms', 'Active rooms, publish control panel'],
             ['Buttons & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
-            ['Posts & subscriptions', 'Twitch streamer and YouTube channel subscriptions'],
+            ['Posts & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
             ['News relay', 'Forwarding routes and source settings'],
             ['Daily topic', 'Topic list, channel and publish times, manual publish'],
             ['Logging', 'Toggle and channel for each server event type'],
@@ -173,10 +189,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Tabs: Lockdown and journal, Settings (moderation log), Anti-raid (anti-spam and Tempban), Verification',
             ],
             ['AutoMod', 'Message filters, punishments, warn escalation'],
-            ['Server join', 'Welcomes, goodbyes, auto-roles, onboarding channels'],
-            ['Members & roles', 'Member search, cards, bans/kicks, bulk roles'],
+            ['Server join', 'Welcomes, goodbyes, auto-roles, onboarding channels; test send'],
+            ['Members & roles', 'Member search, cards, bans/kicks, bulk roles, invite stats'],
             ['Dashboard audit', 'History of moderator actions in the panel'],
-            ['Server settings', 'Bot language for this server (RU/EN) — messages, embeds and command replies'],
+            [
+              'Server settings',
+              'Bot language for this server (RU/EN) and owner alerts (missing permissions, mass bans, module errors)',
+            ],
             ['Super Admin', 'Bot server list, news, CTD tickets (main server only)'],
           ]}
         />
@@ -1436,6 +1455,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           an exact value for any member). All operations are logged (<Code>economy.db</Code>, <Code>history</Code>{' '}
           table) — you can always see where coins came from.
         </P>
+
+        <H3>Weekly report</H3>
+        <P>
+          Optional digest posted to a chosen channel every N days (default 7): top earners, net flow, and high-level
+          casino activity for that server. Enable and set the channel under Economy. Reports are per-guild and never
+          mix balances across servers.
+        </P>
       </>
     ),
   },
@@ -1800,6 +1826,76 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             selected, then builds a report: how many succeeded, how many failed.
           </li>
         </OL>
+      </>
+    ),
+  },
+
+  {
+    id: 'community-tools',
+    title: 'Community tools',
+    group: 'Modules',
+    content: (
+      <>
+        <H>🧩 Custom commands, schedules, sticky, polls, roles &amp; birthdays</H>
+        <P>
+          These modules live under their own dashboard pages. Each is scoped to the active server and off or empty until
+          you configure it. They do not share data with other guilds.
+        </P>
+
+        <H3>Custom commands</H3>
+        <P>
+          Define trigger → reply rules: exact match or “contains”. When a member sends a matching message, the bot
+          replies with the configured text. Toggle the module on the Custom commands page; disable individual rules
+          without deleting them.
+        </P>
+
+        <H3>Scheduled messages</H3>
+        <P>
+          Create one-shot or recurring posts to a channel. Edit content, channel, and schedule from the dashboard (including
+          PATCH updates to existing jobs). Disabled schedules stay in the list until removed.
+        </P>
+
+        <H3>Sticky messages</H3>
+        <P>
+          Keep a message at the bottom of a channel: after new chat activity the bot re-posts the sticky so it stays
+          visible. Use the refresh/test action to post immediately without waiting for chat traffic.
+        </P>
+
+        <H3>Polls</H3>
+        <P>
+          Dedicated poll module (separate from Events). Track active and finished polls, live vote tallies, and end a
+          poll early from the dashboard. Vote data is stored per server.
+        </P>
+
+        <H3>Timed roles</H3>
+        <P>
+          Grant a role until a set expiry. When time is up the bot removes the role automatically. Cancel early from the
+          Timed roles page.
+        </P>
+
+        <H3>Birthdays</H3>
+        <P>
+          Server-wide birthday calendar (distinct from Family roster birthdays). Members&apos; day/month are stored for
+          announcements to a configured channel. Family birthdays remain on the Family page for roster members.
+        </P>
+
+        <H3>Command preview</H3>
+        <P>
+          Dry-run how the bot would reply to a custom-command trigger or similar input without posting to Discord —
+          useful while drafting replies.
+        </P>
+
+        <H3>Owner alerts</H3>
+        <P>
+          On Server settings: optional DM and/or channel alerts when the bot lacks critical permissions, mass bans spike,
+          or a module errors repeatedly. Thresholds are configurable per server.
+        </P>
+
+        <H3>Test sends</H3>
+        <P>
+          Several modules include a safe test action: welcome channel/DM preview, sticky refresh, and streams test
+          announce — so you can verify setup without waiting for a real event.
+        </P>
       </>
     ),
   },

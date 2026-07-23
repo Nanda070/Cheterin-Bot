@@ -1,7 +1,8 @@
 """Тесты stats_db: per-guild изоляция XP/войс/аудита и миграция старой схемы.
 
 Фаза 2.2а MULTIGUILD_PLAN.md: xp_members/voice_sessions/audit_log получили guild_id;
-существующие (глобальные) строки при миграции присваиваются мейн-серверу (guild 404).
+существующие (глобальные) строки при миграции присваиваются мейн-серверу
+(GUILD_ID / MAIN_GUILD_ID). Ошибочный sentinel 404 ремонтируется при init().
 """
 
 import sqlite3
@@ -11,13 +12,15 @@ import pytest
 
 import stats_db
 
-MAIN = 404
+MAIN = 1111  # произвольный guild_id для тестов изоляции (не sentinel 404)
 OTHER = 777
 
 
 @pytest.fixture(autouse=True)
 def isolated_db(tmp_path, monkeypatch):
     monkeypatch.setenv("STATS_DB_PATH", str(tmp_path / "stats.db"))
+    monkeypatch.delenv("GUILD_ID", raising=False)
+    monkeypatch.delenv("MAIN_GUILD_ID", raising=False)
     stats_db.init()
 
 
@@ -221,44 +224,112 @@ def _create_legacy_schema(path: str):
 def test_migration_assigns_legacy_rows_to_main_guild(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_stats.db")
     monkeypatch.setenv("STATS_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     stats_db.init()  # должна выполнить миграцию идемпотентно
+    main = stats_db.get_main_guild_id()
 
-    xp_row = stats_db.xp_get_member(MAIN, 10)
+    xp_row = stats_db.xp_get_member(main, 10)
     assert xp_row is not None
     assert xp_row["xp"] == 500 and xp_row["level"] == 5
     assert xp_row["messages"] == 42 and xp_row["voice_seconds"] == 3600
     assert xp_row["last_text_xp_ts"] == 12345
 
-    voice = stats_db.voice_sessions_since(MAIN, 0)
-    assert len(voice) == 1 and voice[0]["guild_id"] == MAIN
+    voice = stats_db.voice_sessions_since(main, 0)
+    assert len(voice) == 1 and voice[0]["guild_id"] == main
 
-    audit = stats_db.audit_list(MAIN)
-    assert len(audit) == 1 and audit[0]["guild_id"] == MAIN
+    audit = stats_db.audit_list(main)
+    assert len(audit) == 1 and audit[0]["guild_id"] == main
 
 
 def test_migration_is_idempotent(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_stats2.db")
     monkeypatch.setenv("STATS_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     stats_db.init()
     stats_db.init()  # повторный вызов не должен падать и не должен дублировать строки
+    main = stats_db.get_main_guild_id()
 
-    assert stats_db.xp_member_count(MAIN) == 1
-    assert len(stats_db.voice_sessions_since(MAIN, 0)) == 1
-    assert stats_db.audit_count(MAIN) == 1
+    assert stats_db.xp_member_count(main) == 1
+    assert len(stats_db.voice_sessions_since(main, 0)) == 1
+    assert stats_db.audit_count(main) == 1
 
 
 def test_xp_members_primary_key_is_composite(tmp_path, monkeypatch):
     """После миграции один user_id может существовать на разных серверах."""
     db_path = str(tmp_path / "legacy_stats3.db")
     monkeypatch.setenv("STATS_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
     stats_db.init()
+    main = stats_db.get_main_guild_id()
 
     # тот же user_id 10, но другой сервер — отдельная строка, без конфликта PK
     stats_db.xp_add_text(OTHER, 10, 77, 1000)
-    assert stats_db.xp_get_member(MAIN, 10)["xp"] == 500
+    assert stats_db.xp_get_member(main, 10)["xp"] == 500
     assert stats_db.xp_get_member(OTHER, 10)["xp"] == 77
+
+
+def test_repair_moves_misattributed_404_xp_to_main(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "misattributed_stats.db")
+    monkeypatch.setenv("STATS_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
+    main = 1324239354154975252
+
+    with closing(sqlite3.connect(db_path)) as conn, conn:
+        conn.execute("""
+            CREATE TABLE xp_members (
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                xp INTEGER NOT NULL DEFAULT 0,
+                level INTEGER NOT NULL DEFAULT 0,
+                messages INTEGER NOT NULL DEFAULT 0,
+                voice_seconds INTEGER NOT NULL DEFAULT 0,
+                last_text_xp_ts INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (guild_id, user_id)
+            )
+        """)
+        conn.execute("INSERT INTO xp_members VALUES (404, 10, 500, 5, 42, 3600, 12345)")
+        conn.execute("""
+            CREATE TABLE voice_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                channel_id INTEGER NOT NULL,
+                channel_name TEXT NOT NULL DEFAULT '',
+                joined_ts INTEGER NOT NULL,
+                left_ts INTEGER NOT NULL,
+                active_seconds INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        conn.execute(
+            "INSERT INTO voice_sessions (guild_id, user_id, channel_id, channel_name, joined_ts, left_ts, active_seconds) "
+            "VALUES (404, 10, 1, 'general', 1000, 1600, 600)"
+        )
+        conn.execute("""
+            CREATE TABLE audit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id INTEGER NOT NULL,
+                ts INTEGER NOT NULL,
+                moderator_id INTEGER NOT NULL,
+                moderator_name TEXT NOT NULL,
+                method TEXT NOT NULL,
+                path TEXT NOT NULL,
+                action TEXT NOT NULL,
+                status INTEGER NOT NULL,
+                details TEXT NOT NULL DEFAULT ''
+            )
+        """)
+        conn.execute(
+            "INSERT INTO audit_log (guild_id, ts, moderator_id, moderator_name, method, path, action, status, details) "
+            "VALUES (404, 1000, 1, 'mod', 'POST', '/api/x', 'act', 200, '')"
+        )
+
+    stats_db.init()
+    assert stats_db.xp_get_member(main, 10)["xp"] == 500
+    assert stats_db.xp_get_member(404, 10) is None
+    assert len(stats_db.voice_sessions_since(main, 0)) == 1
+    assert stats_db.audit_count(main) == 1

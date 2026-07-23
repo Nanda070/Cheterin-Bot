@@ -49,6 +49,16 @@ const TABLE_ROW_KEYS = [
   'streams',
   'events',
   'reactionRoles',
+  'economy',
+  'wordle',
+  'polls',
+  'sticky',
+  'customCommands',
+  'scheduledMessages',
+  'timedRoles',
+  'birthdays',
+  'ownerAlerts',
+  'games',
   'news',
   'config',
 ] as const
@@ -166,6 +176,8 @@ export function PrivacyPage() {
             <li>{t('privacy.s8.li4')}</li>
             <li>{t('privacy.s8.li5')}</li>
             <li>{t('privacy.s8.li6')}</li>
+            <li>{t('privacy.s8.li7')}</li>
+            <li>{t('privacy.s8.li8')}</li>
           </ul>
           <p>
             8.2. <strong>{t('privacy.s8.p2.label')}</strong> {t('privacy.s8.p2.rest')}

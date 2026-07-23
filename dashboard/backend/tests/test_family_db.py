@@ -1,7 +1,8 @@
 """Тесты family_db: per-guild ростер/заявки/дни рождения + миграция старой схемы.
 
 Фаза 2.2б MULTIGUILD_PLAN.md: «Семья» стала полноценно мультигилдовой. Старые
-(одно-серверные) строки при миграции присваиваются мейн-серверу (guild 404).
+(одно-серверные) строки при миграции присваиваются мейн-серверу
+(GUILD_ID / MAIN_GUILD_ID). Ошибочный sentinel 404 ремонтируется при init().
 """
 
 import sqlite3
@@ -13,12 +14,17 @@ import family_db
 
 G = 100
 G2 = 200
-MAIN = family_db.MAIN_GUILD
+
+
+def _main() -> int:
+    return family_db.get_main_guild_id()
 
 
 @pytest.fixture(autouse=True)
 def isolated_db(tmp_path, monkeypatch):
     monkeypatch.setenv("FAMILY_DB_PATH", str(tmp_path / "family.db"))
+    monkeypatch.delenv("GUILD_ID", raising=False)
+    monkeypatch.delenv("MAIN_GUILD_ID", raising=False)
     family_db.init()
 
 
@@ -156,7 +162,11 @@ def test_birthday_message_roundtrip_and_isolation():
 
 def _create_legacy_schema(path: str):
     """Схема до Фазы 2.2б: синглтоны roster_msg/birthday_msg (id=1), single-PK
-    pending_forms/tickets/birthdays (tickets/birthdays уже с колонкой guild_id)."""
+    pending_forms/tickets/birthdays (tickets/birthdays уже с колонкой guild_id).
+
+    Исторически колонка guild_id в tickets/birthdays писалась sentinel'ом 404 —
+    repair при init переносит их на реальный мейн.
+    """
     with closing(sqlite3.connect(path)) as conn, conn:
         conn.execute("CREATE TABLE roster_msg (id INTEGER PRIMARY KEY CHECK (id = 1), channel_id INTEGER, message_id INTEGER)")
         conn.execute("INSERT INTO roster_msg (id, channel_id, message_id) VALUES (1, 500, 999)")
@@ -173,12 +183,11 @@ def _create_legacy_schema(path: str):
             )
         """)
         conn.execute(
-            "INSERT INTO tickets (user_id, guild_id, status, nickname, created_at) VALUES (7, ?, 'open', 'Leg', '01.01.2026 00:00 UTC')",
-            (MAIN,),
+            "INSERT INTO tickets (user_id, guild_id, status, nickname, created_at) VALUES (7, 404, 'open', 'Leg', '01.01.2026 00:00 UTC')",
         )
 
         conn.execute("CREATE TABLE birthdays (user_id INTEGER PRIMARY KEY, guild_id INTEGER NOT NULL, day INTEGER NOT NULL, month INTEGER NOT NULL, date_display TEXT NOT NULL)")
-        conn.execute("INSERT INTO birthdays VALUES (7, ?, 5, 1, '05.01')", (MAIN,))
+        conn.execute("INSERT INTO birthdays VALUES (7, 404, 5, 1, '05.01')")
 
         conn.execute("CREATE TABLE birthday_msg (id INTEGER PRIMARY KEY CHECK (id = 1), channel_id INTEGER, message_id INTEGER)")
         conn.execute("INSERT INTO birthday_msg (id, channel_id, message_id) VALUES (1, 700, 800)")
@@ -187,30 +196,34 @@ def _create_legacy_schema(path: str):
 def test_migration_assigns_legacy_rows_to_main_guild(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_family.db")
     monkeypatch.setenv("FAMILY_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     family_db.init()
+    main = _main()
 
-    assert family_db.get_roster_data(MAIN)["channel_id"] == 500
-    assert family_db.get_pending_form(MAIN, 7)["nickname"] == "Leg"
-    assert family_db.get_ticket_by_user(MAIN, 7)["status"] == "open"
-    assert family_db.get_all_birthdays(MAIN)[0]["user_id"] == 7
-    assert family_db.get_birthday_message_data(MAIN)["channel_id"] == 700
+    assert family_db.get_roster_data(main)["channel_id"] == 500
+    assert family_db.get_pending_form(main, 7)["nickname"] == "Leg"
+    assert family_db.get_ticket_by_user(main, 7)["status"] == "open"
+    assert family_db.get_all_birthdays(main)[0]["user_id"] == 7
+    assert family_db.get_birthday_message_data(main)["channel_id"] == 700
 
 
 def test_migration_is_idempotent(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_family2.db")
     monkeypatch.setenv("FAMILY_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     family_db.init()
     family_db.init()  # повторный вызов не должен падать/дублировать
+    main = _main()
 
-    assert family_db.count_tickets(MAIN) == 1
-    assert len(family_db.get_all_birthdays(MAIN)) == 1
-    assert family_db.get_roster_data(MAIN)["channel_id"] == 500
+    assert family_db.count_tickets(main) == 1
+    assert len(family_db.get_all_birthdays(main)) == 1
+    assert family_db.get_roster_data(main)["channel_id"] == 500
 
     # композитный PK после миграции: тот же user_id может жить на другом сервере
     family_db.create_ticket_record(7, G2, TICKET_DATA)
-    assert family_db.get_ticket_by_user(MAIN, 7)["nickname"] == "Leg"
+    assert family_db.get_ticket_by_user(main, 7)["nickname"] == "Leg"
     assert family_db.get_ticket_by_user(G2, 7)["nickname"] == "Nick"

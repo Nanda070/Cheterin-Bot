@@ -62,6 +62,7 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("PUT", "/api/xp/members", "audit.action.xp_member"),
     ("POST", "/api/xp/members", "audit.action.xp_member_reset"),
     ("POST", "/api/xp/reset-all", "audit.action.xp_reset_all"),
+    ("POST", "/api/economy/reset-all", "audit.action.economy_reset_all"),
     ("POST", "/api/xp/card-bg", "audit.action.xp_card_bg"),
     ("DELETE", "/api/xp/card-bg", "audit.action.xp_card_bg_delete"),
     ("PUT", "/api/xp", "audit.action.xp_settings"),

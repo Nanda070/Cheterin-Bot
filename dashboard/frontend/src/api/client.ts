@@ -1914,6 +1914,10 @@ export function setEconomyBalance(userId: string, balance: number): Promise<{ us
   return apiFetch('/api/economy/balance', jsonInit('PUT', { user_id: userId, balance }))
 }
 
+export async function resetAllEconomyBalances(): Promise<{ ok: boolean; cleared: number }> {
+  return apiFetch('/api/economy/reset-all', jsonInit('POST'))
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÐšÐ°Ð·Ð¸Ð½Ð¾ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CasinoLossRole {

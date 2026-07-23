@@ -10,8 +10,20 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 
-# Легаси-строки без guild_id при миграции достаются мейн-серверу (как в stats_db / family_db).
-MAIN_GUILD = 404
+# Ошибочный sentinel первой per-guild миграции (легаси уезжало на guild_id=404).
+_MISATTRIBUTED_GUILD = 404
+
+
+def get_main_guild_id() -> int:
+    """Мейн-сервер для миграции легаси-строк без guild_id."""
+    return int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
+
+
+def __getattr__(name: str):
+    # Обратная совместимость: economy_db.MAIN_GUILD читает актуальный env.
+    if name == "MAIN_GUILD":
+        return get_main_guild_id()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def get_db_path() -> str:
@@ -30,8 +42,79 @@ def _table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
     return [r["name"] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
 
 
+def _repair_misattributed_guild(conn: sqlite3.Connection) -> None:
+    """Перенести строки с guild_id=404 на реальный MAIN_GUILD_ID.
+
+    Ранняя миграция ошибочно писала легаси на sentinel 404 — на настоящем мейне
+    балансы выглядели обнулёнными, хотя данные оставались в БД.
+    """
+    real_main = get_main_guild_id()
+    if real_main == _MISATTRIBUTED_GUILD:
+        return
+
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+    if "balances" in tables and "guild_id" in _table_columns(conn, "balances"):
+        for row in conn.execute(
+            "SELECT user_id, balance FROM balances WHERE guild_id = ?",
+            (_MISATTRIBUTED_GUILD,),
+        ).fetchall():
+            existing = conn.execute(
+                "SELECT balance FROM balances WHERE guild_id = ? AND user_id = ?",
+                (real_main, row["user_id"]),
+            ).fetchone()
+            if existing is None:
+                conn.execute(
+                    "UPDATE balances SET guild_id = ? WHERE guild_id = ? AND user_id = ?",
+                    (real_main, _MISATTRIBUTED_GUILD, row["user_id"]),
+                )
+            else:
+                conn.execute(
+                    "UPDATE balances SET balance = balance + ? WHERE guild_id = ? AND user_id = ?",
+                    (int(row["balance"]), real_main, row["user_id"]),
+                )
+                conn.execute(
+                    "DELETE FROM balances WHERE guild_id = ? AND user_id = ?",
+                    (_MISATTRIBUTED_GUILD, row["user_id"]),
+                )
+
+    if "history" in tables and "guild_id" in _table_columns(conn, "history"):
+        conn.execute(
+            "UPDATE history SET guild_id = ? WHERE guild_id = ?",
+            (real_main, _MISATTRIBUTED_GUILD),
+        )
+
+    for table, key_cols in (
+        ("daily_bonus", ("user_id",)),
+        ("owned_cosmetics", ("user_id", "item_id")),
+        ("equipped_cosmetics", ("user_id", "kind")),
+    ):
+        if table not in tables or "guild_id" not in _table_columns(conn, table):
+            continue
+        rows = conn.execute(f"SELECT * FROM {table} WHERE guild_id = ?", (_MISATTRIBUTED_GUILD,)).fetchall()
+        for row in rows:
+            where = " AND ".join(f"{c} = ?" for c in key_cols)
+            exists = conn.execute(
+                f"SELECT 1 FROM {table} WHERE guild_id = ? AND {where}",
+                [real_main] + [row[c] for c in key_cols],
+            ).fetchone()
+            key_vals = [row[c] for c in key_cols]
+            if exists is None:
+                set_keys = " AND ".join(f"{c} = ?" for c in key_cols)
+                conn.execute(
+                    f"UPDATE {table} SET guild_id = ? WHERE guild_id = ? AND {set_keys}",
+                    [real_main, _MISATTRIBUTED_GUILD] + key_vals,
+                )
+            else:
+                conn.execute(
+                    f"DELETE FROM {table} WHERE guild_id = ? AND {where}",
+                    [_MISATTRIBUTED_GUILD] + key_vals,
+                )
+
+
 def init():
     with closing(connect()) as conn, conn:
+        main_guild = get_main_guild_id()
         # ── balances: user_id PK → (guild_id, user_id) PK ──
         cols = _table_columns(conn, "balances")
         if cols and "guild_id" not in cols:
@@ -46,7 +129,7 @@ def init():
             """)
             conn.execute(
                 "INSERT INTO balances (guild_id, user_id, balance) SELECT ?, user_id, balance FROM balances_old",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE balances_old")
         else:
@@ -76,7 +159,7 @@ def init():
             conn.execute(
                 """INSERT INTO history (guild_id, user_id, delta, reason, created_at)
                    SELECT ?, user_id, delta, reason, created_at FROM history_old""",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE history_old")
         else:
@@ -109,7 +192,7 @@ def init():
             conn.execute(
                 """INSERT INTO daily_bonus (guild_id, user_id, streak, last_claim_date)
                    SELECT ?, user_id, streak, last_claim_date FROM daily_bonus_old""",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE daily_bonus_old")
         else:
@@ -141,7 +224,7 @@ def init():
             conn.execute(
                 """INSERT INTO owned_cosmetics (guild_id, user_id, item_id, kind, value, name)
                    SELECT ?, user_id, item_id, kind, value, name FROM owned_cosmetics_old""",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE owned_cosmetics_old")
         else:
@@ -173,7 +256,7 @@ def init():
             conn.execute(
                 """INSERT INTO equipped_cosmetics (guild_id, user_id, kind, item_id)
                    SELECT ?, user_id, kind, item_id FROM equipped_cosmetics_old""",
-                (MAIN_GUILD,),
+                (main_guild,),
             )
             conn.execute("DROP TABLE equipped_cosmetics_old")
         else:
@@ -186,6 +269,8 @@ def init():
                     PRIMARY KEY (guild_id, user_id, kind)
                 )
             """)
+
+        _repair_misattributed_guild(conn)
 
 
 def _now() -> str:
@@ -278,6 +363,22 @@ def set_balance(guild_id: int, user_id: int, value: int, reason: str) -> int:
         )
         _log(conn, guild_id, user_id, value - old_value, reason)
     return value
+
+
+def reset_all_balances(guild_id: int) -> int:
+    """Обнулить все балансы сервера. Возвращает число затронутых строк."""
+    with closing(connect()) as conn, conn:
+        rows = conn.execute(
+            "SELECT user_id, balance FROM balances WHERE guild_id = ? AND balance != 0",
+            (guild_id,),
+        ).fetchall()
+        for row in rows:
+            _log(conn, guild_id, row["user_id"], -int(row["balance"]), "dashboard_reset_all")
+        cursor = conn.execute(
+            "UPDATE balances SET balance = 0 WHERE guild_id = ?",
+            (guild_id,),
+        )
+        return int(cursor.rowcount)
 
 
 def top(guild_id: int, limit: int = 10) -> list[dict]:

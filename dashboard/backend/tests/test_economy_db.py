@@ -9,13 +9,18 @@ import economy_db
 
 GUILD_ID = 1
 OTHER = 777
-MAIN = 404  # миграция легаси → мейн-сервер (как в stats_db)
 
 
 @pytest.fixture(autouse=True)
 def isolated_db(tmp_path, monkeypatch):
     monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
+    monkeypatch.delenv("GUILD_ID", raising=False)
+    monkeypatch.delenv("MAIN_GUILD_ID", raising=False)
     economy_db.init()
+
+
+def _main_guild() -> int:
+    return economy_db.get_main_guild_id()
 
 
 def test_add_and_get_balance():
@@ -74,6 +79,17 @@ def test_top_orders_and_skips_zero():
     economy_db.set_balance(GUILD_ID, 3, 300, "admin")
     top = economy_db.top(GUILD_ID, 10)
     assert [r["user_id"] for r in top] == [3, 1]
+
+
+def test_reset_all_balances_only_one_guild():
+    economy_db.set_balance(GUILD_ID, 1, 100, "admin")
+    economy_db.set_balance(GUILD_ID, 2, 50, "admin")
+    economy_db.set_balance(OTHER, 1, 999, "admin")
+    cleared = economy_db.reset_all_balances(GUILD_ID)
+    assert cleared >= 2
+    assert economy_db.get_balance(GUILD_ID, 1) == 0
+    assert economy_db.get_balance(GUILD_ID, 2) == 0
+    assert economy_db.get_balance(OTHER, 1) == 999
 
 
 def test_balances_isolated_per_guild():
@@ -227,31 +243,110 @@ def _create_legacy_schema(path: str) -> None:
 def test_migration_assigns_legacy_rows_to_main_guild(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_economy.db")
     monkeypatch.setenv("ECONOMY_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     economy_db.init()
+    main = _main_guild()
 
-    assert economy_db.get_balance(MAIN, 10) == 500
+    assert economy_db.get_balance(main, 10) == 500
     assert economy_db.get_balance(GUILD_ID, 10) == 0
-    assert economy_db.get_daily_bonus(MAIN, 10) == {"streak": 3, "last_claim_date": "2026-01-10"}
-    assert economy_db.owns_cosmetic(MAIN, 10, "frame1") is True
-    assert economy_db.get_equipped(MAIN, 10, "frame_color")["item_id"] == "frame1"
-    history = economy_db.recent_history(MAIN, 10)
+    assert economy_db.get_daily_bonus(main, 10) == {"streak": 3, "last_claim_date": "2026-01-10"}
+    assert economy_db.owns_cosmetic(main, 10, "frame1") is True
+    assert economy_db.get_equipped(main, 10, "frame_color")["item_id"] == "frame1"
+    history = economy_db.recent_history(main, 10)
     assert len(history) == 1 and history[0]["delta"] == 100
 
 
 def test_migration_is_idempotent(tmp_path, monkeypatch):
     db_path = str(tmp_path / "legacy_economy2.db")
     monkeypatch.setenv("ECONOMY_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
     _create_legacy_schema(db_path)
 
     economy_db.init()
     economy_db.init()
+    main = _main_guild()
 
-    assert economy_db.get_balance(MAIN, 10) == 500
-    assert len(economy_db.recent_history(MAIN, 10)) == 1
+    assert economy_db.get_balance(main, 10) == 500
+    assert len(economy_db.recent_history(main, 10)) == 1
 
     # композитный PK: тот же user_id на другом сервере
     economy_db.add(OTHER, 10, 77, "new")
-    assert economy_db.get_balance(MAIN, 10) == 500
+    assert economy_db.get_balance(main, 10) == 500
     assert economy_db.get_balance(OTHER, 10) == 77
+
+
+def test_repair_moves_misattributed_404_to_main_guild(tmp_path, monkeypatch):
+    """Данные, ошибочно записанные на guild_id=404, восстанавливаются на мейн."""
+    db_path = str(tmp_path / "misattributed_economy.db")
+    monkeypatch.setenv("ECONOMY_DB_PATH", db_path)
+    monkeypatch.setenv("GUILD_ID", "1324239354154975252")
+    main = 1324239354154975252
+
+    with closing(sqlite3.connect(db_path)) as conn, conn:
+        conn.execute("""
+            CREATE TABLE balances (
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                balance INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (guild_id, user_id)
+            )
+        """)
+        conn.execute("INSERT INTO balances VALUES (404, 10, 500)")
+        conn.execute("INSERT INTO balances VALUES (404, 11, 100)")
+        conn.execute("INSERT INTO balances VALUES (?, 11, 25)", (main,))
+        conn.execute("""
+            CREATE TABLE history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                delta INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        conn.execute(
+            "INSERT INTO history (guild_id, user_id, delta, reason, created_at) VALUES (404, 10, 50, 'old', '2026-01-01T00:00:00+00:00')"
+        )
+        conn.execute("""
+            CREATE TABLE daily_bonus (
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                streak INTEGER NOT NULL DEFAULT 0,
+                last_claim_date TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (guild_id, user_id)
+            )
+        """)
+        conn.execute("INSERT INTO daily_bonus VALUES (404, 10, 2, '2026-01-01')")
+        conn.execute("""
+            CREATE TABLE owned_cosmetics (
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                item_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                value TEXT NOT NULL,
+                name TEXT NOT NULL,
+                PRIMARY KEY (guild_id, user_id, item_id)
+            )
+        """)
+        conn.execute("INSERT INTO owned_cosmetics VALUES (404, 10, 'frame1', 'frame_color', '#FF00AA', 'Рамка')")
+        conn.execute("""
+            CREATE TABLE equipped_cosmetics (
+                guild_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                item_id TEXT NOT NULL,
+                PRIMARY KEY (guild_id, user_id, kind)
+            )
+        """)
+        conn.execute("INSERT INTO equipped_cosmetics VALUES (404, 10, 'frame_color', 'frame1')")
+
+    economy_db.init()
+
+    assert economy_db.get_balance(main, 10) == 500
+    assert economy_db.get_balance(main, 11) == 125  # 25 + 100 merged
+    assert economy_db.get_balance(404, 10) == 0
+    assert economy_db.get_daily_bonus(main, 10)["streak"] == 2
+    assert economy_db.owns_cosmetic(main, 10, "frame1") is True
+    assert len(economy_db.recent_history(main, 10)) == 1

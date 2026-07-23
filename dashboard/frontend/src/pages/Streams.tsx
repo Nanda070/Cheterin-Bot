@@ -122,11 +122,11 @@ export function StreamsPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {subs.map((sub) => (
           <Card key={sub.id} className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               {sub.avatar_url ? (
-                <img src={sub.avatar_url} alt="" className="h-10 w-10 rounded-full" />
+                <img src={sub.avatar_url} alt="" className="h-10 w-10 shrink-0 rounded-full" />
               ) : (
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-hover">
                   <PlatformIcon platform={sub.platform} />
                 </span>
               )}
@@ -135,11 +135,27 @@ export function StreamsPage() {
                   <PlatformIcon platform={sub.platform} />
                   {sub.display_name}
                 </p>
-                <p className="text-xs text-muted">{sub.platform === 'twitch' ? t('streams.platform.twitch') : t('streams.platform.youtube')}</p>
+                <p className="text-xs text-muted">
+                  {sub.platform === 'twitch' ? t('streams.platform.twitch') : t('streams.platform.youtube')}
+                </p>
               </div>
-              <Toggle checked={sub.enabled} onChange={(v) => patchSub(sub.id, { enabled: v })} disabled={busy} />
+              <div className="flex shrink-0 items-center gap-2 self-center">
+                <Toggle checked={sub.enabled} onChange={(v) => patchSub(sub.id, { enabled: v })} disabled={busy} />
+                <button
+                  type="button"
+                  onClick={() => act(() => deleteStreamSubscription(sub.id))}
+                  className="text-muted transition-colors hover:text-danger"
+                  aria-label={t('streams.deleteAria')}
+                >
+                  <Trash size={17} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant="secondary"
+                className="!px-3 !py-1.5 text-xs"
                 disabled={busy || !sub.channel_id}
                 onClick={() => act(() => testStreamSubscription(sub.id))}
               >
@@ -147,24 +163,15 @@ export function StreamsPage() {
               </Button>
               <button
                 type="button"
-                onClick={() => act(() => deleteStreamSubscription(sub.id))}
-                className="text-muted transition-colors hover:text-danger"
-                aria-label={t('streams.deleteAria')}
+                onClick={() => {
+                  setExpanded(expanded === sub.id ? null : sub.id)
+                  setKeywordsDraft(sub.keywords.join(', '))
+                }}
+                className="text-xs text-primary hover:underline"
               >
-                <Trash size={17} />
+                {expanded === sub.id ? t('streams.hideSettings') : t('streams.showSettings')}
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setExpanded(expanded === sub.id ? null : sub.id)
-                setKeywordsDraft(sub.keywords.join(', '))
-              }}
-              className="self-start text-xs text-primary hover:underline"
-            >
-              {expanded === sub.id ? t('streams.hideSettings') : t('streams.showSettings')}
-            </button>
 
             {expanded === sub.id && (
               <div className="flex flex-col gap-3 border-t border-border pt-3">

@@ -1,5 +1,6 @@
-import { ChatCircle, EnvelopeSimple, GearSix, UsersThree } from '@phosphor-icons/react'
+import { ChatCircle, EnvelopeSimple, GearSix, UserPlus, UsersThree } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   fetchChannels,
   fetchConfig,
@@ -29,11 +30,17 @@ import {
 } from '../config/welcomeDmDefaults'
 import { useLanguage, useT } from '../context/LanguageContext'
 import { AutoRolesPage } from './AutoRoles'
+import { InvitesTrackerPage } from './InvitesTracker'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-type Tab = 'welcome' | 'greeting' | 'autoroles'
+type Tab = 'welcome' | 'greeting' | 'autoroles' | 'invites'
+
+function parseServerEntryTab(raw: string | null): Tab {
+  if (raw === 'greeting' || raw === 'autoroles' || raw === 'invites') return raw
+  return 'welcome'
+}
 
 const ONBOARDING_CHANNEL_KEYS = [
   'WELCOME_CHANNEL_ID',
@@ -88,7 +95,12 @@ function previewEmbed(embed: EmbedSpec, vars: Record<string, string>): EmbedSpec
 export function ServerEntryPage() {
   const t = useT()
   const { lang } = useLanguage()
-  const [tab, setTab] = useState<Tab>('welcome')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseServerEntryTab(searchParams.get('tab'))
+  const setTab = (next: Tab) => {
+    if (next === 'welcome') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
   const [settings, setSettings] = useState<WelcomeSettings | null>(null)
   const [config, setConfig] = useState<BotConfig>(EMPTY_BOT_CONFIG)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -109,6 +121,7 @@ export function ServerEntryPage() {
         { key: 'welcome' as const, label: t('serverEntry.tab.welcome'), icon: ChatCircle },
         { key: 'greeting' as const, label: t('serverEntry.tab.greeting'), icon: EnvelopeSimple },
         { key: 'autoroles' as const, label: t('serverEntry.tab.autoroles'), icon: UsersThree },
+        { key: 'invites' as const, label: t('serverEntry.tab.invites'), icon: UserPlus },
       ] as const,
     [t],
   )
@@ -506,6 +519,8 @@ export function ServerEntryPage() {
       )}
 
       {tab === 'autoroles' && <AutoRolesPage embedded />}
+
+      {tab === 'invites' && <InvitesTrackerPage embedded />}
 
       {editorOpen && draftSettings && (
         <Modal open title={t('serverEntry.editorTitle')} onClose={() => setEditorOpen(false)} size="xl">

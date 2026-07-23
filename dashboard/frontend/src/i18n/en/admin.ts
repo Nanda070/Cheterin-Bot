@@ -273,6 +273,7 @@ const admin: TranslationDict = {
   'audit.action.casino': 'Casino settings updated',
   'audit.action.economy': 'Economy settings updated',
   'audit.action.economy_balance': 'Member balance changed',
+  'audit.action.economy_reset_all': 'All balances reset',
   'audit.action.fun': 'Fun module settings updated',
   'audit.action.wordle': 'Wordle settings updated',
   'audit.action.giveaways': 'Giveaway action',
@@ -290,6 +291,8 @@ const admin: TranslationDict = {
   'audit.action.warn_remove': 'Warning removed',
 
   'members.searchPlaceholder': 'Search by name or nickname…',
+  'members.tab.list': 'Members',
+  'members.tab.timedRoles': 'Timed roles',
   'members.massAssign': 'Mass role assign',
   'members.errorLoad': 'Failed to load members',
   'members.bot': 'bot',
@@ -406,6 +409,7 @@ const admin: TranslationDict = {
   'serverEntry.tab.welcome': 'Welcome & goodbye',
   'serverEntry.tab.greeting': 'Welcome message',
   'serverEntry.tab.autoroles': 'Auto-roles',
+  'serverEntry.tab.invites': 'Invite tracker',
 
   'verification.title': 'Verification',
   'verification.moduleOn': 'Module enabled',

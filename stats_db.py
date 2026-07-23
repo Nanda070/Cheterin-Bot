@@ -8,6 +8,13 @@ import os
 import sqlite3
 from contextlib import closing
 
+# Ошибочный sentinel первой per-guild миграции (легаси уезжало на guild_id=404).
+_MISATTRIBUTED_GUILD = 404
+
+
+def get_main_guild_id() -> int:
+    return int(os.getenv("GUILD_ID") or os.getenv("MAIN_GUILD_ID") or "1324239354154975252")
+
 
 def get_db_path() -> str:
     return os.getenv("STATS_DB_PATH", "stats.db")
@@ -21,11 +28,69 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
+    return [r["name"] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()]
+
+
+def _repair_misattributed_guild(conn: sqlite3.Connection) -> None:
+    """Перенести строки с guild_id=404 на реальный MAIN_GUILD_ID."""
+    real_main = get_main_guild_id()
+    if real_main == _MISATTRIBUTED_GUILD:
+        return
+
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+    if "xp_members" in tables and "guild_id" in _table_columns(conn, "xp_members"):
+        for row in conn.execute(
+            "SELECT * FROM xp_members WHERE guild_id = ?",
+            (_MISATTRIBUTED_GUILD,),
+        ).fetchall():
+            existing = conn.execute(
+                "SELECT * FROM xp_members WHERE guild_id = ? AND user_id = ?",
+                (real_main, row["user_id"]),
+            ).fetchone()
+            if existing is None:
+                conn.execute(
+                    "UPDATE xp_members SET guild_id = ? WHERE guild_id = ? AND user_id = ?",
+                    (real_main, _MISATTRIBUTED_GUILD, row["user_id"]),
+                )
+            else:
+                conn.execute(
+                    """UPDATE xp_members SET
+                        xp = xp + ?,
+                        level = MAX(level, ?),
+                        messages = messages + ?,
+                        voice_seconds = voice_seconds + ?,
+                        last_text_xp_ts = MAX(last_text_xp_ts, ?)
+                       WHERE guild_id = ? AND user_id = ?""",
+                    (
+                        int(row["xp"]),
+                        int(row["level"]),
+                        int(row["messages"]),
+                        int(row["voice_seconds"]),
+                        int(row["last_text_xp_ts"]),
+                        real_main,
+                        row["user_id"],
+                    ),
+                )
+                conn.execute(
+                    "DELETE FROM xp_members WHERE guild_id = ? AND user_id = ?",
+                    (_MISATTRIBUTED_GUILD, row["user_id"]),
+                )
+
+    for table in ("voice_sessions", "audit_log"):
+        if table in tables and "guild_id" in _table_columns(conn, table):
+            conn.execute(
+                f"UPDATE {table} SET guild_id = ? WHERE guild_id = ?",
+                (real_main, _MISATTRIBUTED_GUILD),
+            )
+
+
 def init():
     with closing(connect()) as conn, conn:
+        main_guild = get_main_guild_id()
         # 1. xp_members schema & migration
-        cur = conn.execute("PRAGMA table_info(xp_members)")
-        cols = [r["name"] for r in cur.fetchall()]
+        cols = _table_columns(conn, "xp_members")
         if cols and "guild_id" not in cols:
             conn.execute("ALTER TABLE xp_members RENAME TO xp_members_old")
             conn.execute("""
@@ -40,7 +105,11 @@ def init():
                     PRIMARY KEY (guild_id, user_id)
                 )
             """)
-            conn.execute("INSERT INTO xp_members (guild_id, user_id, xp, level, messages, voice_seconds, last_text_xp_ts) SELECT 404, user_id, xp, level, messages, voice_seconds, last_text_xp_ts FROM xp_members_old")
+            conn.execute(
+                "INSERT INTO xp_members (guild_id, user_id, xp, level, messages, voice_seconds, last_text_xp_ts) "
+                "SELECT ?, user_id, xp, level, messages, voice_seconds, last_text_xp_ts FROM xp_members_old",
+                (main_guild,),
+            )
             conn.execute("DROP TABLE xp_members_old")
         else:
             conn.execute("""
@@ -57,11 +126,12 @@ def init():
             """)
 
         # 2. voice_sessions schema & migration
-        cur = conn.execute("PRAGMA table_info(voice_sessions)")
-        cols = [r["name"] for r in cur.fetchall()]
+        cols = _table_columns(conn, "voice_sessions")
         if cols and "guild_id" not in cols:
-            conn.execute("ALTER TABLE voice_sessions ADD COLUMN guild_id INTEGER NOT NULL DEFAULT 404")
-        
+            conn.execute(
+                f"ALTER TABLE voice_sessions ADD COLUMN guild_id INTEGER NOT NULL DEFAULT {int(main_guild)}"
+            )
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS voice_sessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,10 +149,11 @@ def init():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_voice_sessions_guild ON voice_sessions(guild_id)")
 
         # 3. audit_log schema & migration
-        cur = conn.execute("PRAGMA table_info(audit_log)")
-        cols = [r["name"] for r in cur.fetchall()]
+        cols = _table_columns(conn, "audit_log")
         if cols and "guild_id" not in cols:
-            conn.execute("ALTER TABLE audit_log ADD COLUMN guild_id INTEGER NOT NULL DEFAULT 404")
+            conn.execute(
+                f"ALTER TABLE audit_log ADD COLUMN guild_id INTEGER NOT NULL DEFAULT {int(main_guild)}"
+            )
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS audit_log (
@@ -100,6 +171,8 @@ def init():
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log(ts)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_guild ON audit_log(guild_id)")
+
+        _repair_misattributed_guild(conn)
 
 
 # ────────────────────────── XP ──────────────────────────

@@ -66,7 +66,7 @@ describe('DocsPage', () => {
     renderAt('/docs')
     await screen.findByRole('heading', { level: 1, name: 'Введение' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'EN' }))
+    fireEvent.click(screen.getByRole('button', { name: 'English' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Introduction' })).toBeInTheDocument()
     expect(screen.getByText('General')).toBeInTheDocument()

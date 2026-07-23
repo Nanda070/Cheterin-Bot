@@ -71,6 +71,7 @@ const PATH_ACTION_KEYS: [string, string][] = [
   ['/api/wordle', 'audit.action.wordle'],
   ['/api/fun', 'audit.action.fun'],
   ['/api/casino', 'audit.action.casino'],
+  ['/api/economy/reset-all', 'audit.action.economy_reset_all'],
   ['/api/economy/balance', 'audit.action.economy_balance'],
   ['/api/economy', 'audit.action.economy'],
   ['/api/bunker', 'audit.action.bunker'],

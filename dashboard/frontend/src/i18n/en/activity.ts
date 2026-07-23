@@ -175,6 +175,13 @@ const activity: Record<string, string> = {
   'economy.titleAria': 'Title text for item {index}',
   'economy.addItem': 'Add item',
   'economy.topBalances': 'Top balances',
+  'economy.tab.settings': 'Settings',
+  'economy.tab.balances': 'Top balances',
+  'economy.resetAllBalances': 'Reset all balances',
+  'economy.resetAllTitle': 'Reset all balances?',
+  'economy.resetAllWarning':
+    'Every member balance on this server will be set to 0. This cannot be undone.',
+  'economy.resetAllConfirm': 'Reset all',
   'economy.noBalances': 'No one has coins yet.',
   'economy.newBalancePlaceholder': 'New balance',
   'economy.newBalanceAria': 'New balance for {name}',
@@ -182,6 +189,8 @@ const activity: Record<string, string> = {
 
   // Casino
   'casino.title': 'Casino',
+  'casino.tab.settings': 'Settings',
+  'casino.tab.leaderboard': 'Leaderboard',
   'casino.enabled': 'Enabled',
   'casino.disabled': 'Disabled',
   'casino.intro':
@@ -194,6 +203,10 @@ const activity: Record<string, string> = {
   'casino.cooldown': 'Player cooldown, sec (0–300, shared)',
   'casino.minBet': 'Minimum bet',
   'casino.maxBet': 'Maximum bet (0 — no limit)',
+  'casino.rouletteBets': 'Russian roulette bets',
+  'casino.rouletteHint': 'Survive — double the bet; die — lose it. Bet is deducted before the shot.',
+  'casino.rouletteMaxBet': 'Max roulette bet (0 — no limit)',
+  'casino.rouletteLoadError': 'Failed to load roulette bets — other casino settings are still available',
   'casino.lossRoles': '🏅 Roles for losses',
   'casino.lossRolesHint':
     'The bot will automatically grant the specified role when a member reaches the loss threshold. Role is granted once.',

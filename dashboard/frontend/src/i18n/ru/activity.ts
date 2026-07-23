@@ -175,6 +175,13 @@ const activity: Record<string, string> = {
   'economy.titleAria': 'Текст титула товара {index}',
   'economy.addItem': 'Добавить товар',
   'economy.topBalances': 'Топ балансов',
+  'economy.tab.settings': 'Настройки',
+  'economy.tab.balances': 'Топ балансов',
+  'economy.resetAllBalances': 'Сбросить весь баланс',
+  'economy.resetAllTitle': 'Сбросить все балансы?',
+  'economy.resetAllWarning':
+    'Балансы всех участников на этом сервере будут обнулены. Это действие нельзя отменить.',
+  'economy.resetAllConfirm': 'Сбросить всё',
   'economy.noBalances': 'Пока ни у кого нет монет.',
   'economy.newBalancePlaceholder': 'Новый баланс',
   'economy.newBalanceAria': 'Новый баланс {name}',
@@ -182,6 +189,8 @@ const activity: Record<string, string> = {
 
   // Casino
   'casino.title': 'Казино',
+  'casino.tab.settings': 'Настройки',
+  'casino.tab.leaderboard': 'Лидерборд',
   'casino.enabled': 'Включено',
   'casino.disabled': 'Выключено',
   'casino.intro':
@@ -194,6 +203,10 @@ const activity: Record<string, string> = {
   'casino.cooldown': 'Кулдаун на игрока, сек (0–300, общий)',
   'casino.minBet': 'Минимальная ставка',
   'casino.maxBet': 'Максимальная ставка (0 — без лимита)',
+  'casino.rouletteBets': 'Ставки в русской рулетке',
+  'casino.rouletteHint': 'Выжил — удвоил ставку, погиб — потерял. Ставка списывается до выстрела.',
+  'casino.rouletteMaxBet': 'Макс. ставка в рулетке (0 — без лимита)',
+  'casino.rouletteLoadError': 'Не удалось загрузить ставки рулетки — остальные настройки казино доступны',
   'casino.lossRoles': '🏅 Выдача ролей за проигрыши',
   'casino.lossRolesHint':
     'Бот будет автоматически выдавать указанную роль, если участник достиг порога проигрышей. Роль выдаётся один раз.',

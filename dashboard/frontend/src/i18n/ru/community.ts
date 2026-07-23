@@ -63,6 +63,7 @@ const community: TranslationDict = {
   // events
   'events.tab.events': 'События и голосования',
   'events.tab.giveaways': 'Розыгрыши',
+  'events.tab.polls': 'Опросы',
   'events.title': 'События и голосования',
   'events.create': 'Создать событие',
   'events.empty': 'Событий нет.',

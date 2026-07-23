@@ -193,3 +193,11 @@ async def economy_set_balance(request: web.Request) -> web.Response:
     economy_db.init()
     economy_db.set_balance(request["guild_id"], user_id, balance, "dashboard_adjust")
     return web.json_response({"user_id": str(user_id), "balance": balance})
+
+
+@routes.post("/api/economy/reset-all")
+@require_dashboard_access
+async def economy_reset_all(request: web.Request) -> web.Response:
+    economy_db.init()
+    cleared = economy_db.reset_all_balances(request["guild_id"])
+    return web.json_response({"ok": True, "cleared": cleared})

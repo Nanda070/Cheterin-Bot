@@ -44,10 +44,7 @@ import { ServerEntryPage } from './pages/ServerEntry'
 import { CtdPage } from './pages/Ctd'
 import { CustomCommandsPage } from './pages/CustomCommands'
 import { ScheduledMessagesPage } from './pages/ScheduledMessages'
-import { InvitesTrackerPage } from './pages/InvitesTracker'
-import { TimedRolesPage } from './pages/TimedRoles'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
-import { PollsPage } from './pages/Polls'
 import { StickyMessagesPage } from './pages/StickyMessages'
 import { CommandPreviewPage } from './pages/CommandPreview'
 
@@ -97,16 +94,16 @@ function App() {
               <Route path="mafia" element={<MafiaPage />} />
               <Route path="bunker" element={<BunkerPage />} />
               <Route path="fun" element={<FunPage />} />
-              <Route path="giveaways" element={<Navigate to="/events" replace />} />
+              <Route path="giveaways" element={<Navigate to="/events?tab=giveaways" replace />} />
               <Route path="daily-topic" element={<DailyTopicPage />} />
               <Route path="custom-commands" element={<CustomCommandsPage />} />
               <Route path="scheduled-messages" element={<ScheduledMessagesPage />} />
               <Route path="sticky" element={<StickyMessagesPage />} />
-              <Route path="polls" element={<PollsPage />} />
+              <Route path="polls" element={<Navigate to="/events?tab=polls" replace />} />
               <Route path="preview" element={<CommandPreviewPage />} />
               <Route path="command-preview" element={<Navigate to="/preview" replace />} />
-              <Route path="invites" element={<InvitesTrackerPage />} />
-              <Route path="timed-roles" element={<TimedRolesPage />} />
+              <Route path="invites" element={<Navigate to="/server-entry?tab=invites" replace />} />
+              <Route path="timed-roles" element={<Navigate to="/members?tab=timedRoles" replace />} />
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
               <Route path="automod" element={<AutoModPage />} />
               <Route path="server-entry" element={<ServerEntryPage />} />
@@ -122,7 +119,7 @@ function App() {
               <Route path="voice-stats" element={<VoiceStatsPage />} />
               <Route path="audit" element={<AuditPage />} />
               <Route path="welcome" element={<Navigate to="/server-entry" replace />} />
-              <Route path="auto-roles" element={<Navigate to="/server-entry" replace />} />
+              <Route path="auto-roles" element={<Navigate to="/server-entry?tab=autoroles" replace />} />
               <Route path="config" element={<Navigate to="/lockdown" replace />} />
               <Route path="settings" element={<ServerSettingsPage />} />
               <Route path="ctd" element={<CtdPage />} />

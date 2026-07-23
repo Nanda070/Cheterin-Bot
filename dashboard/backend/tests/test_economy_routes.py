@@ -152,6 +152,25 @@ async def test_set_balance(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_reset_all_balances(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    other = GUILD_ID + 1
+    economy_db.set_balance(GUILD_ID, 20, 500, "test")
+    economy_db.set_balance(GUILD_ID, 21, 100, "test")
+    economy_db.set_balance(other, 20, 999, "test")
+
+    resp = await client.post("/api/economy/reset-all")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["ok"] is True
+    assert economy_db.get_balance(GUILD_ID, 20) == 0
+    assert economy_db.get_balance(GUILD_ID, 21) == 0
+    assert economy_db.get_balance(other, 20) == 999
+
+
+@pytest.mark.asyncio
 async def test_requires_login(aiohttp_client):
     _, _, app = build()
     client = await aiohttp_client(app)

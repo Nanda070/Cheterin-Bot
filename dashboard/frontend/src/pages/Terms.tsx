@@ -94,6 +94,11 @@ export function TermsPage() {
             <li>{t('terms.s3.li10')}</li>
             <li>{t('terms.s3.li11')}</li>
             <li>{t('terms.s3.li12')}</li>
+            <li>{t('terms.s3.li13')}</li>
+            <li>{t('terms.s3.li14')}</li>
+            <li>{t('terms.s3.li15')}</li>
+            <li>{t('terms.s3.li16')}</li>
+            <li>{t('terms.s3.li17')}</li>
           </ul>
           <p>{t('terms.s3.p2')}</p>
           <p>{t('terms.s3.p3')}</p>

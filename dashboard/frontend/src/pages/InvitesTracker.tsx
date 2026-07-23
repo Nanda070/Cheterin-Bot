@@ -14,7 +14,7 @@ import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
 
-export function InvitesTrackerPage() {
+export function InvitesTrackerPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [data, setData] = useState<InvitesSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -66,10 +66,17 @@ export function InvitesTrackerPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <UserPlus size={22} className="text-primary" />
-          {t('invites.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <UserPlus size={20} className="text-primary" />
+            {t('invites.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <UserPlus size={22} className="text-primary" />
+            {t('invites.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('invites.intro')}</p>
       </div>
 

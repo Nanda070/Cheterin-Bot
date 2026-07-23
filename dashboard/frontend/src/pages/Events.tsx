@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
 import {
   createEvent,
@@ -21,15 +22,22 @@ import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { EventDetailPanel } from './EventDetailPanel'
 import { GiveawaysPage } from './Giveaways'
-import { CalendarCheck, Gift } from '@phosphor-icons/react'
+import { PollsPage } from './Polls'
+import { CalendarCheck, ChartBar, Gift } from '@phosphor-icons/react'
 
 type StatusFilter = 'open' | 'closed'
-type EventsTab = 'events' | 'giveaways'
+type EventsTab = 'events' | 'giveaways' | 'polls'
+
+function parseEventsTab(raw: string | null): EventsTab {
+  if (raw === 'giveaways' || raw === 'polls') return raw
+  return 'events'
+}
 
 function TabBar({ tab, setTab, t }: { tab: EventsTab; setTab: (t: EventsTab) => void; t: (key: string) => string }) {
   const tabs: { key: EventsTab; labelKey: string; icon: typeof CalendarCheck }[] = [
     { key: 'events', labelKey: 'events.tab.events', icon: CalendarCheck },
     { key: 'giveaways', labelKey: 'events.tab.giveaways', icon: Gift },
+    { key: 'polls', labelKey: 'events.tab.polls', icon: ChartBar },
   ]
   return (
     <div className="flex gap-1 border-b border-border">
@@ -105,7 +113,12 @@ function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string, t: (
 
 export function EventsPage() {
   const t = useT()
-  const [tab, setTab] = useState<EventsTab>('events')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseEventsTab(searchParams.get('tab'))
+  const setTab = (next: EventsTab) => {
+    if (next === 'events') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
   const [status, setStatus] = useState<StatusFilter>('open')
   const [events, setEvents] = useState<EventSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -161,6 +174,15 @@ export function EventsPage() {
       <div className="flex flex-col gap-4">
         <TabBar tab={tab} setTab={setTab} t={t} />
         <GiveawaysPage />
+      </div>
+    )
+  }
+
+  if (tab === 'polls') {
+    return (
+      <div className="flex flex-col gap-4">
+        <TabBar tab={tab} setTab={setTab} t={t} />
+        <PollsPage embedded />
       </div>
     )
   }

@@ -273,6 +273,7 @@ const admin: TranslationDict = {
   'audit.action.casino': 'Изменены настройки казино',
   'audit.action.economy': 'Изменены настройки экономики',
   'audit.action.economy_balance': 'Изменён баланс участника',
+  'audit.action.economy_reset_all': 'Сброшены все балансы',
   'audit.action.fun': 'Изменены настройки развлечений',
   'audit.action.wordle': 'Изменены настройки Wordle',
   'audit.action.giveaways': 'Действие с розыгрышем',
@@ -290,6 +291,8 @@ const admin: TranslationDict = {
   'audit.action.warn_remove': 'Снято предупреждение',
 
   'members.searchPlaceholder': 'Поиск по имени или нику…',
+  'members.tab.list': 'Участники',
+  'members.tab.timedRoles': 'Временные роли',
   'members.massAssign': 'Массовая выдача роли',
   'members.errorLoad': 'Не удалось загрузить участников',
   'members.bot': 'бот',
@@ -406,6 +409,7 @@ const admin: TranslationDict = {
   'serverEntry.tab.welcome': 'Приветствие и прощание',
   'serverEntry.tab.greeting': 'Приветственное сообщение',
   'serverEntry.tab.autoroles': 'Авто-роли',
+  'serverEntry.tab.invites': 'Трекер инвайтов',
 
   'verification.title': 'Верификация',
   'verification.moduleOn': 'Модуль включён',

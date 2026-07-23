@@ -5,7 +5,7 @@ import { formatApiError } from '../api/errors'
 import { Card } from '../components/ui/Card'
 import { useT } from '../context/LanguageContext'
 
-export function TimedRolesPage() {
+export function TimedRolesPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [rows, setRows] = useState<TimedRoleEntry[] | null>(null)
   const [error, setError] = useState('')
@@ -43,10 +43,17 @@ export function TimedRolesPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Timer size={22} className="text-primary" />
-          {t('timedRoles.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <Timer size={20} className="text-primary" />
+            {t('timedRoles.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Timer size={22} className="text-primary" />
+            {t('timedRoles.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('timedRoles.intro')}</p>
       </div>
 
