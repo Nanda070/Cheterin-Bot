@@ -40,5 +40,19 @@
   "38": "Card.tsx",
   "39": "Mafia.tsx",
   "40": "AntiRaid.tsx",
-  "41": "PublicMafiaAction.tsx"
+  "41": "PublicMafiaAction.tsx",
+  "42": "Supply.tsx",
+  "43": "formatApiError",
+  "44": "ServerSettings.tsx",
+  "45": "Giveaways.tsx",
+  "46": "Streams.tsx",
+  "47": "ServerSelect.tsx",
+  "48": "ScheduledMessages.tsx",
+  "49": "StickyMessages.tsx",
+  "50": "Toggle.tsx",
+  "51": "VoiceRooms.tsx",
+  "52": "Polls.tsx",
+  "53": "Tempban.tsx",
+  "54": "Messages.tsx",
+  "55": "MessageBuilder.tsx"
 }

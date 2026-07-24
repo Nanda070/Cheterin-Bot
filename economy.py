@@ -162,7 +162,9 @@ class EconomyCog(commands.Cog):
             logger.warning("Failed to post weekly economy report guild=%s", guild_id)
             return False
         from datetime import datetime
-        week_key = datetime.now(economy_core._MSK).strftime("%G-W%V")
+        import timezone_core
+
+        week_key = timezone_core.now_local(guild_id).strftime("%G-W%V")
         economy_core.mark_weekly_report_posted(guild_id, week_key)
         return True
 
@@ -170,8 +172,14 @@ class EconomyCog(commands.Cog):
     async def weekly_report_loop(self):
         try:
             for guild in self.bot.guilds:
-                if economy_core.should_post_weekly_report(guild.id):
-                    await self.post_weekly_report(guild.id)
+                try:
+                    if economy_core.should_post_weekly_report(guild.id):
+                        await self.post_weekly_report(guild.id)
+                except Exception as exc:
+                    logger.exception("weekly_report_loop guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "economy", str(exc))
         except Exception:
             logger.exception("weekly_report_loop error")
 

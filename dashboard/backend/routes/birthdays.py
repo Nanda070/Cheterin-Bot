@@ -1,3 +1,4 @@
+import discord
 from aiohttp import web
 
 import birthdays_core
@@ -87,4 +88,43 @@ async def birthdays_delete(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_user_id"}, status=400)
     if not birthdays_db.delete_birthday(request["guild_id"], int(user_id)):
         return web.json_response({"error": "not_found"}, status=404)
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/birthdays/test")
+@require_dashboard_access
+async def birthdays_test(request: web.Request) -> web.Response:
+    """Send a test birthday announcement to the configured channel (does not mark announced)."""
+    import i18n
+
+    guild_id = request["guild_id"]
+    settings = birthdays_core.get_settings(guild_id)
+    if not settings["channel_id"]:
+        return web.json_response({"error": "channel_not_configured"}, status=409)
+
+    bot = request.app["bot"]
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        return web.json_response({"error": "guild_unavailable"}, status=503)
+    channel = guild.get_channel(int(settings["channel_id"]))
+    if channel is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+    # Match announce_loop: only discord.TextChannel (skip voice/forum/etc.).
+    if not isinstance(channel, discord.TextChannel):
+        return web.json_response({"error": "channel_not_text"}, status=409)
+
+    lang = i18n.lang_for(guild_id)
+    ping = ""
+    if settings["ping_role_id"]:
+        ping = f"<@&{settings['ping_role_id']}> "
+    sample = guild.me.mention if guild.me else "@member"
+    text = (
+        "🧪 "
+        + ping
+        + i18n.t("birthdays.announce", lang, members=sample)
+    )
+    try:
+        await channel.send(text)
+    except Exception:
+        return web.json_response({"error": "send_failed"}, status=502)
     return web.json_response({"ok": True})

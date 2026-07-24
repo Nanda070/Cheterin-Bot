@@ -21,7 +21,7 @@ import { useT } from '../context/LanguageContext'
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-export function StickyMessagesPage() {
+export function StickyMessagesPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [settings, setSettings] = useState<StickySettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -67,10 +67,17 @@ export function StickyMessagesPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <PushPin size={22} className="text-primary" />
-          {t('sticky.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <PushPin size={20} className="text-primary" />
+            {t('sticky.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <PushPin size={22} className="text-primary" />
+            {t('sticky.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('sticky.intro')}</p>
       </div>
 

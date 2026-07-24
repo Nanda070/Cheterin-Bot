@@ -4,6 +4,7 @@ import daily_topic_core
 import settings_db
 
 GUILD_ID = 404
+FIXED_TODAY = "2026-07-23"
 
 
 @pytest.fixture(autouse=True)
@@ -11,6 +12,15 @@ def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.setattr(settings_db, "_cache", {})
     settings_db.init()
+    # Avoid ZoneInfo/tzdata dependency on Windows CI/dev hosts.
+    monkeypatch.setattr(daily_topic_core, "_today_local", lambda _gid: FIXED_TODAY)
+
+    import timezone_core
+    from datetime import datetime, timezone, timedelta
+
+    fixed_now = datetime(2026, 7, 23, 12, 0, tzinfo=timezone(timedelta(hours=3)))
+    monkeypatch.setattr(timezone_core, "now_local", lambda _gid: fixed_now)
+    monkeypatch.setattr(timezone_core, "today_local", lambda _gid: FIXED_TODAY)
 
 
 def test_is_valid_time():
@@ -98,6 +108,27 @@ def test_mark_and_check_posted_today():
     assert daily_topic_core.already_posted_today(GUILD_ID) is False
     daily_topic_core.mark_posted_today(GUILD_ID)
     assert daily_topic_core.already_posted_today(GUILD_ID) is True
+
+
+def test_already_posted_today_blocks_when_local_date_moves_backward(monkeypatch):
+    """Timezone switch that rewinds the local calendar must not allow a second post."""
+    daily_topic_core.mark_posted_today(GUILD_ID)
+    assert settings_db.get(GUILD_ID, daily_topic_core.MODULE_NAME)["last_posted_date"] == FIXED_TODAY
+
+    earlier = "2026-07-22"
+    monkeypatch.setattr(daily_topic_core, "_today_local", lambda _gid: earlier)
+
+    assert daily_topic_core.already_posted_today(GUILD_ID) is True
+    daily_topic_core.update_settings(GUILD_ID, enabled=True, channel_id="500", post_times=["00:00"])
+    assert daily_topic_core.should_post_now(GUILD_ID) is False
+
+
+def test_already_posted_today_allows_normal_day_rollover(monkeypatch):
+    daily_topic_core.mark_posted_today(GUILD_ID)
+    next_day = "2026-07-24"
+    monkeypatch.setattr(daily_topic_core, "_today_local", lambda _gid: next_day)
+
+    assert daily_topic_core.already_posted_today(GUILD_ID) is False
 
 
 def test_get_today_post_time_no_times_returns_none():

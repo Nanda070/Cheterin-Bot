@@ -19,24 +19,29 @@ class OwnerAlertsCog(commands.Cog):
     def cog_unload(self):
         self.perms_loop.cancel()
 
-    async def send_alert(self, guild: discord.Guild, kind: str, detail: str) -> None:
+    async def send_alert(self, guild: discord.Guild, kind: str, detail: str, *, force: bool = False) -> bool:
+        """Send an owner alert. Returns True if at least one delivery succeeded."""
         settings = owner_alerts_core.get_settings(guild.id)
-        if not settings["enabled"]:
-            return
+        if not force and not settings["enabled"]:
+            return False
         lang = i18n.lang_for(guild.id)
         text = owner_alerts_core.format_alert(kind, detail, lang)
+        delivered = False
         if settings["channel_id"]:
             channel = guild.get_channel(int(settings["channel_id"]))
             if isinstance(channel, discord.TextChannel):
                 try:
                     await channel.send(text)
+                    delivered = True
                 except discord.HTTPException:
                     pass
         if settings["notify_dm"] and guild.owner:
             try:
                 await guild.owner.send(f"**{guild.name}**\n{text}")
+                delivered = True
             except discord.HTTPException:
                 pass
+        return delivered
 
     @tasks.loop(minutes=30)
     async def perms_loop(self):

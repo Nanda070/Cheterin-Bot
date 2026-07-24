@@ -267,17 +267,23 @@ class Streams(commands.Cog):
         # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
             for guild in self.bot.guilds:
-                subs = [s for s in get_subscriptions(guild.id) if s["enabled"] and s["channel_id"]]
-                if not subs:
-                    continue
+                try:
+                    subs = [s for s in get_subscriptions(guild.id) if s["enabled"] and s["channel_id"]]
+                    if not subs:
+                        continue
 
-                twitch_subs = [s for s in subs if s["platform"] == "twitch"]
-                youtube_subs = [s for s in subs if s["platform"] == "youtube"]
+                    twitch_subs = [s for s in subs if s["platform"] == "twitch"]
+                    youtube_subs = [s for s in subs if s["platform"] == "youtube"]
 
-                if twitch_subs:
-                    await self._poll_twitch(guild.id, twitch_subs)
-                for sub in youtube_subs:
-                    await self._poll_youtube_one(guild.id, sub)
+                    if twitch_subs:
+                        await self._poll_twitch(guild.id, twitch_subs)
+                    for sub in youtube_subs:
+                        await self._poll_youtube_one(guild.id, sub)
+                except Exception as exc:
+                    logger.exception("_poll guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "streams", str(exc))
         except Exception:
             logger.exception("_poll: ошибка итерации — цикл продолжает работать")
 

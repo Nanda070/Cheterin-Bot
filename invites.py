@@ -82,25 +82,42 @@ class InvitesCog(commands.Cog):
         self._cache[member.guild.id] = after
         invites_db.record_join(member.guild.id, member.id, inviter_id, used_code)
 
-        if settings["welcome_mention"] or settings["log_channel_id"]:
-            lang = i18n.lang_for(member.guild.id)
-            inviter_mention = f"<@{inviter_id}>" if inviter_id else i18n.t("invites.unknown", lang)
-            text = i18n.t(
-                "invites.join_line",
+        if not (settings["welcome_mention"] or settings["log_channel_id"]):
+            return
+
+        lang = i18n.lang_for(member.guild.id)
+        inviter_mention = f"<@{inviter_id}>" if inviter_id else i18n.t("invites.unknown", lang)
+        total = 0
+        if inviter_id is not None:
+            for row in invites_db.inviter_stats(member.guild.id):
+                if row["inviter_id"] == inviter_id:
+                    total = int(row["joins"])
+                    break
+
+        channel_id = settings["log_channel_id"]
+        channel = member.guild.get_channel(int(channel_id)) if channel_id else None
+        if channel is None and settings["welcome_mention"]:
+            channel = member.guild.system_channel
+        if not isinstance(channel, discord.TextChannel):
+            return
+
+        embed = discord.Embed(
+            title=i18n.t("welcome.invite_log_title", lang),
+            description=i18n.t(
+                "welcome.invite_log_body",
                 lang,
-                member=member.mention,
                 inviter=inviter_mention,
+                member=member.mention,
                 code=used_code or "—",
-            )
-            channel_id = settings["log_channel_id"]
-            channel = member.guild.get_channel(int(channel_id)) if channel_id else None
-            if channel is None and settings["welcome_mention"]:
-                channel = member.guild.system_channel
-            if isinstance(channel, discord.TextChannel):
-                try:
-                    await channel.send(text)
-                except discord.HTTPException:
-                    pass
+                invites=total,
+            ),
+            color=discord.Color.blurple(),
+            timestamp=discord.utils.utcnow(),
+        )
+        try:
+            await channel.send(embed=embed)
+        except discord.HTTPException:
+            pass
 
 
 async def setup(bot: commands.Bot):

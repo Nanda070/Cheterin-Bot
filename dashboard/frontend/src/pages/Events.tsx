@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { CalendarCheck, ChartBar, Gift, Trophy } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
 import {
@@ -20,16 +21,16 @@ import { EmbedPreview } from '../components/EmbedPreview'
 import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { BracketsPage } from './Brackets'
 import { EventDetailPanel } from './EventDetailPanel'
 import { GiveawaysPage } from './Giveaways'
 import { PollsPage } from './Polls'
-import { CalendarCheck, ChartBar, Gift } from '@phosphor-icons/react'
 
 type StatusFilter = 'open' | 'closed'
-type EventsTab = 'events' | 'giveaways' | 'polls'
+type EventsTab = 'events' | 'giveaways' | 'polls' | 'brackets'
 
 function parseEventsTab(raw: string | null): EventsTab {
-  if (raw === 'giveaways' || raw === 'polls') return raw
+  if (raw === 'giveaways' || raw === 'polls' || raw === 'brackets') return raw
   return 'events'
 }
 
@@ -38,6 +39,7 @@ function TabBar({ tab, setTab, t }: { tab: EventsTab; setTab: (t: EventsTab) => 
     { key: 'events', labelKey: 'events.tab.events', icon: CalendarCheck },
     { key: 'giveaways', labelKey: 'events.tab.giveaways', icon: Gift },
     { key: 'polls', labelKey: 'events.tab.polls', icon: ChartBar },
+    { key: 'brackets', labelKey: 'events.tab.brackets', icon: Trophy },
   ]
   return (
     <div className="flex gap-1 border-b border-border">
@@ -101,7 +103,7 @@ function buildEventEmbedPreview(spec: CreateEventSpec, optionsText: string, t: (
     title: spec.title,
     description: spec.description,
     url: '',
-    color: spec.type === 'tournament' ? '#ed4245' : '#5865f2',
+    color: spec.type === 'tournament' ? '#ed4245' : '#a8283c',
     author: { name: '', url: '', icon_url: '' },
     footer: { text: t('events.preview.statusOpen'), icon_url: '' },
     image: { url: spec.banner_url },
@@ -183,6 +185,15 @@ export function EventsPage() {
       <div className="flex flex-col gap-4">
         <TabBar tab={tab} setTab={setTab} t={t} />
         <PollsPage embedded />
+      </div>
+    )
+  }
+
+  if (tab === 'brackets') {
+    return (
+      <div className="flex flex-col gap-4">
+        <TabBar tab={tab} setTab={setTab} t={t} />
+        <BracketsPage embedded />
       </div>
     )
   }

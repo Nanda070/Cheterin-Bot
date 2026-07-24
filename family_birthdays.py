@@ -165,8 +165,11 @@ class BirthdayCog(commands.Cog):
                     continue
                 try:
                     await self.send_today_birthdays(guild)
-                except Exception:
+                except Exception as exc:
                     logger.exception("send_today_birthdays failed for guild %s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "family_birthdays", str(exc))
             self.last_announcement_date = today
         except Exception:
             logger.exception("birthday_loop: ошибка итерации — цикл продолжает работать")

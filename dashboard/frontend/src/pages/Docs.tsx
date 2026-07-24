@@ -59,7 +59,7 @@ export function DocsPage() {
           className="animate-fade-in-up min-w-0 flex-1 rounded-card border border-border bg-surface p-6"
         >
           <div className="mb-2 flex items-start justify-between gap-3">
-            <h1 className="text-lg font-semibold text-foreground">{active.title}</h1>
+            <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{active.title}</h1>
             <button
               type="button"
               onClick={copyPage}

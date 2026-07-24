@@ -33,7 +33,7 @@ function shuffle(items: string[]): string[] {
   return copy
 }
 
-export function BracketsPage() {
+export function BracketsPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const navigate = useNavigate()
   const [brackets, setBrackets] = useState<BracketSummary[]>([])
@@ -127,7 +127,11 @@ export function BracketsPage() {
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-foreground">{t('brackets.title')}</h1>
+        {embedded ? (
+          <h2 className="font-semibold text-foreground">{t('brackets.title')}</h2>
+        ) : (
+          <h1 className="text-lg font-semibold text-foreground">{t('brackets.title')}</h1>
+        )}
         <Button variant="primary" onClick={openCreate} className="ml-auto">
           {t('brackets.create')}
         </Button>

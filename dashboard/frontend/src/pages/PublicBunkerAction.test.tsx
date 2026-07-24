@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { renderWithLanguage } from '../test/renderWithLanguage'
@@ -47,11 +47,10 @@ const baseState: client.BunkerPublicState = {
 
 function renderAt(token: string) {
   return renderWithLanguage(
-    <MemoryRouter initialEntries={[`/bunker/${token}`]}>
-      <Routes>
-        <Route path="/bunker/:token" element={<PublicBunkerActionPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <Routes>
+      <Route path="/bunker/:token" element={<PublicBunkerActionPage />} />
+    </Routes>,
+    { initialEntries: [`/bunker/${token}`] },
   )
 }
 

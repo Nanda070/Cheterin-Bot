@@ -42,8 +42,8 @@ const legal: TranslationDict = {
   'privacy.table.voiceRooms.module': 'Private voice rooms',
   'privacy.table.voiceRooms.data': 'Owner ID, room name, user limit, individual access rules (allow/deny)',
   'privacy.table.voiceRooms.retention': 'Removed immediately when the room is deleted',
-  'privacy.table.modlog.module': 'Moderation log',
-  'privacy.table.modlog.data': 'Action type (ban/kick/spam/tempban), offender and moderator IDs, reason, time',
+  'privacy.table.modlog.module': 'Server logging',
+  'privacy.table.modlog.data': 'Action type (ban/kick/spam/spam trap), offender and moderator IDs, reason, time',
   'privacy.table.modlog.retention': 'Until deleted by administration',
   'privacy.table.rating.module': 'Member ranking',
   'privacy.table.rating.data': 'Member ID, XP, level, message count, total voice activity time',
@@ -161,7 +161,7 @@ const legal: TranslationDict = {
   'privacy.s9.li1': 'find out what data the Service stores about you (request via server administration or a ticket);',
   'privacy.s9.li2': 'request correction of inaccurate data;',
   'privacy.s9.li3':
-    'request deletion of your data (except moderation log entries required for server safety);',
+    'request deletion of your data (except server logging entries required for server safety);',
   'privacy.s9.li4': 'stop using the Service at any time.',
 
   'privacy.s10.title': '10. Age restrictions',
@@ -216,7 +216,7 @@ const legal: TranslationDict = {
 
   'terms.s3.title': '3. Service description',
   'terms.s3.p1': '3.1. The Service provides Discord server automation tools, including but not limited to:',
-  'terms.s3.li1': 'moderation: anti-spam, temporary bans, lockdown mode, action log;',
+  'terms.s3.li1': 'moderation: anti-spam, spam traps, lockdown mode, action log;',
   'terms.s3.li2': 'level and ranking system: XP for text and voice activity, reward roles, rank cards, leaderboards;',
   'terms.s3.li3': 'server event logging and voice activity statistics;',
   'terms.s3.li4': 'ticket system (CTD) and feedback with categories and resolutions;',

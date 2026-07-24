@@ -142,7 +142,15 @@ class PollsCog(commands.Cog):
     async def end_loop(self):
         try:
             for poll in polls_db.due_to_end():
-                await self.end_poll(poll)
+                try:
+                    await self.end_poll(poll)
+                except Exception as exc:
+                    logger.exception("polls end_loop poll=%s guild=%s", poll.get("id"), poll.get("guild_id"))
+                    guild_id = poll.get("guild_id")
+                    if guild_id:
+                        cog = self.bot.get_cog("OwnerAlertsCog")
+                        if cog:
+                            cog.report_module_error(int(guild_id), "polls", str(exc))
         except Exception:
             logger.exception("polls end_loop error")
 

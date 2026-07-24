@@ -1,17 +1,22 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { AuthProvider } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { DocsPage } from './Docs'
 
 function renderAt(path: string) {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({}) }))
+
   return render(
     <MemoryRouter initialEntries={[path]}>
       <LanguageProvider>
-        <Routes>
-          <Route path="/docs" element={<DocsPage />} />
-          <Route path="/docs/:sectionId" element={<DocsPage />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/docs" element={<DocsPage />} />
+            <Route path="/docs/:sectionId" element={<DocsPage />} />
+          </Routes>
+        </AuthProvider>
       </LanguageProvider>
     </MemoryRouter>,
   )

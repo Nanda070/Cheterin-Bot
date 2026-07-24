@@ -115,7 +115,14 @@ export function InvitesTrackerPage({ embedded = false }: { embedded?: boolean })
         ) : (
           data.stats.map((row) => (
             <Card key={row.inviter_id} className="flex items-center justify-between gap-3">
-              <span className="font-mono text-sm text-foreground">{row.inviter_id}</span>
+              <div>
+                <span className="text-sm font-medium text-foreground">
+                  {row.inviter_display || row.inviter_id}
+                </span>
+                {row.inviter_display && row.inviter_display !== row.inviter_id && (
+                  <p className="font-mono text-xs text-muted">{row.inviter_id}</p>
+                )}
+              </div>
               <span className="text-sm text-muted">{t('invites.joins', { count: row.joins })}</span>
             </Card>
           ))
@@ -133,8 +140,8 @@ export function InvitesTrackerPage({ embedded = false }: { embedded?: boolean })
             <Card key={`${row.invitee_id}-${row.joined_at}-${i}`} className="flex flex-col gap-1 text-sm">
               <p className="text-foreground">
                 {t('invites.joinLine', {
-                  invitee: row.invitee_id,
-                  inviter: row.inviter_id ?? '—',
+                  invitee: row.invitee_display || row.invitee_id,
+                  inviter: row.inviter_display || row.inviter_id || '—',
                   code: row.code ?? '—',
                 })}
               </p>

@@ -1,3 +1,5 @@
+import logging
+
 import settings_db
 import discord
 from discord.ext import commands
@@ -5,8 +7,12 @@ from discord import app_commands
 
 import bot_config
 import i18n
+import invites_core
 import slash_registry
+import sticky_roles_core
 import welcome_core
+
+logger = logging.getLogger("welcome")
 
 
 class Welcome(commands.Cog):
@@ -16,6 +22,7 @@ class Welcome(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        sticky_roles_core.init()
         for guild in self.bot.guilds:
             try:
                 self.cached_invites[guild.id] = await guild.invites()
@@ -63,6 +70,36 @@ class Welcome(commands.Cog):
                     )
                     await welcome_ch.send(**payload)
 
+        sticky_settings = sticky_roles_core.get_settings(guild.id)
+        if sticky_settings["enabled"]:
+            sticky_ids = sticky_roles_core.pop_snapshot(guild.id, member.id)
+            if sticky_ids:
+                roles_to_restore = []
+                ignored = {int(x) for x in sticky_settings["ignored_role_ids"]}
+                tracked = {int(x) for x in sticky_settings["tracked_role_ids"]}
+                for rid in sticky_ids:
+                    if rid in ignored:
+                        continue
+                    if tracked and rid not in tracked:
+                        continue
+                    role = guild.get_role(rid)
+                    if role is None or role.is_default() or role.managed:
+                        continue
+                    me = guild.me
+                    if me is not None and getattr(role, "position", 0) >= getattr(me.top_role, "position", 0):
+                        continue
+                    roles_to_restore.append(role)
+                if roles_to_restore:
+                    try:
+                        await member.add_roles(
+                            *roles_to_restore,
+                            reason=i18n.t("welcome.sticky_roles_reason", lang),
+                        )
+                    except discord.Forbidden:
+                        logger.warning("sticky roles restore forbidden guild=%s user=%s", guild.id, member.id)
+                    except discord.HTTPException:
+                        logger.exception("sticky roles restore failed guild=%s user=%s", guild.id, member.id)
+
         auto_role_ids = bot_config.get(guild.id, "AUTO_ROLE_IDS", [])
         if auto_role_ids:
             roles_to_add = [guild.get_role(int(rid)) for rid in auto_role_ids]
@@ -86,24 +123,30 @@ class Welcome(commands.Cog):
 
             settings_db.put(member.guild.id, "invites_stats", invites_data)
 
-            embed_inv = discord.Embed(
-                title=i18n.t("welcome.invite_log_title", lang),
-                description=i18n.t(
-                    "welcome.invite_log_body",
-                    lang,
-                    inviter=used.inviter.mention,
-                    member=member.mention,
-                    code=used.code,
-                    invites=stats[inviter_id]["invites"],
-                ),
-                color=discord.Color.blurple(),
-                timestamp=self.bot.utcnow(),
+            # Если модуль Invites сам пишет лог — не дублируем embed из Welcome.
+            inv_settings = invites_core.get_settings(guild.id)
+            invites_logs = inv_settings["enabled"] and (
+                bool(inv_settings["log_channel_id"]) or inv_settings["welcome_mention"]
             )
-            inv_ch_id = bot_config.get(guild.id, "INVITE_LOG_CHANNEL_ID")
-            if inv_ch_id:
-                inv_ch = self.bot.get_channel(int(inv_ch_id))
-                if inv_ch:
-                    await inv_ch.send(embed=embed_inv)
+            if not invites_logs:
+                embed_inv = discord.Embed(
+                    title=i18n.t("welcome.invite_log_title", lang),
+                    description=i18n.t(
+                        "welcome.invite_log_body",
+                        lang,
+                        inviter=used.inviter.mention,
+                        member=member.mention,
+                        code=used.code,
+                        invites=stats[inviter_id]["invites"],
+                    ),
+                    color=discord.Color.blurple(),
+                    timestamp=self.bot.utcnow(),
+                )
+                inv_ch_id = bot_config.get(guild.id, "INVITE_LOG_CHANNEL_ID")
+                if inv_ch_id:
+                    inv_ch = self.bot.get_channel(int(inv_ch_id))
+                    if inv_ch:
+                        await inv_ch.send(embed=embed_inv)
 
         dm_sent = False
         if bot_config.get(guild.id, "WELCOME_DM_ENABLED", True):
@@ -136,6 +179,13 @@ class Welcome(commands.Cog):
         guild = member.guild
         lang = i18n.lang_for(guild.id)
         mid = str(member.id)
+
+        sticky_settings = sticky_roles_core.get_settings(guild.id)
+        if sticky_settings["enabled"]:
+            role_ids = sticky_roles_core.filter_member_roles(member, sticky_settings)
+            if role_ids:
+                sticky_roles_core.save_snapshot(guild.id, member.id, role_ids)
+
         invites_data = settings_db.get(guild.id, "invites_stats", {})
         stats = invites_data.setdefault("stats", {})
         invite_history = invites_data.setdefault("invite_history", {})
@@ -215,6 +265,7 @@ class Welcome(commands.Cog):
 
 
 async def setup(bot):
+    sticky_roles_core.init()
     cog = Welcome(bot)
     slash_registry.register_welcome(cog)
     await bot.add_cog(cog)

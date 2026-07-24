@@ -161,7 +161,7 @@ class WordleCog(commands.Cog):
                 i18n.module_disabled(lang, "wordle"), ephemeral=True,
             )
 
-        day_no = wordle_core.day_number()
+        day_no = wordle_core.day_number(wordle_core.today_for_guild(interaction.guild_id))
         answer = wordle_core.word_for_day(day_no)
         guild_id = interaction.guild.id
         game = wordle_db.get_daily_game(guild_id, interaction.user.id, day_no) or wordle_db.start_daily_game(
@@ -190,7 +190,7 @@ class WordleCog(commands.Cog):
                 i18n.module_disabled(lang, "wordle"), ephemeral=True,
             )
 
-        day_no = wordle_core.day_number()
+        day_no = wordle_core.day_number(wordle_core.today_for_guild(interaction.guild_id))
         answer = wordle_core.word_for_day(day_no)
         guild_id = interaction.guild.id
         game = wordle_db.get_daily_game(guild_id, interaction.user.id, day_no) or wordle_db.start_daily_game(
@@ -401,32 +401,43 @@ class WordleCog(commands.Cog):
     @tasks.loop(minutes=1)
     async def announce_loop(self):
         try:
-            day_no = wordle_core.day_number()
-            now = datetime.now(wordle_core.MSK)
+            import timezone_core
 
             for guild in self.bot.guilds:
-                if wordle_db.get_last_announced_day(guild.id) >= day_no:
-                    continue
-
-                settings = wordle_core.get_settings(guild.id)
-                if not settings["enabled"] or not settings["channel_id"]:
-                    continue
-                if not wordle_core.is_valid_announce_time(settings["announce_time"]):
-                    continue
-
-                hour, minute = (int(p) for p in settings["announce_time"].split(":"))
-                if (now.hour, now.minute) != (hour, minute):
-                    continue
-
-                channel = self.bot.get_channel(int(settings["channel_id"]))
-                if channel is None:
-                    continue
-
                 try:
-                    await self.post_daily_announce(channel, day_no)
-                    wordle_db.set_last_announced_day(guild.id, day_no)
-                except Exception:
-                    logger.exception("announce_loop: не удалось опубликовать анонс для guild %s", guild.id)
+                    day_no = wordle_core.day_number(wordle_core.today_for_guild(guild.id))
+                    now = timezone_core.now_local(guild.id)
+
+                    if wordle_db.get_last_announced_day(guild.id) >= day_no:
+                        continue
+
+                    settings = wordle_core.get_settings(guild.id)
+                    if not settings["enabled"] or not settings["channel_id"]:
+                        continue
+                    if not wordle_core.is_valid_announce_time(settings["announce_time"]):
+                        continue
+
+                    hour, minute = (int(p) for p in settings["announce_time"].split(":"))
+                    if (now.hour, now.minute) != (hour, minute):
+                        continue
+
+                    channel = self.bot.get_channel(int(settings["channel_id"]))
+                    if channel is None:
+                        continue
+
+                    try:
+                        await self.post_daily_announce(channel, day_no)
+                        wordle_db.set_last_announced_day(guild.id, day_no)
+                    except Exception as exc:
+                        logger.exception("announce_loop: не удалось опубликовать анонс для guild %s", guild.id)
+                        cog = self.bot.get_cog("OwnerAlertsCog")
+                        if cog:
+                            cog.report_module_error(guild.id, "wordle", str(exc))
+                except Exception as exc:
+                    logger.exception("announce_loop guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "wordle", str(exc))
         except Exception:
             logger.exception("announce_loop: ошибка итерации — цикл продолжает работать")
 

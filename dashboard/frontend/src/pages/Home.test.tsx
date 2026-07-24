@@ -36,6 +36,13 @@ function defaultMocks() {
   vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
   vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
   vi.spyOn(client, 'fetchMembers').mockResolvedValue({ total: 0, page: 1, page_size: 1, members: [] })
+  vi.spyOn(client, 'fetchGiveawayOverview').mockResolvedValue({ active: [], history: [] })
+  vi.spyOn(client, 'fetchSetupHealth').mockResolvedValue({
+    ok: true,
+    missing_permissions: [],
+    guild_id: '1',
+    guild_name: 'Test',
+  })
 }
 
 describe('HomePage', () => {
@@ -202,6 +209,13 @@ describe('HomePage', () => {
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
     vi.spyOn(client, 'fetchMembers').mockResolvedValue({ total: 7, page: 1, page_size: 1, members: [] })
+    vi.spyOn(client, 'fetchGiveawayOverview').mockResolvedValue({ active: [], history: [] })
+    vi.spyOn(client, 'fetchSetupHealth').mockResolvedValue({
+      ok: true,
+      missing_permissions: [],
+      guild_id: '1',
+      guild_name: 'Test',
+    })
 
     renderPage()
 

@@ -10,7 +10,7 @@ import { useT } from '../context/LanguageContext'
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-export function CommandPreviewPage() {
+export function CommandPreviewPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [content, setContent] = useState('Welcome, {mention}! You joined {guild_name}.')
   const [embedTitle, setEmbedTitle] = useState('Hello {name}')
@@ -44,10 +44,17 @@ export function CommandPreviewPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Eye size={22} className="text-primary" />
-          {t('preview.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <Eye size={20} className="text-primary" />
+            {t('preview.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Eye size={22} className="text-primary" />
+            {t('preview.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('preview.intro')}</p>
       </div>
 

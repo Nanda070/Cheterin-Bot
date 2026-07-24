@@ -61,18 +61,24 @@ class DailyTopicCog(commands.Cog):
         # именно так расписание «молча умирало», при этом ручная публикация работала.
         try:
             for guild in self.bot.guilds:
-                if not daily_topic_core.get_settings(guild.id)["enabled"]:
-                    continue
-                if not daily_topic_core.should_post_now(guild.id):
-                    continue
-                topic = await self.post_topic_now(guild.id)
-                if topic is not None:
-                    logger.info("Тема дня опубликована по расписанию: %s (guild=%s)", topic["id"], guild.id)
-                else:
-                    logger.warning(
-                        "Расписание сработало, но публикация не удалась (канал/темы не настроены?, guild=%s)",
-                        guild.id,
-                    )
+                try:
+                    if not daily_topic_core.get_settings(guild.id)["enabled"]:
+                        continue
+                    if not daily_topic_core.should_post_now(guild.id):
+                        continue
+                    topic = await self.post_topic_now(guild.id)
+                    if topic is not None:
+                        logger.info("Тема дня опубликована по расписанию: %s (guild=%s)", topic["id"], guild.id)
+                    else:
+                        logger.warning(
+                            "Расписание сработало, но публикация не удалась (канал/темы не настроены?, guild=%s)",
+                            guild.id,
+                        )
+                except Exception as exc:
+                    logger.exception("daily_topic_loop guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "daily_topic", str(exc))
         except Exception:
             logger.exception("daily_topic_loop: ошибка итерации — цикл продолжает работать")
 

@@ -44,6 +44,7 @@ def _normalized(data: dict) -> dict:
 
 
 def _today_msk() -> str:
+    # Backward-compat alias used by older tests; prefer _today_local(guild_id).
     return datetime.now(MOSCOW_TZ).strftime("%Y-%m-%d")
 
 
@@ -123,14 +124,29 @@ def pick_next_topic(guild_id: int) -> dict | None:
     return next((t for t in data["topics"] if t["id"] == topic_id), None)
 
 
+def _today_local(guild_id: int) -> str:
+    import timezone_core
+
+    return timezone_core.today_local(guild_id)
+
+
 def already_posted_today(guild_id: int) -> bool:
+    """True if a topic was already posted for today's local calendar (or later).
+
+    Uses ``>=`` so a timezone change that moves the local date *backward*
+    still counts as already posted and does not double-post.
+    Normal day rollover (posted date < today) still allows the next post.
+    """
     data = _normalized(settings_db.get(guild_id, MODULE_NAME))
-    return data["last_posted_date"] == _today_msk()
+    last = data["last_posted_date"] or ""
+    if not last:
+        return False
+    return last >= _today_local(guild_id)
 
 
 def mark_posted_today(guild_id: int) -> None:
     data = _normalized(settings_db.get(guild_id, MODULE_NAME))
-    data["last_posted_date"] = _today_msk()
+    data["last_posted_date"] = _today_local(guild_id)
     settings_db.put(guild_id, MODULE_NAME, data)
 
 
@@ -141,7 +157,7 @@ def get_today_post_time(guild_id: int) -> str | None:
     if not post_times:
         return None
 
-    today = _today_msk()
+    today = _today_local(guild_id)
     if data["chosen_time_date"] == today and data["chosen_time"] in post_times:
         return data["chosen_time"]
 
@@ -154,10 +170,12 @@ def get_today_post_time(guild_id: int) -> str | None:
 
 def should_post_now(guild_id: int) -> bool:
     """Пора ли публиковать тему дня: время настало и сегодня ещё не публиковали."""
+    import timezone_core
+
     if already_posted_today(guild_id):
         return False
     target = get_today_post_time(guild_id)
     if target is None:
         return False
-    now_hhmm = datetime.now(MOSCOW_TZ).strftime("%H:%M")
+    now_hhmm = timezone_core.now_local(guild_id).strftime("%H:%M")
     return now_hhmm >= target

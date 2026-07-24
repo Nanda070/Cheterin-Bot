@@ -64,18 +64,26 @@ class TimedRolesCog(commands.Cog):
     async def sweeper(self):
         try:
             for row in timed_roles_db.expired():
-                guild = self.bot.get_guild(row["guild_id"])
-                if guild is None:
+                try:
+                    guild = self.bot.get_guild(row["guild_id"])
+                    if guild is None:
+                        timed_roles_db.remove(row["id"])
+                        continue
+                    member = guild.get_member(row["user_id"])
+                    role = guild.get_role(row["role_id"])
+                    if member and role and role in member.roles:
+                        try:
+                            await member.remove_roles(role, reason="timed role expired")
+                        except discord.HTTPException:
+                            logger.warning("timed role remove failed guild=%s", guild.id)
                     timed_roles_db.remove(row["id"])
-                    continue
-                member = guild.get_member(row["user_id"])
-                role = guild.get_role(row["role_id"])
-                if member and role and role in member.roles:
-                    try:
-                        await member.remove_roles(role, reason="timed role expired")
-                    except discord.HTTPException:
-                        logger.warning("timed role remove failed guild=%s", guild.id)
-                timed_roles_db.remove(row["id"])
+                except Exception as exc:
+                    logger.exception("timed_roles sweeper guild=%s", row.get("guild_id"))
+                    guild_id = row.get("guild_id")
+                    if guild_id:
+                        cog = self.bot.get_cog("OwnerAlertsCog")
+                        if cog:
+                            cog.report_module_error(int(guild_id), "timed_roles", str(exc))
         except Exception:
             logger.exception("timed_roles sweeper error")
 

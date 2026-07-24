@@ -1,14 +1,19 @@
-import { Bell, GlobeHemisphereWest } from '@phosphor-icons/react'
+import { Bell, Clock, GlobeHemisphereWest, Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
   fetchChannels,
   fetchLanguage,
   fetchOwnerAlerts,
+  fetchSetupHealth,
+  fetchTimezone,
+  testOwnerAlerts,
   updateLanguage,
   updateOwnerAlerts,
+  updateTimezone,
   type ChannelInfo,
   type OwnerAlertsSettings,
   type ServerLanguage,
+  type SetupHealth,
 } from '../api/client'
 import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
@@ -44,17 +49,34 @@ export function ServerSettingsPage() {
   const [error, setError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
 
+  const [timezone, setTimezone] = useState('Europe/Moscow')
+  const [timezoneChoices, setTimezoneChoices] = useState<string[]>([])
+  const [tzBusy, setTzBusy] = useState(false)
+  const [tzError, setTzError] = useState('')
+  const [tzSaved, setTzSaved] = useState('')
+
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [alerts, setAlerts] = useState<OwnerAlertsSettings>(defaultAlerts)
   const [alertsBusy, setAlertsBusy] = useState(false)
   const [alertsError, setAlertsError] = useState('')
   const [alertsSaved, setAlertsSaved] = useState('')
+  const [testBusy, setTestBusy] = useState(false)
+
+  const [health, setHealth] = useState<SetupHealth | null>(null)
+  const [healthError, setHealthError] = useState('')
 
   useEffect(() => {
     fetchLanguage()
       .then((data) => setLanguage(data.code))
       .catch(() => setError(t('settings.errorLoad')))
       .finally(() => setLoading(false))
+
+    fetchTimezone()
+      .then((data) => {
+        setTimezone(data.code)
+        setTimezoneChoices(data.supported)
+      })
+      .catch((err) => setTzError(formatApiError(err, t, 'settings.timezone.errorLoad')))
 
     fetchOwnerAlerts()
       .then(setAlerts)
@@ -63,6 +85,10 @@ export function ServerSettingsPage() {
     fetchChannels()
       .then(setChannels)
       .catch(() => setChannels([]))
+
+    fetchSetupHealth()
+      .then(setHealth)
+      .catch((err) => setHealthError(formatApiError(err, t, 'setupHealth.errorLoad')))
   }, [t])
 
   const handleSave = async () => {
@@ -80,6 +106,22 @@ export function ServerSettingsPage() {
     }
   }
 
+  const saveTimezone = async () => {
+    setTzBusy(true)
+    setTzError('')
+    setTzSaved('')
+    try {
+      const data = await updateTimezone(timezone)
+      setTimezone(data.code)
+      setTimezoneChoices(data.supported)
+      setTzSaved(t('settings.saved'))
+    } catch (err) {
+      setTzError(formatApiError(err, t, 'settings.timezone.errorSave'))
+    } finally {
+      setTzBusy(false)
+    }
+  }
+
   const saveAlerts = async () => {
     setAlertsBusy(true)
     setAlertsError('')
@@ -92,6 +134,20 @@ export function ServerSettingsPage() {
       setAlertsError(formatApiError(err, t, 'ownerAlerts.errorSave'))
     } finally {
       setAlertsBusy(false)
+    }
+  }
+
+  const sendTestAlert = async () => {
+    setTestBusy(true)
+    setAlertsError('')
+    setAlertsSaved('')
+    try {
+      await testOwnerAlerts()
+      setAlertsSaved(t('ownerAlerts.testSent'))
+    } catch (err) {
+      setAlertsError(formatApiError(err, t, 'ownerAlerts.testFailed'))
+    } finally {
+      setTestBusy(false)
     }
   }
 
@@ -115,6 +171,31 @@ export function ServerSettingsPage() {
       )}
 
       <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+        <div className="flex items-start gap-2">
+          <Warning size={20} className="mt-0.5 text-primary" />
+          <div>
+            <h2 className="font-medium text-foreground">{t('setupHealth.title')}</h2>
+            <p className="mt-1 text-sm text-muted">{t('setupHealth.intro')}</p>
+          </div>
+        </div>
+        {healthError && <p className="text-sm text-danger">{healthError}</p>}
+        {!healthError && health === null && <p className="text-sm text-muted">{t('common.loading')}</p>}
+        {!healthError && health !== null && health.ok && (
+          <p className="text-sm text-success">{t('setupHealth.ok')}</p>
+        )}
+        {!healthError && health !== null && !health.ok && (
+          <div className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-foreground">
+            <p className="font-medium text-warning">{t('setupHealth.missing')}</p>
+            <ul className="mt-1 list-inside list-disc text-muted">
+              {health.missing_permissions.map((perm) => (
+                <li key={perm}>{perm}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
         <div>
           <h2 className="font-medium text-foreground">{t('settings.botLanguage')}</h2>
           <p className="mt-1 text-sm text-muted">{t('settings.botLanguageHint')}</p>
@@ -128,6 +209,29 @@ export function ServerSettingsPage() {
         <div>
           <Button onClick={handleSave} disabled={loading || busy}>
             {busy ? t('common.saving') : t('common.save')}
+          </Button>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+        <div className="flex items-start gap-2">
+          <Clock size={20} className="mt-0.5 text-primary" />
+          <div>
+            <h2 className="font-medium text-foreground">{t('settings.timezone')}</h2>
+            <p className="mt-1 text-sm text-muted">{t('settings.timezoneHint')}</p>
+          </div>
+        </div>
+        {tzError && <p className="text-sm text-danger">{tzError}</p>}
+        {tzSaved && <p className="text-sm text-success">{tzSaved}</p>}
+        <Select
+          value={timezone}
+          disabled={tzBusy || timezoneChoices.length === 0}
+          onChange={setTimezone}
+          options={timezoneChoices.map((code) => ({ id: code, name: code }))}
+        />
+        <div>
+          <Button onClick={saveTimezone} disabled={tzBusy || !timezone}>
+            {tzBusy ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </section>
@@ -225,9 +329,12 @@ export function ServerSettingsPage() {
           </div>
         </div>
 
-        <div>
-          <Button onClick={saveAlerts} disabled={alertsBusy}>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={saveAlerts} disabled={alertsBusy || testBusy}>
             {alertsBusy ? t('common.saving') : t('common.save')}
+          </Button>
+          <Button variant="secondary" onClick={sendTestAlert} disabled={alertsBusy || testBusy}>
+            {testBusy ? t('common.saving') : t('ownerAlerts.testSend')}
           </Button>
         </div>
       </section>

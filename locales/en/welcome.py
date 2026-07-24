@@ -1,6 +1,7 @@
 MESSAGES: dict[str, str] = {
     "welcome.channel_message": "Welcome {mention} to **{guild_name}**! We are now {member_count} members!",
     "welcome.auto_role_reason": "Auto-role on join",
+    "welcome.sticky_roles_reason": "Sticky roles on rejoin",
     "welcome.invite_log_title": "📥 Invite Log",
     "welcome.invite_log_body": "{inviter} invited {member}\nCode: `{code}` | Total invited: **{invites}**",
     "welcome.dm_title": "Welcome to {guild_name}",

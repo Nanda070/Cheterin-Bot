@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   ChatCircleText,
   Clock,
+  Gift,
   LockKeyOpen,
   Prohibit,
   ShieldCheck,
@@ -20,11 +21,15 @@ import { useNavigate } from 'react-router-dom'
 import {
   fetchEvents,
   fetchFeedbackCases,
+  fetchGiveawayOverview,
   fetchLockdownStatus,
   fetchMembers,
   fetchModerationLog,
+  fetchSetupHealth,
+  type GiveawayOverview,
   type LockdownStatus,
   type ModerationLogEntry,
+  type SetupHealth,
 } from '../api/client'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../context/AuthContext'
@@ -70,6 +75,11 @@ export function HomePage() {
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [memberError, setMemberError] = useState('')
 
+  const [giveaways, setGiveaways] = useState<GiveawayOverview | null>(null)
+  const [giveawaysError, setGiveawaysError] = useState('')
+
+  const [health, setHealth] = useState<SetupHealth | null>(null)
+
   useEffect(() => {
     fetchFeedbackCases('pending')
       .then((cases) => setFeedbackCount(cases.length))
@@ -100,11 +110,39 @@ export function HomePage() {
       .catch(() => setMemberError(t('common.errorLoad')))
   }, [t])
 
+  useEffect(() => {
+    fetchGiveawayOverview()
+      .then(setGiveaways)
+      .catch(() => setGiveawaysError(t('common.errorLoad')))
+  }, [t])
+
+  useEffect(() => {
+    fetchSetupHealth()
+      .then(setHealth)
+      .catch(() => setHealth(null))
+  }, [t])
+
   return (
     <div>
       <h1 className="mb-4 text-lg font-semibold text-foreground">
         {t('home.welcome', { username: user?.username ?? '' })}
       </h1>
+
+      {health && !health.ok && (
+        <button
+          type="button"
+          onClick={() => navigate('/settings')}
+          className="mb-4 flex w-full items-start gap-2 rounded-control border border-warning/40 bg-warning/10 px-4 py-3 text-left text-sm text-foreground transition hover:border-warning"
+        >
+          <ShieldWarning size={18} className="mt-0.5 shrink-0 text-warning" />
+          <span>
+            <span className="font-medium text-warning">{t('home.setupHealth.warning')}</span>
+            <span className="mt-0.5 block text-muted">
+              {t('home.setupHealth.missingCount', { count: health.missing_permissions.length })}
+            </span>
+          </span>
+        </button>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/feedback')}>
@@ -202,6 +240,24 @@ export function HomePage() {
           )}
           {!memberError && memberCount !== null && (
             <p className="mt-2 text-sm text-muted">{t('home.members.count', { count: memberCount })}</p>
+          )}
+        </Card>
+
+        <Card interactive className="animate-fade-in-up" onClick={() => navigate('/giveaways')}>
+          <div className="flex items-center gap-2 text-foreground">
+            <Gift size={20} className="text-primary" />
+            <h2 className="font-semibold">{t('home.giveaways')}</h2>
+          </div>
+          {giveawaysError && <p className="mt-2 text-sm text-danger">{giveawaysError}</p>}
+          {!giveawaysError && giveaways === null && (
+            <p className="mt-2 text-sm text-muted">{t('common.loading')}</p>
+          )}
+          {!giveawaysError && giveaways !== null && (
+            <p className="mt-2 text-sm text-muted">
+              {giveaways.active.length === 0
+                ? t('home.giveaways.none')
+                : t('home.giveaways.activeCount', { count: giveaways.active.length })}
+            </p>
           )}
         </Card>
       </div>

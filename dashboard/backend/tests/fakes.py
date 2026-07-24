@@ -53,10 +53,24 @@ class FakeRole:
 
 
 class FakePermissions:
-    def __init__(self, administrator=False, mention_everyone=False, manage_guild=False):
+    def __init__(self, administrator=False, mention_everyone=False, manage_guild=False, **extra):
         self.administrator = administrator
         self.mention_everyone = mention_everyone
         self.manage_guild = manage_guild
+        # Expose common Discord permission attrs (getattr default False otherwise).
+        for attr in (
+            "send_messages",
+            "embed_links",
+            "manage_messages",
+            "manage_roles",
+            "kick_members",
+            "ban_members",
+            "moderate_members",
+            "view_audit_log",
+        ):
+            setattr(self, attr, True if administrator else extra.get(attr, True))
+        for key, value in extra.items():
+            setattr(self, key, value)
 
 
 class FakeAsset:

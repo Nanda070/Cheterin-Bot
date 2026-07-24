@@ -7,6 +7,7 @@ import type { TranslationDict } from './types'
 import activity from './en/activity'
 import docsShell from './en/docsShell'
 import legal from './en/legal'
+import landing from './en/landing'
 
 const en: TranslationDict = {
   ...shell,
@@ -17,6 +18,7 @@ const en: TranslationDict = {
   ...community,
   ...docsShell,
   ...legal,
+  ...landing,
 }
 
 export default en

@@ -56,7 +56,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>Multi-server</H>
         <P>
           You can add the bot to any server via an invite link. In the dashboard you pick which server to manage and
-          configure its modules independently of other servers - like MEE6. Access requires{' '}
+          configure its modules independently of other servers. Access requires{' '}
           <strong>Manage Server</strong> or Administrator on that server. Modules are off by default on a new server.
           Staff-only features (CTD tickets, news relay, Super Admin) belong to the main server and are hidden on other
           guilds.
@@ -72,30 +72,31 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Dashboard audit', 'Which moderators changed what in the panel', 'Dashboard audit'],
             ['Posts & subscriptions', 'Twitch stream and YouTube video notifications', 'Posts & subscriptions'],
             ['Anti-spam', 'Mass mentions (@everyone/roles) → 24h timeout and a 20-minute message purge', 'Moderation'],
-            ['Tempban', 'Trap channel: a non-admin message auto-bans (message purge) and unbans a few seconds later', 'Moderation'],
+            ['Spam traps', 'Trap channel: a non-admin message auto-bans (message purge) and unbans a few seconds later', 'Moderation'],
             ['Lockdown', 'Emergency server isolation during a raid', 'Moderation'],
             ['CTD tickets', 'Private support threads with auto-close', 'Feedback & tickets'],
             ['Feedback', 'Category-based submissions with moderator decisions', 'Feedback & tickets'],
-            ['Welcomes', 'Channel message + DM guide for newcomers', 'Moderation → Welcome'],
-            ['Invite stats', 'Who invited whom, joins/leaves', 'Members & roles'],
-            ['Auto-roles', 'Roles for new members on join', 'Moderation → Auto-roles'],
+            ['Welcomes', 'Channel message + DM guide for newcomers', 'Server join'],
+            ['Invite stats', 'Who invited whom, joins/leaves', 'Server join → Invites'],
+            ['Auto-roles', 'Roles for new members on join', 'Server join → Auto-roles'],
             ['Reaction roles', 'Self-assign roles via reactions', 'Button & embed builder'],
             ['Embed Builder', 'Embed constructor, form buttons, templates', 'Buttons & embeds'],
             ['Events', 'Events and polls with join buttons', 'Events & polls'],
-            ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'Brackets'],
+            ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'Events → Brackets'],
             ['Mafia', 'Role-playing game: lobby in Discord; full match (role, player list, timer, votes) on a personal link', 'Mafia'],
             ['Bunker', 'Role-playing game: lobby in Discord; character card, trait reveals, special abilities and voting on a personal link', 'Bunker'],
-            ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events & polls → Giveaways'],
+            ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events → Giveaways'],
             ['Daily topic', 'Question/topic of the day posted on a schedule to keep chat alive', 'Daily topic'],
             ['Fun', 'Russian roulette, emoji roulette, Auto-Emoji, and Russian Wordle (word of the day)', 'Fun'],
-            ['Economy', 'Server currency: activity payouts, transfers, role shop, roulette bets, casino (slots, coinflip, blackjack), weekly report', 'Economy'],
+            ['Economy', 'Server currency: activity payouts, transfers, role shop, weekly report', 'Economy'],
+            ['Casino', 'Slots, coinflip, blackjack, Russian roulette bets, leaderboard', 'Casino'],
             ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Custom commands'],
-            ['Scheduled messages', 'One-shot or recurring posts to a channel on a schedule', 'Scheduled messages'],
-            ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'Sticky messages'],
-            ['Polls', 'Dedicated polls with live tallies and early end from the dashboard', 'Polls'],
-            ['Timed roles', 'Temporary role grants that expire automatically', 'Timed roles'],
+            ['Scheduled messages', 'One-shot or recurring posts to a channel on a schedule', 'Messages → Scheduled'],
+            ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'Messages → Sticky'],
+            ['Polls', 'Dedicated polls with live tallies and early end from the dashboard', 'Events → Polls'],
+            ['Timed roles', 'Temporary role grants that expire automatically', 'Members → Timed roles'],
             ['Birthdays', 'Server-wide birthday calendar and announcements', 'Birthdays'],
-            ['Command preview', 'Try bot replies in the dashboard without posting to Discord', 'Command preview'],
+            ['Command preview', 'Try bot replies in the dashboard without posting to Discord', 'Custom commands → Preview'],
             ['Owner alerts', 'Notify the owner on missing permissions, mass bans, or module errors', 'Server settings'],
             ['AutoMod', '9 message filters with punishments and warn escalation', 'AutoMod'],
             ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins - off by default', 'Moderation → Anti-raid'],
@@ -160,43 +161,37 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           headers={['Section', 'Purpose']}
           rows={[
             ['Member ranking', 'XP settings, rewards, leaderboard, member editing'],
+            ['Economy', 'Currency, XP rate, daily bonus, transfers, role shop, balance top, weekly report'],
+            ['Casino', 'Slots / coinflip / blackjack, Russian roulette bets, leaderboard'],
             ['Voice stats', 'Activity charts, top channels and members'],
+            ['Private rooms', 'Active rooms, publish control panel'],
+            ['Family', 'Module toggle, role roster, ticket applications, birthdays'],
+            ['Supplies', 'Active runs, history, top participants, create a run'],
             ['Feedback & tickets', 'Feedback cases, categories, ticket panel'],
-            ['Events & polls', 'Create events, participants, reward roles'],
-            ['Brackets', 'Tournament brackets in three formats and public links'],
+            ['Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
+            ['Messages', 'Tabs: scheduled posts and sticky messages'],
+            ['Buttons & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
+            ['Birthdays', 'Member birthday calendar and announce channel'],
+            ['Fun', 'Module toggle, Russian roulette timeout and cooldown, Auto-Emoji, Wordle'],
+            ['Posts & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
+            ['Daily topic', 'Topic list, channel and publish times, manual publish'],
             ['Mafia', 'Module toggle, default players and timers, log channel, active games'],
             ['Bunker', 'Module toggle, default players and timers, active games, special-ability requests'],
-            ['Events & polls', 'Giveaways tab: active and finished draws, create, reroll'],
-            ['Fun', 'Module toggle, Russian roulette timeout and cooldown, Auto-Emoji, Wordle'],
-            ['Economy', 'Currency, XP rate, daily bonus, transfers, roulette bets, casino (slots/coinflip/blackjack), role shop, balance top, weekly report'],
-            ['Custom commands', 'Create trigger → reply rules; module toggle'],
-            ['Scheduled messages', 'Create, edit, enable/disable scheduled channel posts'],
-            ['Sticky messages', 'Per-channel sticky text, refresh/test post'],
-            ['Polls', 'Active and finished polls, end early, vote tallies'],
-            ['Timed roles', 'Grant a role until a set time; list and cancel'],
-            ['Birthdays', 'Member birthday calendar and announce channel'],
-            ['Command preview', 'Dry-run how the bot would reply to a trigger or slash-style input'],
-            ['Supplies', 'Active runs, history, top participants, create a run'],
-            ['Family', 'Module toggle, role roster, ticket applications, birthdays'],
-            ['Private rooms', 'Active rooms, publish control panel'],
-            ['Buttons & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
-            ['Posts & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
-            ['News relay', 'Forwarding routes and source settings'],
-            ['Daily topic', 'Topic list, channel and publish times, manual publish'],
             ['Logging', 'Toggle and channel for each server event type'],
             [
               'Moderation',
-              'Tabs: Lockdown and journal, Settings (moderation log), Anti-raid (anti-spam and Tempban), Verification',
+              'Tabs: Lockdown and journal, Settings (server logging), Anti-spam, Spam traps, Verification / Anti-raid',
             ],
             ['AutoMod', 'Message filters, punishments, warn escalation'],
-            ['Server join', 'Welcomes, goodbyes, auto-roles, onboarding channels; test send'],
-            ['Members & roles', 'Member search, cards, bans/kicks, bulk roles, invite stats'],
-            ['Dashboard audit', 'History of moderator actions in the panel'],
+            ['Server join', 'Welcomes, goodbyes, DM guide, auto-roles, invites; test send'],
+            ['Members', 'Member search, cards, bans/kicks, bulk roles, timed roles'],
+            ['Custom commands', 'Trigger → reply rules; Preview tab without posting to Discord'],
+            ['Dashboard audit', 'History of moderator actions in the panel (human-readable labels)'],
             [
               'Server settings',
               'Bot language for this server (RU/EN) and owner alerts (missing permissions, mass bans, module errors)',
             ],
-            ['Super Admin', 'Bot server list, news, CTD tickets (main server only)'],
+            ['Super Admin', 'Bot server list, news relay, CTD tickets (main server only)'],
           ]}
         />
       </>
@@ -217,7 +212,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>Moderation and spam</H>
         <P>
           <strong>Moderation → Settings:</strong> shared log channel. <strong>Moderation → Anti-raid:</strong>{' '}
-          anti-spam, Tempban, and related channels.
+          anti-spam, Spam traps, and related channels.
         </P>
         <Table
           headers={['Parameter', 'Description']}
@@ -562,7 +557,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>The detector cache is cleared automatically every 5 minutes.</li>
         </UL>
 
-        <H>🛑 Tempban — trap channel</H>
+        <H>🛑 Spam traps — trap channel</H>
         <P>
           This is <strong>not</strong> a “timed ban for N minutes” — it is a trap for raiders/self-banning bots. Any
           non-admin message in the <Code>TEMPBAN_CHANNEL_ID</Code> channel instantly bans the author (purging their
@@ -572,7 +567,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         </P>
         <Note>
           If the bot restarts in the narrow window between the ban and the unban, a user can get stuck banned — on
-          the next startup the bot scans each server&apos;s ban list and automatically unbans any stuck tempbans.
+          the next startup the bot scans each server&apos;s ban list and automatically unbans any stuck spam-trap bans.
         </Note>
         <Warn>
           Do not confuse this with an actual timed ban: for that, use the <Code>/ban</Code> slash command with the{' '}
@@ -644,7 +639,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H>📝 Moderation journal</H>
         <P>
-          Moderation shows recent actions: anti-spam punishments, tempbans, manual bans and kicks from the dashboard,
+          Moderation shows recent actions: anti-spam punishments, spam traps, manual bans and kicks from the dashboard,
           and <Code>/ban</Code>/<Code>/kick</Code>/<Code>/unban</Code>/<Code>/clear</Code> — who, whom, when, and why.
         </P>
       </>
@@ -908,7 +903,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>Create and manage</H>
         <OL>
           <li>
-            Under Brackets click Create bracket, add participants (manually or from a finished event), and pick a
+            Under Events → Brackets click Create bracket, add participants (manually or from a finished event), and pick a
             format.
           </li>
           <li>
@@ -1836,53 +1831,47 @@ export const DOC_SECTIONS_EN: DocSection[] = [
     group: 'Modules',
     content: (
       <>
-        <H>🧩 Custom commands, schedules, sticky, polls, roles &amp; birthdays</H>
+        <H>🧩 Custom commands, messages, polls, roles &amp; birthdays</H>
         <P>
-          These modules live under their own dashboard pages. Each is scoped to the active server and off or empty until
-          you configure it. They do not share data with other guilds.
+          These modules live in the active server&apos;s dashboard (some as dedicated pages, some as tabs). Until you
+          configure a module, it does nothing. They do not share data with other guilds.
         </P>
 
         <H3>Custom commands</H3>
         <P>
           Define trigger → reply rules: exact match or “contains”. When a member sends a matching message, the bot
-          replies with the configured text. Toggle the module on the Custom commands page; disable individual rules
-          without deleting them.
+          replies with the configured text. Toggle the module on Custom commands; disable individual rules without
+          deleting them. The Preview tab dry-runs a reply without posting to Discord.
         </P>
 
-        <H3>Scheduled messages</H3>
+        <H3>Messages — scheduled</H3>
         <P>
-          Create one-shot or recurring posts to a channel. Edit content, channel, and schedule from the dashboard (including
-          PATCH updates to existing jobs). Disabled schedules stay in the list until removed.
+          On Messages → Scheduled: create one-shot or recurring posts to a channel. Edit content, channel, and schedule
+          from the dashboard (including updates to existing jobs). Disabled schedules stay in the list until removed.
         </P>
 
-        <H3>Sticky messages</H3>
+        <H3>Messages — sticky</H3>
         <P>
-          Keep a message at the bottom of a channel: after new chat activity the bot re-posts the sticky so it stays
-          visible. Use the refresh/test action to post immediately without waiting for chat traffic.
+          On the same page → Sticky: keep a message at the bottom of a channel. After new chat activity the bot
+          re-posts the sticky. Use refresh/test to post immediately without waiting for chat traffic.
         </P>
 
         <H3>Polls</H3>
         <P>
-          Dedicated poll module (separate from Events). Track active and finished polls, live vote tallies, and end a
-          poll early from the dashboard. Vote data is stored per server.
+          The Polls tab on Events &amp; polls (separate from tournament/event posts). Track active and finished polls,
+          live vote tallies, and end a poll early from the dashboard. Vote data is stored per server.
         </P>
 
         <H3>Timed roles</H3>
         <P>
           Grant a role until a set expiry. When time is up the bot removes the role automatically. Cancel early from the
-          Timed roles page.
+          Timed roles tab on Members.
         </P>
 
         <H3>Birthdays</H3>
         <P>
           Server-wide birthday calendar (distinct from Family roster birthdays). Members&apos; day/month are stored for
           announcements to a configured channel. Family birthdays remain on the Family page for roster members.
-        </P>
-
-        <H3>Command preview</H3>
-        <P>
-          Dry-run how the bot would reply to a custom-command trigger or similar input without posting to Discord —
-          useful while drafting replies.
         </P>
 
         <H3>Owner alerts</H3>

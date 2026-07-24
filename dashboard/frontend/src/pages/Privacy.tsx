@@ -81,8 +81,8 @@ export function PrivacyPage() {
         key={`${lang}-privacy`}
         className="animate-fade-in-up mx-auto max-w-3xl rounded-card border border-border bg-surface p-6"
       >
-        <h1 className="text-lg font-semibold text-foreground">{t('privacy.title')}</h1>
-        <p className="mt-1 text-xs text-muted">{t('privacy.lastUpdated')}</p>
+        <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{t('privacy.title')}</h1>
+        <p className="mt-1 pl-3.5 text-xs text-muted">{t('privacy.lastUpdated')}</p>
 
         <Section title={t('privacy.s1.title')}>
           <p>{t('privacy.s1.p1')}</p>

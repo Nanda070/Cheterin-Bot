@@ -266,7 +266,7 @@ export function LevelsPage() {
                 step={5}
                 value={settings.text.multiplier}
                 onChange={(e) => patch((p) => ({ ...p, text: { ...p.text, multiplier: Number(e.target.value) } }))}
-                className="flex-1 accent-[#5865f2]"
+                className="flex-1 accent-primary"
               />
             </div>
           </Card>
@@ -311,7 +311,7 @@ export function LevelsPage() {
                 step={5}
                 value={settings.voice.multiplier}
                 onChange={(e) => patch((p) => ({ ...p, voice: { ...p.voice, multiplier: Number(e.target.value) } }))}
-                className="flex-1 accent-[#5865f2]"
+                className="flex-1 accent-primary"
               />
             </div>
             <div className="flex flex-col gap-1">

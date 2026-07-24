@@ -16,6 +16,23 @@ const WEEKDAY_KEYS = [
   'voiceStats.weekday.sun',
 ] as const
 
+/** Human-readable voice duration using dashboard UI language (not guild bot lang). */
+function formatVoiceDuration(seconds: number, t: ReturnType<typeof useT>): string {
+  const minutes = Math.floor(seconds / 60)
+  const weeks = Math.floor(minutes / (7 * 24 * 60))
+  let rem = minutes % (7 * 24 * 60)
+  const days = Math.floor(rem / (24 * 60))
+  rem %= 24 * 60
+  const hours = Math.floor(rem / 60)
+  const mins = rem % 60
+  const parts: string[] = []
+  if (weeks) parts.push(t('voiceStats.duration.week', { n: weeks }))
+  if (days) parts.push(t('voiceStats.duration.day', { n: days }))
+  if (hours) parts.push(t('voiceStats.duration.hour', { n: hours }))
+  if (mins || parts.length === 0) parts.push(t('voiceStats.duration.min', { n: mins }))
+  return parts.join(' ')
+}
+
 function BarChart({
   values,
   labels,
@@ -95,7 +112,10 @@ export function VoiceStatsPage() {
       {stats && (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <StatTile label={t('voiceStats.totalTime')} value={stats.total_time_text} />
+            <StatTile
+              label={t('voiceStats.totalTime')}
+              value={formatVoiceDuration(stats.total_seconds, t)}
+            />
             <StatTile label={t('voiceStats.sessions')} value={String(stats.session_count)} />
             <StatTile label={t('voiceStats.peakConcurrent')} value={String(stats.peak_concurrent)} />
           </div>
@@ -129,7 +149,7 @@ export function VoiceStatsPage() {
                   <span className="truncate text-sm text-foreground">
                     {i + 1}. {c.name}
                   </span>
-                  <span className="shrink-0 text-sm text-muted">{c.time_text}</span>
+                  <span className="shrink-0 text-sm text-muted">{formatVoiceDuration(c.seconds, t)}</span>
                 </div>
               ))}
             </Card>
@@ -150,7 +170,7 @@ export function VoiceStatsPage() {
                     </span>
                   )}
                   <span className="min-w-0 flex-1 truncate text-sm text-foreground">{u.display}</span>
-                  <span className="shrink-0 text-sm text-muted">{u.time_text}</span>
+                  <span className="shrink-0 text-sm text-muted">{formatVoiceDuration(u.seconds, t)}</span>
                 </div>
               ))}
             </Card>

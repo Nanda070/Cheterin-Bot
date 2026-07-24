@@ -11,6 +11,7 @@ MODULE_NAME = "scheduled_messages"
 MAX_MESSAGES = 30
 MAX_CONTENT_LEN = 2000
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+# Kept for tests / backward-compat imports; runtime uses timezone_core.
 MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 
@@ -111,8 +112,10 @@ def delete_message(guild_id: int, msg_id: str) -> bool:
 
 
 def mark_posted(guild_id: int, msg_id: str, *, once: bool = False) -> None:
+    import timezone_core
+
     data = _normalized(settings_db.get(guild_id, MODULE_NAME))
-    today = datetime.now(MOSCOW_TZ).strftime("%Y-%m-%d")
+    today = timezone_core.today_local(guild_id)
     for msg in data["messages"]:
         if str(msg.get("id")) == str(msg_id):
             msg["last_posted_date"] = today
@@ -125,13 +128,15 @@ def mark_posted(guild_id: int, msg_id: str, *, once: bool = False) -> None:
 
 def due_messages(guild_id: int, now: datetime | None = None) -> list[dict]:
     """Messages that should post now (caller posts then mark_posted)."""
+    import timezone_core
+
     settings = get_settings(guild_id)
     if not settings["enabled"]:
         return []
     now = now or datetime.now(timezone.utc)
-    now_msk = now.astimezone(MOSCOW_TZ)
-    today = now_msk.strftime("%Y-%m-%d")
-    hhmm = now_msk.strftime("%H:%M")
+    now_local = now.astimezone(timezone_core.get_tz(guild_id))
+    today = now_local.strftime("%Y-%m-%d")
+    hhmm = now_local.strftime("%H:%M")
     due = []
     for msg in settings["messages"]:
         if not msg["enabled"] or not msg["channel_id"] or not msg["content"]:

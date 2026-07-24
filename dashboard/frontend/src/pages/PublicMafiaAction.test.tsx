@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { renderWithLanguage } from '../test/renderWithLanguage'
@@ -27,11 +27,10 @@ const baseState: client.MafiaPublicState = {
 
 function renderAt(token: string) {
   return renderWithLanguage(
-    <MemoryRouter initialEntries={[`/mafia/${token}`]}>
-      <Routes>
-        <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <Routes>
+      <Route path="/mafia/:token" element={<PublicMafiaActionPage />} />
+    </Routes>,
+    { initialEntries: [`/mafia/${token}`] },
   )
 }
 

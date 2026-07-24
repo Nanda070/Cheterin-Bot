@@ -1,11 +1,14 @@
 import { Sparkle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { loginUrl } from '../api/client'
 import { LanguageToggle } from './LanguageToggle'
+import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const t = useT()
+  const { user } = useAuth()
 
   const navLinks = [
     { to: '/docs', labelKey: 'nav.docs' },
@@ -13,11 +16,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { to: '/privacy', labelKey: 'nav.privacy' },
   ] as const
 
+  const dashboardHref = user ? (user.active_guild_id ? '/' : '/servers') : loginUrl()
+  const dashboardIsSpa = dashboardHref.startsWith('/') && !dashboardHref.startsWith('/api')
+
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
+    <div className="public flex min-h-dvh flex-col">
+      <header className="public-header sticky top-0 z-10 border-b backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/docs" className="flex items-center gap-2 text-foreground">
+          <Link to="/" className="flex items-center gap-2 text-foreground">
             <Sparkle size={20} weight="fill" className="text-primary" />
             <span className="font-semibold">Cheterin</span>
           </Link>
@@ -38,12 +44,21 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                   {t(labelKey)}
                 </NavLink>
               ))}
-              <Link
-                to="/"
-                className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-              >
-                {t('nav.dashboard')}
-              </Link>
+              {dashboardIsSpa ? (
+                <Link
+                  to={dashboardHref}
+                  className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+                >
+                  {t('nav.dashboard')}
+                </Link>
+              ) : (
+                <a
+                  href={dashboardHref}
+                  className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+                >
+                  {t('nav.dashboard')}
+                </a>
+              )}
             </nav>
           </div>
         </div>
@@ -51,20 +66,20 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
 
-      <footer className="border-t border-border">
+      <footer className="public-footer border-t">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:px-6">
           <p className="flex items-center gap-2">
             <Sparkle size={16} weight="fill" className="text-primary" />
             {t('public.footer')}
           </p>
           <nav className="flex gap-4">
-            <Link to="/docs" className="hover:text-foreground">
+            <Link to="/docs" className="transition-colors hover:text-primary">
               {t('nav.docs')}
             </Link>
-            <Link to="/terms" className="hover:text-foreground">
+            <Link to="/terms" className="transition-colors hover:text-primary">
               {t('public.footer.terms')}
             </Link>
-            <Link to="/privacy" className="hover:text-foreground">
+            <Link to="/privacy" className="transition-colors hover:text-primary">
               {t('public.footer.privacy')}
             </Link>
           </nav>

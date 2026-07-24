@@ -16,6 +16,10 @@ export function DocsBanner() {
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-r from-background/85 via-transparent to-primary-muted"
       />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_88%_20%,rgba(196,60,78,0.18),transparent_55%)]"
+      />
       <div className="relative flex h-full flex-col justify-end gap-1 p-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">Документация</p>
         <p className="text-2xl font-semibold text-foreground sm:text-3xl">Cheterin</p>

@@ -2112,10 +2112,12 @@ export interface InvitesSettings {
   enabled: boolean
   welcome_mention: boolean
   log_channel_id: string
-  stats: { inviter_id: string; joins: number }[]
+  stats: { inviter_id: string; inviter_display?: string; joins: number }[]
   recent_joins: {
     invitee_id: string
+    invitee_display?: string
     inviter_id: string | null
+    inviter_display?: string | null
     code: string | null
     joined_at: string
   }[]
@@ -2183,6 +2185,10 @@ export function setBirthday(userId: string, mmDd: string): Promise<{ user_id: st
 
 export async function deleteBirthday(userId: string): Promise<void> {
   await apiFetch(`/api/birthdays/${userId}`, { method: 'DELETE' })
+}
+
+export async function testBirthdayAnnounce(): Promise<void> {
+  await apiFetch('/api/birthdays/test', { method: 'POST' })
 }
 
 export interface PollEntry {
@@ -2264,6 +2270,52 @@ export function fetchOwnerAlerts(): Promise<OwnerAlertsSettings> {
 
 export function updateOwnerAlerts(settings: OwnerAlertsSettings): Promise<OwnerAlertsSettings> {
   return apiFetch('/api/owner-alerts', jsonInit('PUT', settings))
+}
+
+export async function testOwnerAlerts(): Promise<void> {
+  await apiFetch('/api/owner-alerts/test', { method: 'POST' })
+}
+
+export interface SetupHealth {
+  ok: boolean
+  missing_permissions: string[]
+  guild_id: string
+  guild_name: string
+}
+
+export function fetchSetupHealth(): Promise<SetupHealth> {
+  return apiFetch('/api/setup-health')
+}
+
+export interface TimezoneSettings {
+  code: string
+  supported: string[]
+}
+
+export function fetchTimezone(): Promise<TimezoneSettings> {
+  return apiFetch('/api/timezone')
+}
+
+export function updateTimezone(code: string): Promise<TimezoneSettings> {
+  return apiFetch('/api/timezone', jsonInit('PUT', { code }))
+}
+
+export interface StickyRolesSettings {
+  enabled: boolean
+  tracked_role_ids: string[]
+  ignored_role_ids: string[]
+}
+
+export function fetchStickyRoles(): Promise<StickyRolesSettings> {
+  return apiFetch('/api/sticky-roles')
+}
+
+export function updateStickyRoles(settings: {
+  enabled: boolean
+  tracked_role_ids: string[]
+  ignored_role_ids: string[]
+}): Promise<StickyRolesSettings> {
+  return apiFetch('/api/sticky-roles', jsonInit('PUT', settings))
 }
 
 export interface TemplatePreviewResult {

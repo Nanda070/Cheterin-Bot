@@ -111,7 +111,7 @@ describe('LockdownPage', () => {
     expect(await screen.findByText('Детектор массовых тегов')).toBeInTheDocument()
   })
 
-  it('switches to the Tempban tab', async () => {
+  it('switches to the Spam traps tab', async () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
     vi.spyOn(client, 'fetchTempbanSettings').mockResolvedValue({
@@ -126,9 +126,9 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
     renderWithI18n(<LockdownPage />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Tempban' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ловушки от Спама' }))
 
-    expect(await screen.findByText('Сообщения Tempban')).toBeInTheDocument()
+    expect(await screen.findByText('Сообщения ловушек от спама')).toBeInTheDocument()
   })
 
   it('switches to the Верификация tab', async () => {

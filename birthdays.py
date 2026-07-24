@@ -41,58 +41,63 @@ class BirthdaysCog(commands.Cog):
     @tasks.loop(minutes=5)
     async def announce_loop(self):
         try:
-            today = datetime.now(MOSCOW_TZ)
-            date_iso = today.strftime("%Y-%m-%d")
-            mm_dd = today.strftime("%m-%d")
+            import timezone_core
+
             for guild in self.bot.guilds:
-                settings = birthdays_core.get_settings(guild.id)
-                if not settings["enabled"] or not settings["channel_id"]:
-                    continue
-                if settings["last_announced_date"] == date_iso:
-                    continue
-                rows = birthdays_db.for_date(guild.id, mm_dd)
-                if not rows:
-                    birthdays_core.mark_announced(guild.id, date_iso)
-                    continue
-                channel = guild.get_channel(int(settings["channel_id"]))
-                if not isinstance(channel, discord.TextChannel):
-                    continue
-                lang = i18n.lang_for(guild.id)
-                mentions = []
-                unresolved = False
-                for row in rows:
-                    member = guild.get_member(row["user_id"])
-                    if not member:
-                        try:
-                            member = await guild.fetch_member(row["user_id"])
-                        except discord.NotFound:
-                            # Left the server — skip for today without blocking others.
-                            continue
-                        except discord.HTTPException:
-                            # Transient API failure — retry on the next loop tick.
-                            unresolved = True
-                            continue
-                    if member:
-                        mentions.append(member.mention)
-                if unresolved:
-                    # Avoid partial announces that would be marked done forever.
-                    continue
-                if not mentions:
-                    birthdays_core.mark_announced(guild.id, date_iso)
-                    continue
-                ping = ""
-                if settings["ping_role_id"]:
-                    ping = f"<@&{settings['ping_role_id']}> "
-                text = ping + i18n.t(
-                    "birthdays.announce",
-                    lang,
-                    members=", ".join(mentions),
-                )
                 try:
-                    await channel.send(text)
-                    birthdays_core.mark_announced(guild.id, date_iso)
-                except discord.HTTPException:
-                    logger.warning("birthday announce failed guild=%s", guild.id)
+                    today = timezone_core.now_local(guild.id)
+                    date_iso = today.strftime("%Y-%m-%d")
+                    mm_dd = today.strftime("%m-%d")
+                    settings = birthdays_core.get_settings(guild.id)
+                    if not settings["enabled"] or not settings["channel_id"]:
+                        continue
+                    if settings["last_announced_date"] == date_iso:
+                        continue
+                    rows = birthdays_db.for_date(guild.id, mm_dd)
+                    if not rows:
+                        birthdays_core.mark_announced(guild.id, date_iso)
+                        continue
+                    channel = guild.get_channel(int(settings["channel_id"]))
+                    if not isinstance(channel, discord.TextChannel):
+                        continue
+                    lang = i18n.lang_for(guild.id)
+                    mentions = []
+                    unresolved = False
+                    for row in rows:
+                        member = guild.get_member(row["user_id"])
+                        if not member:
+                            try:
+                                member = await guild.fetch_member(row["user_id"])
+                            except discord.NotFound:
+                                continue
+                            except discord.HTTPException:
+                                unresolved = True
+                                continue
+                        if member:
+                            mentions.append(member.mention)
+                    if unresolved:
+                        continue
+                    if not mentions:
+                        birthdays_core.mark_announced(guild.id, date_iso)
+                        continue
+                    ping = ""
+                    if settings["ping_role_id"]:
+                        ping = f"<@&{settings['ping_role_id']}> "
+                    text = ping + i18n.t(
+                        "birthdays.announce",
+                        lang,
+                        members=", ".join(mentions),
+                    )
+                    try:
+                        await channel.send(text)
+                        birthdays_core.mark_announced(guild.id, date_iso)
+                    except discord.HTTPException:
+                        logger.warning("birthday announce failed guild=%s", guild.id)
+                except Exception as exc:
+                    logger.exception("birthday announce guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "birthdays", str(exc))
         except Exception:
             logger.exception("birthday announce_loop error")
 

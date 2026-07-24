@@ -1,5 +1,6 @@
-import { ChatTeardropText, Plus, Trash } from '@phosphor-icons/react'
+import { ChatTeardropText, Eye, Plus, Trash } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   createCustomCommand,
   deleteCustomCommand,
@@ -14,12 +15,50 @@ import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
+import { CommandPreviewPage } from './CommandPreview'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
+type Tab = 'commands' | 'preview'
+
+function parseTab(raw: string | null): Tab {
+  return raw === 'preview' ? 'preview' : 'commands'
+}
+
+function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (t: Tab) => void; t: (key: string) => string }) {
+  const tabs: { key: Tab; labelKey: string; icon: typeof ChatTeardropText }[] = [
+    { key: 'commands', labelKey: 'customCommands.tab.commands', icon: ChatTeardropText },
+    { key: 'preview', labelKey: 'customCommands.tab.preview', icon: Eye },
+  ]
+  return (
+    <div className="flex gap-1 border-b border-border">
+      {tabs.map(({ key, labelKey, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setTab(key)}
+          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
+            tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          <Icon size={15} />
+          {t(labelKey)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function CustomCommandsPage() {
   const t = useT()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseTab(searchParams.get('tab'))
+  const setTab = (next: Tab) => {
+    if (next === 'commands') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
+
   const [settings, setSettings] = useState<CustomCommandsSettings | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -32,8 +71,8 @@ export function CustomCommandsPage() {
       .catch(() => setError(t('customCommands.errorLoad')))
 
   useEffect(() => {
-    reload()
-  }, [])
+    if (tab === 'commands') reload()
+  }, [tab])
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -48,12 +87,28 @@ export function CustomCommandsPage() {
     }
   }
 
+  if (tab === 'preview') {
+    return (
+      <div className="flex flex-col gap-4">
+        <TabBar tab={tab} setTab={setTab} t={t} />
+        <CommandPreviewPage embedded />
+      </div>
+    )
+  }
+
   if (!settings) {
-    return <p className="text-sm text-muted">{error || t('common.loading')}</p>
+    return (
+      <div className="flex flex-col gap-4">
+        <TabBar tab={tab} setTab={setTab} t={t} />
+        <p className="text-sm text-muted">{error || t('common.loading')}</p>
+      </div>
+    )
   }
 
   return (
     <div className="flex max-w-3xl flex-col gap-5">
+      <TabBar tab={tab} setTab={setTab} t={t} />
+
       <div>
         <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <ChatTeardropText size={22} className="text-primary" />

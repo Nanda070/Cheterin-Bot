@@ -75,7 +75,7 @@ export function BracketDetailPage() {
     setDeleteBusy(true)
     try {
       await deleteBracket(id)
-      navigate('/brackets')
+      navigate('/events?tab=brackets')
     } catch (err) {
       setError(formatApiError(err, t, 'brackets.detail.errorDelete'))
       setDeleteBusy(false)

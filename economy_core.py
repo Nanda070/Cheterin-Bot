@@ -104,13 +104,15 @@ def mark_weekly_report_posted(guild_id: int, date_iso: str) -> None:
 
 
 def should_post_weekly_report(guild_id: int) -> bool:
-    """True on Monday MSK if enabled, channel set, and not yet posted this ISO week."""
+    """True on Monday in guild TZ if enabled, channel set, and not yet posted this ISO week."""
+    import timezone_core
+
     settings = get_settings(guild_id)
     if not settings["enabled"] or not settings["weekly_report_enabled"]:
         return False
     if not settings["weekly_report_channel_id"]:
         return False
-    now = datetime.now(_MSK)
+    now = timezone_core.now_local(guild_id)
     if now.weekday() != 0:  # Monday
         return False
     week_key = now.strftime("%G-W%V")
@@ -172,9 +174,13 @@ def find_shop_item(settings: dict, item_id: str) -> dict | None:
 
 # ────────────────────────── Ежедневный бонус (/daily) ──────────────────────────
 
-def today_msk_date() -> str:
-    """Календарная дата по МСК (ISO), тот же принцип смены дня, что у Вордла."""
-    return datetime.now(_MSK).date().isoformat()
+def today_msk_date(guild_id: int | None = None) -> str:
+    """Календарная дата в TZ сервера (ISO). Без guild_id — MSK (тесты/легаси)."""
+    if guild_id is None:
+        return datetime.now(_MSK).date().isoformat()
+    import timezone_core
+
+    return timezone_core.now_local(guild_id).date().isoformat()
 
 
 def daily_bonus_amount(streak: int, settings: dict) -> int:
@@ -187,9 +193,9 @@ def claim_daily_bonus(guild_id: int, user_id: int, today: str | None = None) -> 
     """Забрать бонус за сегодня. Стрик продолжается, если предыдущий клейм был
     вчера; пропуск дня (или первый визит) начинает стрик заново с 1.
 
-    today — только для тестов; в бою всегда берётся реальная дата по МСК.
+    today — только для тестов; в бою всегда берётся дата в TZ сервера.
     """
-    today = today or today_msk_date()
+    today = today or today_msk_date(guild_id)
     settings = get_settings(guild_id)
     state = economy_db.get_daily_bonus(guild_id, user_id)
 

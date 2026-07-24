@@ -88,7 +88,14 @@ def _answers_shuffled() -> list[str]:
 
 
 def today_msk() -> date:
+    """MSK calendar date (tests / callers without guild). Prefer today_for_guild."""
     return datetime.now(MSK).date()
+
+
+def today_for_guild(guild_id: int) -> date:
+    import timezone_core
+
+    return timezone_core.now_local(guild_id).date()
 
 
 def day_number(today: date | None = None) -> int:

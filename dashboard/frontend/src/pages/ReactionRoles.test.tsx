@@ -42,8 +42,8 @@ describe('ReactionRolesPage', () => {
       </MemoryRouter>,
     )
 
-    await waitFor(() => screen.getByText('Создать reaction role'))
-    fireEvent.click(screen.getByText('Создать reaction role'))
+    await waitFor(() => screen.getByText('Создать роль по реакции'))
+    fireEvent.click(screen.getByText('Создать роль по реакции'))
 
     await waitFor(() => screen.getByLabelText('Канал'))
     fireEvent.click(screen.getByLabelText('Канал'))
@@ -75,8 +75,8 @@ describe('ReactionRolesPage', () => {
       </MemoryRouter>,
     )
 
-    await waitFor(() => screen.getByText('Создать reaction role'))
-    fireEvent.click(screen.getByText('Создать reaction role'))
+    await waitFor(() => screen.getByText('Создать роль по реакции'))
+    fireEvent.click(screen.getByText('Создать роль по реакции'))
     await waitFor(() => screen.getByLabelText('Канал'))
 
     fireEvent.click(screen.getByLabelText('Канал'))

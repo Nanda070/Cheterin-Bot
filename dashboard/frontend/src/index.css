@@ -12,10 +12,10 @@
   --color-foreground: #e8eaf0;
   --color-muted: #8b93a7;
 
-  /* Brand accent — Discord blurple family */
-  --color-primary: #5865f2;
-  --color-primary-hover: #6e76f5;
-  --color-primary-muted: #5865f224;
+  /* Brand accent — muted crimson (echoes landing, softer for dense UI) */
+  --color-primary: #a8283c;
+  --color-primary-hover: #c43c4e;
+  --color-primary-muted: #a8283c24;
 
   /* Status */
   --color-success: #22c55e;
@@ -85,6 +85,28 @@
   }
 }
 
+@keyframes landing-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 400ms var(--ease-out-smooth) both;
 }
@@ -93,9 +115,73 @@
   animation: dropdown-in 150ms var(--ease-out-smooth) both;
 }
 
+.landing-hero-in {
+  animation: landing-hero-in 700ms var(--ease-out-smooth) both;
+}
+
+.landing-section-in {
+  animation: landing-section-in 650ms var(--ease-out-smooth) both;
+}
+
+.landing-wave {
+  line-height: 0;
+}
+
+/* Landing hero palette: deeper crimson + glow (refines global primary for marketing surfaces) */
+.landing {
+  --landing-accent: #9b1b2e;
+  --landing-accent-deep: #5c0f1e;
+  --landing-accent-deeper: #3a0a14;
+  --landing-accent-glow: #c43c4e;
+  --landing-accent-muted: #9b1b2e28;
+  --landing-cta-ink: #3a0a14;
+  --landing-glow-rgb: 196, 60, 78;
+
+  --color-primary: var(--landing-accent);
+  --color-primary-hover: var(--landing-accent-glow);
+  --color-primary-muted: var(--landing-accent-muted);
+}
+
+.landing-plane {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 18%, rgba(var(--landing-glow-rgb), 0.22), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 12% 85%, rgba(20, 4, 10, 0.45), transparent 52%),
+    linear-gradient(165deg, var(--landing-accent-deep) 0%, var(--landing-accent-deeper) 100%);
+}
+
+.landing-header {
+  background-color: color-mix(in srgb, var(--landing-accent-deep) 92%, #000 8%);
+}
+
+.landing-cta-ink {
+  color: var(--landing-cta-ink);
+}
+
+.landing-feature-glow {
+  box-shadow: 0 12px 40px -20px rgba(var(--landing-glow-rgb), 0.5);
+}
+
+/* Docs / Terms / Privacy — soft crimson echo of landing header (not a full hero plane) */
+.public {
+  --public-accent-deep: #5c0f1e;
+  --public-accent: #9b1b2e;
+  --public-glow-rgb: 196, 60, 78;
+}
+
+.public-header {
+  background-color: color-mix(in srgb, var(--color-background) 82%, var(--public-accent-deep) 18%);
+  border-bottom-color: color-mix(in srgb, var(--color-border) 70%, var(--public-accent) 30%);
+}
+
+.public-footer {
+  border-top-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
-  .animate-dropdown-in {
+  .animate-dropdown-in,
+  .landing-hero-in,
+  .landing-section-in {
     animation: none;
   }
 }

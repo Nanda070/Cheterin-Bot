@@ -6,6 +6,7 @@ import {
   fetchChannels,
   fetchRoles,
   setBirthday,
+  testBirthdayAnnounce,
   updateBirthdaySettings,
   type BirthdaysPayload,
   type ChannelInfo,
@@ -34,6 +35,7 @@ export function BirthdaysCalendarPage() {
   const [pingRoleId, setPingRoleId] = useState('')
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState({ user_id: '', mm_dd: '' })
+  const [testMessage, setTestMessage] = useState('')
 
   const reload = () =>
     fetchBirthdays()
@@ -59,11 +61,26 @@ export function BirthdaysCalendarPage() {
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true)
     setError('')
+    setTestMessage('')
     try {
       await fn()
       await reload()
     } catch (err) {
       setError(formatApiError(err, t, 'common.operationFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendTest = async () => {
+    setBusy(true)
+    setError('')
+    setTestMessage('')
+    try {
+      await testBirthdayAnnounce()
+      setTestMessage(t('birthdays.testSent'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'birthdays.testFailed'))
     } finally {
       setBusy(false)
     }
@@ -84,9 +101,10 @@ export function BirthdaysCalendarPage() {
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
+      {testMessage && <p className="text-sm text-success">{testMessage}</p>}
 
       <Card className="flex flex-col gap-4">
-          <Toggle checked={enabled} onChange={setEnabled} label={t('birthdays.enable')} disabled={busy} />
+        <Toggle checked={enabled} onChange={setEnabled} label={t('birthdays.enable')} disabled={busy} />
         <div className="flex flex-col gap-1">
           <label className="text-xs text-muted">{t('birthdays.channel')}</label>
           <Select
@@ -105,7 +123,10 @@ export function BirthdaysCalendarPage() {
             placeholder={t('birthdays.noPing')}
           />
         </div>
-        <div className="flex justify-end border-t border-border pt-3">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-3">
+          <Button variant="secondary" disabled={busy || !channelId} onClick={sendTest}>
+            {t('birthdays.testSend')}
+          </Button>
           <Button
             variant="primary"
             disabled={busy}

@@ -52,6 +52,7 @@ birthdays.db
 invites.db
 polls.db
 timed_roles.db
+sticky_roles.db
 *.migrated.bak
 venv/
 .env 

@@ -37,8 +37,8 @@ export function TermsPage() {
         key={`${lang}-terms`}
         className="animate-fade-in-up mx-auto max-w-3xl rounded-card border border-border bg-surface p-6"
       >
-        <h1 className="text-lg font-semibold text-foreground">{t('terms.title')}</h1>
-        <p className="mt-1 text-xs text-muted">{t('terms.lastUpdated')}</p>
+        <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{t('terms.title')}</h1>
+        <p className="mt-1 pl-3.5 text-xs text-muted">{t('terms.lastUpdated')}</p>
 
         <Section title={t('terms.s1.title')}>
           <ul className="flex list-disc flex-col gap-1 pl-5">

@@ -12,6 +12,7 @@ import invites_db
 import mafia_db
 import polls_db
 import stats_db
+import sticky_roles_core
 import timed_roles_db
 import birthdays_db
 import warns_db
@@ -62,6 +63,8 @@ from .routes.birthdays import routes as birthdays_routes
 from .routes.polls import routes as polls_routes
 from .routes.sticky import routes as sticky_routes
 from .routes.owner_alerts import routes as owner_alerts_routes
+from .routes.timezone import routes as timezone_routes
+from .routes.sticky_roles import routes as sticky_roles_routes
 from .routes.preview import routes as preview_routes
 from .audit_middleware import audit_middleware
 from .guild_context import guild_context_middleware
@@ -98,6 +101,7 @@ def create_app(
     birthdays_db.init()
     polls_db.init()
     invites_db.init()
+    sticky_roles_core.init()
 
     app = web.Application(middlewares=[json_error_middleware, guild_context_middleware, audit_middleware])
     app["bot"] = bot
@@ -150,6 +154,8 @@ def create_app(
     app.add_routes(polls_routes)
     app.add_routes(sticky_routes)
     app.add_routes(owner_alerts_routes)
+    app.add_routes(timezone_routes)
+    app.add_routes(sticky_roles_routes)
     app.add_routes(preview_routes)
 
     async def health(request: web.Request) -> web.Response:
