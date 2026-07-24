@@ -12,7 +12,7 @@ function renderShell(initialPath = '/members') {
       <LanguageProvider>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<div>Home Page Marker</div>} />
+            <Route path="/about" element={<div>Landing Page Marker</div>} />
             <Route path="/members" element={<DashboardShell />} />
           </Routes>
         </AuthProvider>
@@ -22,7 +22,7 @@ function renderShell(initialPath = '/members') {
 }
 
 describe('DashboardShell', () => {
-  it('renders the "Cheterin" header title as a link to the home page', async () => {
+  it('renders the "Cheterin" header title as a link to the marketing landing', async () => {
     vi.spyOn(client, 'fetchCurrentUser').mockResolvedValue({
       id: '1',
       username: 'tester',
@@ -35,10 +35,10 @@ describe('DashboardShell', () => {
     renderShell()
 
     const title = await screen.findByText('Cheterin')
-    expect(title.closest('a')).toHaveAttribute('href', '/')
+    expect(title.closest('a')).toHaveAttribute('href', '/about')
 
     fireEvent.click(title)
-    expect(await screen.findByText('Home Page Marker')).toBeInTheDocument()
+    expect(await screen.findByText('Landing Page Marker')).toBeInTheDocument()
   })
 
   it('shows the username in the top-right header', async () => {

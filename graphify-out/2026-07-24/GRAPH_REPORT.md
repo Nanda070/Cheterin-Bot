@@ -1,7 +1,7 @@
 # Graph Report - Cheterin_Bot_Dashboard  (2026-07-24)
 
 ## Corpus Check
-- 568 files · ~403,618 words
+- 568 files · ~403,616 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -556,8 +556,8 @@ Cohesion: 0.21
 Nodes (8): generate_roster_text(), Bot, Guild, Interaction, Live-ростер семьи: список участников по настроенным ролям.  Портировано из FamQ, Debounce: аккумулирует изменения и обновляет сообщение через 10 секунд., RosterCog, setup()
 
 ### Community 78 - "reaction_roles.py"
-Cohesion: 0.18
-Nodes (11): MemberLookupResult, resolve_guild_member(), FakeBot, FakeGuild, _StubHTTPException, _StubNotFound, test_falls_back_to_fetch_when_not_cached(), test_not_found_when_fetch_raises_notfound() (+3 more)
+Cohesion: 0.22
+Nodes (10): resolve_guild_member(), FakeBot, FakeGuild, _StubHTTPException, _StubNotFound, test_falls_back_to_fetch_when_not_cached(), test_not_found_when_fetch_raises_notfound(), test_returns_cached_member_without_fetching() (+2 more)
 
 ### Community 79 - "PublicBunkerAction.tsx"
 Cohesion: 0.10
@@ -576,8 +576,8 @@ Cohesion: 0.22
 Nodes (5): BirthdaysCog, Bot, Interaction, Guild-wide birthday calendar cog., setup()
 
 ### Community 83 - "events.py"
-Cohesion: 0.13
-Nodes (18): can_manage_guild_permissions(), has_dashboard_access(), has_manage_server(), has_super_admin_access(), manageable_guilds(), Контроль доступа к дашборду (модель MEE6, Фаза 2.3).  Доступ к серверу = право, DEPRECATED (Фаза 1, роль-модель). Оставлено до перевода auth/middleware на, Доступ к настройкам сервера: Manage Server или Administrator на этой гильдии. (+10 more)
+Cohesion: 0.15
+Nodes (14): can_manage_guild_permissions(), has_manage_server(), manageable_guilds(), Доступ к настройкам сервера: Manage Server или Administrator на этой гильдии., Право управлять сервером по битмаске из OAuth-списка `/users/@me/guilds`., Отфильтровать OAuth-список серверов пользователя до управляемых им и     анноти, select_guild(), Тесты модели доступа Фазы 2.3 (Manage Server / main-guild / OAuth-фильтр серверо (+6 more)
 
 ### Community 84 - "ChetBot"
 Cohesion: 0.15
@@ -896,8 +896,8 @@ Cohesion: 0.20
 Nodes (17): Request, Response, timed_roles_delete(), timed_roles_list(), isolated(), test_add_and_expired(), add(), connect() (+9 more)
 
 ### Community 176 - "custom_commands.py"
-Cohesion: 0.31
-Nodes (13): callback(), _frontend(), invite_url(), list_guilds(), login(), logout(), me(), Request (+5 more)
+Cohesion: 0.16
+Nodes (17): has_dashboard_access(), has_super_admin_access(), Контроль доступа к дашборду (модель MEE6, Фаза 2.3).  Доступ к серверу = право, DEPRECATED (Фаза 1, роль-модель). Оставлено до перевода auth/middleware на, Супер-админ: администратор или носитель супер-роли на МЕЙН-сервере     (сам фак, callback(), _frontend(), invite_url() (+9 more)
 
 ### Community 177 - "test_warns_routes.py"
 Cohesion: 0.22
@@ -940,8 +940,8 @@ Cohesion: 0.33
 Nodes (4): AntiRaidCog, Bot, Ког «Антирейд»: автоматический Lockdown при всплеске входов новых участников.  В, setup()
 
 ### Community 189 - "cookie_secure_flag"
-Cohesion: 0.36
-Nodes (8): cookie_secure_flag(), derive_fernet_key(), Whether Set-Cookie should use Secure.      Explicit `DASHBOARD_COOKIE_SECURE`, test_cookie_secure_flag_detects_https_frontend(), test_cookie_secure_flag_from_env(), test_derive_fernet_key_differs_per_secret(), test_derive_fernet_key_is_deterministic(), test_derive_fernet_key_is_valid_fernet_key()
+Cohesion: 0.31
+Nodes (9): login(), cookie_secure_flag(), derive_fernet_key(), Whether Set-Cookie should use Secure.      Explicit `DASHBOARD_COOKIE_SECURE`, test_cookie_secure_flag_detects_https_frontend(), test_cookie_secure_flag_from_env(), test_derive_fernet_key_differs_per_secret(), test_derive_fernet_key_is_deterministic() (+1 more)
 
 ### Community 190 - "BracketView.tsx"
 Cohesion: 0.13

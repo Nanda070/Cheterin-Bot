@@ -5872,8 +5872,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_access",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "access.py"
     },
     {
@@ -5883,8 +5883,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "dashboard_backend_access_has_dashboard_access",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "has_dashboard_access()"
     },
     {
@@ -5905,8 +5905,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "dashboard_backend_access_has_super_admin_access",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "has_super_admin_access()"
     },
     {
@@ -5938,8 +5938,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_access_rationale_1",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "\u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0434\u0430\u0448\u0431\u043e\u0440\u0434\u0443 (\u043c\u043e\u0434\u0435\u043b\u044c mee6, \u0444\u0430\u0437\u0430 2.3).  \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u0441\u0435\u0440\u0432\u0435\u0440\u0443 = \u043f\u0440\u0430\u0432\u043e"
     },
     {
@@ -5949,8 +5949,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_backend_access_rationale_23",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "deprecated (\u0444\u0430\u0437\u0430 1, \u0440\u043e\u043b\u044c-\u043c\u043e\u0434\u0435\u043b\u044c). \u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e \u0434\u043e \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u0430 auth/middleware \u043d\u0430"
     },
     {
@@ -5971,8 +5971,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "dashboard_backend_access_rationale_38",
-      "community": 83,
-      "community_name": "events.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "\u0441\u0443\u043f\u0435\u0440-\u0430\u0434\u043c\u0438\u043d: \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u0438\u043b\u0438 \u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c \u0441\u0443\u043f\u0435\u0440-\u0440\u043e\u043b\u0438 \u043d\u0430 \u043c\u0435\u0438\u043d-\u0441\u0435\u0440\u0432\u0435\u0440\u0435     (\u0441\u0430\u043c \u0444\u0430\u043a"
     },
     {
@@ -6268,8 +6268,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "dashboard_backend_auth_login",
-      "community": 176,
-      "community_name": "custom_commands.py",
+      "community": 189,
+      "community_name": "cookie_secure_flag",
       "norm_label": "login()"
     },
     {
@@ -6323,8 +6323,8 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "dashboard_backend_auth_select_guild",
-      "community": 176,
-      "community_name": "custom_commands.py",
+      "community": 83,
+      "community_name": "events.py",
       "norm_label": "select_guild()"
     },
     {
@@ -6631,8 +6631,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_member_lookup",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "member_lookup.py"
     },
     {
@@ -6642,8 +6642,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "dashboard_backend_member_lookup_memberlookupresult",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": "memberlookupresult"
     },
     {
@@ -6653,8 +6653,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "dashboard_backend_member_lookup_memberlookupresult_init",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 176,
+      "community_name": "custom_commands.py",
       "norm_label": ".__init__()"
     },
     {
@@ -181361,7 +181361,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/Landing.tsx",
-      "source_location": "L282",
+      "source_location": "L281",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_landing_landingpage",
@@ -181493,7 +181493,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/Landing.tsx",
-      "source_location": "L292",
+      "source_location": "L291",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_landing_landingpage",

@@ -765,8 +765,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.test.tsx": {
-    "mtime": 1784789898.0249486,
-    "ast_hash": "e0e8cdd2f6e98a353cc553ef4dbdf426",
+    "mtime": 1784901463.923765,
+    "ast_hash": "01af9174f39c78bdda5ecf1c3aba2e25",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.tsx": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Home.test.tsx": {
-    "mtime": 1784710902.4309256,
-    "ast_hash": "493d5bacc2dff4720d395668d72b2b1e",
+    "mtime": 1784901525.6872964,
+    "ast_hash": "a9407b2c5782f29f00cf676bd2bd123b",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Home.tsx": {
@@ -925,8 +925,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/MessageBuilder.test.tsx": {
-    "mtime": 1784719849.9599626,
-    "ast_hash": "566d0dd2d07151676200a613f2d7ffc2",
+    "mtime": 1784901569.4032314,
+    "ast_hash": "612fcc1e0a347ef79080c6f21c94901c",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/MessageBuilder.tsx": {
@@ -965,8 +965,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicMafiaAction.test.tsx": {
-    "mtime": 1784717748.1598666,
-    "ast_hash": "83edbf994fcc5a779e625d521fe75b4b",
+    "mtime": 1784901504.3295677,
+    "ast_hash": "221eed1019d3c668cdac05739c50af83",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicMafiaAction.tsx": {
@@ -975,8 +975,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ReactionRoles.test.tsx": {
-    "mtime": 1784719833.2020433,
-    "ast_hash": "36c7ea0ba3b5662c0274835a7408eb78",
+    "mtime": 1784901559.9534128,
+    "ast_hash": "967a0d13efebfd1f3289bb7dc4e732d8",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ReactionRoles.tsx": {
@@ -1455,8 +1455,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicBunkerAction.test.tsx": {
-    "mtime": 1784717748.2229877,
-    "ast_hash": "91b9d024459644afdd5c5044a5dcaccc",
+    "mtime": 1784901488.3255029,
+    "ast_hash": "b513d25bcccb35395859a09acc93144f",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicBunkerAction.tsx": {

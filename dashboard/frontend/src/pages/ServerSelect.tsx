@@ -127,10 +127,10 @@ export function ServerSelectPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center gap-8 px-4 py-10">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-foreground">
+        <Link to="/about" className="flex items-center gap-2 text-foreground">
           <Sparkle size={22} weight="fill" className="text-primary" />
           <span className="text-lg font-semibold">Cheterin</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-3">
           <LanguageToggle />
           <button

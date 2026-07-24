@@ -4,6 +4,7 @@ import { LanguageProvider } from './context/LanguageContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PublicLandingOrDashboard } from './components/PublicLandingOrDashboard'
 import { LoginPage } from './pages/Login'
+import { LandingPage } from './pages/Landing'
 import { ServerSelectPage } from './pages/ServerSelect'
 import { AccessDeniedPage } from './pages/AccessDenied'
 import { DashboardShell } from './pages/DashboardShell'
@@ -53,6 +54,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/about" element={<LandingPage />} />
             <Route
               path="/servers"
               element={

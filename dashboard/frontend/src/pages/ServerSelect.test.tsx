@@ -16,6 +16,7 @@ function renderPage() {
         <AuthProvider>
           <Routes>
             <Route path="/servers" element={<ServerSelectPage />} />
+            <Route path="/about" element={<div>Landing page</div>} />
             <Route path="/" element={<div>Dashboard home</div>} />
             <Route path="/login" element={<div>Login page</div>} />
           </Routes>
@@ -27,6 +28,25 @@ function renderPage() {
 
 describe('ServerSelectPage', () => {
   afterEach(() => vi.restoreAllMocks())
+
+  it('links the Cheterin brand to the marketing landing', async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/me')) {
+        return Promise.resolve(jsonResponse({ id: '1', is_super_admin: false, active_guild_id: null }))
+      }
+      if (url.endsWith('/api/auth/guilds')) {
+        return Promise.resolve(jsonResponse({ guilds: [] }))
+      }
+      return Promise.resolve(jsonResponse({}, 404))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    const brand = await screen.findByText('Cheterin')
+    expect(brand.closest('a')).toHaveAttribute('href', '/about')
+  })
 
   it('lists manageable guilds and selects one with the bot present', async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {

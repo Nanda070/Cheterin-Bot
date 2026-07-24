@@ -301,7 +301,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
     <div className="landing flex min-h-dvh flex-col bg-background text-foreground">
       <header className="landing-header sticky top-0 z-20 border-b border-white/10 text-white backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
+          <Link to="/about" className="flex items-center gap-2 font-semibold tracking-tight">
             <Sparkle size={22} weight="fill" className="text-white" />
             <span>Cheterin</span>
           </Link>
@@ -422,7 +422,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
       <footer className="border-t border-border bg-background">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
           <div>
-            <Link to="/" className="flex items-center gap-2 text-foreground">
+            <Link to="/about" className="flex items-center gap-2 text-foreground">
               <Sparkle size={20} weight="fill" className="text-primary" />
               <span className="font-semibold">Cheterin</span>
             </Link>

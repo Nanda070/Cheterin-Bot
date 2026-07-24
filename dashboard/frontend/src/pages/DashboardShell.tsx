@@ -261,7 +261,7 @@ export function DashboardShell() {
           >
             {mobileNavOpen ? <X size={20} /> : <List size={20} />}
           </button>
-          <Link to="/" className="flex items-center gap-2 text-foreground">
+          <Link to="/about" className="flex items-center gap-2 text-foreground">
             <Sparkle size={20} weight="fill" className="text-primary" />
             <span className="font-semibold">Cheterin</span>
           </Link>

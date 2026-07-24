@@ -2,10 +2,9 @@ import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
-import { LandingPage } from '../pages/Landing'
 
 /**
- * Root gate: public marketing landing on `/` when logged out;
+ * Root gate: redirect logged-out visitors on `/` to the marketing landing;
  * dashboard shell when authenticated with an active guild.
  */
 export function PublicLandingOrDashboard({ children }: { children: ReactNode }) {
@@ -25,7 +24,7 @@ export function PublicLandingOrDashboard({ children }: { children: ReactNode }) 
 
   if (!user) {
     if (location.pathname === '/') {
-      return <LandingPage />
+      return <Navigate to="/about" replace />
     }
     return <Navigate to="/login" replace />
   }
