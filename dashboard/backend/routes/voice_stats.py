@@ -1,17 +1,16 @@
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from aiohttp import web
 
 import stats_db
+import timezone_core
 import xp_core
 
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()
-
-MSK = timezone(timedelta(hours=3))
 
 
 @routes.get("/api/voice-stats")
@@ -22,11 +21,13 @@ async def voice_stats(request: web.Request) -> web.Response:
     except ValueError:
         days = 30
 
-    guild = request.app["bot"].get_guild(request["guild_id"])
+    guild_id = request["guild_id"]
+    guild = request.app["bot"].get_guild(guild_id)
+    tz = timezone_core.get_tz(guild_id)
     since_ts = int(time.time()) - days * 24 * 3600
-    sessions = stats_db.voice_sessions_since(request["guild_id"], since_ts)
+    sessions = stats_db.voice_sessions_since(guild_id, since_ts)
 
-    by_hour = [0] * 24          # суммарные минуты по часам суток (МСК)
+    by_hour = [0] * 24          # суммарные минуты по часам суток (TZ сервера)
     by_weekday = [0] * 7        # суммарные минуты по дням недели (0=Пн)
     by_channel: dict[int, dict] = {}
     by_user: dict[int, int] = defaultdict(int)
@@ -53,7 +54,7 @@ async def voice_stats(request: web.Request) -> web.Response:
         # Распределение по часам/дням: идём по часовым срезам сессии
         cursor = start
         while cursor < end:
-            dt = datetime.fromtimestamp(cursor, MSK)
+            dt = datetime.fromtimestamp(cursor, tz)
             hour_end = int(dt.replace(minute=0, second=0, microsecond=0).timestamp()) + 3600
             chunk = min(end, hour_end) - cursor
             by_hour[dt.hour] += chunk
@@ -82,6 +83,7 @@ async def voice_stats(request: web.Request) -> web.Response:
 
     return web.json_response({
         "days": days,
+        "timezone": timezone_core.get_timezone(guild_id),
         "session_count": len(sessions),
         "total_seconds": total_seconds,
         "total_time_text": xp_core.format_voice_time(total_seconds),

@@ -1,19 +1,24 @@
-"""Тесты кога «Верификация»: выключена по умолчанию, join-роль, кнопка."""
+"""Тесты кога «Верификация»: выключена по умолчанию, join-роль, кнопка, re-verify."""
+
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 import moderation_log
 import settings_db
 import verification_core
-from verification import VerificationCog
+import verification_db
+from verification import VerificationCog, VerificationView
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
 
 
 @pytest.fixture(autouse=True)
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    monkeypatch.setenv("VERIFICATION_DB_PATH", str(tmp_path / "verification.db"))
     monkeypatch.setattr(settings_db, "_cache", {})
     settings_db.init()
+    verification_db.init()
     monkeypatch.setattr(moderation_log, "LOG_FILE", str(tmp_path / "moderation_log.json"))
 
 
@@ -38,7 +43,7 @@ UNVERIFIED_ROLE_ID = 111
 VERIFIED_ROLE_ID = 222
 
 
-def build(enabled=True, unverified=True, verified=True):
+def build(enabled=True, unverified=True, verified=True, **extra):
     roles = [FakeRole(UNVERIFIED_ROLE_ID, name="Unverified"), FakeRole(VERIFIED_ROLE_ID, name="Verified")]
     member = FakeMember(20, name="newbie")
     guild = FakeGuild(members=[member], roles=roles)
@@ -46,9 +51,11 @@ def build(enabled=True, unverified=True, verified=True):
         "enabled": enabled,
         "unverified_role_id": UNVERIFIED_ROLE_ID if unverified else 0,
         "verified_role_id": VERIFIED_ROLE_ID if verified else 0,
+        **extra,
     })
     bot = FakeBot(guild)
     cog = VerificationCog(bot)
+    cog.reverify_sweeper.cancel()
     return cog, guild, member, bot
 
 
@@ -61,6 +68,7 @@ async def test_disabled_by_default_no_join_role():
     member.guild = guild
     bot = FakeBot(guild)
     cog = VerificationCog(bot)  # save_config НЕ вызывался — чистый дефолт
+    cog.reverify_sweeper.cancel()
 
     await cog.on_member_join(member)
 
@@ -129,6 +137,7 @@ async def test_verify_happy_path_swaps_roles():
     remove_kwargs = next(k for a, k in member.action_calls if a == "remove_roles")
     assert remove_kwargs["role"].id == UNVERIFIED_ROLE_ID
     assert "Добро пожаловать" in interaction.response.messages[0]["content"]
+    assert verification_db.get_consent(guild.id, member.id) is not None
 
 
 @pytest.mark.asyncio
@@ -163,6 +172,50 @@ async def test_verify_missing_role_on_server():
     await cog.handle_verify(interaction)
 
     assert "не найдена" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_rules_consent_success_message():
+    cog, guild, member, bot = build(rules_consent_enabled=True)
+    interaction = FakeInteraction(member, guild)
+    await cog.handle_verify(interaction)
+    assert "Правила приняты" in interaction.response.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_reverify_allows_click_when_consent_expired():
+    cog, guild, member, bot = build(reverify_enabled=True, reverify_days=7)
+    member.roles.append(guild.get_role(VERIFIED_ROLE_ID))
+    stale = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
+    verification_db.record_consent(guild.id, member.id, verified_at=stale)
+    interaction = FakeInteraction(member, guild)
+
+    await cog.handle_verify(interaction)
+
+    assert "Добро пожаловать" in interaction.response.messages[0]["content"]
+    consent = verification_db.get_consent(guild.id, member.id)
+    assert consent is not None
+    assert consent["verified_at"] != stale
+
+
+@pytest.mark.asyncio
+async def test_reverify_sweeper_expires_member():
+    cog, guild, member, bot = build(
+        reverify_enabled=True,
+        reverify_days=7,
+        unverified_role_id=str(UNVERIFIED_ROLE_ID),
+        verified_role_id=str(VERIFIED_ROLE_ID),
+    )
+    member.roles.append(guild.get_role(VERIFIED_ROLE_ID))
+    stale = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
+    verification_db.record_consent(guild.id, member.id, verified_at=stale)
+
+    await cog.reverify_sweeper()
+
+    actions = [a for a, _ in member.action_calls]
+    assert "remove_roles" in actions
+    assert "add_roles" in actions
+    assert verification_db.get_consent(guild.id, member.id) is None
 
 
 # ────────────────────────── /verify_setup ──────────────────────────
@@ -213,3 +266,20 @@ async def test_setup_posts_panel_with_english_button_when_guild_language_en():
     view = channel.send_calls[0]["view"]
     button = view.children[0]
     assert button.label == "I'm not a bot"
+
+
+@pytest.mark.asyncio
+async def test_setup_posts_rules_button_when_rules_consent_enabled():
+    import language_core
+    from dashboard.backend.tests.fakes import FakeChannel
+
+    language_core.set_language(1, "en")
+    cog, guild, member, bot = build(rules_consent_enabled=True)
+    channel = FakeChannel(500)
+    interaction = FakeInteraction(member, guild, channel)
+
+    await VerificationCog.verify_setup.callback(cog, interaction)
+
+    view = channel.send_calls[0]["view"]
+    assert isinstance(view, VerificationView)
+    assert view.children[0].label == "Accept rules"

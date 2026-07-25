@@ -47,7 +47,7 @@ async def send_dev_log(
     channel_id = _config_int(guild_id, "SUPPLY_LOG_CHANNEL_ID") or _config_int(guild_id, "LOG_CHANNEL_ID")
     channel = bot.get_channel(channel_id)
     if channel:
-        now = supply_core.now_msk().strftime('%Y-%m-%d %H:%M:%S')
+        now = supply_core.now_local(guild_id).strftime('%Y-%m-%d %H:%M:%S')
         embed = discord.Embed(title=title, description=description, color=color)
         embed.set_footer(text=now)
         try:
@@ -386,7 +386,7 @@ class SupplyCog(commands.Cog):
                 return
 
             reminder_minutes = get_reminder_minutes(guild_id)
-            now_ts = int(supply_core.now_msk().timestamp())
+            now_ts = int(supply_core.now_local(guild_id).timestamp())
             reminder_ts = supply["target_ts"] - reminder_minutes * 60
 
             if reminder_minutes and not supply.get("reminder_sent") and reminder_ts > now_ts:
@@ -396,7 +396,7 @@ class SupplyCog(commands.Cog):
             supply = supply_core.get_supply(guild_id, supply_id)
             if supply is None or supply["status"] != "active":
                 return
-            now_ts = int(supply_core.now_msk().timestamp())
+            now_ts = int(supply_core.now_local(guild_id).timestamp())
             if supply["target_ts"] > now_ts:
                 await asyncio.sleep(supply["target_ts"] - now_ts)
 
@@ -573,7 +573,7 @@ class SupplyCog(commands.Cog):
     @app_commands.describe(
         против="Фракция/цель, против которой идет поставка",
         лимит="Максимальное количество участников",
-        время="Время сбора в формате ЧЧ:ММ (МСК, например 15:10)",
+        время="Время сбора в формате ЧЧ:ММ (часовой пояс сервера, например 15:10)",
     )
     async def supply_collect(self, interaction: discord.Interaction, против: str, лимит: int, время: str):
         lang = i18n.lang_for(interaction.guild_id)

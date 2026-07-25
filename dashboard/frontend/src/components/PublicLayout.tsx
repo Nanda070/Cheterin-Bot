@@ -72,9 +72,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <Sparkle size={16} weight="fill" className="text-primary" />
             {t('public.footer')}
           </p>
-          <nav className="flex gap-4">
+          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             <Link to="/docs" className="transition-colors hover:text-primary">
               {t('nav.docs')}
+            </Link>
+            <Link to="/credits" className="transition-colors hover:text-primary">
+              {t('public.footer.credits')}
             </Link>
             <Link to="/terms" className="transition-colors hover:text-primary">
               {t('public.footer.terms')}

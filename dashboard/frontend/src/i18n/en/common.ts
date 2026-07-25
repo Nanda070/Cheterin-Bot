@@ -65,6 +65,8 @@ const common: TranslationDict = {
   'common.date': 'Date',
   'common.none': '—',
   'common.selectChannel': 'Select channel',
+  'common.channelDead': 'dead',
+  'common.channelDeadHint': 'Bot cannot see this channel or cannot Send Messages',
   'common.selectRole': 'Select role',
   'common.notSelected': 'Not selected',
   'common.notSet': 'Not set',

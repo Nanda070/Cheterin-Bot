@@ -1,4 +1,4 @@
-"""Ког «Верификация»: панель «Я не бот» для новичков.
+"""Ког «Верификация»: панель «Я не бот» / согласия с правилами для новичков.
 
 ВЫКЛЮЧЕН ПО УМОЛЧАНИЮ и не имеет никакого эффекта, пока не включён отдельным
 тумблером в дашборде (раздел «Верификация») — on_member_join и обработчик
@@ -10,6 +10,10 @@
 самим администратором для этой роли (бот только назначает/снимает её). После
 клика по кнопке роль «Unverified» снимается, выдаётся verified_role_id.
 
+Опционально: режим «согласие с правилами» (подпись кнопки) и повторное
+подтверждение каждые N дней — sweeper снимает verified-роль (и снова выдаёт
+unverified, если настроена), участник должен нажать кнопку снова.
+
 Панель — persistent view (custom_id), переживает перезапуск бота, как
 CTD-панель в memobb.py.
 """
@@ -18,12 +22,13 @@ import logging
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import i18n
 import slash_registry
 import moderation_log
 import verification_core
+import verification_db
 
 logger = logging.getLogger("verification")
 
@@ -37,14 +42,22 @@ def verify_custom_id(guild_id: int | None) -> str:
     return f"verification:verify:{guild_id}"
 
 
+def _button_label(guild_id: int | None) -> str:
+    lang = i18n.lang_for(guild_id)
+    if guild_id is not None:
+        settings = verification_core.get_settings(guild_id)
+        if settings["rules_consent_enabled"]:
+            return i18n.t("verification.rules_button", lang)
+    return i18n.t("verification.button", lang)
+
+
 class VerificationView(discord.ui.View):
     def __init__(self, bot: commands.Bot, guild_id: int | None = None):
         super().__init__(timeout=None)
         self.bot = bot
         self.guild_id = guild_id
-        lang = i18n.lang_for(guild_id)
         button = discord.ui.Button(
-            label=i18n.t("verification.button", lang),
+            label=_button_label(guild_id),
             style=discord.ButtonStyle.success,
             custom_id=verify_custom_id(guild_id),
         )
@@ -64,6 +77,10 @@ class VerificationView(discord.ui.View):
 class VerificationCog(commands.Cog, name=COG_NAME):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.reverify_sweeper.start()
+
+    def cog_unload(self):
+        self.reverify_sweeper.cancel()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -91,6 +108,14 @@ class VerificationCog(commands.Cog, name=COG_NAME):
         except discord.Forbidden:
             logger.warning("Верификация: нет прав выдать роль Unverified участнику %s", member.id)
 
+    def _already_verified(self, member: discord.Member, verified_role: discord.Role, settings: dict) -> bool:
+        if not any(r.id == verified_role.id for r in member.roles):
+            return False
+        if not settings["reverify_enabled"]:
+            return True
+        consent = verification_db.get_consent(member.guild.id, member.id)
+        return verification_core.has_valid_consent(consent, settings)
+
     async def handle_verify(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = verification_core.get_settings(interaction.guild.id)
@@ -110,15 +135,16 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             return await interaction.response.send_message(
                 i18n.t("verification.role_not_found", lang), ephemeral=True
             )
-        if any(r.id == verified_role.id for r in member.roles):
+        if self._already_verified(member, verified_role, settings):
             return await interaction.response.send_message(
                 i18n.t("verification.already_verified", lang), ephemeral=True
             )
 
         try:
-            await member.add_roles(
-                verified_role, reason=i18n.t("verification.role_reason_verified", lang)
-            )
+            if not any(r.id == verified_role.id for r in member.roles):
+                await member.add_roles(
+                    verified_role, reason=i18n.t("verification.role_reason_verified", lang)
+                )
             if settings["unverified_role_id"]:
                 unverified_role = guild.get_role(int(settings["unverified_role_id"]))
                 if unverified_role is not None and any(r.id == unverified_role.id for r in member.roles):
@@ -130,6 +156,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
                 i18n.t("verification.bot_forbidden", lang), ephemeral=True
             )
 
+        verification_db.record_consent(interaction.guild_id, member.id)
         moderation_log.append_event(
             interaction.guild_id,
             "verification_pass",
@@ -137,7 +164,83 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             member.name,
             i18n.t("verification.log_reason", lang),
         )
-        await interaction.response.send_message(i18n.t("verification.success", lang), ephemeral=True)
+        success_key = (
+            "verification.rules_success"
+            if settings["rules_consent_enabled"]
+            else "verification.success"
+        )
+        await interaction.response.send_message(i18n.t(success_key, lang), ephemeral=True)
+
+    async def _expire_member(self, guild: discord.Guild, member: discord.Member, settings: dict) -> None:
+        lang = i18n.lang_for(guild.id)
+        verified_role = guild.get_role(int(settings["verified_role_id"])) if settings["verified_role_id"] else None
+        try:
+            if verified_role is not None and any(r.id == verified_role.id for r in member.roles):
+                await member.remove_roles(
+                    verified_role, reason=i18n.t("verification.role_reason_reverify", lang)
+                )
+            if settings["unverified_role_id"]:
+                unverified_role = guild.get_role(int(settings["unverified_role_id"]))
+                if unverified_role is not None and not any(r.id == unverified_role.id for r in member.roles):
+                    await member.add_roles(
+                        unverified_role, reason=i18n.t("verification.role_reason_reverify", lang)
+                    )
+        except discord.Forbidden:
+            logger.warning(
+                "Верификация: нет прав снять/выдать роли при повторной проверке guild=%s user=%s",
+                guild.id,
+                member.id,
+            )
+            return
+        except discord.HTTPException:
+            logger.warning(
+                "Верификация: HTTP ошибка при повторной проверке guild=%s user=%s",
+                guild.id,
+                member.id,
+            )
+            return
+
+        verification_db.clear_consent(guild.id, member.id)
+        moderation_log.append_event(
+            guild.id,
+            "verification_expired",
+            member.id,
+            member.name,
+            i18n.t("verification.log_reverify", lang),
+        )
+
+    @tasks.loop(hours=1)
+    async def reverify_sweeper(self):
+        # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
+        try:
+            for guild in self.bot.guilds:
+                try:
+                    settings = verification_core.get_settings(guild.id)
+                    if (
+                        not settings["enabled"]
+                        or not settings["reverify_enabled"]
+                        or not verification_core.is_configured(settings)
+                    ):
+                        continue
+                    for row in verification_db.list_consents(guild.id):
+                        if not verification_core.is_consent_expired(row["verified_at"], settings):
+                            continue
+                        member = guild.get_member(row["user_id"])
+                        if member is None:
+                            verification_db.clear_consent(guild.id, row["user_id"])
+                            continue
+                        await self._expire_member(guild, member, settings)
+                except Exception as exc:
+                    logger.exception("verification reverify sweeper guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(int(guild.id), "verification", str(exc))
+        except Exception:
+            logger.exception("verification reverify sweeper error")
+
+    @reverify_sweeper.before_loop
+    async def before_reverify_sweeper(self):
+        await self.bot.wait_until_ready()
 
     @app_commands.command(name="verify_setup", description="Опубликовать панель верификации в текущем канале")
     @app_commands.default_permissions(manage_guild=True)
@@ -161,6 +264,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
 
 
 async def setup(bot: commands.Bot):
+    verification_db.init()
     cog = VerificationCog(bot)
     slash_registry.register_verification(cog)
     await bot.add_cog(cog)

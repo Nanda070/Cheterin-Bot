@@ -1,10 +1,14 @@
 import { CaretDown } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
+import { isChannelDead } from '../../api/client'
+import { useT } from '../../context/LanguageContext'
 
 export interface SelectOption {
   id: string
   name: string
   category?: string
+  bot_can_view?: boolean
+  bot_can_send?: boolean
 }
 
 interface SelectProps {
@@ -24,6 +28,10 @@ interface SelectProps {
  * Полностью кастомный themed listbox — замена нативному `<select>`, чей
  * выпадающий попап рисует браузер/ОС и не поддаётся тёмной теме. Паттерн
  * взаимодействия (click-outside, Escape) как у Dropdown.tsx.
+ *
+ * For channel options with bot_can_view / bot_can_send: dead channels show a
+ * badge and cannot be newly selected; a currently saved dead value stays
+ * visible and selectable so admins can see/change it.
  */
 export function Select({
   value,
@@ -36,6 +44,7 @@ export function Select({
   ariaLabel,
   variant = 'default',
 }: SelectProps) {
+  const t = useT()
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -60,6 +69,7 @@ export function Select({
   }, [isOpen])
 
   const selected = options.find((o) => o.id === value)
+  const selectedDead = selected ? isChannelDead(selected) : false
 
   const groups: { category: string; items: SelectOption[] }[] = []
   for (const option of options) {
@@ -71,6 +81,15 @@ export function Select({
       groups.push({ category, items: [option] })
     }
   }
+
+  const deadBadge = (
+    <span
+      className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-danger bg-danger/15"
+      title={t('common.channelDeadHint')}
+    >
+      {t('common.channelDead')}
+    </span>
+  )
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -88,8 +107,9 @@ export function Select({
             : 'border border-border bg-background px-3 py-2 focus:border-primary'
         }`}
       >
-        <span className={`truncate ${selected ? 'text-foreground' : 'text-muted'}`}>
-          {selected ? selected.name : placeholder}
+        <span className={`flex min-w-0 items-center gap-2 ${selected ? 'text-foreground' : 'text-muted'}`}>
+          <span className="truncate">{selected ? selected.name : placeholder}</span>
+          {selectedDead && deadBadge}
         </span>
         <CaretDown size={14} className={`shrink-0 text-muted transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -106,23 +126,38 @@ export function Select({
                   {group.category}
                 </p>
               )}
-              {group.items.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="option"
-                  aria-selected={option.id === value}
-                  onClick={() => {
-                    onChange(option.id)
-                    setIsOpen(false)
-                  }}
-                  className={`flex w-full cursor-pointer items-center rounded-[8px] px-3 py-2 text-left text-sm transition-colors duration-150 ease-out ${
-                    option.id === value ? 'bg-primary-muted text-foreground' : 'text-foreground hover:bg-surface-hover'
-                  }`}
-                >
-                  {option.name}
-                </button>
-              ))}
+              {group.items.map((option) => {
+                const dead = isChannelDead(option)
+                const isCurrent = option.id === value
+                // Disable dead channels for new picks; keep current saved value clickable.
+                const optionDisabled = dead && !isCurrent
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="option"
+                    aria-selected={isCurrent}
+                    aria-disabled={optionDisabled || undefined}
+                    disabled={optionDisabled}
+                    title={dead ? t('common.channelDeadHint') : undefined}
+                    onClick={() => {
+                      if (optionDisabled) return
+                      onChange(option.id)
+                      setIsOpen(false)
+                    }}
+                    className={`flex w-full items-center justify-between gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors duration-150 ease-out ${
+                      optionDisabled
+                        ? 'cursor-not-allowed opacity-55 text-muted'
+                        : isCurrent
+                          ? 'cursor-pointer bg-primary-muted text-foreground'
+                          : 'cursor-pointer text-foreground hover:bg-surface-hover'
+                    }`}
+                  >
+                    <span className="truncate">{option.name}</span>
+                    {dead && deadBadge}
+                  </button>
+                )
+              })}
             </div>
           ))}
         </div>

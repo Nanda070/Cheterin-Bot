@@ -23,7 +23,22 @@ describe('i18n translate', () => {
     expect(translate('en', 'events.title')).toBe('Events & polls')
   })
 
-  it('resolves community keys', () => {
-    expect(translate('ru', 'mafia.gameMeta', { phase: 'Ночь', round: 2, alive: 6, total: 8 })).toContain('раунд 2')
+  it('includes whatsNew keys', () => {
+    expect(translate('ru', 'whatsNew.title')).toBe('Что нового')
+    expect(translate('en', 'whatsNew.title')).toBe("What's new")
+  })
+
+  it('includes credits keys', () => {
+    expect(translate('ru', 'credits.title')).toBe('Авторы')
+    expect(translate('en', 'credits.title')).toBe('Credits')
+    expect(translate('ru', 'nav.credits')).toBe('Авторы')
+    expect(translate('en', 'nav.credits')).toBe('Credits')
+    expect(translate('ru', 'credits.eyebrow')).toBe('Cheterin Group')
+    expect(translate('en', 'credits.eyebrow')).toBe('Cheterin Group')
+  })
+
+  it('includes channel dead badge keys', () => {
+    expect(translate('ru', 'common.channelDead')).toBe('мёртв')
+    expect(translate('en', 'common.channelDead')).toBe('dead')
   })
 })

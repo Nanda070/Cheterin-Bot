@@ -22,6 +22,7 @@ import { NewsPage } from './pages/News'
 import { DocsPage } from './pages/Docs'
 import { TermsPage } from './pages/Terms'
 import { PrivacyPage } from './pages/Privacy'
+import { CreditsPage } from './pages/Credits'
 import { ServerLogPage } from './pages/ServerLog'
 import { LevelsPage } from './pages/Levels'
 import { VoiceStatsPage } from './pages/VoiceStats'
@@ -71,6 +72,7 @@ function App() {
             <Route path="/docs/:sectionId" element={<DocsPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/credits" element={<CreditsPage />} />
             <Route path="/leaderboard/:guildId" element={<LeaderboardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route

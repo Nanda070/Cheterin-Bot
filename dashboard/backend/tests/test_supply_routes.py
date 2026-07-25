@@ -1,6 +1,8 @@
 import pytest
+from datetime import datetime, timedelta, timezone
 
 import supply_core
+import timezone_core
 from dashboard.backend.routes.supply import routes as supply_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -13,6 +15,16 @@ from dashboard.backend.tests.fakes import (
 
 
 GUILD = 1
+FIXED_TZ = timezone(timedelta(hours=3), name="MSK")
+FIXED_NOW = datetime(2026, 7, 24, 12, 0, tzinfo=FIXED_TZ)
+
+
+@pytest.fixture(autouse=True)
+def stub_timezone(monkeypatch):
+    # Avoid ZoneInfo/tzdata dependency on Windows CI/dev hosts.
+    monkeypatch.setattr(timezone_core, "now_local", lambda _gid: FIXED_NOW)
+    monkeypatch.setattr(timezone_core, "today_local", lambda _gid: "2026-07-24")
+    monkeypatch.setattr(timezone_core, "get_tz", lambda _gid: FIXED_TZ)
 
 
 class FakeSupplyCog:

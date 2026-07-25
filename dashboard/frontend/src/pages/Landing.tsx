@@ -444,6 +444,11 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
                 </Link>
               </li>
               <li>
+                <Link to="/credits" className="text-foreground/90 hover:text-foreground">
+                  {t('nav.credits')}
+                </Link>
+              </li>
+              <li>
                 <AccountLink href={dashboardHref} className="text-foreground/90 hover:text-foreground">
                   {dashboardLabel}
                 </AccountLink>

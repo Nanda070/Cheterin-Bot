@@ -1,7 +1,22 @@
+import pytest
+from datetime import datetime, timedelta, timezone
+
 import supply_core
+import timezone_core
 
 G = 404
 G2 = 777
+
+FIXED_TZ = timezone(timedelta(hours=3), name="MSK")
+FIXED_NOW = datetime(2026, 7, 24, 12, 0, tzinfo=FIXED_TZ)
+
+
+@pytest.fixture(autouse=True)
+def stub_timezone(monkeypatch):
+    # Avoid ZoneInfo/tzdata dependency on Windows CI/dev hosts.
+    monkeypatch.setattr(timezone_core, "now_local", lambda _gid: FIXED_NOW)
+    monkeypatch.setattr(timezone_core, "today_local", lambda _gid: "2026-07-24")
+    monkeypatch.setattr(timezone_core, "get_tz", lambda _gid: FIXED_TZ)
 
 
 def test_is_valid_time():
@@ -12,6 +27,20 @@ def test_is_valid_time():
     assert not supply_core.is_valid_time("5:10")
     assert not supply_core.is_valid_time("15:60")
     assert not supply_core.is_valid_time("abc")
+
+
+def test_get_target_datetime_same_day():
+    target = supply_core.get_target_datetime("15:10", G)
+    assert target.hour == 15
+    assert target.minute == 10
+    assert target.date() == FIXED_NOW.date()
+    assert target.tzinfo == FIXED_TZ
+
+
+def test_get_target_datetime_rolls_to_next_day():
+    target = supply_core.get_target_datetime("10:00", G)
+    assert target.hour == 10
+    assert target.date() == (FIXED_NOW + timedelta(days=1)).date()
 
 
 def test_create_and_get_supply():

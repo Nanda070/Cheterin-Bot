@@ -2,7 +2,8 @@
 
 Каждое действие пишет в общий журнал модерации (виден на странице «Lockdown и
 модерация» дашборда) и, если настроен LOG_CHANNEL_ID, шлёт embed «Кто/Кого/Причина»
-— тот же формат, что и у ручных действий из дашборда (dashboard/backend/routes/moderation.py).
+(причина только если указана) — тот же формат, что и у ручных действий из дашборда
+(dashboard/backend/routes/moderation.py), через moderation_commands_core.action_log_fields.
 
 Временный бан (/ban с параметром time) переживает перезапуск бота: срок хранится в
 ban_db.py, на старте все ещё не истёкшие сроки планируются заново (recover-паттерн
@@ -96,28 +97,30 @@ class ModerationCommandsCog(commands.Cog):
     async def _log_action(
         self, guild_id: int, title: str, target_id: int, target_name: str, moderator: discord.abc.User,
         reason: str, extra: str = "", event_type: str = "", lang: str | None = None,
+        target_mention: str | None = None,
     ):
         lang = lang or i18n.lang_for(guild_id)
         embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=discord.utils.utcnow())
-        embed.add_field(
-            name=i18n.t("moderation.embed.who", lang),
-            value=f"{moderator.name} (`{moderator.id}`)",
-            inline=False,
-        )
-        embed.add_field(
-            name=i18n.t("moderation.embed.target", lang),
-            value=f"{target_name} (`{target_id}`)",
-            inline=False,
-        )
-        embed.add_field(name=i18n.t("moderation.embed.reason", lang), value=reason, inline=False)
-        if extra:
-            embed.add_field(name=i18n.t("moderation.embed.extra", lang), value=extra, inline=False)
+        for name, value in moderation_commands_core.action_log_fields(
+            lang,
+            moderation_commands_core.format_user_ref(moderator.name, moderator.id, moderator.mention),
+            moderation_commands_core.format_user_ref(target_name, target_id, target_mention),
+            reason=reason,
+            extra=extra,
+        ):
+            embed.add_field(name=name, value=value, inline=False)
         embed.set_footer(text=i18n.t("moderation.embed.footer", lang))
         await self.bot.send_log(guild_id, embed)
         if event_type:
             moderation_log.append_event(
-                guild_id, event_type, target_id, target_name,
-                str(moderator.id), moderator.name, reason,
+                guild_id,
+                event_type,
+                target_id,
+                target_name,
+                reason,
+                moderator_id=moderator.id,
+                moderator_display=moderator.name,
+                extra=extra,
             )
 
     # ────────────────────────── /ban ──────────────────────────
@@ -146,7 +149,7 @@ class ModerationCommandsCog(commands.Cog):
                 return await interaction.response.send_message(str(exc), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        reason_text = moderation_commands_core.normalize_reason(reason)
         full_reason = moderation_commands_core.command_reason(
             reason_text, interaction.user.name, interaction.user.id, lang,
         )
@@ -172,10 +175,12 @@ class ModerationCommandsCog(commands.Cog):
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.ban", lang), user.id, user.name, interaction.user, reason_text,
             extra=i18n.t("moderation.embed.duration_extra", lang, duration=duration_display),
-            event_type="command_ban", lang=lang,
+            event_type="command_ban", lang=lang, target_mention=user.mention,
         )
         await interaction.followup.send(
-            i18n.t("moderation.success.ban", lang, mention=user.mention, duration=duration_display, reason=reason_text),
+            moderation_commands_core.success_message(
+                "moderation.success.ban", lang, reason_text, mention=user.mention, duration=duration_display,
+            ),
             ephemeral=True,
         )
 
@@ -190,7 +195,7 @@ class ModerationCommandsCog(commands.Cog):
             return await interaction.response.send_message(i18n.t("moderation.guild_only", lang), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        reason_text = moderation_commands_core.normalize_reason(reason)
         full_reason = moderation_commands_core.command_reason(
             reason_text, interaction.user.name, interaction.user.id, lang,
         )
@@ -208,10 +213,13 @@ class ModerationCommandsCog(commands.Cog):
 
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.kick", lang), user.id, user.name, interaction.user, reason_text,
-            event_type="command_kick", lang=lang,
+            event_type="command_kick", lang=lang, target_mention=user.mention,
         )
         await interaction.followup.send(
-            i18n.t("moderation.success.kick", lang, mention=user.mention, reason=reason_text), ephemeral=True,
+            moderation_commands_core.success_message(
+                "moderation.success.kick", lang, reason_text, mention=user.mention,
+            ),
+            ephemeral=True,
         )
 
     # ────────────────────────── /mute ──────────────────────────
@@ -237,7 +245,7 @@ class ModerationCommandsCog(commands.Cog):
             return await interaction.response.send_message(str(exc), ephemeral=True)
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        reason_text = moderation_commands_core.normalize_reason(reason)
         full_reason = moderation_commands_core.command_reason(
             reason_text, interaction.user.name, interaction.user.id, lang,
         )
@@ -257,10 +265,12 @@ class ModerationCommandsCog(commands.Cog):
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.mute", lang), user.id, user.name, interaction.user, reason_text,
             extra=i18n.t("moderation.embed.duration_extra", lang, duration=duration_display),
-            event_type="command_mute", lang=lang,
+            event_type="command_mute", lang=lang, target_mention=user.mention,
         )
         await interaction.followup.send(
-            i18n.t("moderation.success.mute", lang, mention=user.mention, duration=duration_display, reason=reason_text),
+            moderation_commands_core.success_message(
+                "moderation.success.mute", lang, reason_text, mention=user.mention, duration=duration_display,
+            ),
             ephemeral=True,
         )
 
@@ -279,7 +289,7 @@ class ModerationCommandsCog(commands.Cog):
             )
 
         await interaction.response.defer(ephemeral=True)
-        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        reason_text = moderation_commands_core.normalize_reason(reason)
         full_reason = moderation_commands_core.command_reason(
             reason_text, interaction.user.name, interaction.user.id, lang,
         )
@@ -297,10 +307,13 @@ class ModerationCommandsCog(commands.Cog):
 
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.unmute", lang), user.id, user.name, interaction.user, reason_text,
-            event_type="command_unmute", lang=lang,
+            event_type="command_unmute", lang=lang, target_mention=user.mention,
         )
         await interaction.followup.send(
-            i18n.t("moderation.success.unmute", lang, mention=user.mention, reason=reason_text), ephemeral=True,
+            moderation_commands_core.success_message(
+                "moderation.success.unmute", lang, reason_text, mention=user.mention,
+            ),
+            ephemeral=True,
         )
 
     # ────────────────────────── /unban ──────────────────────────
@@ -331,7 +344,7 @@ class ModerationCommandsCog(commands.Cog):
             )
 
         target = ban_entry.user
-        reason_text = moderation_commands_core.normalize_reason(reason, lang)
+        reason_text = moderation_commands_core.normalize_reason(reason)
         full_reason = moderation_commands_core.command_reason(
             reason_text, interaction.user.name, interaction.user.id, lang,
         )
@@ -346,10 +359,12 @@ class ModerationCommandsCog(commands.Cog):
 
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.unban", lang), target.id, target.name, interaction.user, reason_text,
-            event_type="command_unban", lang=lang,
+            event_type="command_unban", lang=lang, target_mention=getattr(target, "mention", None),
         )
         await interaction.followup.send(
-            i18n.t("moderation.success.unban", lang, user=target, user_id=target.id, reason=reason_text),
+            moderation_commands_core.success_message(
+                "moderation.success.unban", lang, reason_text, user=target, user_id=target.id,
+            ),
             ephemeral=True,
         )
 
@@ -385,9 +400,12 @@ class ModerationCommandsCog(commands.Cog):
 
         await self._log_action(
             interaction.guild.id, i18n.t("moderation.log.clear", lang), interaction.user.id, interaction.user.name, interaction.user,
-            i18n.t("moderation.log.clear_reason", lang, count=len(deleted)),
-            extra=i18n.t("moderation.log.clear_channel", lang, channel=channel.mention),
-            event_type="command_clear", lang=lang,
+            "",
+            extra="\n".join([
+                i18n.t("moderation.log.clear_reason", lang, count=len(deleted)),
+                i18n.t("moderation.log.clear_channel", lang, channel=channel.mention),
+            ]),
+            event_type="command_clear", lang=lang, target_mention=interaction.user.mention,
         )
         await interaction.followup.send(
             i18n.t("moderation.success.clear", lang, count=len(deleted)), ephemeral=True,

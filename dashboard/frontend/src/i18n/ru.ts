@@ -8,6 +8,8 @@ import activity from './ru/activity'
 import docsShell from './ru/docsShell'
 import legal from './ru/legal'
 import landing from './ru/landing'
+import whatsNew from './ru/whatsNew'
+import credits from './ru/credits'
 
 const ru: TranslationDict = {
   ...shell,
@@ -19,6 +21,8 @@ const ru: TranslationDict = {
   ...docsShell,
   ...legal,
   ...landing,
+  ...whatsNew,
+  ...credits,
 }
 
 export default ru

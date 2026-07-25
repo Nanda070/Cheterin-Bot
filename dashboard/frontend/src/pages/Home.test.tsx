@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { AuthProvider } from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
+import { LATEST_WHATS_NEW, whatsNewDismissKey } from '../whatsNew'
 import { HomePage } from './Home'
 
 function renderPage() {
@@ -46,7 +47,28 @@ function defaultMocks() {
 }
 
 describe('HomePage', () => {
-  afterEach(() => vi.restoreAllMocks())
+  beforeEach(() => {
+    const store: Record<string, string> = {
+      [whatsNewDismissKey(LATEST_WHATS_NEW.version)]: '1',
+    }
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value
+      },
+      removeItem: (key: string) => {
+        delete store[key]
+      },
+      clear: () => {
+        for (const key of Object.keys(store)) delete store[key]
+      },
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
 
   it('renders the feedback card with a pending count', async () => {
     defaultMocks()

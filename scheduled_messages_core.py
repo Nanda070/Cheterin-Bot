@@ -41,7 +41,7 @@ def _public(m: dict) -> dict:
         "content": str(m.get("content") or ""),
         "schedule_type": m.get("schedule_type") if m.get("schedule_type") in ("once", "daily") else "once",
         "run_at": str(m.get("run_at") or ""),  # ISO UTC for once
-        "daily_time": str(m.get("daily_time") or ""),  # HH:MM MSK for daily
+        "daily_time": str(m.get("daily_time") or ""),  # HH:MM in guild timezone for daily
         "enabled": bool(m.get("enabled", True)),
         "last_posted_date": str(m.get("last_posted_date") or ""),
         "posted": bool(m.get("posted", False)),

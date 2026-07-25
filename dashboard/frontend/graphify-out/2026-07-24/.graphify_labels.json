@@ -52,7 +52,5 @@
   "50": "Toggle.tsx",
   "51": "VoiceRooms.tsx",
   "52": "Polls.tsx",
-  "53": "Tempban.tsx",
-  "54": "Messages.tsx",
-  "55": "MessageBuilder.tsx"
+  "53": "Tempban.tsx"
 }

@@ -1,12 +1,11 @@
 """Дни рождения участников: хранение дат, live-список по месяцам, ежедневная рассылка.
 
-Портировано из FamQ birthdays.py. Рассылка триггерится в 00:00 по MSK,
-как в оригинале (ручная проверка часа/минуты вместо discord.ext.tasks time=,
-чтобы не зависеть от таймзоны хоста).
+Портировано из FamQ birthdays.py. Рассылка — раз в календарный день по TZ сервера
+(как у guild-wide birthdays.py), без привязки к таймзоне хоста.
 """
 
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 import discord
 from discord import app_commands
@@ -16,21 +15,20 @@ import family_core
 import family_db
 import i18n
 import slash_registry
+import timezone_core
 
 logger = logging.getLogger("family.birthdays")
 
-MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
-
-def build_birthday_embed(member: discord.abc.User, lang: str) -> discord.Embed:
-    now_msk = datetime.now(MOSCOW_TZ)
+def build_birthday_embed(member: discord.abc.User, lang: str, guild_id: int) -> discord.Embed:
+    now_local = timezone_core.now_local(guild_id)
     embed = discord.Embed(
         title=i18n.t("family.birthdays.embed.title", lang),
         description=i18n.t("family.birthdays.embed.description", lang, mention=member.mention),
         color=0xFEE75C,
         timestamp=datetime.now(timezone.utc),
     )
-    embed.set_footer(text=i18n.t("family.birthdays.embed.footer", lang, date=now_msk.strftime('%d.%m.%Y')))
+    embed.set_footer(text=i18n.t("family.birthdays.embed.footer", lang, date=now_local.strftime('%d.%m.%Y')))
     return embed
 
 
@@ -49,7 +47,7 @@ async def send_birthday_log(bot: commands.Bot, guild_id: int, text: str):
 class BirthdayCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.last_announcement_date: str | None = None
+        self.last_announcement_dates: dict[int, str] = {}
         self._recovered = False
         self.birthday_loop.start()
 
@@ -128,8 +126,8 @@ class BirthdayCog(commands.Cog):
         if not channel_id:
             return
 
-        now_msk = datetime.now(MOSCOW_TZ)
-        rows = family_db.get_birthdays_for_date(guild.id, now_msk.day, now_msk.month)
+        now_local = timezone_core.now_local(guild.id)
+        rows = family_db.get_birthdays_for_date(guild.id, now_local.day, now_local.month)
         if not rows:
             return
 
@@ -148,29 +146,27 @@ class BirthdayCog(commands.Cog):
                 except discord.HTTPException:
                     continue
 
-            await channel.send(content=content, embed=build_birthday_embed(member, lang))
+            await channel.send(content=content, embed=build_birthday_embed(member, lang, guild.id))
             await send_birthday_log(self.bot, guild.id, i18n.t("family.birthdays.log.sent", lang, mention=member.mention))
 
     @tasks.loop(minutes=1)
     async def birthday_loop(self):
         # Всё тело под try/except: необработанное исключение навсегда остановило бы tasks.loop.
         try:
-            now_msk = datetime.now(MOSCOW_TZ)
-            today = now_msk.strftime("%Y-%m-%d")
-            if now_msk.hour != 0 or now_msk.minute != 0 or self.last_announcement_date == today:
-                return
-
             for guild in self.bot.guilds:
                 if not family_core.get_settings(guild.id)["enabled"]:
                     continue
                 try:
+                    today = timezone_core.today_local(guild.id)
+                    if self.last_announcement_dates.get(guild.id) == today:
+                        continue
                     await self.send_today_birthdays(guild)
+                    self.last_announcement_dates[guild.id] = today
                 except Exception as exc:
                     logger.exception("send_today_birthdays failed for guild %s", guild.id)
                     cog = self.bot.get_cog("OwnerAlertsCog")
                     if cog:
                         cog.report_module_error(guild.id, "family_birthdays", str(exc))
-            self.last_announcement_date = today
         except Exception:
             logger.exception("birthday_loop: ошибка итерации — цикл продолжает работать")
 

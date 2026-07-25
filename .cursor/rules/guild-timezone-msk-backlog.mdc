@@ -1,0 +1,15 @@
+---
+description: COMPLETED — guild timezone migration (former MSK hardcoding backlog)
+alwaysApply: false
+---
+
+# Guild timezone backlog — DONE
+
+Completed: remaining MSK hardcoding migrated to `timezone_core` (`now_local` / `today_local` / `get_tz`).
+
+Modules covered:
+- `supply_core` / `supply` cog
+- `family_birthdays` (per-guild loop)
+- voice stats backend hour bucketing + UI copy
+
+Default when unset remains `Europe/Moscow`. Prefer guild TZ for any new schedule/day logic.

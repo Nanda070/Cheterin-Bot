@@ -109,6 +109,60 @@ export function VerificationPage() {
         />
       </Card>
 
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-foreground">{t('verification.rulesTitle')}</h2>
+          <Toggle
+            checked={settings.rules_consent_enabled}
+            onChange={(v) => setSettings({ ...settings, rules_consent_enabled: v })}
+            label={
+              settings.rules_consent_enabled
+                ? t('verification.rulesOn')
+                : t('verification.rulesOff')
+            }
+          />
+        </div>
+        <p className="text-sm text-muted">{t('verification.rulesHint')}</p>
+
+        <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-foreground">{t('verification.reverifyTitle')}</span>
+            <span className="text-xs text-muted">{t('verification.reverifyHint')}</span>
+          </div>
+          <Toggle
+            checked={settings.reverify_enabled}
+            onChange={(v) => setSettings({ ...settings, reverify_enabled: v })}
+            label={
+              settings.reverify_enabled
+                ? t('verification.reverifyOn')
+                : t('verification.reverifyOff')
+            }
+          />
+        </div>
+
+        {settings.reverify_enabled && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-muted" htmlFor="ver-reverify-days">
+              {t('verification.reverifyDays')}
+            </label>
+            <input
+              id="ver-reverify-days"
+              type="number"
+              min={1}
+              max={365}
+              value={settings.reverify_days}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  reverify_days: Math.max(1, Math.min(365, Number(e.target.value) || 1)),
+                })
+              }
+              className={`${inputClass} w-32`}
+            />
+          </div>
+        )}
+      </Card>
+
       {saved && <p className="text-sm text-primary">{saved}</p>}
       <div>
         <Button variant="primary" onClick={save} disabled={busy}>

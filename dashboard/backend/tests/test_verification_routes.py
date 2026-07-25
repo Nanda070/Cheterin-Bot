@@ -30,6 +30,9 @@ async def test_get_defaults_disabled(aiohttp_client):
     body = await resp.json()
     assert body["enabled"] is False
     assert body["verified_role_id"] == ""
+    assert body["rules_consent_enabled"] is False
+    assert body["reverify_enabled"] is False
+    assert body["reverify_days"] == 30
 
 
 @pytest.mark.asyncio
@@ -39,11 +42,20 @@ async def test_put_then_get(aiohttp_client):
     await force_login(client, 10)
 
     resp = await client.put("/api/verification", json={
-        "enabled": True, "unverified_role_id": "111", "verified_role_id": "222", "welcome_text": "Жми кнопку",
+        "enabled": True,
+        "unverified_role_id": "111",
+        "verified_role_id": "222",
+        "welcome_text": "Жми кнопку",
+        "rules_consent_enabled": True,
+        "reverify_enabled": True,
+        "reverify_days": 14,
     })
     assert resp.status == 200
     body = await resp.json()
     assert body["verified_role_id"] == "222"
+    assert body["rules_consent_enabled"] is True
+    assert body["reverify_enabled"] is True
+    assert body["reverify_days"] == 14
 
     resp = await client.get("/api/verification")
     assert (await resp.json())["welcome_text"] == "Жми кнопку"
@@ -60,6 +72,10 @@ async def test_put_validation(aiohttp_client):
         {"enabled": True, "verified_role_id": -1},
         {"enabled": True, "welcome_text": ""},
         {"enabled": True, "welcome_text": "x" * 1001},
+        {"enabled": True, "welcome_text": "ok", "rules_consent_enabled": "yes"},
+        {"enabled": True, "welcome_text": "ok", "reverify_days": 0},
+        {"enabled": True, "welcome_text": "ok", "reverify_days": 400},
+        {"enabled": True, "welcome_text": "ok", "reverify_days": True},
     ]
     for body in cases:
         resp = await client.put("/api/verification", json=body)

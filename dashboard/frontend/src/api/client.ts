@@ -195,6 +195,7 @@ export interface ModerationLogEntry {
     | 'command_clear'
     | 'antiraid_trigger'
     | 'verification_pass'
+    | 'verification_expired'
   timestamp: string
   user_id: string
   user_display: string
@@ -257,6 +258,18 @@ export interface ChannelInfo {
   id: string
   name: string
   category?: string
+  /** Bot can View Channel in this channel. Omitted/true = usable. */
+  bot_can_view?: boolean
+  /** Bot can Send Messages in this channel. Omitted/true = usable. */
+  bot_can_send?: boolean
+}
+
+/** Channel is unusable for the bot (not visible or cannot send). */
+export function isChannelDead(ch: {
+  bot_can_view?: boolean
+  bot_can_send?: boolean
+}): boolean {
+  return ch.bot_can_view === false || ch.bot_can_send === false
 }
 
 export async function fetchReactionRoles(): Promise<ReactionRoleEntry[]> {
@@ -996,6 +1009,7 @@ export function fetchPublicLeaderboard(guildId: string): Promise<PublicLeaderboa
 
 export interface VoiceStats {
   days: number
+  timezone?: string
   session_count: number
   total_seconds: number
   total_time_text: string
@@ -2006,6 +2020,9 @@ export interface VerificationSettings {
   unverified_role_id: string
   verified_role_id: string
   welcome_text: string
+  rules_consent_enabled: boolean
+  reverify_enabled: boolean
+  reverify_days: number
 }
 
 export function fetchVerificationSettings(): Promise<VerificationSettings> {

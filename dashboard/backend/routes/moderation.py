@@ -5,6 +5,7 @@ import discord
 from aiohttp import web
 
 import i18n
+import moderation_commands_core
 import moderation_log
 import settings_db
 from ..access_middleware import require_dashboard_access
@@ -141,19 +142,18 @@ async def _send_action_log(
 ):
     lang = i18n.lang_for(guild_id)
     embed = discord.Embed(title=i18n.t(title_key, lang), color=discord.Color.red(), timestamp=bot.utcnow())
-    embed.add_field(
-        name=i18n.t("moderation.embed.who", lang),
-        value=f"{moderator.name} (`{moderator.id}`)",
-        inline=False,
-    )
-    embed.add_field(
-        name=i18n.t("moderation.embed.target", lang),
-        value=f"{target.name} (`{target.id}`)",
-        inline=False,
-    )
-    embed.add_field(name=i18n.t("moderation.embed.reason", lang), value=reason, inline=False)
-    if extra:
-        embed.add_field(name=i18n.t("moderation.embed.extra", lang), value=extra, inline=False)
+    for name, value in moderation_commands_core.action_log_fields(
+        lang,
+        moderation_commands_core.format_user_ref(
+            moderator.name, moderator.id, getattr(moderator, "mention", None),
+        ),
+        moderation_commands_core.format_user_ref(
+            target.name, target.id, getattr(target, "mention", None),
+        ),
+        reason=reason,
+        extra=extra,
+    ):
+        embed.add_field(name=name, value=value, inline=False)
     embed.set_footer(text=i18n.t("moderation.dashboard.footer", lang))
     await bot.send_log(guild_id, embed)
     if event_type:

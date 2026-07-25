@@ -92,6 +92,7 @@ const admin: TranslationDict = {
   'lockdown.type.command_clear': 'Chat purge (command)',
   'lockdown.type.antiraid_trigger': 'Anti-raid triggered',
   'lockdown.type.verification_pass': 'Verification passed',
+  'lockdown.type.verification_expired': 'Verification expired',
 
   'automod.title': 'Automod',
   'automod.intro': 'Message filters with configurable punishments and warning escalation. Disabled by default.',
@@ -417,7 +418,7 @@ const admin: TranslationDict = {
   'verification.moduleOff': 'Module disabled',
   'verification.intro.beforeBold': 'The module is ',
   'verification.intro.bold': 'disabled by default',
-  'verification.intro.afterBold': ' and has no effect until you explicitly enable it here — it is not tied to other bot settings. When enabled, newcomers can receive the "Unverified" role on join (channel access is limited by your Discord permissions for that role), and a panel with an "I\'m not a bot" button is published via the /verify_setup command in any channel.',
+  'verification.intro.afterBold': ' and has no effect until you explicitly enable it here — it is not tied to other bot settings. When enabled, newcomers can receive the "Unverified" role on join (channel access is limited by your Discord permissions for that role), and a panel with a verify / accept-rules button is published via the /verify_setup command in any channel.',
   'verification.errorLoad': 'Failed to load Verification module settings',
   'verification.errorSave': 'Failed to save settings — check the fields',
   'verification.rolesTitle': 'Roles',
@@ -426,6 +427,17 @@ const admin: TranslationDict = {
   'verification.rolePlaceholder': 'Role ID',
   'verification.rolesHint': 'Channel access for the "Unverified" role is configured via Discord permissions by you — the bot only assigns and removes the role, not channel permissions.',
   'verification.panelTextTitle': 'Panel text',
+  'verification.rulesTitle': 'Rules agreement',
+  'verification.rulesOn': 'Rules mode on',
+  'verification.rulesOff': 'Rules mode off',
+  'verification.rulesHint':
+    'When enabled, the panel button reads “Accept rules” (in the server language) and the default panel text asks members to accept the rules. The same Verified role is granted on click. Put your rules summary in the panel text above, or keep a separate rules channel and point members to it.',
+  'verification.reverifyTitle': 'Re-verification',
+  'verification.reverifyHint':
+    'After N days the Verified role is removed (and Unverified is restored if configured). The member must press the button again.',
+  'verification.reverifyOn': 'Enabled',
+  'verification.reverifyOff': 'Disabled',
+  'verification.reverifyDays': 'Days between acceptances (1–365)',
 
   'welcome.title': 'Welcome & goodbye',
   'welcome.intro': 'The bot automatically welcomes new members on join (in the selected channel or via DM) and says goodbye on leave.',

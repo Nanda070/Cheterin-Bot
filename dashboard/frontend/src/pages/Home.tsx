@@ -31,6 +31,7 @@ import {
   type ModerationLogEntry,
   type SetupHealth,
 } from '../api/client'
+import { WhatsNewCard, WhatsNewModal } from '../components/WhatsNew'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
@@ -49,6 +50,7 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   command_clear: Broom,
   antiraid_trigger: Siren,
   verification_pass: UserCheck,
+  verification_expired: UserCheck,
 }
 
 function modlogLabel(t: (key: string) => string, type: ModerationLogEntry['type']): string {
@@ -127,6 +129,9 @@ export function HomePage() {
       <h1 className="mb-4 text-lg font-semibold text-foreground">
         {t('home.welcome', { username: user?.username ?? '' })}
       </h1>
+
+      <WhatsNewModal />
+      <WhatsNewCard />
 
       {health && !health.ok && (
         <button

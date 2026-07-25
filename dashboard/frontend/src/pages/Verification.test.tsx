@@ -9,6 +9,9 @@ const emptySettings: client.VerificationSettings = {
   unverified_role_id: '',
   verified_role_id: '',
   welcome_text: 'Нажмите кнопку ниже.',
+  rules_consent_enabled: false,
+  reverify_enabled: false,
+  reverify_days: 30,
 }
 
 describe('VerificationPage', () => {
@@ -37,6 +40,36 @@ describe('VerificationPage', () => {
       expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ enabled: true, verified_role_id: '222' })),
     )
     expect(await screen.findByText('Сохранено')).toBeInTheDocument()
+  })
+
+  it('saves rules consent and reverify settings', async () => {
+    vi.spyOn(client, 'fetchVerificationSettings').mockResolvedValue(emptySettings)
+    const updateSpy = vi
+      .spyOn(client, 'updateVerificationSettings')
+      .mockResolvedValue({
+        ...emptySettings,
+        rules_consent_enabled: true,
+        reverify_enabled: true,
+        reverify_days: 14,
+      })
+    renderWithI18n(<VerificationPage />)
+
+    fireEvent.click(await screen.findByLabelText('Режим правил выключен'))
+    fireEvent.click(screen.getByLabelText('Выключено'))
+    fireEvent.change(await screen.findByLabelText(/Дней между подтверждениями/), {
+      target: { value: '14' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    await waitFor(() =>
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rules_consent_enabled: true,
+          reverify_enabled: true,
+          reverify_days: 14,
+        }),
+      ),
+    )
   })
 
   it('shows an error when loading fails', async () => {

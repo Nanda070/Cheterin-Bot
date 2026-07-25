@@ -92,6 +92,7 @@ const admin: TranslationDict = {
   'lockdown.type.command_clear': 'Очистка чата (команда)',
   'lockdown.type.antiraid_trigger': 'Антирейд сработал',
   'lockdown.type.verification_pass': 'Верификация пройдена',
+  'lockdown.type.verification_expired': 'Срок верификации истёк',
 
   'automod.title': 'Автомодерация',
   'automod.intro': 'Фильтры сообщений с настраиваемыми наказаниями и эскалацией по предупреждениям. Выключена по умолчанию.',
@@ -417,7 +418,7 @@ const admin: TranslationDict = {
   'verification.moduleOff': 'Модуль выключен',
   'verification.intro.beforeBold': 'Модуль ',
   'verification.intro.bold': 'выключен по умолчанию',
-  'verification.intro.afterBold': ' и не имеет никакого эффекта, пока вы явно не включите его здесь — не связан с остальными настройками бота. При включении новичкам можно выдавать роль «Unverified» сразу при входе (доступ к каналам ограничивается вашими же правами Discord для этой роли), а панель с кнопкой «Я не бот» публикуется командой /verify_setup в любом канале.',
+  'verification.intro.afterBold': ' и не имеет никакого эффекта, пока вы явно не включите его здесь — не связан с остальными настройками бота. При включении новичкам можно выдавать роль «Unverified» сразу при входе (доступ к каналам ограничивается вашими же правами Discord для этой роли), а панель с кнопкой верификации / принятия правил публикуется командой /verify_setup в любом канале.',
   'verification.errorLoad': 'Не удалось загрузить настройки модуля «Верификация»',
   'verification.errorSave': 'Не удалось сохранить настройки — проверьте поля',
   'verification.rolesTitle': 'Роли',
@@ -426,6 +427,17 @@ const admin: TranslationDict = {
   'verification.rolePlaceholder': 'ID роли',
   'verification.rolesHint': 'Ограничение доступа к каналам для роли «Unverified» настраивается правами Discord вами самими — бот только назначает и снимает роль, а не управляет разрешениями каналов.',
   'verification.panelTextTitle': 'Текст панели',
+  'verification.rulesTitle': 'Согласие с правилами',
+  'verification.rulesOn': 'Режим правил включён',
+  'verification.rulesOff': 'Режим правил выключен',
+  'verification.rulesHint':
+    'Если включено, кнопка на панели — «Принять правила» (на языке сервера), а текст панели по умолчанию просит принять правила. При клике выдаётся та же роль «Verified». Краткое содержание правил можно указать в тексте панели выше или оставить отдельный канал с правилами и сослаться на него.',
+  'verification.reverifyTitle': 'Повторная верификация',
+  'verification.reverifyHint':
+    'Через N дней роль «Verified» снимается (и снова выдаётся «Unverified», если настроена). Участник должен снова нажать кнопку.',
+  'verification.reverifyOn': 'Включено',
+  'verification.reverifyOff': 'Выключено',
+  'verification.reverifyDays': 'Дней между подтверждениями (1–365)',
 
   'welcome.title': 'Приветствие и прощание',
   'welcome.intro': 'Бот автоматически приветствует новых участников при входе на сервер (в выбранном канале или в ЛС) и прощается при выходе.',

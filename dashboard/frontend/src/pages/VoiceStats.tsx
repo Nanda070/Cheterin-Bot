@@ -121,7 +121,9 @@ export function VoiceStatsPage() {
           </div>
 
           <Card className="flex flex-col gap-3">
-            <h2 className="font-semibold text-foreground">{t('voiceStats.byHour')}</h2>
+            <h2 className="font-semibold text-foreground">
+              {t('voiceStats.byHour', { tz: stats.timezone || 'UTC' })}
+            </h2>
             <BarChart
               values={stats.by_hour_minutes}
               labels={stats.by_hour_minutes.map((_, i) => String(i))}

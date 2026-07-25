@@ -10,29 +10,28 @@
 """
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import settings_db
+import timezone_core
 
 MODULE_NAME = "supply"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
-
-MSK = timezone(timedelta(hours=3))
 
 TIME_RE = re.compile(r"^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
 HISTORY_LIMIT = 100
 
 
-def now_msk() -> datetime:
-    return datetime.now(MSK)
+def now_local(guild_id: int) -> datetime:
+    return timezone_core.now_local(guild_id)
 
 
 def is_valid_time(time_str: str) -> bool:
     return bool(TIME_RE.match(time_str))
 
 
-def get_target_datetime(time_str: str) -> datetime:
-    now = now_msk()
+def get_target_datetime(time_str: str, guild_id: int) -> datetime:
+    now = now_local(guild_id)
     target_h, target_m = map(int, time_str.split(':'))
     target_dt = now.replace(hour=target_h, minute=target_m, second=0, microsecond=0)
 
@@ -60,7 +59,7 @@ def create_supply(guild_id: int, initiator_id: int, opponent: str, limit: int, t
     data = load_data(guild_id)
     data["seq"] += 1
     supply_id = str(data["seq"])
-    target_dt = get_target_datetime(time_str)
+    target_dt = get_target_datetime(time_str, guild_id)
     supply = {
         "id": supply_id,
         "guild_id": str(guild_id),
@@ -75,7 +74,7 @@ def create_supply(guild_id: int, initiator_id: int, opponent: str, limit: int, t
         "channel_id": "",
         "message_id": "",
         "reminder_sent": False,
-        "created_at": now_msk().isoformat(),
+        "created_at": now_local(guild_id).isoformat(),
         "closed_at": None,
     }
     data["supplies"][supply_id] = supply
@@ -174,7 +173,7 @@ def close_supply(guild_id: int, supply_id: str, status: str = "finished") -> dic
         return None
 
     supply["status"] = status
-    supply["closed_at"] = now_msk().isoformat()
+    supply["closed_at"] = now_local(guild_id).isoformat()
 
     if status == "finished":
         for uid in supply["participants"]:

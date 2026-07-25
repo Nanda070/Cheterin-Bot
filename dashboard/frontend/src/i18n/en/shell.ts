@@ -87,7 +87,7 @@ const shell: TranslationDict = {
   'settings.errorLoad': 'Failed to load settings.',
   'settings.errorSave': 'Failed to save settings.',
   'settings.timezone': 'Server timezone',
-  'settings.timezoneHint': 'Used for daily schedules, Wordle day, weekly reports, and birthday announcements.',
+  'settings.timezoneHint': 'Used for daily schedules, Wordle day, weekly reports, birthday announcements, supply run times, and voice-stats hour buckets.',
   'settings.timezone.errorLoad': 'Failed to load timezone.',
   'settings.timezone.errorSave': 'Failed to save timezone.',
   'setupHealth.title': 'Setup health',

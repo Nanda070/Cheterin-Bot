@@ -153,6 +153,7 @@ describe('ServerSelectPage', () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByRole('link', { name: 'Документация' })).toBeInTheDocument())
+    expect(screen.getByRole('link', { name: 'Авторы' })).toHaveAttribute('href', '/credits')
     expect(screen.getByRole('link', { name: 'Условия' })).toHaveAttribute('href', '/terms')
     expect(screen.getByRole('link', { name: 'Приватность' })).toHaveAttribute('href', '/privacy')
     const support = screen.getByRole('link', { name: 'Сервер поддержки' })

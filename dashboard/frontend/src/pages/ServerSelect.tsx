@@ -221,6 +221,9 @@ export function ServerSelectPage() {
             <BookOpen size={16} />
             {t('nav.docs')}
           </Link>
+          <Link to="/credits" className="text-muted transition-colors hover:text-foreground">
+            {t('nav.credits')}
+          </Link>
           <Link to="/terms" className="text-muted transition-colors hover:text-foreground">
             {t('nav.terms')}
           </Link>

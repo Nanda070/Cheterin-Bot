@@ -8,6 +8,8 @@ import activity from './en/activity'
 import docsShell from './en/docsShell'
 import legal from './en/legal'
 import landing from './en/landing'
+import whatsNew from './en/whatsNew'
+import credits from './en/credits'
 
 const en: TranslationDict = {
   ...shell,
@@ -19,6 +21,8 @@ const en: TranslationDict = {
   ...docsShell,
   ...legal,
   ...landing,
+  ...whatsNew,
+  ...credits,
 }
 
 export default en

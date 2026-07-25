@@ -100,7 +100,7 @@ async def test_ban_with_duration_schedules_unban():
 
     text = interaction.all_messages()[0]["content"]
     assert "10 мин." in text
-    assert moderation_commands_core.DEFAULT_REASON in text
+    assert "Причина" not in text
 
     task = cog._unban_timers.get(row["id"])
     if task:
@@ -141,6 +141,69 @@ async def test_ban_forbidden_reports_ephemeral_error():
     await ModerationCommandsCog.ban_command.callback(cog, interaction, target)
 
     assert "Недостаточно прав" in interaction.followup.messages[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_ban_log_omits_reason_when_empty():
+    bot, guild, channel, moderator, cog = build()
+    target = FakeMember(20, name="troll")
+    interaction = FakeInteraction(moderator, guild, channel)
+
+    await ModerationCommandsCog.ban_command.callback(cog, interaction, target, reason=None, time_str=None)
+
+    assert len(bot.sent_logs) == 1
+    embed = bot.sent_logs[0]
+    field_names = [f.name for f in embed.fields]
+    assert "Причина" not in field_names
+    assert "Кто" in field_names and "Кого" in field_names
+    assert "<@10>" in embed.fields[0].value
+    assert "<@20>" in embed.fields[1].value
+    assert any(f.name == "Дополнительно" for f in embed.fields)
+
+
+@pytest.mark.asyncio
+async def test_kick_log_includes_reason_when_provided():
+    bot, guild, channel, moderator, cog = build()
+    target = FakeMember(20, name="troll")
+    interaction = FakeInteraction(moderator, guild, channel)
+
+    await ModerationCommandsCog.kick_command.callback(cog, interaction, target, reason="токсичность")
+
+    embed = bot.sent_logs[0]
+    fields = {f.name: f.value for f in embed.fields}
+    assert fields["Причина"] == "токсичность"
+    assert "Дополнительно" not in fields
+
+
+@pytest.mark.asyncio
+async def test_unmute_log_omits_reason_when_empty():
+    bot, guild, channel, moderator, cog = build()
+    target = FakeMember(20, name="troll")
+    await target.timeout(object(), reason="test")
+    interaction = FakeInteraction(moderator, guild, channel)
+
+    await ModerationCommandsCog.unmute_command.callback(cog, interaction, target, reason=None)
+
+    embed = bot.sent_logs[0]
+    assert "Причина" not in [f.name for f in embed.fields]
+
+
+@pytest.mark.asyncio
+async def test_clear_log_puts_count_in_extra_not_reason():
+    bot, guild, channel, moderator, cog = build()
+    from dashboard.backend.tests.fakes import FakeMessage
+    for i in range(3):
+        msg = FakeMessage(2000 + i, content=f"msg{i}")
+        channel._messages[msg.id] = msg
+    interaction = FakeInteraction(moderator, guild, channel)
+
+    await ModerationCommandsCog.clear_command.callback(cog, interaction, 3)
+
+    embed = bot.sent_logs[0]
+    fields = {f.name: f.value for f in embed.fields}
+    assert "Причина" not in fields
+    assert "Удалено сообщений: 3" in fields["Дополнительно"]
+    assert "Канал:" in fields["Дополнительно"]
 
 
 # ────────────────────────── /kick ──────────────────────────

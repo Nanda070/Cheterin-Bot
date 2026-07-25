@@ -66,6 +66,8 @@ const common: TranslationDict = {
   'common.date': 'Дата',
   'common.none': '—',
   'common.selectChannel': 'Выберите канал',
+  'common.channelDead': 'мёртв',
+  'common.channelDeadHint': 'Бот не видит канал или не может отправлять сообщения',
   'common.selectRole': 'Выберите роль',
   'common.notSelected': 'Не выбрано',
   'common.notSet': 'Не задано',

@@ -62,7 +62,9 @@ describe('reaction roles api client', () => {
   })
 
   it('fetchChannels unwraps the list', async () => {
-    const channels = [{ id: '500', name: 'general' }]
+    const channels = [
+      { id: '500', name: 'general', bot_can_view: true, bot_can_send: false },
+    ]
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ channels })))
     expect(await fetchChannels()).toEqual(channels)
   })

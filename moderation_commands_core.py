@@ -1,5 +1,5 @@
 """Ядро команд модерации (/ban /kick /unban /clear): парсинг и форматирование срока
-бана, нормализация причины, текст для Discord audit log.
+бана, нормализация причины, текст для Discord audit log, поля лог-эмбеда.
 
 Без импорта discord — юнит-тестируемо напрямую (тот же подход, что и automod_core.py).
 """
@@ -17,8 +17,6 @@ CLEAR_MAX = 999
 
 # Discord ограничивает таймаут 28 днями — дальше API просто отклонит запрос.
 MUTE_MAX_SECONDS = 28 * 86400
-
-DEFAULT_REASON = i18n.t("moderation.default_reason")
 
 
 def parse_duration(value: str, lang: str | None = None) -> int:
@@ -50,16 +48,61 @@ def format_duration(value: str, lang: str | None = None) -> str:
     return i18n.t(_DURATION_LABEL_KEYS[unit], lang, amount=amount)
 
 
-def normalize_reason(reason: str | None, lang: str | None = None) -> str:
-    lang = lang or i18n.DEFAULT_LANGUAGE
+def normalize_reason(reason: str | None) -> str:
+    """Strip user reason; empty/whitespace → '' (no placeholder in logs or replies)."""
+    return (reason or "").strip()
+
+
+def format_user_ref(name: str, user_id: int, mention: str | None = None) -> str:
+    """Common log style: @mention (`id`), with name (`id`) fallback when mention is unavailable."""
+    if mention:
+        return f"{mention} (`{user_id}`)"
+    return f"{name} (`{user_id}`)"
+
+
+def action_log_fields(
+    lang: str,
+    who_value: str,
+    target_value: str,
+    reason: str = "",
+    extra: str = "",
+) -> list[tuple[str, str]]:
+    """Кто / Кого / Причина (only if non-empty) / Дополнительно (only if non-empty)."""
+    fields: list[tuple[str, str]] = [
+        (i18n.t("moderation.embed.who", lang), who_value),
+        (i18n.t("moderation.embed.target", lang), target_value),
+    ]
     reason = (reason or "").strip()
-    return reason or i18n.t("moderation.default_reason", lang)
+    if reason:
+        fields.append((i18n.t("moderation.embed.reason", lang), reason))
+    extra = (extra or "").strip()
+    if extra:
+        fields.append((i18n.t("moderation.embed.extra", lang), extra))
+    return fields
 
 
 def command_reason(reason: str, moderator_name: str, moderator_id: int, lang: str | None = None) -> str:
     """Причина, которая уходит в нативный Discord audit log — там же видно, кто и когда."""
     lang = lang or i18n.DEFAULT_LANGUAGE
-    return i18n.t("moderation.command_reason", lang, reason=reason, name=moderator_name, id=moderator_id)
+    reason = (reason or "").strip()
+    if reason:
+        return i18n.t(
+            "moderation.command_reason",
+            lang,
+            reason=reason,
+            name=moderator_name,
+            id=moderator_id,
+        )
+    return i18n.t("moderation.command_reason_bare", lang, name=moderator_name, id=moderator_id)
+
+
+def success_message(key: str, lang: str, reason: str = "", **kwargs) -> str:
+    """Ephemeral success reply; appends reason suffix only when a reason was given."""
+    text = i18n.t(key, lang, **kwargs)
+    reason = (reason or "").strip()
+    if reason:
+        text = f"{text} {i18n.t('moderation.success.reason_suffix', lang, reason=reason)}"
+    return text
 
 
 def is_valid_clear_count(number: int) -> bool:

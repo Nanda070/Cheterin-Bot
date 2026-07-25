@@ -322,4 +322,40 @@ async def test_list_channels(aiohttp_client):
     resp = await client.get("/api/channels")
     assert resp.status == 200
     body = await resp.json()
-    assert body["channels"] == [{"id": "500", "name": "general", "category": ""}]
+    assert body["channels"] == [
+        {
+            "id": "500",
+            "name": "general",
+            "category": "",
+            "bot_can_view": True,
+            "bot_can_send": True,
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_list_channels_marks_dead_when_bot_cannot_send(aiohttp_client):
+    from dashboard.backend.tests.fakes import FakePermissions
+
+    dead = FakeChannel(
+        501,
+        name="locked",
+        permissions=FakePermissions(view_channel=True, send_messages=False),
+    )
+    hidden = FakeChannel(
+        502,
+        name="hidden",
+        permissions=FakePermissions(view_channel=False, send_messages=False),
+    )
+    _, app = build(channels=[dead, hidden])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/channels")
+    assert resp.status == 200
+    body = await resp.json()
+    by_id = {c["id"]: c for c in body["channels"]}
+    assert by_id["501"]["bot_can_view"] is True
+    assert by_id["501"]["bot_can_send"] is False
+    assert by_id["502"]["bot_can_view"] is False
+    assert by_id["502"]["bot_can_send"] is False

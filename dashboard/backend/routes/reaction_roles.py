@@ -218,6 +218,22 @@ async def list_emojis(request: web.Request) -> web.Response:
     )
 
 
+def _bot_channel_flags(channel, me) -> dict[str, bool]:
+    """Whether the bot can view / send in this channel (dashboard channel selects)."""
+    bot_can_view = True
+    bot_can_send = True
+    if me is not None and hasattr(channel, "permissions_for"):
+        try:
+            perms = channel.permissions_for(me)
+            if getattr(perms, "administrator", False):
+                return {"bot_can_view": True, "bot_can_send": True}
+            bot_can_view = bool(getattr(perms, "view_channel", True))
+            bot_can_send = bool(getattr(perms, "send_messages", True))
+        except Exception:
+            pass
+    return {"bot_can_view": bot_can_view, "bot_can_send": bot_can_send}
+
+
 @routes.get("/api/channels")
 @require_dashboard_access
 async def list_channels(request: web.Request) -> web.Response:
@@ -225,6 +241,7 @@ async def list_channels(request: web.Request) -> web.Response:
     if guild is None:
         return web.json_response({"error": "service_unavailable"}, status=503)
 
+    me = getattr(guild, "me", None)
     channels = []
     if hasattr(guild, "by_category"):
         # Порядок как в интерфейсе Discord: каналы без категории, затем
@@ -235,8 +252,17 @@ async def list_channels(request: web.Request) -> web.Response:
                     "id": str(channel.id),
                     "name": channel.name,
                     "category": category.name if category else "",
+                    **_bot_channel_flags(channel, me),
                 })
     else:
-        channels = [{"id": str(c.id), "name": c.name, "category": ""} for c in guild.channels]
+        channels = [
+            {
+                "id": str(c.id),
+                "name": c.name,
+                "category": "",
+                **_bot_channel_flags(c, me),
+            }
+            for c in guild.channels
+        ]
 
     return web.json_response({"channels": channels})

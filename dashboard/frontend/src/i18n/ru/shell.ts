@@ -88,7 +88,7 @@ const shell: TranslationDict = {
   'settings.errorLoad': 'Не удалось загрузить настройки.',
   'settings.errorSave': 'Не удалось сохранить настройки.',
   'settings.timezone': 'Часовой пояс сервера',
-  'settings.timezoneHint': 'Используется для ежедневных расписаний, Wordle, недельных отчётов и объявлений дней рождения.',
+  'settings.timezoneHint': 'Используется для ежедневных расписаний, Wordle, недельных отчётов, объявлений дней рождения, времени сборов на поставку и почасовой статистики войса.',
   'settings.timezone.errorLoad': 'Не удалось загрузить часовой пояс.',
   'settings.timezone.errorSave': 'Не удалось сохранить часовой пояс.',
   'setupHealth.title': 'Состояние настройки',

@@ -43,6 +43,7 @@ const TABLE_ROW_KEYS = [
   'supply',
   'voiceRooms',
   'modlog',
+  'verification',
   'rating',
   'voiceSessions',
   'audit',

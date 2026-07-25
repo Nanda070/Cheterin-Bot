@@ -59,6 +59,7 @@ class FakePermissions:
         self.manage_guild = manage_guild
         # Expose common Discord permission attrs (getattr default False otherwise).
         for attr in (
+            "view_channel",
             "send_messages",
             "embed_links",
             "manage_messages",
@@ -150,7 +151,15 @@ class _FakeChannelType:
 
 
 class FakeChannel:
-    def __init__(self, channel_id, name="channel", messages=None, next_message_id=1000, type_name="text"):
+    def __init__(
+        self,
+        channel_id,
+        name="channel",
+        messages=None,
+        next_message_id=1000,
+        type_name="text",
+        permissions=None,
+    ):
         self.id = channel_id
         self.name = name
         self._messages = messages or {}
@@ -164,6 +173,13 @@ class FakeChannel:
         self.edit_calls = []
         self.edit_raises = None
         self.slowmode_delay = 0
+        # Optional FakePermissions override for permissions_for(bot); else guild_permissions.
+        self._permissions = permissions
+
+    def permissions_for(self, member):
+        if self._permissions is not None:
+            return self._permissions
+        return getattr(member, "guild_permissions", FakePermissions())
 
     @property
     def mention(self):

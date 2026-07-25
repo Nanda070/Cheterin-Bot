@@ -50,6 +50,7 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   command_clear: Broom,
   antiraid_trigger: Siren,
   verification_pass: UserCheck,
+  verification_expired: UserCheck,
 }
 
 export function LockdownPage() {

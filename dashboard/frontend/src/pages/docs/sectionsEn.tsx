@@ -22,88 +22,82 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       <>
         <H>What is Cheterin?</H>
         <P>
-          Cheterin is a multi-purpose Discord bot with a full web control panel (dashboard). In a single process it
-          covers everything a gaming community needs: moderation and raid protection, levels and rankings, full
-          logging, tickets and feedback, welcomes and auto-roles, a message builder, events, polls, tournament brackets,
-          economy and casino, custom commands, scheduled and sticky messages, supply runs, private voice rooms, stream
-          notifications, and news relay.
+          Cheterin is a multi-purpose Discord bot with a web control panel. It covers what a gaming community needs:
+          moderation and raid protection, levels, server logging, tickets and feedback, welcomes and roles, a message
+          builder, events, polls, brackets, economy and casino, custom commands, scheduled and sticky messages, GTA5RP
+          supply runs and family tools, private voice rooms, stream notifications, and more.
         </P>
         <P>
-          The project philosophy is <strong>minimal chat commands, maximum control in the browser</strong>. Almost
-          every bot feature has its own dashboard section, and changes apply instantly without a restart.
+          The idea is simple: <strong>few chat commands, most setup in the browser</strong>. Almost every feature has
+          its own panel section, and changes apply right away — no bot restart.
         </P>
 
-        <H>Architecture</H>
+        <H>How the panel works</H>
         <UL>
           <li>
-            <strong>Bot</strong> - Python, <Code>discord.py</Code>. Multi-server model: one instance serves many
-            guilds; each guild&apos;s settings and data are isolated by guild ID (guild_id).
+            Sign in with Discord, pick a server you can manage, then turn modules on and configure them in the menu.
           </li>
           <li>
-            <strong>Dashboard backend</strong> - an <Code>aiohttp</Code> app that runs in the same process as the bot,
-            so it has direct access to bot state: no intermediate queues or lag.
+            Each server has its own settings. Enabling something on one server does not affect another.
           </li>
           <li>
-            <strong>Frontend</strong> - React + Vite + Tailwind. Built as static files and served by the same aiohttp
-            server.
-          </li>
-          <li>
-            <strong>Storage</strong> - SQLite (a unified settings DB partitioned by guild) plus some legacy JSON files.
-            No external databases or cloud services.
+            On the home page and under Server settings you can check <strong>Setup health</strong> — whether the bot
+            has the critical Discord permissions it needs.
           </li>
         </UL>
 
-        <H>Multi-server</H>
+        <H>Several servers</H>
         <P>
-          You can add the bot to any server via an invite link. In the dashboard you pick which server to manage and
-          configure its modules independently of other servers. Access requires{' '}
-          <strong>Manage Server</strong> or Administrator on that server. Modules are off by default on a new server.
-          Staff-only features (CTD tickets, news relay, Super Admin) belong to the main server and are hidden on other
-          guilds.
+          Add the bot via an invite link. In the panel, choose which server to manage. You need{' '}
+          <strong>Manage Server</strong> or Administrator on that server. New servers start with modules off. Some
+          tools (CTD tickets, news relay, Super Admin) appear only on the main/staff server.
         </P>
 
         <H>Full module list</H>
         <Table
-          headers={['Module', 'What it does', 'Dashboard section']}
+          headers={['Module', 'What it does', 'Panel section']}
           rows={[
-            ['Member ranking', 'XP for text and voice, reward roles, /rank, leaderboard', 'Member ranking'],
-            ['Voice stats', 'Activity by hour/day, top channels and members', 'Voice stats'],
-            ['Logging', 'All server events, a dedicated channel per type', 'Logging'],
+            ['Member levels', 'XP for text and voice, reward roles, /rank, leaderboard', 'Member levels'],
+            ['Voice statistics', 'Activity by hour/day, top channels and members', 'Voice statistics'],
+            ['Logging', 'Server events to Discord channels, per event type', 'Logging'],
             ['Dashboard audit', 'Which moderators changed what in the panel', 'Dashboard audit'],
-            ['Posts & subscriptions', 'Twitch stream and YouTube video notifications', 'Posts & subscriptions'],
+            ['Streams & subscriptions', 'Twitch stream and YouTube video notifications', 'Streams & subscriptions'],
             ['Anti-spam', 'Mass mentions (@everyone/roles) → 24h timeout and a 20-minute message purge', 'Moderation'],
             ['Spam traps', 'Trap channel: a non-admin message auto-bans (message purge) and unbans a few seconds later', 'Moderation'],
             ['Lockdown', 'Emergency server isolation during a raid', 'Moderation'],
             ['CTD tickets', 'Private support threads with auto-close', 'Feedback & tickets'],
             ['Feedback', 'Category-based submissions with moderator decisions', 'Feedback & tickets'],
-            ['Welcomes', 'Channel message + DM guide for newcomers', 'Server join'],
-            ['Invite stats', 'Who invited whom, joins/leaves', 'Server join → Invites'],
-            ['Auto-roles', 'Roles for new members on join', 'Server join → Auto-roles'],
-            ['Reaction roles', 'Self-assign roles via reactions', 'Button & embed builder'],
+            ['Welcomes', 'Channel message + DM guide for newcomers', 'Server entry'],
+            ['Invite tracker', 'Who invited whom, joins and leaves', 'Server entry → Invites'],
+            ['Auto-roles', 'Roles for new members on join', 'Server entry → Auto-roles'],
+            ['Sticky roles', 'Remember roles on leave and restore them on rejoin', 'Server entry → Sticky roles'],
+            ['Reaction roles', 'Self-assign roles via reactions', 'Buttons & embeds'],
             ['Embed Builder', 'Embed constructor, form buttons, templates', 'Buttons & embeds'],
             ['Events', 'Events and polls with join buttons', 'Events & polls'],
             ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'Events → Brackets'],
-            ['Mafia', 'Role-playing game: lobby in Discord; full match (role, player list, timer, votes) on a personal link', 'Mafia'],
-            ['Bunker', 'Role-playing game: lobby in Discord; character card, trait reveals, special abilities and voting on a personal link', 'Bunker'],
+            ['Mafia', 'Role-playing game: lobby in Discord; full match on a personal link', 'Mafia'],
+            ['Bunker', 'Role-playing game: lobby in Discord; character card and voting on a personal link', 'Bunker'],
             ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events → Giveaways'],
-            ['Daily topic', 'Question/topic of the day posted on a schedule to keep chat alive', 'Daily topic'],
-            ['Fun', 'Russian roulette, emoji roulette, Auto-Emoji, and Russian Wordle (word of the day)', 'Fun'],
+            ['Daily topic', 'Question/topic of the day on a schedule', 'Daily topic'],
+            ['Fun', 'Russian roulette, emoji roulette, Auto-Emoji, and Russian Wordle', 'Fun'],
             ['Economy', 'Server currency: activity payouts, transfers, role shop, weekly report', 'Economy'],
             ['Casino', 'Slots, coinflip, blackjack, Russian roulette bets, leaderboard', 'Casino'],
             ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Custom commands'],
-            ['Scheduled messages', 'One-shot or recurring posts to a channel on a schedule', 'Messages → Scheduled'],
+            ['Scheduled messages', 'One-shot or recurring posts on a schedule', 'Messages → Scheduled'],
             ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'Messages → Sticky'],
-            ['Polls', 'Dedicated polls with live tallies and early end from the dashboard', 'Events → Polls'],
+            ['Polls', 'Dedicated polls with live tallies; end early from the panel', 'Events → Polls'],
             ['Timed roles', 'Temporary role grants that expire automatically', 'Members → Timed roles'],
             ['Birthdays', 'Server-wide birthday calendar and announcements', 'Birthdays'],
-            ['Command preview', 'Try bot replies in the dashboard without posting to Discord', 'Custom commands → Preview'],
+            ['Command preview', 'Try bot replies in the panel without posting to Discord', 'Custom commands → Preview'],
+            ['Server timezone', 'Timezone for schedules, Wordle day, birthdays, supply times, voice-stats hours', 'Server settings'],
+            ['Setup health', 'Check that the bot has critical permissions', 'Home / Server settings'],
             ['Owner alerts', 'Notify the owner on missing permissions, mass bans, or module errors', 'Server settings'],
-            ['AutoMod', '9 message filters with punishments and warn escalation', 'AutoMod'],
-            ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins - off by default', 'Moderation → Anti-raid'],
-            ['Verification', '“I am not a bot” panel for newcomers before full access - off by default', 'Moderation → Verification'],
-            ['Supplies', 'Member sign-ups with reserve list and reminders', 'Supplies'],
+            ['Automod', 'Message filters with punishments and warn escalation', 'Automod'],
+            ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins — off by default', 'Moderation → Anti-raid'],
+            ['Verification', '“I am not a bot” / accept-rules panel; optional re-verify — off by default', 'Moderation → Verification'],
+            ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Supply runs'],
             ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Family'],
-            ['Private rooms', 'Personal voice channels with a control panel', 'Private rooms'],
+            ['Private voice rooms', 'Personal voice channels with a control panel', 'Private voice rooms'],
             ['News relay', 'Forward messages from a source server', 'News relay'],
             ['Bulk role assign', 'Background role assignment to many members', 'Members & roles'],
             ['Super Admin', 'List of servers the bot is in', 'Super Admin'],
@@ -120,76 +114,78 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       <>
         <H>Adding the bot to your server</H>
         <OL>
-          <li>Open the dashboard (for example, <Code>https://cheterin.online</Code>) and sign in with Discord.</li>
+          <li>Open the panel (for example, <Code>https://cheterin.online</Code>) and sign in with Discord.</li>
           <li>
             On the server picker, click <strong>Add bot</strong> next to the server you want (or use the invite link).
             You need Manage Server on that guild to add the bot.
           </li>
           <li>
-            After joining, the bot sends a welcome. All modules are off by default - enable and configure what you need
-            in the dashboard.
+            After joining, the bot sends a welcome. All modules are off by default — enable and configure what you need
+            in the panel.
           </li>
         </OL>
 
-        <H>Signing into the dashboard</H>
+        <H>Signing into the panel</H>
         <OL>
-          <li>Open the dashboard URL in your browser (for example, <Code>https://cheterin.online</Code>).</li>
+          <li>Open the panel URL in your browser (for example, <Code>https://cheterin.online</Code>).</li>
           <li>Click <strong>Sign in with Discord</strong>.</li>
           <li>
-            You are redirected to Discord&apos;s official OAuth2 page. The app requests basic profile info and your
-            server list (scopes “identify” and “guilds”) so it can show which servers you can manage.
+            Discord asks you to authorize the app. It only needs your basic profile and the list of servers you are in,
+            so the panel can show which ones you can manage.
           </li>
           <li>
             Pick a server on the “Select server” page. You can switch servers later from the menu in the top right.
           </li>
         </OL>
         <Note>
-          🔐 <strong>Passwords are never requested.</strong> Auth happens only on Discord&apos;s side - the service
+          🔐 <strong>Passwords are never requested.</strong> Sign-in happens only on Discord&apos;s side — the service
           receives your ID, name, avatar, and server list with permission flags.
         </Note>
 
         <H>Who has access</H>
         <P>
-          Settings for a given server are available to members with <strong>Manage Server</strong> or Administrator
-          on that server. Role allowlists in environment variables are no longer used. Every panel API request is
-          re-checked - you cannot keep access after losing permissions. Super Admin is visible only to super-admins of
-          the main server.
+          Settings for a given server are available to members with <strong>Manage Server</strong> or Administrator on
+          that server. If you lose those permissions, panel access stops right away. Super Admin is visible only to
+          super-admins of the main server.
         </P>
 
         <H>Navigation</H>
         <Table
           headers={['Section', 'Purpose']}
           rows={[
-            ['Member ranking', 'XP settings, rewards, leaderboard, member editing'],
+            ['Member levels', 'XP settings, rewards, leaderboard, member editing'],
             ['Economy', 'Currency, XP rate, daily bonus, transfers, role shop, balance top, weekly report'],
             ['Casino', 'Slots / coinflip / blackjack, Russian roulette bets, leaderboard'],
-            ['Voice stats', 'Activity charts, top channels and members'],
-            ['Private rooms', 'Active rooms, publish control panel'],
+            ['Voice statistics', 'Activity charts, top channels and members'],
+            ['Private voice rooms', 'Active rooms, publish control panel'],
             ['Family', 'Module toggle, role roster, ticket applications, birthdays'],
-            ['Supplies', 'Active runs, history, top participants, create a run'],
+            ['Supply runs', 'Active runs, history, top participants, create a run'],
             ['Feedback & tickets', 'Feedback cases, categories, ticket panel'],
             ['Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
             ['Messages', 'Tabs: scheduled posts and sticky messages'],
             ['Buttons & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
             ['Birthdays', 'Member birthday calendar and announce channel'],
             ['Fun', 'Module toggle, Russian roulette timeout and cooldown, Auto-Emoji, Wordle'],
-            ['Posts & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
+            ['Streams & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
             ['Daily topic', 'Topic list, channel and publish times, manual publish'],
             ['Mafia', 'Module toggle, default players and timers, log channel, active games'],
             ['Bunker', 'Module toggle, default players and timers, active games, special-ability requests'],
             ['Logging', 'Toggle and channel for each server event type'],
             [
               'Moderation',
-              'Tabs: Lockdown and journal, Settings (server logging), Anti-spam, Spam traps, Verification / Anti-raid',
+              'Tabs: Lockdown & log, Settings (server logging), Anti-spam, Spam traps, Verification, Anti-raid',
             ],
-            ['AutoMod', 'Message filters, punishments, warn escalation'],
-            ['Server join', 'Welcomes, goodbyes, DM guide, auto-roles, invites; test send'],
-            ['Members', 'Member search, cards, bans/kicks, bulk roles, timed roles'],
+            ['Automod', 'Message filters, punishments, warn escalation'],
+            [
+              'Server entry',
+              'Welcomes, goodbyes, DM guide, auto-roles, sticky roles, invites; test send',
+            ],
+            ['Members & roles', 'Member search, cards, bans/kicks, bulk roles, timed roles'],
             ['Custom commands', 'Trigger → reply rules; Preview tab without posting to Discord'],
-            ['Dashboard audit', 'History of moderator actions in the panel (human-readable labels)'],
+            ['Dashboard audit', 'History of moderator actions in the panel'],
             [
               'Server settings',
-              'Bot language for this server (RU/EN) and owner alerts (missing permissions, mass bans, module errors)',
+              'Bot language (RU/EN), server timezone, setup health, owner alerts',
             ],
             ['Super Admin', 'Bot server list, news relay, CTD tickets (main server only)'],
           ]}
@@ -204,38 +200,38 @@ export const DOC_SECTIONS_EN: DocSection[] = [
     content: (
       <>
         <P>
-          There is no longer a separate “Configuration” page: channels and roles are set in the matching dashboard
-          sections (Settings tab for Supplies, Private rooms, Buttons & embeds; Settings and Anti-raid under
-          Moderation; a dedicated Server join page). Values are stored per server and apply immediately.
+          There is no separate “Configuration” page: channels and roles are set in the matching panel sections
+          (Settings tab for Supply runs, Private voice rooms, Buttons & embeds; Settings / Anti-spam / Spam traps under
+          Moderation; Server entry for welcomes and roles). Values are stored per server and apply immediately.
         </P>
 
         <H>Moderation and spam</H>
         <P>
-          <strong>Moderation → Settings:</strong> shared log channel. <strong>Moderation → Anti-raid:</strong>{' '}
-          anti-spam, Spam traps, and related channels.
+          <strong>Moderation → Settings:</strong> shared server logging channel.{' '}
+          <strong>Moderation → Anti-spam</strong> and <strong>Spam traps:</strong> their own channels and options.
         </P>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['LOG_CHANNEL_ID', 'Main bot log channel: DM logs, tickets, moderator actions.'],
-            ['TEMPBAN_CHANNEL_ID', 'Trap channel: a non-admin message triggers an automatic tempban.'],
-            ['TEMPBAN_LOG_CHANNEL_ID', 'Channel for the “🔨 Automatic Tempban” embed (if empty - SPAM_LOG or LOG).'],
-            ['SPAM_LOG_CHANNEL_ID', 'Spam incident notifications (with Ban/Leave buttons).'],
-            ['SPAM_LOG_ROLE_ID', 'Role that is only pinged in the log message about a spam incident — not applied to the offender; the punishment is a 24-hour timeout.'],
-            ['SPAM_EXCEPTION_CHANNELS', 'Exception channels where anti-spam does not punish (e.g. bot-commands).'],
+            ['Server log channel', 'Main log: DMs, tickets, moderator actions, and fallback for other modules.'],
+            ['Spam trap channel', 'Trap channel: a non-admin message triggers an automatic ban and quick unban.'],
+            ['Spam trap log channel', 'Where the spam-trap report is posted (if empty — spam log or server log).'],
+            ['Spam log channel', 'Spam incident notifications (with Ban/Leave buttons).'],
+            ['Spam alert role', 'Role that is only pinged in the spam log — not applied to the offender; punishment is a 24-hour timeout.'],
+            ['Anti-spam exception channels', 'Channels where anti-spam does not punish (e.g. bot-commands).'],
           ]}
         />
 
         <H>Welcomes and onboarding</H>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['WELCOME_CHANNEL_ID', 'Public welcome channel for new members.'],
-            ['INVITE_LOG_CHANNEL_ID', 'Invite log channel (who invited whom).'],
-            ['ANNOUNCEMENTS_CHANNEL_ID', 'Announcements channel - linked in the newcomer DM guide.'],
-            ['RULES_CHANNEL_ID', 'Rules channel - for the DM guide.'],
-            ['ROLES_CHANNEL_ID', 'Role-pick channel - for the DM guide.'],
-            ['SEARCH_PLAYERS_CHANNEL_ID', 'Looking-for-teammates channel - for the DM guide.'],
+            ['Welcome channel', 'Public welcome channel for new members.'],
+            ['Invite log channel', 'Invite log (who invited whom).'],
+            ['Announcements channel', 'Linked in the newcomer DM guide.'],
+            ['Rules channel', 'Linked in the DM guide.'],
+            ['Roles channel', 'Role-pick channel — for the DM guide.'],
+            ['LFG channel', 'Looking-for-teammates channel — for the DM guide.'],
           ]}
         />
 
@@ -245,48 +241,48 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           the main server).
         </Note>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['CTD_ROLE_ID', 'Support team role: invited into tickets and can close them.'],
-            ['CTD_CHANNEL_ID', 'Channel where the ticket creation panel is posted.'],
+            ['Support role', 'Support team role: invited into tickets and can close them.'],
+            ['Panel channel', 'Channel where the ticket creation panel is posted.'],
           ]}
         />
 
         <H>Buttons and webhooks</H>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['BUTTON_CREATE_ALLOWED_ROLES', 'Roles allowed to create form buttons.'],
-            ['BUTTON_WEBHOOK_URL', 'Webhook that receives form answers.'],
-            ['SERVER_INVITE_LINK', 'Permanent server invite link.'],
+            ['Button creator roles', 'Roles allowed to create form buttons.'],
+            ['Form webhook', 'Webhook that receives form answers.'],
+            ['Server invite link', 'Permanent server invite link (used in some DMs).'],
           ]}
         />
 
-        <H>Private rooms</H>
+        <H>Private voice rooms</H>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['VOICE_LOBBY_CHANNEL_ID', 'Voice lobby: joining it creates a private room.'],
-            ['VOICE_PANEL_CHANNEL_ID', 'Text channel where the room control panel is published.'],
-            ['VOICE_LOG_CHANNEL_ID', 'Private-room log channel (if empty - LOG_CHANNEL_ID is used).'],
-            ['VOICE_PANEL_THUMB_URL', 'Thumbnail image in the control-panel embed.'],
+            ['Voice lobby', 'Joining this voice channel creates a private room.'],
+            ['Control panel channel', 'Text channel where the room control panel is published.'],
+            ['Rooms log channel', 'Private-room log (if empty — server log is used).'],
+            ['Panel thumbnail', 'Optional image in the control-panel embed.'],
           ]}
         />
 
-        <H>Supplies</H>
+        <H>Supply runs</H>
         <Table
-          headers={['Parameter', 'Description']}
+          headers={['Setting', 'Description']}
           rows={[
-            ['SUPPLY_ROLE_ID', 'Role pinged when a run is created.'],
-            ['SUPPLY_VOICE_CHANNEL_ID', 'Voice channel for the run - shown in the embed.'],
-            ['SUPPLY_LOG_CHANNEL_ID', 'Supply log channel (if empty - LOG_CHANNEL_ID is used).'],
-            ['SUPPLY_REMINDER_MINUTES', 'Minutes before start to remind participants. Empty = 10, 0 = disable.'],
+            ['Supply ping role', 'Role pinged when a run is created.'],
+            ['Supply voice channel', 'Voice channel for the run — shown in the embed.'],
+            ['Supply log channel', 'Supply log (if empty — server log is used).'],
+            ['Reminder (minutes)', 'Minutes before start to remind participants. Empty = 10, 0 = disable.'],
           ]}
         />
 
         <Note>
-          All dropdowns in these sections show real server channels and roles - you do not enter IDs by hand. Before
-          saving, the backend checks that each selected channel and role still exists.
+          All dropdowns show real server channels and roles — you do not enter IDs by hand. Before saving, the panel
+          checks that each selected channel and role still exists.
         </Note>
       </>
     ),
@@ -295,14 +291,14 @@ export const DOC_SECTIONS_EN: DocSection[] = [
   // ────────────────────────── MODULES ──────────────────────────
   {
     id: 'levels',
-    title: 'Member ranking',
+    title: 'Member levels',
     group: 'Modules',
     content: (
       <>
         <H>📈 Levels and XP</H>
         <P>
           Members earn XP from text chat and voice activity, level up, and receive reward roles. The module is{' '}
-          <strong>off by default</strong> - enable it with the toggle in Member ranking.
+          <strong>off by default</strong> — enable it with the toggle in Member levels.
         </P>
 
         <H3>Text message XP</H3>
@@ -350,10 +346,10 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <UL>
           <li>
             The <Code>/rank</Code> (<Code>/ранг</Code>) command generates a PNG card: avatar, level, progress to next
-            level, rank place, voice time. Card background is configurable - upload your own image in the dashboard.
+            level, rank place, voice time. Card background is configurable — upload your own image in the panel.
           </li>
           <li>
-            The leaderboard is in the dashboard and on the public{' '}
+            The leaderboard is in the panel and on the public{' '}
             <Code>/leaderboard/&lt;server ID&gt;</Code> page (can be disabled; each server has its own
             link).
           </li>
@@ -364,7 +360,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>/xp and /leaders commands</H3>
         <P>
-          Both commands work only while Member ranking is enabled - otherwise they reply that the level system is
+          Both commands work only while Member levels is enabled — otherwise they reply that the level system is
           disabled.
         </P>
         <UL>
@@ -392,7 +388,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>🧾 Full logging</H>
         <P>
           The module writes all server events to Discord channels. Each event type is toggled separately and can post
-          to its own channel - Logging in the dashboard.
+          to its own channel — Logging in the panel.
         </P>
         <H3>Unified embed style</H3>
         <UL>
@@ -437,7 +433,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
   },
   {
     id: 'voice-stats',
-    title: 'Voice stats',
+    title: 'Voice statistics',
     group: 'Modules',
     content: (
       <>
@@ -461,24 +457,23 @@ export const DOC_SECTIONS_EN: DocSection[] = [
   },
   {
     id: 'streams',
-    title: 'Posts & subscriptions',
+    title: 'Streams & subscriptions',
     group: 'Modules',
     content: (
       <>
         <H>📺 Stream notifications</H>
         <P>
-          The bot watches selected streamers and posts when a stream starts. Subscriptions are managed in the
-          dashboard: a card per streamer with a toggle and delete.
+          The bot watches selected streamers and posts when a stream starts. Subscriptions are managed in the panel: a
+          card per streamer with a toggle and delete.
         </P>
         <H3>Platforms</H3>
         <UL>
           <li>
-            <strong>Twitch</strong> - stream start via the official Helix API. Requires{' '}
-            <Code>TWITCH_CLIENT_ID</Code> and <Code>TWITCH_CLIENT_SECRET</Code> in <Code>.env</Code> (free app
-            registration on dev.twitch.tv).
+            <strong>Twitch</strong> — stream start notifications. The bot host must have Twitch app credentials
+            configured; without them Twitch subscriptions will not announce.
           </li>
           <li>
-            <strong>YouTube</strong> - new channel videos via RSS; no API keys needed.
+            <strong>YouTube</strong> — new channel videos; no extra keys needed from you in the panel.
           </li>
         </UL>
         <H3>Subscription settings</H3>
@@ -507,9 +502,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           setting - is recorded automatically: who, what, when.
         </P>
         <UL>
-          <li>Dashboard audit: entries with a human-readable action label, filter by moderator, pagination.</li>
-          <li>Only successful actions are stored; page views (GET) are not audited.</li>
-          <li>Stored in a local SQLite database; nothing is sent externally.</li>
+          <li>Entries with a clear action label, filter by moderator, pagination.</li>
+          <li>Only successful changes are stored; simply opening pages is not recorded.</li>
+          <li>History stays on your bot host — it is not sent to third-party services.</li>
         </UL>
         <P>
           Audit complements the moderation journal: the journal answers “what happened to a member”; audit answers “who
@@ -527,68 +522,60 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       <>
         <H>🛡️ Anti-spam</H>
         <P>
-          The module does not react to generic text flood — it reacts specifically to{' '}
-          <strong>mass mentions</strong>: <Code>@everyone</Code>/<Code>@here</Code> or any role mention. Regular text
-          flood without such mentions is left to AutoMod (the “Repeated text” filter). The bot tracks these messages
-          per user in a sliding window (default 60s) and compares by content/attachments against{' '}
-          <Code>limit_with_attachments</Code> (default 3) and <Code>limit_without_attachments</Code> (default 5) —
-          hitting the limit triggers the punishment.
+          Reacts to <strong>mass mentions</strong> — <Code>@everyone</Code>/<Code>@here</Code> or any role mention —
+          not to ordinary text flood (that is Automod’s “Repeated text” filter). In a short time window the bot counts
+          how many such messages a user sends (with or without attachments). Crossing the limit triggers punishment.
         </P>
         <OL>
           <li>
             The offender gets a Discord timeout for <strong>24 hours</strong>, and their messages from the last{' '}
-            <strong>20 minutes</strong> are purged in the background across all text channels and active threads.
+            <strong>20 minutes</strong> are purged in the background across text channels and active threads.
           </li>
           <li>
-            An incident report is sent to <Code>SPAM_LOG_CHANNEL_ID</Code> with{' '}
-            <strong>Ban</strong> and <strong>Leave</strong> buttons — a moderator decides the offender&apos;s further
-            fate (the timeout is already applied) in one click.
+            An incident report goes to the spam log channel with <strong>Ban</strong> and <strong>Leave</strong>{' '}
+            buttons — a moderator decides next steps in one click (the timeout is already applied).
           </li>
-          <li>The incident is written to the moderation journal (visible in the dashboard).</li>
+          <li>The incident is written to the moderation journal (visible in the panel).</li>
         </OL>
         <UL>
           <li>
-            <Code>SPAM_LOG_ROLE_ID</Code> is only <strong>pinged</strong> in the log message to draw moderators&apos;
-            attention — it is never applied to the offender and is not a mute role.
+            The spam alert role is only <strong>pinged</strong> in the log — it is never applied to the offender.
           </li>
-          <li>Incident buttons are persistent: they work after a bot restart.</li>
-          <li>Channels in <Code>SPAM_EXCEPTION_CHANNELS</Code> are excluded from punishment.</li>
-          <li>Thresholds (<Code>limit_with_attachments</Code>/<Code>limit_without_attachments</Code>/window in seconds) are configured under Moderation → Anti-raid.</li>
-          <li>The detector cache is cleared automatically every 5 minutes.</li>
+          <li>Incident buttons keep working after a bot restart.</li>
+          <li>Exception channels are excluded from punishment.</li>
+          <li>Thresholds and the time window are configured under Moderation → Anti-spam.</li>
         </UL>
 
-        <H>🛑 Spam traps — trap channel</H>
+        <H>🛑 Spam traps</H>
         <P>
-          This is <strong>not</strong> a “timed ban for N minutes” — it is a trap for raiders/self-banning bots. Any
-          non-admin message in the <Code>TEMPBAN_CHANNEL_ID</Code> channel instantly bans the author (purging their
-          message history for 20 minutes, <Code>delete_message_seconds=1200</Code>) and unbans them again almost
-          immediately — a couple of seconds later. The report goes to <Code>TEMPBAN_LOG_CHANNEL_ID</Code> (falling
-          back to <Code>SPAM_LOG_CHANNEL_ID</Code>, then <Code>LOG_CHANNEL_ID</Code>).
+          This is <strong>not</strong> a “timed ban for N minutes” — it is a trap for raiders and self-banning bots.
+          Any non-admin message in the spam trap channel instantly bans the author (purging recent message history) and
+          unbans them again a couple of seconds later. The report goes to the spam trap log channel (or spam log /
+          server log if unset).
         </P>
         <Note>
-          If the bot restarts in the narrow window between the ban and the unban, a user can get stuck banned — on
-          the next startup the bot scans each server&apos;s ban list and automatically unbans any stuck spam-trap bans.
+          If the bot restarts in the narrow window between ban and unban, someone can stay banned briefly — on the next
+          startup the bot finds stuck spam-trap bans and unbans them automatically.
         </Note>
         <Warn>
-          Do not confuse this with an actual timed ban: for that, use the <Code>/ban</Code> slash command with the{' '}
-          <Code>time</Code> parameter — it is stored in the database (<Code>ban_db</Code>) and survives a bot restart
-          (see “Moderation commands” below).
+          Do not confuse this with a real timed ban: for that, use <Code>/ban</Code> with a duration — timed bans from
+          that command survive a bot restart (see “Moderation commands” below).
         </Warn>
 
         <H>🔒 Lockdown (server isolation)</H>
-        <P>Emergency mode for raids. Enabled with <Code>/antispam</Code> or from the dashboard.</P>
+        <P>Emergency mode for raids. Enabled with <Code>/antispam</Code> or from the panel (Moderation).</P>
         <OL>
           <li>
-            The bot walks all server roles and removes mass-mention permissions; current permission state is saved to a
-            backup file.
+            The bot walks all server roles and removes mass-mention permissions; the previous state is saved so it can
+            be restored.
           </li>
           <li>Exception roles are left untouched.</li>
-          <li>When lockdown ends, permissions are restored from the backup exactly as they were.</li>
-          <li>Partial errors (e.g. a role above the bot) do not stop the process — they are collected and shown in the report.</li>
+          <li>When lockdown ends, permissions are restored exactly as they were.</li>
+          <li>Partial errors (e.g. a role above the bot) do not stop the process — they are listed in the report.</li>
         </OL>
         <Warn>
-          Do not edit role permissions manually while Lockdown is active: restoring from backup will overwrite manual
-          mass-mention changes.
+          Do not edit role permissions manually while Lockdown is active: restoring will overwrite those mass-mention
+          changes.
         </Warn>
 
         <H>⚔️ Moderation commands: /ban /kick /mute /unmute /unban /clear</H>
@@ -602,7 +589,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             [
               '/ban',
               'user (pick or ID), reason (optional), time (optional)',
-              'Bans a user — even someone not on the server, by ID. Duration as number+unit: 30s, 10m, 2h, 7d. Omit for permanent. Timed bans survive bot restart: duration is stored in the DB, not process memory.',
+              'Bans a user — even someone not on the server, by ID. Duration as number+unit: 30s, 10m, 2h, 7d. Omit for permanent. Timed bans from this command survive a bot restart.',
             ],
             [
               '/unban',
@@ -632,9 +619,10 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           ]}
         />
         <P>
-          If no reason is given, the journal gets “Reason not specified” — that is not an error. Discord&apos;s native
-          audit log (Server Settings → Audit Log) gets the reason as{' '}
-          <Code>reason — command: Name (ID)</Code> — the actor is visible there without the dashboard.
+          If no reason is given, the log embed omits the Reason field entirely. Discord&apos;s native
+          audit log (Server Settings → Audit Log) still records the actor as{' '}
+          <Code>reason — command: Name (ID)</Code> when a reason is set, or{' '}
+          <Code>command: Name (ID)</Code> when it is not — visible there without the dashboard.
         </P>
 
         <H>📝 Moderation journal</H>
@@ -647,15 +635,15 @@ export const DOC_SECTIONS_EN: DocSection[] = [
   },
   {
     id: 'automod',
-    title: 'AutoMod',
+    title: 'Automod',
     group: 'Modules',
     content: (
       <>
-        <H>🛡️ 9 configurable message filters</H>
+        <H>🛡️ Configurable message filters</H>
         <P>
-          A separate automatic message-moderation module — independent of anti-spam and Lockdown. Each filter is
-          toggled and configured on its own: whether to delete the message, which punishment to apply, and whether to
-          notify the offender. The module as a whole is <strong>off by default</strong> — AutoMod section.
+          Separate automatic message moderation — independent of anti-spam and Lockdown. Each filter is toggled and
+          configured on its own: whether to delete the message, which punishment to apply, and whether to notify the
+          offender. The module is <strong>off by default</strong> — Automod section.
         </P>
 
         <H3>Filters</H3>
@@ -690,11 +678,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           </li>
         </UL>
         <Warn>
-          Discord timeouts are capped at 28 days — longer values are truncated on apply. A timed ban with automatic
-          unban is only kept <strong>in bot memory</strong>: if the bot restarts during the ban window, the automatic
-          unban will not fire and needs a manual fix. If you need a timed ban that survives a restart, use the{' '}
-          <Code>/ban</Code> slash command with the <Code>time</Code> parameter — it stores the duration in the
-          database (<Code>ban_db</Code>), not in process memory.
+          Discord timeouts are capped at 28 days — longer values are truncated on apply. An Automod timed ban with
+          automatic unban may not lift itself if the bot restarts during the ban window — unban manually with{' '}
+          <Code>/unban</Code>. For a timed ban that survives a restart, use <Code>/ban</Code> with a duration.
         </Warn>
 
         <H>⚠️ Warnings (warns)</H>
@@ -779,8 +765,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>👋 Welcomes</H>
         <UL>
           <li>
-            <strong>Public welcome:</strong> message in <Code>WELCOME_CHANNEL_ID</Code> mentioning the newcomer and
-            member count. Toggle under Server join.
+            <strong>Public welcome:</strong> message in the welcome channel mentioning the newcomer and
+            member count. Toggle under Server entry.
           </li>
           <li>
             <strong>Goodbye:</strong> on leave, the bot can post to a channel (separate “Send goodbye to channel”
@@ -797,25 +783,32 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H>📥 Invite stats</H>
         <P>
-          The bot caches all server invites and, on join, resolves whose link was used. Per inviter: joins, leaves, and
-          total invites. Events post to <Code>INVITE_LOG_CHANNEL_ID</Code>, and stats appear on the member card. On
-          leave, the inviter gets a leave counted.
+          The bot tracks server invites and, on join, resolves whose link was used. Per inviter: joins, leaves, and
+          total invites. Events post to the invite log channel, and stats appear on the member card. On leave, the
+          inviter gets a leave counted.
         </P>
 
         <H>🤖 Auto-roles</H>
         <P>
-          Under Server join, pick one or more roles — every new member receives them automatically on join.
+          Under Server entry, pick one or more roles — every new member receives them automatically on join.
+        </P>
+
+        <H>📌 Sticky roles</H>
+        <P>
+          On Server entry → Sticky roles: when a member leaves, the bot can remember their roles and restore them when
+          they rejoin. Choose which roles to track (or all assignable ones) and which to ignore (never saved or
+          restored — useful for mod/admin roles).
         </P>
 
         <H>🎭 Reaction roles</H>
         <OL>
           <li>Create a message (e.g. via Embed Builder) or use an existing one.</li>
-          <li>In the dashboard, bind “emoji → role” pairs to that message. Duplicate emoji are not allowed.</li>
+          <li>In the panel, bind “emoji → role” pairs to that message. Duplicate emoji are not allowed.</li>
           <li>The bot adds the reactions itself.</li>
           <li>User adds a reaction — gets the role; removes it — role is removed.</li>
         </OL>
         <P>
-          Bindings to deleted messages and channels are cleaned up automatically on bot start.
+          Bindings to deleted messages and channels are cleaned up automatically when the bot starts.
         </P>
 
         <H>ℹ️ /userinfo command</H>
@@ -850,11 +843,11 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H>🔘 Form buttons</H>
         <P>
-          Interactive buttons that open a modal form with configurable questions. Answers go to a webhook (
-          <Code>BUTTON_WEBHOOK_URL</Code>) — useful for collecting applications into a dedicated channel.
+          Interactive buttons that open a modal form with configurable questions. Answers go to a webhook — useful for
+          collecting applications into a dedicated channel.
         </P>
         <UL>
-          <li>Only roles in <Code>BUTTON_CREATE_ALLOWED_ROLES</Code> can create buttons.</li>
+          <li>Only roles allowed in Buttons & embeds settings can create buttons.</li>
           <li>Up to 5 questions per form (Discord limit).</li>
           <li>5-second per-user cooldown — anti-spam for forms.</li>
           <li>Buttons are persistent: they work after a bot restart.</li>
@@ -1183,7 +1176,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <P>
           The bot posts a daily question/topic to a chosen channel so conversation does not die on quiet days. The
           topic is a plain text message from the bot (not an embed). The module is{' '}
-          <strong>off by default</strong> — toggle under Daily topic, like Member ranking / Family.
+          <strong>off by default</strong> — toggle under Daily topic, like Member levels / Family.
         </P>
 
         <H3>Setup</H3>
@@ -1191,7 +1184,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>Topic/question list — add, edit, and delete in the dashboard.</li>
           <li>Publish channel.</li>
           <li>
-            Publish times (MSK): each day the bot randomly picks one of the configured times and posts when it hits.
+            Publish times (server timezone): each day the bot randomly picks one of the configured times and posts when it hits.
           </li>
         </UL>
 
@@ -1276,7 +1269,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>🟩 Wordle — /wordle</H3>
         <P>
-          Russian Wordle in the style of the official Discord app. Each day (resets at midnight MSK) everyone plays one
+          Russian Wordle in the style of the official Discord app. Each day (resets at midnight in the server timezone) everyone plays one
           shared 5-letter word — 6 guesses. Your letter board is <strong>ephemeral</strong> (only you see it); words are
           entered via “Enter word” through a modal. After each guess the bot posts and updates a live PNG “X is
           playing” card in the channel — avatar and color grid <strong>without letters</strong>, so others cannot
@@ -1293,7 +1286,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             <Code>/wordle-top</Code> — server top 10 by wins (ties broken by best streak).
           </li>
           <li>
-            <strong>Daily announcement</strong>: at a configured time (MSK, HH:MM) the bot posts yesterday&apos;s
+            <strong>Daily announcement</strong>: at a configured time (server timezone, HH:MM) the bot posts yesterday&apos;s
             results — server streak 🔥, player results (👑 for best), yesterday&apos;s word, summary card, and a Play
             button. Without an announcement channel there is no daily post; live cards go to the channel where the
             command was used.
@@ -1315,7 +1308,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>💰 Server currency</H>
         <P>
           Coins (name and emoji configurable) are granted automatically as a <strong>percentage of earned XP</strong>{' '}
-          — separately for text and voice. Economy inherits all Member ranking rules: cooldowns, ignored channels and
+          — separately for text and voice. Economy inherits all Member levels rules: cooldowns, ignored channels and
           roles, multipliers. The module is <strong>off by default</strong>; with ranking off, coins are not granted
           (but commands and the shop still work).
         </P>
@@ -1359,7 +1352,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>🎁 Daily bonus — /daily</H3>
         <P>
-          Once per calendar day MSK (resets at midnight, same idea as Wordle&apos;s word of the day) — coins with no
+          Once per calendar day in the server timezone (resets at midnight, same idea as Wordle&apos;s word of the day) — coins with no
           activity. Separate toggle on the Daily bonus card under Economy, on by default.
         </P>
         <UL>
@@ -1548,12 +1541,24 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>Clicking again when already verified replies “You are already verified”, without errors.</li>
           <li>The event is written to the moderation journal (type “Verification passed”).</li>
         </UL>
+
+        <H3>Rules agreement &amp; re-verification</H3>
+        <UL>
+          <li>
+            Optional <strong>Rules agreement</strong> mode changes the button label to “Accept rules” (server language)
+            and uses rules-oriented default panel text. Same Verified role on click.
+          </li>
+          <li>
+            Optional <strong>Re-verification every N days</strong>: after N days the bot removes Verified (and restores
+            Unverified if configured). The member must press the button again.
+          </li>
+        </UL>
       </>
     ),
   },
   {
     id: 'supply',
-    title: 'Supplies',
+    title: 'Supply runs',
     group: 'Modules',
     content: (
       <>
@@ -1567,16 +1572,16 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <OL>
           <li>
             In Discord: <Code>/supply-run</Code> (<Code>/реаки-поставка</Code>) with <Code>против</Code> (target),{' '}
-            <Code>лимит</Code> (main roster slots), and <Code>время</Code> as HH:MM MSK. If that time already passed
+            <Code>лимит</Code> (main roster slots), and <Code>время</Code> as HH:MM in the server timezone. If that time already passed
             today, the run is scheduled for tomorrow.
           </li>
           <li>
-            In the dashboard: Supplies → New run — same parameters plus publish channel.
+            In the panel: Supply runs → New run — same parameters plus publish channel.
           </li>
         </OL>
         <P>
           The bot posts an embed with initiator, target, time (including a live Discord timer), voice channel, and
-          participant list, pinging <Code>SUPPLY_ROLE_ID</Code>.
+          participant list, pinging the configured supply role.
         </P>
 
         <H3>Buttons</H3>
@@ -1599,8 +1604,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>Reminder</H3>
         <P>
-          <Code>SUPPLY_REMINDER_MINUTES</Code> minutes before start (default 10) the bot posts in the run channel
-          mentioning all sign-ups and a link to the voice channel. 0 disables reminders.
+          A configured number of minutes before start (default 10) the bot posts in the run channel mentioning all
+          sign-ups and a link to the voice channel. 0 disables reminders.
         </P>
 
         <H3>Completion</H3>
@@ -1617,7 +1622,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             are recreated.
           </li>
           <li>Dashboard: active runs with rosters, history (recent finished), top participants, Finish and Cancel.</li>
-          <li>All events (join, withdraw, reserve, promote, close) are logged to <Code>SUPPLY_LOG_CHANNEL_ID</Code>.</li>
+          <li>All events (join, withdraw, reserve, promote, close) are logged to the supply log channel.</li>
         </UL>
       </>
     ),
@@ -1631,8 +1636,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>👨‍👩‍👧 Managing “Family”</H>
         <P>
           Module for a GTA5RP “Family” faction: live role-based roster, joining via application tickets, and a birthday
-          list. Like Member ranking, it is <strong>off by default</strong> — master toggle and all config live on the
-          Family page (not under a shared Configuration page).
+          list. Like Member levels, it is <strong>off by default</strong> — master toggle and all config live on the
+          Family page.
         </P>
 
         <H3>Roster</H3>
@@ -1669,7 +1674,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             (day and month, no year).
           </li>
           <li>A live upcoming-birthdays message updates on every change.</li>
-          <li>Every day at midnight MSK the bot congratulates birthday people in the configured channel.</li>
+          <li>Every day at midnight in the server timezone the bot congratulates birthday people in the configured channel.</li>
           <li>Dashboard Birthdays tab: search a member, add or remove a date for any player.</li>
         </UL>
       </>
@@ -1678,13 +1683,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
   {
     id: 'voice',
-    title: 'Private rooms',
+    title: 'Private voice rooms',
     group: 'Modules',
     content: (
       <>
         <H>🔊 How a room is created</H>
         <OL>
-          <li>A member joins the voice lobby (<Code>VOICE_LOBBY_CHANNEL_ID</Code>).</li>
+          <li>A member joins the voice lobby.</li>
           <li>
             The bot instantly creates a “Room • Name” voice channel in the same category and moves the member there.
           </li>
@@ -1695,7 +1700,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H>Control panel</H>
         <P>
-          In <Code>VOICE_PANEL_CHANNEL_ID</Code> the bot posts a panel with buttons. Only the owner can use them while
+          In the control panel channel the bot posts a panel with buttons. Only the owner can use them while
           in their room:
         </P>
         <Table
@@ -1724,18 +1729,18 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           </li>
           <li>
             All actions — create, rename, access, transfer, kicks, and rejected attempts to control someone else&apos;s
-            room — are logged to <Code>VOICE_LOG_CHANNEL_ID</Code>.
+            room — are logged to the rooms log channel.
           </li>
         </UL>
 
         <H>Reliability</H>
         <UL>
           <li>
-            Rooms are stored in SQLite. After a bot restart, recovery restores owner permissions, individual access,
-            names, and limits; orphaned records are cleaned up.
+            After a bot restart, rooms come back: owner permissions, individual access, names, and limits are restored;
+            orphaned records are cleaned up.
           </li>
           <li>
-            In the dashboard (Private rooms) you see all active rooms — owner, status, member count. A moderator can
+            In the panel (Private voice rooms) you see all active rooms — owner, status, member count. A moderator can
             force-delete a room or republish the control panel.
           </li>
         </UL>
@@ -1846,8 +1851,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>Messages — scheduled</H3>
         <P>
-          On Messages → Scheduled: create one-shot or recurring posts to a channel. Edit content, channel, and schedule
-          from the dashboard (including updates to existing jobs). Disabled schedules stay in the list until removed.
+          On Messages → Scheduled: create one-shot or daily posts to a channel. Daily schedules use the{' '}
+          <strong>server timezone</strong> from Server settings. Edit content, channel, and schedule from the panel.
+          Disabled schedules stay in the list until removed.
         </P>
 
         <H3>Messages — sticky</H3>
@@ -1859,19 +1865,33 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Polls</H3>
         <P>
           The Polls tab on Events &amp; polls (separate from tournament/event posts). Track active and finished polls,
-          live vote tallies, and end a poll early from the dashboard. Vote data is stored per server.
+          live vote tallies, and end a poll early from the panel.
         </P>
 
         <H3>Timed roles</H3>
         <P>
           Grant a role until a set expiry. When time is up the bot removes the role automatically. Cancel early from the
-          Timed roles tab on Members.
+          Timed roles tab on Members &amp; roles.
         </P>
 
         <H3>Birthdays</H3>
         <P>
           Server-wide birthday calendar (distinct from Family roster birthdays). Members&apos; day/month are stored for
-          announcements to a configured channel. Family birthdays remain on the Family page for roster members.
+          announcements to a configured channel (at midnight in the server timezone). Family birthdays remain on the
+          Family page for roster members.
+        </P>
+
+        <H3>Server timezone</H3>
+        <P>
+          Under Server settings: choose the timezone used for daily schedules, Wordle day reset, weekly economy
+          reports, birthday announcements, supply run times, and voice-statistics hour buckets. It is not a fixed
+          “Moscow time” — set what your community uses.
+        </P>
+
+        <H3>Setup health</H3>
+        <P>
+          Home and Server settings show whether the bot has critical Discord permissions on this server (send messages,
+          manage roles, and so on). Fix missing items in Discord’s role/channel permissions for the bot.
         </P>
 
         <H3>Owner alerts</H3>
@@ -1920,7 +1940,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ],
             [
               '/supply-run',
-              'Create a supply run: target, participant limit, time HH:MM (MSK). Join buttons, reserve, reminder.',
+              'Create a supply run: target, participant limit, time HH:MM (server timezone). Join buttons, reserve, reminder.',
               'Everyone',
             ],
             [
@@ -1965,12 +1985,12 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ],
             [
               '/xp add | set | clear',
-              'Change a member’s XP: add/subtract, set exact value, or clear. Only when Member ranking is enabled.',
+              'Change a member’s XP: add/subtract, set exact value, or clear. Only when Member levels is enabled.',
               'Manage Server',
             ],
             [
               '/leaders',
-              'Interactive leaderboard (up to 1000 members, 10 per page). Sort by XP or Voice, pagination «‹ › », close ✕. Only when Member ranking is enabled.',
+              'Interactive leaderboard (up to 1000 members, 10 per page). Sort by XP or Voice, pagination «‹ › », close ✕. Only when Member levels is enabled.',
               'Everyone',
             ],
             [
@@ -2071,9 +2091,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           ]}
         />
         <Note>
-          By default commands sync to each bot server on startup (per_guild mode), so they appear in Discord
-          immediately without the global one-hour delay. With many servers you can switch to global sync (
-          <Code>COMMAND_SYNC_MODE=global</Code>) — then propagation can take up to an hour.
+          By default commands appear on each server soon after the bot starts. On very large deployments they may take
+          longer to show up in Discord — wait a bit or re-open the server app.
         </Note>
       </>
     ),
@@ -2098,8 +2117,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>Modules</H>
         <H3>The private rooms panel does not appear</H3>
         <P>
-          Make sure <Code>VOICE_PANEL_CHANNEL_ID</Code> and <Code>VOICE_LOBBY_CHANNEL_ID</Code> are set, then click
-          Publish panel under Private rooms.
+          Make sure the voice lobby and control panel channel are set under Private voice rooms, then click Publish
+          panel.
         </P>
         <H3>A room is not created when joining the lobby</H3>
         <UL>
@@ -2108,7 +2127,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         </UL>
         <H3>The supply reminder did not arrive</H3>
         <UL>
-          <li>Check <Code>SUPPLY_REMINDER_MINUTES</Code> — 0 disables reminders.</li>
+          <li>Check the reminder minutes setting — 0 disables reminders.</li>
           <li>A reminder is sent only if the run has at least one participant.</li>
           <li>If the run was created less than N minutes before start, the reminder stage is skipped.</li>
         </UL>
@@ -2126,14 +2145,14 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         </UL>
         <H3>XP is not granted</H3>
         <UL>
-          <li>Confirm the module is enabled with the master toggle under Member ranking.</li>
+          <li>Confirm the module is enabled with the master toggle under Member levels.</li>
           <li>Text XP only works in target channels — the list must not be empty.</li>
           <li>Voice XP requires at least two active members (mic + audio on) and is written to the ranking only after leaving the channel.</li>
           <li>Confirm the member does not have an ignored role.</li>
         </UL>
         <H3>Stream notifications do not arrive</H3>
         <UL>
-          <li>For Twitch set <Code>TWITCH_CLIENT_ID</Code> and <Code>TWITCH_CLIENT_SECRET</Code> in <Code>.env</Code> and restart the bot.</li>
+          <li>For Twitch, the bot host must have Twitch credentials configured — ask the operator if Twitch never fires.</li>
           <li>Confirm the subscription toggle is on and a publish channel is selected.</li>
           <li>Keywords filter by stream title — too strict a filter blocks notifications.</li>
           <li>The minimum interval suppresses repeat notifications — keep that in mind when testing with stream restarts.</li>
@@ -2143,25 +2162,24 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           Each event type under Logging is enabled separately, and an enabled type requires a channel. Check that the
           bot can send messages in the chosen channel.
         </P>
-        <H3>An AutoMod timed ban didn&apos;t lift itself after a bot restart</H3>
+        <H3>An Automod timed ban didn&apos;t lift itself after a bot restart</H3>
         <P>
-          That is expected: AutoMod&apos;s timed ban is kept only in process memory, not in the database. If the bot
-          restarts during the ban window, the auto-unban will not fire — unban manually (<Code>/unban</Code>). The{' '}
-          <Code>/ban</Code> slash command with the <Code>time</Code> parameter is a different mechanism: the
-          duration is stored in the database (<Code>ban_db</Code>) and survives a restart.
+          That can happen: Automod&apos;s timed ban may not auto-unban after a restart during the ban window — use{' '}
+          <Code>/unban</Code>. The <Code>/ban</Code> command with a duration is different: those timed bans survive a
+          restart.
         </P>
 
         <H>General</H>
         <H3>What happens on a bot restart?</H3>
         <P>
-          All persistent mechanics restore automatically: active supply runs (buttons + timers), private rooms
-          (permissions and owners), ticket/event/spam-incident/form buttons. You should not lose data on a normal
-          restart.
+          Persistent mechanics restore automatically: active supply runs (buttons + timers), private rooms (permissions
+          and owners), ticket/event/spam-incident/form buttons. You should not lose data on a normal restart.
         </P>
         <H3>Where does the bot write logs?</H3>
         <P>
-          The main channel is <Code>LOG_CHANNEL_ID</Code>. Individual modules may use their own channels (spam,
-          tempban, invites, supplies, rooms, relay) when configured; otherwise the main one is used.
+          The main channel is the server log under Moderation → Settings (and Logging for event types). Individual
+          modules may use their own channels (spam, spam traps, invites, supplies, rooms, relay) when configured;
+          otherwise the main one is used.
         </P>
       </>
     ),

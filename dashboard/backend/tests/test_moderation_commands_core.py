@@ -25,10 +25,10 @@ def test_format_duration(value, expected):
     assert core.format_duration(value) == expected
 
 
-def test_normalize_reason_defaults_when_empty():
-    assert core.normalize_reason(None) == core.DEFAULT_REASON
-    assert core.normalize_reason("") == core.DEFAULT_REASON
-    assert core.normalize_reason("   ") == core.DEFAULT_REASON
+def test_normalize_reason_empty_when_missing():
+    assert core.normalize_reason(None) == ""
+    assert core.normalize_reason("") == ""
+    assert core.normalize_reason("   ") == ""
 
 
 def test_normalize_reason_strips_and_keeps_text():
@@ -40,6 +40,41 @@ def test_command_reason_includes_moderator_id_and_name():
     assert "спам" in text
     assert "ModName" in text
     assert "12345" in text
+
+
+def test_command_reason_bare_when_empty():
+    text = core.command_reason("", "ModName", 12345)
+    assert "ModName" in text
+    assert "12345" in text
+    assert text.startswith("команда:") or " — " not in text
+
+
+def test_format_user_ref_prefers_mention():
+    assert core.format_user_ref("alice", 42, "<@42>") == "<@42> (`42`)"
+    assert core.format_user_ref("alice", 42) == "alice (`42`)"
+
+
+def test_action_log_fields_omits_empty_reason():
+    fields = core.action_log_fields("ru", "who", "target", reason="", extra="Срок: 1 ч.")
+    names = [name for name, _ in fields]
+    assert names == ["Кто", "Кого", "Дополнительно"]
+    assert fields[2][1] == "Срок: 1 ч."
+
+
+def test_action_log_fields_includes_nonempty_reason():
+    fields = core.action_log_fields("ru", "who", "target", reason="спам")
+    names = [name for name, _ in fields]
+    assert names == ["Кто", "Кого", "Причина"]
+    assert fields[2][1] == "спам"
+
+
+def test_success_message_appends_reason_only_when_present():
+    with_reason = core.success_message(
+        "moderation.success.kick", "ru", "флуд", mention="<@1>",
+    )
+    without = core.success_message("moderation.success.kick", "ru", "", mention="<@1>")
+    assert "Причина: флуд" in with_reason
+    assert "Причина" not in without
 
 
 @pytest.mark.parametrize("number", [1, 500, 999])
