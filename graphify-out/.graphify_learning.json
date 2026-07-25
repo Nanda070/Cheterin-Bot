@@ -1,8 +1,24 @@
 {
-  "generated_at": "2026-07-24T14:24:29.252789+00:00",
+  "generated_at": "2026-07-25T11:02:26.197424+00:00",
   "nodes": {
+    "dashboard_backend_config_dashboardconfig": {
+      "code_fingerprint": "8904a853bc2a6d92ed7ad2c1e6a5dc472bc9425244824db07cb8d1b819a1b76e",
+      "label": "DashboardConfig",
+      "last": "2026-07-16T16:17:16.478648+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-16T16:17:16.478648+00:00",
+          "outcome": "useful",
+          "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
+        }
+      ],
+      "score": 0.816365951,
+      "source_file": "dashboard/backend/config.py",
+      "status": "tentative",
+      "uses": 1
+    },
     "dashboard_backend_tests_fakes_fakemember": {
-      "code_fingerprint": "1b8cc54669d061fc5d56938c2d00840fa7a91f88da747a35a0d5c15819640a74",
+      "code_fingerprint": "f41c9b39ea10ffe134073ea5743b1fbd66beec6175e0509651e58af4b62e1c95",
       "label": "FakeMember",
       "last": "2026-07-16T16:17:16.478648+00:00",
       "provenance": [
@@ -12,13 +28,13 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.83274353,
+      "score": 0.816365951,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
     },
     "dashboard_backend_tests_fakes_fakerole": {
-      "code_fingerprint": "1b8cc54669d061fc5d56938c2d00840fa7a91f88da747a35a0d5c15819640a74",
+      "code_fingerprint": "f41c9b39ea10ffe134073ea5743b1fbd66beec6175e0509651e58af4b62e1c95",
       "label": "FakeRole",
       "last": "2026-07-16T16:17:16.478648+00:00",
       "provenance": [
@@ -28,13 +44,13 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.83274353,
+      "score": 0.816365951,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
     },
     "dashboard_backend_tests_fakes_force_login": {
-      "code_fingerprint": "1b8cc54669d061fc5d56938c2d00840fa7a91f88da747a35a0d5c15819640a74",
+      "code_fingerprint": "f41c9b39ea10ffe134073ea5743b1fbd66beec6175e0509651e58af4b62e1c95",
       "label": "force_login()",
       "last": "2026-07-16T16:17:13.336142+00:00",
       "provenance": [
@@ -44,13 +60,13 @@
           "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
         }
       ],
-      "score": 0.832742831,
+      "score": 0.816365265,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
     },
     "dashboard_frontend_src_components_ui_select_selectoption": {
-      "code_fingerprint": "a637ced9e19cfcf6ab17ee9fcf6e32b7658f042c0bf680bd784ffbaf7a484a58",
+      "code_fingerprint": "27af053c5cc070f9ae72736017391a9d86643b4a034ce9b7779125835182d10b",
       "label": "SelectOption",
       "last": "2026-07-16T16:17:07.417785+00:00",
       "provenance": [
@@ -60,7 +76,7 @@
           "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
         }
       ],
-      "score": 0.832741513,
+      "score": 0.816363973,
       "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
       "status": "tentative",
       "uses": 1
@@ -76,7 +92,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.832744198,
+      "score": 0.816366605,
       "source_file": "dashboard/frontend/.oxlintrc.json",
       "status": "tentative",
       "uses": 1
@@ -92,7 +108,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.832744198,
+      "score": 0.816366605,
       "source_file": "dashboard/frontend/package.json",
       "status": "tentative",
       "uses": 1

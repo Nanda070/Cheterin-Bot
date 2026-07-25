@@ -1955,8 +1955,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/index.test.ts": {
-    "mtime": 1784976119.908616,
-    "ast_hash": "c36becae230858a5d0527f20f31becdc",
+    "mtime": 1784976918.5405674,
+    "ast_hash": "6950155b0b0afd27b9bb9db18bd8d5ee",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/index.ts": {
@@ -2955,23 +2955,23 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/credits.ts": {
-    "mtime": 1784976612.811511,
-    "ast_hash": "ca7478ef4fd856acc591fbe12218e37e",
+    "mtime": 1784976885.9938507,
+    "ast_hash": "5b0ac0605019a183b8f164303ddbdfb3",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/credits.ts": {
-    "mtime": 1784976634.0294895,
-    "ast_hash": "e3e1ae9b72f1e40c3a72dcf981d56e97",
+    "mtime": 1784976888.976144,
+    "ast_hash": "14d044e20f51e8a1b0a3fa071e2195f6",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Credits.test.tsx": {
-    "mtime": 1784976665.5157325,
-    "ast_hash": "e19e10051c8a30135f335ec2e5f98a03",
+    "mtime": 1784976918.7640767,
+    "ast_hash": "becb5f182da52a60a08392a090776615",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Credits.tsx": {
-    "mtime": 1784976674.9763572,
-    "ast_hash": "0f6c6b0c1046d329058ac4acdd68e75a",
+    "mtime": 1784976881.25355,
+    "ast_hash": "bad86ac1a578eb28e183b9fefeee1ccc",
     "semantic_hash": ""
   },
   "dashboard/frontend/public/credits/404-banner.png": {

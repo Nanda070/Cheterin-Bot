@@ -139,6 +139,9 @@ describe('LockdownPage', () => {
       unverified_role_id: '',
       verified_role_id: '',
       welcome_text: 'Нажмите кнопку ниже.',
+      rules_consent_enabled: false,
+      reverify_enabled: false,
+      reverify_days: 30,
     })
 
     renderWithI18n(<LockdownPage />)

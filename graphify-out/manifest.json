@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.test.tsx": {
-    "mtime": 1784902649.806892,
-    "ast_hash": "765ca49782f025f8e2c707169ffa874a",
+    "mtime": 1784977615.3133469,
+    "ast_hash": "f9441dec8a33dedc386a157f68f11b76",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Lockdown.tsx": {
@@ -2977,66 +2977,6 @@
   "dashboard/frontend/public/credits/404-banner.png": {
     "mtime": 1784976548.0015697,
     "ast_hash": "a9176a46540874421f720f63800a8100",
-    "semantic_hash": ""
-  },
-  ".tmp_apply_patches.py": {
-    "mtime": 1784976837.1489995,
-    "ast_hash": "f8cce886a700ef332b05c2c41b2a22be",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/Credits.test.tsx": {
-    "mtime": 1784976824.3542774,
-    "ast_hash": "2e32f7f30afcc44e7f501cf68fc9ec88",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/Credits.tsx": {
-    "mtime": 1784976824.3521976,
-    "ast_hash": "fbcfb6bf7c718f8e61484823d972f645",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/en_Credits.test.tsx": {
-    "mtime": 1784976802.0704954,
-    "ast_hash": "2e32f7f30afcc44e7f501cf68fc9ec88",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/en_Credits.tsx": {
-    "mtime": 1784976802.0689445,
-    "ast_hash": "fbcfb6bf7c718f8e61484823d972f645",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/en_credits.ts": {
-    "mtime": 1784976824.350659,
-    "ast_hash": "69d60cc474c9faf12d31f492d584c869",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/final_Credits.test.tsx": {
-    "mtime": 1784976845.689421,
-    "ast_hash": "9e057a6e077c50cc5e51e76c831f9b31",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/final_Credits.tsx": {
-    "mtime": 1784976845.688918,
-    "ast_hash": "f0938b61380e1e1b7927de931d31e065",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/final_en_credits.ts": {
-    "mtime": 1784976845.6904252,
-    "ast_hash": "69d60cc474c9faf12d31f492d584c869",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/final_ru_credits.ts": {
-    "mtime": 1784976845.6904252,
-    "ast_hash": "36689693efc74855057ce5a9285c0209",
-    "semantic_hash": ""
-  },
-  ".tmp_credits_orig/ru_credits.ts": {
-    "mtime": 1784976824.3521976,
-    "ast_hash": "36689693efc74855057ce5a9285c0209",
-    "semantic_hash": ""
-  },
-  ".tmp_extract_credits.py": {
-    "mtime": 1784976820.9036157,
-    "ast_hash": "73baaebfa8f37987589ffb8eaa68af6c",
     "semantic_hash": ""
   }
 }
