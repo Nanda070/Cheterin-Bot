@@ -76,7 +76,16 @@ export function PublicBunkerActionPage() {
   const [abilityMessage, setAbilityMessage] = useState('')
 
   const fieldLabel = (key: BunkerFieldKey) => t(`publicBunker.field.${key}`)
-  const phaseLabel = (phase: string) => t(`publicBunker.phase.${phase}`)
+  // API phases: lobby | discussion | vote | ended — keys must match exactly.
+  const phaseLabel = (phase: string) => {
+    const map: Record<string, string> = {
+      lobby: t('publicBunker.phase.lobby'),
+      discussion: t('publicBunker.phase.discussion'),
+      vote: t('publicBunker.phase.vote'),
+      ended: t('publicBunker.phase.ended'),
+    }
+    return map[phase] ?? phase
+  }
 
   const fieldValue = (key: BunkerFieldKey, character: BunkerCharacter): string => {
     switch (key) {
@@ -227,7 +236,7 @@ export function PublicBunkerActionPage() {
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t('publicBunker.title')}</p>
             <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">
-              {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase) ?? state.phase}
+              {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase)}
             </h1>
           </div>
           {state.game_status === 'active' && state.phase_deadline_ts && (

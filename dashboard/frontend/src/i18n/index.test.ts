@@ -41,4 +41,26 @@ describe('i18n translate', () => {
     expect(translate('ru', 'common.channelDead')).toBe('мёртв')
     expect(translate('en', 'common.channelDead')).toBe('dead')
   })
+
+  it('resolves publicMafia phase keys for API snake_case phases', () => {
+    const phases = ['lobby', 'night', 'day_discussion', 'day_vote', 'ended'] as const
+    for (const phase of phases) {
+      const key = `publicMafia.phase.${phase}`
+      expect(translate('ru', key)).not.toBe(key)
+      expect(translate('en', key)).not.toBe(key)
+    }
+    expect(translate('ru', 'publicMafia.phase.day_discussion')).toBe('Обсуждение')
+    expect(translate('en', 'publicMafia.phase.day_discussion')).toBe('Discussion')
+    expect(translate('ru', 'publicMafia.phase.day_vote')).toBe('Голосование')
+    expect(translate('en', 'publicMafia.phase.day_vote')).toBe('Voting')
+  })
+
+  it('resolves publicBunker phase keys for API phases', () => {
+    const phases = ['lobby', 'discussion', 'vote', 'ended'] as const
+    for (const phase of phases) {
+      const key = `publicBunker.phase.${phase}`
+      expect(translate('ru', key)).not.toBe(key)
+      expect(translate('en', key)).not.toBe(key)
+    }
+  })
 })

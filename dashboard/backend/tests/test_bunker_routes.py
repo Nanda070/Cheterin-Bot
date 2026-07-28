@@ -263,6 +263,26 @@ async def test_game_detail_includes_players_and_announcements(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_game_detail_uses_stored_display_name_for_bot_players(aiohttp_client):
+    from game_test_lobby import fake_user_id
+
+    _, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    bot_id = fake_user_id(0)
+    game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    bunker_db.add_player(game["id"], bot_id, display_name="Alex Bot")
+    bunker_db.assign_character(game["id"], bot_id, _sample_character(), f"tok-{bot_id}")
+
+    resp = await client.get(f"/api/bunker/games/{game['id']}")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["players"][0]["user_id"] == str(bot_id)
+    assert body["players"][0]["display_name"] == "Alex Bot"
+
+
+@pytest.mark.asyncio
 async def test_game_detail_not_found(aiohttp_client):
     _, _, app = build()
     client = await aiohttp_client(app)

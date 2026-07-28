@@ -462,3 +462,79 @@ async def test_vote_triggers_early_day_vote_resolution(aiohttp_client):
     task = cog._timers.get(game["id"])
     if task:
         task.cancel()
+
+
+@pytest.mark.asyncio
+async def test_vote_negative_bot_target_and_stored_display_name(aiohttp_client):
+    """Fake-lobby bots use negative user ids; vote + roster must accept them."""
+    from game_test_lobby import fake_avatar_url, fake_user_id
+
+    host = FakeMember(20, name="host", display_name="Host")
+    bot_id = fake_user_id(0)
+    _, guild, channel, app = build(members=[host])
+    game = mafia_db.create_game(guild.id, channel.id, 10, 5, 20, 60, 120, 60)
+    mafia_db.update_game(
+        game["id"], status="active", phase="day_vote", round_number=1,
+        phase_deadline_ts=int(time.time()) + 60,
+    )
+    mafia_db.add_player(game["id"], 20, display_name="Host")
+    mafia_db.assign_player_role(game["id"], 20, "citizen", "tok-20")
+    mafia_db.add_player(
+        game["id"], bot_id, display_name="Alex Bot", avatar_url=fake_avatar_url("Alex Bot"),
+    )
+    mafia_db.assign_player_role(game["id"], bot_id, "citizen", f"tok-{bot_id}")
+
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/api/public/mafia/tok-20")
+    assert resp.status == 200
+    body = await resp.json()
+    alive_by_id = {p["user_id"]: p for p in body["alive_players"]}
+    assert alive_by_id[str(bot_id)]["display_name"] == "Alex Bot"
+    roster_by_id = {p["user_id"]: p for p in body["roster"]}
+    assert roster_by_id[str(bot_id)]["display_name"] == "Alex Bot"
+
+    resp = await client.post(
+        "/api/public/mafia/tok-20/vote",
+        json={"target_user_id": str(bot_id)},
+    )
+    assert resp.status == 200
+
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["your_submitted_target"] == str(bot_id)
+    assert any(
+        entry["target"] == str(bot_id) and entry["target_display"] == "Alex Bot"
+        for entry in body["vote_tally"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_night_action_negative_bot_target(aiohttp_client):
+    """Night actions must accept synthetic negative bot seat ids."""
+    from game_test_lobby import fake_user_id
+
+    mafia1 = FakeMember(20, name="mafia1")
+    bot_id = fake_user_id(0)
+    _, guild, channel, app = build(members=[mafia1])
+    game = mafia_db.create_game(guild.id, channel.id, 10, 5, 20, 60, 120, 60)
+    mafia_db.update_game(
+        game["id"], status="active", phase="night", round_number=1,
+        phase_deadline_ts=int(time.time()) + 60,
+    )
+    mafia_db.add_player(game["id"], 20, display_name="Mafia")
+    mafia_db.assign_player_role(game["id"], 20, "mafia", "tok-20")
+    mafia_db.add_player(game["id"], bot_id, display_name="Alex Bot")
+    mafia_db.assign_player_role(game["id"], bot_id, "citizen", f"tok-{bot_id}")
+
+    client = await aiohttp_client(app)
+    resp = await client.post(
+        "/api/public/mafia/tok-20/action",
+        json={"target_user_id": str(bot_id)},
+    )
+    assert resp.status == 200
+
+    resp = await client.get("/api/public/mafia/tok-20")
+    body = await resp.json()
+    assert body["your_action_submitted"] is True
+    assert body["your_submitted_target"] == str(bot_id)

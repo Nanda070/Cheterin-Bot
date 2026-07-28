@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/mafia.py": {
-    "mtime": 1785276742.8765867,
-    "ast_hash": "81e28a68dc3baab1fa6557fb09a8711e",
+    "mtime": 1785278219.8799152,
+    "ast_hash": "7423859f5507d92b984cd9a1123b9c93",
     "semantic_hash": ""
   },
   "dashboard/backend/routes/moderation.py": {
@@ -965,13 +965,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicMafiaAction.test.tsx": {
-    "mtime": 1784901504.3295677,
-    "ast_hash": "221eed1019d3c668cdac05739c50af83",
+    "mtime": 1785278325.597093,
+    "ast_hash": "2cfc64a8f19d3c88931a243b611f8ef7",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicMafiaAction.tsx": {
-    "mtime": 1785276950.4123895,
-    "ast_hash": "09995a566d70579bb891e260683e0678",
+    "mtime": 1785278317.0740976,
+    "ast_hash": "e3442d19d6c9bac86e873782ef475d2d",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ReactionRoles.test.tsx": {
@@ -1140,8 +1140,8 @@
     "semantic_hash": ""
   },
   "mafia.py": {
-    "mtime": 1785276717.6107402,
-    "ast_hash": "7b54bad4c5b9d6a615d7a7b71153c213",
+    "mtime": 1785277499.0743916,
+    "ast_hash": "1cdfb9c7b65ee169a1b001dac0a651b4",
     "semantic_hash": ""
   },
   "mafia_core.py": {
@@ -1150,8 +1150,8 @@
     "semantic_hash": ""
   },
   "mafia_db.py": {
-    "mtime": 1785276660.4579127,
-    "ast_hash": "2b2e605edb06863b0d7d8b8fbe1c5f6d",
+    "mtime": 1785277396.742366,
+    "ast_hash": "7678acfce01439971d394519e4536bea",
     "semantic_hash": ""
   },
   "main.py": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "bunker.py": {
-    "mtime": 1785276708.0821424,
-    "ast_hash": "49c0acabe759754160b63cd33f1710d5",
+    "mtime": 1785277443.2040575,
+    "ast_hash": "d70ce19db051e422129b73967b861028",
     "semantic_hash": ""
   },
   "bunker_core.py": {
@@ -1325,8 +1325,8 @@
     "semantic_hash": "8367f4c43ee6424e40befbbff35eaeca"
   },
   "bunker_db.py": {
-    "mtime": 1785276655.7118478,
-    "ast_hash": "b985da52516b59bdb2d9b6eac9279153",
+    "mtime": 1785277379.3384526,
+    "ast_hash": "c8b5c94db601a243baed373a5026a8f5",
     "semantic_hash": ""
   },
   "daily_topic.py": {
@@ -1345,8 +1345,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/routes/bunker.py": {
-    "mtime": 1785276740.5044029,
-    "ast_hash": "4117e20d62229b2deaa3572681b7e8b7",
+    "mtime": 1785278193.3612528,
+    "ast_hash": "55b9b63280475d005d60dbb3104892ec",
     "semantic_hash": ""
   },
   "dashboard/backend/routes/daily_topic.py": {
@@ -1370,8 +1370,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_bunker_cog.py": {
-    "mtime": 1785276906.8843856,
-    "ast_hash": "10e7cb3c2280d8ac791fcccbd8368b10",
+    "mtime": 1785277599.4107556,
+    "ast_hash": "4886a3d48050e9fe730bbc09b740e1e1",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_bunker_core.py": {
@@ -1385,13 +1385,13 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_bunker_public_routes.py": {
-    "mtime": 1785276907.412791,
-    "ast_hash": "d7b2e6d5fb2ab832da1c48e3a57483db",
+    "mtime": 1785278220.6123054,
+    "ast_hash": "e7e9107638f09957a887b988c3c7e355",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_bunker_routes.py": {
-    "mtime": 1784783957.2348795,
-    "ast_hash": "8cf343c1ac79451420dfbcbd8f15fb16",
+    "mtime": 1785278236.0949833,
+    "ast_hash": "094779c124d62fea6d70816b396fa0a3",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_daily_topic_core.py": {
@@ -1460,8 +1460,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/PublicBunkerAction.tsx": {
-    "mtime": 1785276949.6872401,
-    "ast_hash": "95c126346ab2a93e6cb4a5b0505b3bab",
+    "mtime": 1785278328.8870952,
+    "ast_hash": "7afc9f22eb0539f259cd3d78f2211945",
     "semantic_hash": ""
   },
   "warns_core.py": {
@@ -1955,8 +1955,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/index.test.ts": {
-    "mtime": 1784976918.5405674,
-    "ast_hash": "6950155b0b0afd27b9bb9db18bd8d5ee",
+    "mtime": 1785278324.3376417,
+    "ast_hash": "3f083e380b9e33f02ae9763b9327c608",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/index.ts": {
@@ -2015,8 +2015,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/community.ts": {
-    "mtime": 1784973669.5603628,
-    "ast_hash": "a9e243a404ce14746ebdee622f3590e5",
+    "mtime": 1785278083.3429284,
+    "ast_hash": "c63be887ec88b5839239b350ae8c82ca",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/shell.ts": {
@@ -2045,8 +2045,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/community.ts": {
-    "mtime": 1784973669.5603628,
-    "ast_hash": "93459d727a26177f70ad77e40a11f134",
+    "mtime": 1785278082.8729296,
+    "ast_hash": "db879e6e80664ad97209f8401d4426c5",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/shell.ts": {
@@ -2170,8 +2170,8 @@
     "semantic_hash": ""
   },
   "locales/en/bunker.py": {
-    "mtime": 1784710902.479794,
-    "ast_hash": "c50f9fff690402a2d68b2c618d77fd84",
+    "mtime": 1785277544.5700765,
+    "ast_hash": "4d8801231f0ce78fbb73ee2faa0b9f9b",
     "semantic_hash": ""
   },
   "locales/en/button.py": {
@@ -2215,8 +2215,8 @@
     "semantic_hash": ""
   },
   "locales/en/mafia.py": {
-    "mtime": 1784710902.4742138,
-    "ast_hash": "7ff662f73aa6df670e25d0409402cf80",
+    "mtime": 1785277565.4920897,
+    "ast_hash": "38fc6eba1f547be7a0b791e1a4efa712",
     "semantic_hash": ""
   },
   "locales/en/moderation.py": {
@@ -2285,8 +2285,8 @@
     "semantic_hash": ""
   },
   "locales/ru/bunker.py": {
-    "mtime": 1784710902.3572981,
-    "ast_hash": "1e70cd593e3f2966860d6dc24ae38ab2",
+    "mtime": 1785277537.4592102,
+    "ast_hash": "0f02fa46d5f1719c1429a658c7dd5cba",
     "semantic_hash": ""
   },
   "locales/ru/button.py": {
@@ -2330,8 +2330,8 @@
     "semantic_hash": ""
   },
   "locales/ru/mafia.py": {
-    "mtime": 1784710902.4772818,
-    "ast_hash": "0adbe611dea7f6d2471ace2145ae9da5",
+    "mtime": 1785277553.6173582,
+    "ast_hash": "89dfcbb1206d1b0920a6b927a4580e4a",
     "semantic_hash": ""
   },
   "locales/ru/moderation.py": {
@@ -2400,13 +2400,13 @@
     "semantic_hash": ""
   },
   "locales/en/slash.py": {
-    "mtime": 1784784629.5641515,
-    "ast_hash": "284945b7110818de737eef229d525d8d",
+    "mtime": 1785277570.276198,
+    "ast_hash": "3810c2cce2fc7a5252b11f0f93b00017",
     "semantic_hash": ""
   },
   "locales/ru/slash.py": {
-    "mtime": 1784784629.9716918,
-    "ast_hash": "14cd869490ce754ad1fe5d6f8378cd93",
+    "mtime": 1785277571.462159,
+    "ast_hash": "ec1caa4901a32656cff23c12d521b6c0",
     "semantic_hash": ""
   },
   "slash_i18n.py": {
@@ -2425,8 +2425,8 @@
     "semantic_hash": ""
   },
   "slash_registry.py": {
-    "mtime": 1784784276.7361526,
-    "ast_hash": "288567b5f3c0e351ab83edbe93fb9624",
+    "mtime": 1785277524.1311462,
+    "ast_hash": "cf0aba2e72da99b0bc23b586019d2c7d",
     "semantic_hash": ""
   },
   "dashboard/backend/routes/tempban_settings.py": {
@@ -2987,6 +2987,21 @@
   "DEV_BLOG_25.07.2026.md": {
     "mtime": 1785276210.4856892,
     "ast_hash": "25574305ce162a09bd435c7d4fe2a21c",
+    "semantic_hash": ""
+  },
+  "dashboard/backend/tests/test_game_test_lobby.py": {
+    "mtime": 1785277581.1377468,
+    "ast_hash": "6d8cd74b404c52d10b840034475b8879",
+    "semantic_hash": ""
+  },
+  "dashboard/backend/tests/test_mafia_test_game.py": {
+    "mtime": 1785277611.2049985,
+    "ast_hash": "223fc2d3d9f174d94e575c254cc07d07",
+    "semantic_hash": ""
+  },
+  "game_test_lobby.py": {
+    "mtime": 1785277364.69424,
+    "ast_hash": "4dff642e988d9f9cd6959c5d3db94d40",
     "semantic_hash": ""
   }
 }

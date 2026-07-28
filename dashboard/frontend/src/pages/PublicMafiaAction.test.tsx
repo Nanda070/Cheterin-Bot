@@ -77,6 +77,8 @@ describe('PublicMafiaActionPage', () => {
     await screen.findByText('Доктор')
     expect(screen.queryByRole('button', { name: 'Отправить' })).not.toBeInTheDocument()
     expect(screen.getByText('Сейчас обсуждение — скоро начнётся голосование.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Раунд 1 · Обсуждение')
+    expect(screen.queryByText(/publicMafia\.phase/)).not.toBeInTheDocument()
   })
 
   it('shows teammates during the night for mafia players', async () => {
@@ -119,6 +121,8 @@ describe('PublicMafiaActionPage', () => {
     renderAt('my-token')
 
     expect(await screen.findByText('Дневное голосование')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Раунд 1 · Голосование')
+    expect(screen.queryByText(/publicMafia\.phase/)).not.toBeInTheDocument()
     expect(screen.getByText('Текущие голоса')).toBeInTheDocument()
     expect(screen.getByText('Alice: 2')).toBeInTheDocument()
 
@@ -128,6 +132,34 @@ describe('PublicMafiaActionPage', () => {
 
     await screen.findByText('Отправлено.')
     expect(voteSpy).toHaveBeenCalledWith('my-token', '20')
+  })
+
+  it('submits a vote for a negative bot seat id', async () => {
+    const botId = '-1000000000000000'
+    vi.spyOn(client, 'fetchPublicMafia').mockResolvedValue({
+      ...baseState,
+      your_role: 'citizen',
+      phase: 'day_vote',
+      action_required: true,
+      alive_players: [
+        { user_id: '10', display_name: 'Alice' },
+        { user_id: botId, display_name: 'Alex Bot' },
+      ],
+      roster: [
+        { user_id: '10', display_name: 'Alice', alive: true },
+        { user_id: botId, display_name: 'Alex Bot', alive: true },
+      ],
+    })
+    const voteSpy = vi.spyOn(client, 'submitMafiaVote').mockResolvedValue()
+    renderAt('my-token')
+
+    await screen.findByText('Дневное голосование')
+    fireEvent.click(screen.getByRole('button', { name: 'Пропустить' }))
+    fireEvent.click(await screen.findByRole('option', { name: 'Alex Bot' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }))
+
+    await screen.findByText('Отправлено.')
+    expect(voteSpy).toHaveBeenCalledWith('my-token', botId)
   })
 
   it('switches UI language when API returns language', async () => {

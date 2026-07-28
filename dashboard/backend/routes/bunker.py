@@ -19,6 +19,26 @@ def _is_id(value) -> bool:
     return isinstance(value, str) and (value == "" or value.isdigit())
 
 
+def _parse_user_id(value) -> int | None:
+    """Parse a Discord snowflake or synthetic negative bot seat id from JSON.
+
+    Fake lobby bots use negative ids; ``str.isdigit()`` rejects the leading '-'.
+    Accepts JSON strings and integers.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if not isinstance(value, str) or not value:
+        return None
+    # Fake test seats use negative ids; str.isdigit() rejects the leading '-'.
+    if value[0] == "-" and value[1:].isdigit():
+        return int(value)
+    if value.isdigit():
+        return int(value)
+    return None
+
+
 def _display_name(guild, user_id: int, stored: str | None = None) -> str:
     member = guild.get_member(user_id) if guild else None
     if member is not None:
@@ -195,7 +215,7 @@ async def bunker_game_detail(request: web.Request) -> web.Response:
         "players": [
             {
                 "user_id": str(p["user_id"]),
-                "display_name": _display_name(guild, p["user_id"]),
+                "display_name": _display_name(guild, p["user_id"], p.get("display_name")),
                 "alive": bool(p["alive"]),
                 "character": p["character"],
                 "revealed_fields": p["revealed_fields"],
@@ -397,9 +417,9 @@ async def bunker_public_vote(request: web.Request) -> web.Response:
     raw_target = body.get("target_user_id")
     target_user_id = None
     if raw_target is not None:
-        if not isinstance(raw_target, str) or not raw_target.isdigit():
+        target_user_id = _parse_user_id(raw_target)
+        if target_user_id is None:
             return web.json_response({"error": "invalid_target"}, status=400)
-        target_user_id = int(raw_target)
         alive_ids = {p["user_id"] for p in bunker_db.list_alive_players(game["id"])}
         if target_user_id not in alive_ids:
             return web.json_response({"error": "invalid_target"}, status=400)
@@ -450,9 +470,9 @@ async def bunker_public_ability(request: web.Request) -> web.Response:
     raw_target = body.get("target_user_id")
     target_user_id = None
     if raw_target is not None:
-        if not isinstance(raw_target, str) or not raw_target.isdigit():
+        target_user_id = _parse_user_id(raw_target)
+        if target_user_id is None:
             return web.json_response({"error": "invalid_target"}, status=400)
-        target_user_id = int(raw_target)
         known_ids = {p["user_id"] for p in bunker_db.list_players(game["id"])}
         if target_user_id not in known_ids:
             return web.json_response({"error": "invalid_target"}, status=400)

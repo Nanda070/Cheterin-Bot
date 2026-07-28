@@ -52,7 +52,12 @@ export function PublicMafiaActionPage() {
   const [message, setMessage] = useState('')
 
   const roleLabel = (role: string) => t(`publicMafia.role.${role}`)
-  const phaseLabel = (phase: string) => t(`publicMafia.phase.${phase}`)
+  // API phases are snake_case (`day_vote`); keys must match (not camelCase like mafia.phase.dayVote).
+  const phaseLabel = (phase: string) => {
+    const key = `publicMafia.phase.${phase}`
+    const label = t(key)
+    return label === key ? phase : label
+  }
 
   useEffect(() => {
     if (!token) return
@@ -132,7 +137,7 @@ export function PublicMafiaActionPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t('publicMafia.title')}</p>
             <h1 className="flex items-center gap-2 truncate text-lg font-semibold text-foreground sm:text-xl">
               {isNight ? <Moon size={20} weight="fill" className="text-primary" /> : <Sun size={20} weight="fill" className="text-warning" />}
-              {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase) ?? state.phase}
+              {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase)}
             </h1>
           </div>
           {state.game_status === 'active' && state.phase_deadline_ts && (

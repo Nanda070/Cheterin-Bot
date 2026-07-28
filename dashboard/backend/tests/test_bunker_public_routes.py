@@ -340,6 +340,51 @@ async def test_vote_self_target_allowed(aiohttp_client):
 
 
 @pytest.mark.asyncio
+async def test_vote_negative_bot_target_and_stored_display_name(aiohttp_client):
+    """Fake-lobby bots use negative user ids; vote + roster must accept them."""
+    from game_test_lobby import fake_avatar_url, fake_user_id
+
+    host = FakeMember(20, name="host", display_name="Host")
+    bot_id = fake_user_id(0)
+    _, guild, channel, app = build(members=[host])
+    game = bunker_db.create_game(guild.id, channel.id, 10, 4, 12, 180, 90)
+    bunker_db.update_game(
+        game["id"], status="active", phase="vote", round_number=1,
+        phase_deadline_ts=int(time.time()) + 60, bunker_capacity=2,
+    )
+    bunker_db.add_player(game["id"], 20, display_name="Host")
+    bunker_db.assign_character(game["id"], 20, _character(), "tok-20")
+    bunker_db.add_player(
+        game["id"], bot_id, display_name="Alex Bot", avatar_url=fake_avatar_url("Alex Bot"),
+    )
+    bunker_db.assign_character(game["id"], bot_id, _character("Врач"), f"tok-{bot_id}")
+
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/api/public/bunker/tok-20")
+    assert resp.status == 200
+    body = await resp.json()
+    alive_by_id = {p["user_id"]: p for p in body["alive_players"]}
+    assert alive_by_id[str(bot_id)]["display_name"] == "Alex Bot"
+    roster_by_id = {p["user_id"]: p for p in body["roster"]}
+    assert roster_by_id[str(bot_id)]["display_name"] == "Alex Bot"
+
+    resp = await client.post(
+        "/api/public/bunker/tok-20/vote",
+        json={"target_user_id": str(bot_id)},
+    )
+    assert resp.status == 200
+
+    resp = await client.get("/api/public/bunker/tok-20")
+    body = await resp.json()
+    assert body["your_submitted_target"] == str(bot_id)
+    assert any(
+        entry["target"] == str(bot_id) and entry["target_display"] == "Alex Bot"
+        for entry in body["vote_tally"]
+    )
+
+
+@pytest.mark.asyncio
 async def test_vote_deadline_passed(aiohttp_client):
     p1 = FakeMember(20, name="p1")
     bot, guild, channel, app = build(members=[p1])
