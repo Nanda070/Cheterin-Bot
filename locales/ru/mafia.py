@@ -22,6 +22,7 @@ MESSAGES: dict[str, str] = {
     "mafia.lobby.no_access": "Нет доступа.",
     "mafia.lobby.min_players": "Нужно минимум {min} игроков (сейчас {count}).",
     "mafia.started.title": "🎭 Игра «Мафия» началась!",
+    "mafia.started.title_test": "🧪 [ТЕСТ] Игра «Мафия» началась!",
     "mafia.started.description": (
         "Роли розданы в личные сообщения. Каждый игрок получил персональную ссылку на дашборд — "
         "там весь матч: роль, список игроков, таймер и дневное голосование за казнь."
@@ -54,9 +55,17 @@ MESSAGES: dict[str, str] = {
     "mafia.error.channel_busy": "В этом канале уже есть активное лобби/игра.",
     "mafia.error.min_gt_max": "Минимум игроков не может быть больше максимума.",
     "mafia.error.no_active_game": "В этом канале нет активной игры.",
+    "mafia.error.guild_only": "Команда доступна только на сервере.",
     "mafia.stopped": "Остановлено.",
     "mafia.voice_channel": "Мафия • Игра #{game_id}",
+    "mafia.voice_channel_test": "ТЕСТ • Мафия #{game_id}",
     "mafia.voice_delete_reason": "Игра «Мафия» завершена",
+    "mafia.test.ready": (
+        "🧪 Тестовая «Мафия» запущена: **{count}** игроков ({bots} ботов).\n"
+        "Ваша персональная ссылка: {link}\n"
+        "Остановить: `/мафия-стоп`."
+    ),
+    "mafia.test.failed": "Не удалось запустить тестовую игру (нет токена для вашего места).",
     "mafia.dm.started": (
         "Игра «Мафия» началась. Твоя роль: **{role}**.\n"
         "Персональная ссылка на дашборд (действует всю игру): {link}\n{note}"

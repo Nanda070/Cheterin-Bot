@@ -1299,11 +1299,13 @@ export type MafiaRole = 'mafia' | 'citizen' | 'doctor' | 'sheriff'
 export interface MafiaPlayerRef {
   user_id: string
   display_name: string
+  avatar_url?: string | null
 }
 
 export interface MafiaRosterEntry {
   user_id: string
   display_name: string
+  avatar_url?: string | null
   alive: boolean
   role?: MafiaRole
 }
@@ -1756,11 +1758,13 @@ export async function applyBunkerAbility(gameId: number, announcementId: number)
 export interface BunkerPlayerRef {
   user_id: string
   display_name: string
+  avatar_url?: string | null
 }
 
 export interface BunkerRosterEntry {
   user_id: string
   display_name: string
+  avatar_url?: string | null
   alive: boolean
   character: BunkerCharacter
   revealed_fields: string[]

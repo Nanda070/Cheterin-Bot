@@ -177,11 +177,100 @@
   border-top-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
 }
 
+/* Public bunker / mafia player tables — atmospheric HUD surfaces */
+.game-table {
+  --game-glow-rgb: 196, 60, 78;
+  position: relative;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.game-table--bunker {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(var(--game-glow-rgb), 0.22), transparent 55%),
+    radial-gradient(ellipse 45% 35% at 90% 80%, rgba(92, 15, 30, 0.35), transparent 50%),
+    linear-gradient(180deg, #12080c 0%, var(--color-background) 48%, #0a0c12 100%);
+}
+
+.game-table--mafia {
+  --game-glow-rgb: 168, 40, 60;
+}
+
+.game-table--mafia.game-table--night {
+  background:
+    radial-gradient(ellipse 65% 45% at 20% 0%, rgba(40, 55, 95, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(var(--game-glow-rgb), 0.18), transparent 50%),
+    linear-gradient(180deg, #070912 0%, #0b0e14 55%, #0a0c12 100%);
+}
+
+.game-table--mafia.game-table--day {
+  background:
+    radial-gradient(ellipse 70% 45% at 70% -5%, rgba(196, 120, 50, 0.16), transparent 55%),
+    radial-gradient(ellipse 45% 35% at 10% 90%, rgba(var(--game-glow-rgb), 0.14), transparent 50%),
+    linear-gradient(180deg, #121018 0%, var(--color-background) 50%, #0b0e14 100%);
+}
+
+.game-hud {
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  box-shadow: 0 10px 36px -24px rgba(var(--game-glow-rgb), 0.55);
+}
+
+.game-panel {
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  box-shadow: 0 14px 40px -28px rgba(0, 0, 0, 0.65);
+}
+
+.game-panel--action {
+  animation: game-action-pulse 2.4s var(--ease-out-smooth) infinite;
+}
+
+.game-chip {
+  background: color-mix(in srgb, var(--color-background) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, var(--color-primary) 30%);
+}
+
+.game-timer {
+  background: color-mix(in srgb, var(--color-background) 70%, transparent);
+  border: 1px solid var(--color-border);
+}
+
+.game-timer--urgent {
+  border-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+  animation: game-timer-blink 1s ease-in-out infinite;
+}
+
+.game-role-icon {
+  background: var(--color-primary-muted);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+@keyframes game-action-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--game-glow-rgb), 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(var(--game-glow-rgb), 0);
+  }
+}
+
+@keyframes game-timer-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-dropdown-in,
   .landing-hero-in,
-  .landing-section-in {
+  .landing-section-in,
+  .game-panel--action,
+  .game-timer--urgent {
     animation: none;
   }
 }

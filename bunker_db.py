@@ -52,7 +52,8 @@ def init():
                 created_by INTEGER NOT NULL,
                 created_at TEXT NOT NULL,
                 started_at TEXT,
-                ended_at TEXT
+                ended_at TEXT,
+                is_test INTEGER NOT NULL DEFAULT 0
             )
         """)
         conn.execute("""
@@ -65,6 +66,8 @@ def init():
                 revealed_fields_json TEXT NOT NULL DEFAULT '[]',
                 alive INTEGER NOT NULL DEFAULT 1,
                 eliminated_round INTEGER,
+                avatar_url TEXT,
+                display_name TEXT,
                 joined_at TEXT NOT NULL,
                 UNIQUE(game_id, user_id)
             )
@@ -114,9 +117,15 @@ def init():
             ("unique_cards", "unique_cards INTEGER NOT NULL DEFAULT 1"),
             ("catastrophe_key", "catastrophe_key TEXT"),
             ("bunker_conditions_key", "bunker_conditions_key TEXT"),
+            ("is_test", "is_test INTEGER NOT NULL DEFAULT 0"),
         ):
             if column not in existing:
                 conn.execute(f"ALTER TABLE games ADD COLUMN {ddl}")
+        player_cols = {row["name"] for row in conn.execute("PRAGMA table_info(players)").fetchall()}
+        if "avatar_url" not in player_cols:
+            conn.execute("ALTER TABLE players ADD COLUMN avatar_url TEXT")
+        if "display_name" not in player_cols:
+            conn.execute("ALTER TABLE players ADD COLUMN display_name TEXT")
 
 
 def _now() -> str:
@@ -139,16 +148,19 @@ def create_game(
     min_players: int, max_players: int,
     discussion_timer_sec: int, vote_timer_sec: int,
     unique_cards: bool = True,
+    is_test: bool = False,
 ) -> dict:
     with closing(connect()) as conn, conn:
         cursor = conn.execute("""
             INSERT INTO games (
                 guild_id, channel_id, min_players, max_players,
-                discussion_timer_sec, vote_timer_sec, unique_cards, created_by, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                discussion_timer_sec, vote_timer_sec, unique_cards, created_by, created_at,
+                is_test
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             guild_id, channel_id, min_players, max_players,
             discussion_timer_sec, vote_timer_sec, int(unique_cards), created_by, _now(),
+            int(is_test),
         ))
         game_id = cursor.lastrowid
     return get_game(game_id)
@@ -203,16 +215,30 @@ def list_active_games(guild_id: int | None = None) -> list[dict]:
 
 # ────────────────────────── Игроки ──────────────────────────
 
-def add_player(game_id: int, user_id: int) -> bool:
+def add_player(
+    game_id: int,
+    user_id: int,
+    avatar_url: str | None = None,
+    display_name: str | None = None,
+) -> bool:
     with closing(connect()) as conn, conn:
         try:
             conn.execute(
-                "INSERT INTO players (game_id, user_id, joined_at) VALUES (?, ?, ?)",
-                (game_id, user_id, _now()),
+                "INSERT INTO players (game_id, user_id, avatar_url, display_name, joined_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (game_id, user_id, avatar_url, display_name, _now()),
             )
             return True
         except sqlite3.IntegrityError:
             return False
+
+
+def set_player_avatar(game_id: int, user_id: int, avatar_url: str | None) -> None:
+    with closing(connect()) as conn, conn:
+        conn.execute(
+            "UPDATE players SET avatar_url = ? WHERE game_id = ? AND user_id = ?",
+            (avatar_url, game_id, user_id),
+        )
 
 
 def remove_player(game_id: int, user_id: int) -> bool:

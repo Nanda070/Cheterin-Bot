@@ -35,8 +35,10 @@ SLASH_KEYS: tuple[str, ...] = (
     "antispam",
     "bunker_start",
     "bunker_stop",
+    "bunker_test",
     "mafia_start",
     "mafia_stop",
+    "mafia_test",
     "ban",
     "kick",
     "mute",
@@ -149,11 +151,13 @@ def register_lockdown(cog) -> None:
 def register_bunker(cog) -> None:
     _cmd(cog.start_lobby, "bunker_start")
     _cmd(cog.stop_game, "bunker_stop")
+    _cmd(cog.start_test_game, "bunker_test")
 
 
 def register_mafia(cog) -> None:
     _cmd(cog.start_lobby, "mafia_start")
     _cmd(cog.stop_game, "mafia_stop")
+    _cmd(cog.start_test_game, "mafia_test")
 
 
 def register_moderation(cog) -> None:

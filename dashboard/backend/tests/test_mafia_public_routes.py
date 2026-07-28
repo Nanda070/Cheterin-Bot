@@ -68,6 +68,8 @@ async def test_public_state_mafia_sees_teammates_and_votes(aiohttp_client):
     assert {t["user_id"] for t in body["teammates"]} == {"21"}
     assert len(body["mafia_votes"]) == 1
     assert len(body["alive_players"]) == 3
+    assert body["roster"][0]["avatar_url"] == str(mafia1.display_avatar.url)
+    assert body["teammates"][0]["avatar_url"] == str(mafia2.display_avatar.url)
 
 
 @pytest.mark.asyncio

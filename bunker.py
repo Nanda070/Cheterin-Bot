@@ -23,6 +23,7 @@ from discord.ext import commands
 import bunker_core
 import bunker_db
 import bunker_localize
+import game_test_lobby
 import i18n
 import slash_registry
 
@@ -33,22 +34,59 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+DEFAULT_FRONTEND_URL = "https://cheterin.online"
+
+
 def _frontend_url() -> str:
-    return os.getenv("DASHBOARD_FRONTEND_URL", "").rstrip("/")
+    """Public dashboard origin for personal game links in DMs.
+
+    Prefers DASHBOARD_FRONTEND_URL / FRONTEND_URL; falls back to production
+    so relative paths like `/bunker/TOKEN` are never sent to players.
+    """
+    for key in ("DASHBOARD_FRONTEND_URL", "FRONTEND_URL"):
+        value = (os.getenv(key) or "").strip().rstrip("/")
+        if value:
+            return value
+    return DEFAULT_FRONTEND_URL
 
 
 def _resolve_alive_members(guild: discord.Guild | None, game_id: int) -> list[dict]:
     members = []
     for player in bunker_db.list_alive_players(game_id):
         member = guild.get_member(player["user_id"]) if guild else None
-        display = member.display_name if member else str(player["user_id"])
+        display = (
+            member.display_name
+            if member
+            else (player.get("display_name") or str(player["user_id"]))
+        )
         members.append({"user_id": player["user_id"], "display_name": display})
     return members
 
 
-def _display_name(guild: discord.Guild | None, user_id: int) -> str:
+def _display_name(guild: discord.Guild | None, user_id: int, stored: str | None = None) -> str:
     member = guild.get_member(user_id) if guild else None
-    return member.display_name if member else str(user_id)
+    if member is not None:
+        return member.display_name
+    return stored or str(user_id)
+
+
+def _player_display_name(guild: discord.Guild | None, player: dict) -> str:
+    return _display_name(guild, player["user_id"], player.get("display_name"))
+
+
+def _member_avatar_url(member: discord.abc.User | None) -> str | None:
+    if member is None:
+        return None
+    avatar = getattr(member, "display_avatar", None)
+    return str(avatar.url) if avatar is not None else None
+
+
+def _refresh_player_avatars(guild: discord.Guild | None, game_id: int, player_ids: list[int]) -> None:
+    for user_id in player_ids:
+        member = guild.get_member(user_id) if guild else None
+        avatar_url = _member_avatar_url(member)
+        if avatar_url:
+            bunker_db.set_player_avatar(game_id, user_id, avatar_url)
 
 
 # ────────────────────────── Эмбеды ──────────────────────────
@@ -105,10 +143,11 @@ def build_game_started_embed(
     game: dict, players: list[dict], voice_channel_id: int | None, lang: str
 ) -> discord.Embed:
     cat_name, cat_desc, cond_name, cond_desc = bunker_localize.localize_game_scenario(game, lang)
+    title_key = "bunker.started.title_test" if game.get("is_test") else "bunker.started.title"
     embed = discord.Embed(
-        title=i18n.t("bunker.started.title", lang),
+        title=i18n.t(title_key, lang),
         description=i18n.t("bunker.started.description", lang),
-        color=0x5865F2,
+        color=0xED4245 if game.get("is_test") else 0x5865F2,
     )
     embed.add_field(name=i18n.t("bunker.started.players", lang), value=str(len(players)), inline=True)
     embed.add_field(
@@ -254,7 +293,7 @@ class BunkerLobbyView(discord.ui.View):
             )
         if bunker_db.count_players(game["id"]) >= game["max_players"]:
             return await interaction.response.send_message(i18n.t("bunker.lobby.full", lang), ephemeral=True)
-        if not bunker_db.add_player(game["id"], interaction.user.id):
+        if not bunker_db.add_player(game["id"], interaction.user.id, _member_avatar_url(interaction.user)):
             return await interaction.response.send_message(
                 i18n.t("bunker.lobby.already_joined", lang), ephemeral=True
             )
@@ -400,7 +439,7 @@ class BunkerCog(commands.Cog):
         )
         if вместимость_бункера is not None:
             game = bunker_db.update_game(game["id"], bunker_capacity=вместимость_бункера)
-        bunker_db.add_player(game["id"], interaction.user.id)
+        bunker_db.add_player(game["id"], interaction.user.id, _member_avatar_url(interaction.user))
         players = bunker_db.list_players(game["id"])
 
         await interaction.response.send_message(
@@ -436,6 +475,98 @@ class BunkerCog(commands.Cog):
             await self.end_game(game["id"], stopped=True)
         await interaction.followup.send(i18n.t("bunker.stopped", lang), ephemeral=True)
 
+    @app_commands.command(name="бункер-тест", description="Тестовая игра «Бункер» с ботами (только админы)")
+    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.describe(
+        игроков="Число игроков включая вас (по умолчанию 6)",
+    )
+    async def start_test_game(
+        self,
+        interaction: discord.Interaction,
+        игроков: app_commands.Range[
+            int, game_test_lobby.BUNKER_PLAYERS_MIN, game_test_lobby.BUNKER_PLAYERS_MAX
+        ] = None,
+    ):
+        if interaction.guild is None:
+            return await interaction.response.send_message(
+                i18n.t("bunker.error.guild_only", i18n.lang_for(None)), ephemeral=True
+            )
+        lang = i18n.lang_for(interaction.guild_id)
+        if not bunker_core.has_moderator_access(interaction.user):
+            return await interaction.response.send_message(
+                i18n.t("bunker.lobby.no_access", lang), ephemeral=True
+            )
+        settings = bunker_core.get_settings(interaction.guild.id)
+        if not settings["enabled"]:
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "bunker"), ephemeral=True
+            )
+        if bunker_db.get_active_game_in_channel(interaction.channel.id) is not None:
+            return await interaction.response.send_message(
+                i18n.t("bunker.error.channel_busy", lang), ephemeral=True
+            )
+
+        total = (
+            игроков
+            if игроков is not None
+            else game_test_lobby.DEFAULT_BUNKER_PLAYERS
+        )
+        total = game_test_lobby.clamp_player_count(
+            total, game_test_lobby.BUNKER_PLAYERS_MIN, game_test_lobby.BUNKER_PLAYERS_MAX
+        )
+
+        await interaction.response.defer(ephemeral=True)
+
+        host_name = getattr(interaction.user, "display_name", None) or interaction.user.name
+        seats = game_test_lobby.build_fake_seats(
+            total,
+            host_user_id=interaction.user.id,
+            host_display_name=host_name,
+            host_avatar_url=_member_avatar_url(interaction.user),
+        )
+
+        # Short timers so a test session is easier to walk through.
+        discussion_timer = min(settings["default_discussion_timer_sec"], 120)
+        vote_timer = min(settings["default_vote_timer_sec"], 90)
+
+        game = bunker_db.create_game(
+            interaction.guild.id,
+            interaction.channel.id,
+            interaction.user.id,
+            total,
+            total,
+            discussion_timer,
+            vote_timer,
+            settings["default_unique_cards"],
+            is_test=True,
+        )
+        for seat in seats:
+            bunker_db.add_player(
+                game["id"],
+                seat.user_id,
+                seat.avatar_url,
+                display_name=seat.display_name,
+            )
+
+        await self.start_game(game["id"])
+        host_player = bunker_db.get_player(game["id"], interaction.user.id)
+        if host_player is None or not host_player.get("token"):
+            return await interaction.followup.send(
+                i18n.t("bunker.test.failed", lang), ephemeral=True
+            )
+
+        link = f"{_frontend_url()}/bunker/{host_player['token']}"
+        await interaction.followup.send(
+            i18n.t(
+                "bunker.test.ready",
+                lang,
+                count=total,
+                bots=total - 1,
+                link=link,
+            ),
+            ephemeral=True,
+        )
+
     # ────────────────────────── Игровой цикл ──────────────────────────
 
     async def start_game(self, game_id: int):
@@ -450,7 +581,10 @@ class BunkerCog(commands.Cog):
         lang = i18n.lang_for(game["guild_id"])
         players = bunker_db.list_players(game_id)
         player_ids = [p["user_id"] for p in players]
-        display_names = {uid: _display_name(guild, uid) for uid in player_ids}
+        _refresh_player_avatars(guild, game_id, player_ids)
+        display_names = {
+            p["user_id"]: _player_display_name(guild, p) for p in players
+        }
 
         bunker_capacity = game["bunker_capacity"] or bunker_core.default_bunker_capacity(len(player_ids))
         if bunker_capacity >= len(player_ids):
@@ -468,8 +602,9 @@ class BunkerCog(commands.Cog):
         try:
             category = channel.category if isinstance(channel, discord.TextChannel) else None
             overwrites = {guild.default_role: discord.PermissionOverwrite(view_channel=True, connect=True, speak=True)}
+            voice_name_key = "bunker.voice_channel_test" if game.get("is_test") else "bunker.voice_channel"
             voice_channel = await guild.create_voice_channel(
-                name=i18n.t("bunker.voice_channel", lang, game_id=game_id),
+                name=i18n.t(voice_name_key, lang, game_id=game_id),
                 overwrites=overwrites,
                 category=category,
             )
@@ -599,13 +734,23 @@ class BunkerCog(commands.Cog):
             return
         guild = self.bot.get_guild(game["guild_id"])
         lang = i18n.lang_for(game["guild_id"])
-        player_name = _display_name(guild, announcement["player_user_id"])
+        actor = bunker_db.get_player(game_id, announcement["player_user_id"])
+        player_name = _display_name(
+            guild,
+            announcement["player_user_id"],
+            actor.get("display_name") if actor else None,
+        )
         target_part = ""
         if announcement["target_user_id"] is not None:
+            target = bunker_db.get_player(game_id, announcement["target_user_id"])
             target_part = i18n.t(
                 "bunker.ability.target",
                 lang,
-                target=_display_name(guild, announcement["target_user_id"]),
+                target=_display_name(
+                    guild,
+                    announcement["target_user_id"],
+                    target.get("display_name") if target else None,
+                ),
             )
         note_part = (
             i18n.t("bunker.ability.note", lang, note=announcement["note"])

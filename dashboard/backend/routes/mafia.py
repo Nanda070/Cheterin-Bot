@@ -18,9 +18,26 @@ def _is_id(value) -> bool:
     return isinstance(value, str) and (value == "" or value.isdigit())
 
 
-def _display_name(guild, user_id: int) -> str:
+def _display_name(guild, user_id: int, stored: str | None = None) -> str:
     member = guild.get_member(user_id) if guild else None
-    return member.display_name if member else str(user_id)
+    if member is not None:
+        return member.display_name
+    return stored or str(user_id)
+
+
+def _avatar_url(guild, user_id: int, stored: str | None = None) -> str | None:
+    member = guild.get_member(user_id) if guild else None
+    if member is not None and getattr(member, "display_avatar", None) is not None:
+        return str(member.display_avatar.url)
+    return stored or None
+
+
+def _player_ref(guild, player: dict) -> dict:
+    return {
+        "user_id": str(player["user_id"]),
+        "display_name": _display_name(guild, player["user_id"], player.get("display_name")),
+        "avatar_url": _avatar_url(guild, player["user_id"], player.get("avatar_url")),
+    }
 
 
 def _serialize_game_summary(game: dict, bot) -> dict:
@@ -138,8 +155,7 @@ async def mafia_public_state(request: web.Request) -> web.Response:
     roster = []
     for p in all_players:
         entry = {
-            "user_id": str(p["user_id"]),
-            "display_name": _display_name(guild, p["user_id"]),
+            **_player_ref(guild, p),
             "alive": bool(p["alive"]),
         }
         if not p["alive"] or p["user_id"] == player["user_id"]:
@@ -157,10 +173,7 @@ async def mafia_public_state(request: web.Request) -> web.Response:
         "action_required": action_required,
         "your_action_submitted": action is not None,
         "your_submitted_target": str(action["target_user_id"]) if action and action["target_user_id"] is not None else None,
-        "alive_players": [
-            {"user_id": str(p["user_id"]), "display_name": _display_name(guild, p["user_id"])}
-            for p in alive_players
-        ],
+        "alive_players": [_player_ref(guild, p) for p in alive_players],
         "roster": roster,
     }
 
@@ -174,13 +187,11 @@ async def mafia_public_state(request: web.Request) -> web.Response:
             p for p in mafia_db.list_players(game["id"])
             if p["role"] == "mafia" and p["user_id"] != player["user_id"]
         ]
-        body["teammates"] = [
-            {"user_id": str(p["user_id"]), "display_name": _display_name(guild, p["user_id"])}
-            for p in teammates
-        ]
+        body["teammates"] = [_player_ref(guild, p) for p in teammates]
 
     if game["phase"] == "day_vote":
         votes = mafia_db.get_day_votes(game["id"], round_number)
+        by_id = {p["user_id"]: p for p in all_players}
         tally: dict[str | None, int] = {}
         for v in votes:
             key = str(v["target_user_id"]) if v["target_user_id"] is not None else None
@@ -188,7 +199,15 @@ async def mafia_public_state(request: web.Request) -> web.Response:
         body["vote_tally"] = [
             {
                 "target": key,
-                "target_display": _display_name(guild, int(key)) if key else None,
+                "target_display": (
+                    _display_name(
+                        guild,
+                        int(key),
+                        by_id.get(int(key), {}).get("display_name"),
+                    )
+                    if key
+                    else None
+                ),
                 "count": count,
             }
             for key, count in sorted(tally.items(), key=lambda kv: -kv[1])

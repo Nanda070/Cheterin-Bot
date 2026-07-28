@@ -1,4 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import {
+  Briefcase,
+  Handbag,
+  Heart,
+  IdentificationCard,
+  Lightning,
+  Person,
+  ShieldWarning,
+  Skull,
+  Timer,
+  UsersThree,
+  Warning,
+} from '@phosphor-icons/react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   announceBunkerAbility,
@@ -10,8 +23,8 @@ import {
   type BunkerFieldKey,
   type BunkerPublicState,
 } from '../api/client'
+import { GameAvatar } from '../components/GameAvatar'
 import { Button } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
 import { translate, type Lang } from '../i18n'
 
@@ -24,6 +37,26 @@ function useCountdown(deadlineTs: number | null): number {
   }, [deadlineTs])
   if (!deadlineTs) return 0
   return Math.max(0, deadlineTs - Math.floor(now / 1000))
+}
+
+function formatTimer(remaining: number): string {
+  const minutes = Math.floor(remaining / 60)
+  const seconds = remaining % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+const FIELD_ICON: Record<BunkerFieldKey, ReactNode> = {
+  profession: <Briefcase size={16} weight="fill" />,
+  age: <IdentificationCard size={16} weight="fill" />,
+  gender: <Person size={16} weight="fill" />,
+  body_type: <Person size={16} weight="duotone" />,
+  health: <Heart size={16} weight="fill" />,
+  hobby: <Lightning size={16} weight="fill" />,
+  phobia: <ShieldWarning size={16} weight="fill" />,
+  backpack_item: <Handbag size={16} weight="fill" />,
+  large_item: <Handbag size={16} weight="duotone" />,
+  trait: <IdentificationCard size={16} weight="duotone" />,
+  additional_info: <Warning size={16} weight="fill" />,
 }
 
 export function PublicBunkerActionPage() {
@@ -97,6 +130,7 @@ export function PublicBunkerActionPage() {
   }, [token, pageLang])
 
   const remaining = useCountdown(state?.phase_deadline_ts ?? null)
+  const timerUrgent = remaining > 0 && remaining <= 30
 
   const voteOptions = useMemo(() => {
     if (!state) return []
@@ -166,7 +200,7 @@ export function PublicBunkerActionPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
+      <div className="game-table game-table--bunker flex min-h-dvh items-center justify-center p-6">
         <p className="text-sm text-danger">{error}</p>
       </div>
     )
@@ -174,80 +208,106 @@ export function PublicBunkerActionPage() {
 
   if (!state) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
+      <div className="game-table game-table--bunker flex min-h-dvh items-center justify-center p-6">
         <p className="text-sm text-muted">{t('common.loading')}</p>
       </div>
     )
   }
 
-  const minutes = Math.floor(remaining / 60)
-  const seconds = remaining % 60
   const character = state.your_character
   const aliveCount = state.roster.filter((p) => p.alive).length
   const canReveal = state.phase === 'discussion' && state.your_alive && state.game_status === 'active'
   const canUseAbility = state.your_alive && state.game_status === 'active' && state.phase !== 'vote'
+  const timerText = formatTimer(remaining)
 
   return (
-    <div className="flex min-h-dvh flex-col items-center bg-background p-6">
-      <div className="flex w-full max-w-lg flex-col gap-4">
-        <h1 className="text-lg font-semibold text-foreground">{t('publicBunker.title')}</h1>
-
-        <Card className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted">
+    <div className="game-table game-table--bunker min-h-dvh">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6">
+        <header className="game-hud animate-fade-in-up sticky top-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-border/70 px-4 py-3 backdrop-blur-md">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{t('publicBunker.title')}</p>
+            <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">
               {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase) ?? state.phase}
-            </p>
-            {state.game_status === 'active' && state.phase_deadline_ts && (
-              <span className="text-xs font-medium text-muted">
-                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+            </h1>
+          </div>
+          {state.game_status === 'active' && state.phase_deadline_ts && (
+            <div
+              className={`game-timer flex items-center gap-2 rounded-control px-3 py-2 ${
+                timerUrgent ? 'game-timer--urgent' : ''
+              }`}
+            >
+              <Timer size={18} weight="bold" className={timerUrgent ? 'text-danger' : 'text-primary'} />
+              <span className={`font-mono text-lg font-semibold tabular-nums ${timerUrgent ? 'text-danger' : 'text-foreground'}`}>
+                {timerText}
+              </span>
+            </div>
+          )}
+        </header>
+
+        <section className="game-panel animate-fade-in-up flex flex-col gap-3 rounded-[var(--radius-card)] border border-border/70 p-4" style={{ animationDelay: '60ms' }}>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {state.bunker_capacity && (
+              <span className="game-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-foreground">
+                <UsersThree size={14} weight="fill" className="text-primary" />
+                {t('publicBunker.capacity')} {state.bunker_capacity} {t('publicBunker.capacityOf', { total: state.roster.length })}
               </span>
             )}
           </div>
-          {state.bunker_capacity && (
-            <p className="text-sm text-muted">
-              {t('publicBunker.capacity')}{' '}
-              <span className="text-foreground">{state.bunker_capacity}</span>{' '}
-              {t('publicBunker.capacityOf', { total: state.roster.length })}
-            </p>
-          )}
           {state.catastrophe_name && (
-            <p className="text-sm text-muted">
-              <span className="font-medium text-foreground">
+            <div className="rounded-control border border-danger/25 bg-danger/5 px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-danger">
+                <Warning size={14} weight="fill" />
                 {t('publicBunker.catastrophe', { name: state.catastrophe_name })}
-              </span>{' '}
-              {state.catastrophe_description}
-            </p>
+              </p>
+              <p className="mt-1 text-sm text-muted">{state.catastrophe_description}</p>
+            </div>
           )}
           {state.bunker_conditions_name && (
-            <p className="text-sm text-muted">
-              <span className="font-medium text-foreground">
+            <div className="rounded-control border border-border/80 bg-background/40 px-3 py-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                 {t('publicBunker.bunkerConditions', { name: state.bunker_conditions_name })}
-              </span>{' '}
-              {state.bunker_conditions_description}
+              </p>
+              <p className="mt-1 text-sm text-foreground/90">{state.bunker_conditions_description}</p>
+            </div>
+          )}
+          {!state.your_alive && (
+            <p className="flex items-center gap-2 text-sm text-danger">
+              <Skull size={16} weight="fill" />
+              {t('game.eliminatedBunker')}
             </p>
           )}
-          {!state.your_alive && <p className="text-sm text-danger">{t('game.eliminatedBunker')}</p>}
           {state.game_status !== 'active' && (
             <p className="text-sm text-muted">
               {state.game_status === 'finished' ? t('game.finished') : t('game.cancelled')}
             </p>
           )}
-        </Card>
+        </section>
 
         {character && (
-          <Card className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">{t('publicBunker.yourCard')}</h2>
-            <ul className="flex flex-col gap-2 text-sm">
+          <section className="game-panel animate-fade-in-up flex flex-col gap-3 rounded-[var(--radius-card)] border border-border/70 p-4" style={{ animationDelay: '120ms' }}>
+            <div className="flex items-center gap-2">
+              <IdentificationCard size={18} weight="fill" className="text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">{t('publicBunker.yourCard')}</h2>
+            </div>
+            <ul className="grid gap-2">
               {BUNKER_FIELD_KEYS.map((key) => {
                 const revealed = state.your_revealed_fields.includes(key)
                 return (
-                  <li key={key} className="flex items-center justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
-                    <div>
-                      <p className="text-xs text-muted">
-                        {fieldLabel(key)}
-                        {revealed && <span className="ml-1.5 text-primary">{t('publicBunker.revealed')}</span>}
-                      </p>
-                      <p className="text-foreground">{fieldValue(key, character)}</p>
+                  <li
+                    key={key}
+                    className={`flex items-center justify-between gap-3 rounded-control border px-3 py-2.5 transition-colors ${
+                      revealed ? 'border-primary/35 bg-primary-muted/40' : 'border-border/70 bg-background/35'
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-start gap-2.5">
+                      <span className="mt-0.5 text-primary">{FIELD_ICON[key]}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted">
+                          {fieldLabel(key)}
+                          {revealed && <span className="ml-1.5 text-primary">{t('publicBunker.revealed')}</span>}
+                        </p>
+                        <p className="text-sm text-foreground">{fieldValue(key, character)}</p>
+                      </div>
                     </div>
                     {!revealed && canReveal && (
                       <Button variant="secondary" onClick={() => reveal(key)}>
@@ -258,25 +318,28 @@ export function PublicBunkerActionPage() {
                 )
               })}
             </ul>
-          </Card>
+          </section>
         )}
 
         {character?.special_abilities && character.special_abilities.length > 0 && (
-          <Card className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-foreground">{t('publicBunker.specialAbilities')}</h2>
+          <section className="game-panel flex flex-col gap-3 rounded-[var(--radius-card)] border border-border/70 p-4">
+            <div className="flex items-center gap-2">
+              <Lightning size={18} weight="fill" className="text-warning" />
+              <h2 className="text-sm font-semibold text-foreground">{t('publicBunker.specialAbilities')}</h2>
+            </div>
             <ul className="flex flex-col gap-3 text-sm">
               {character.special_abilities.map((card, index) => {
                 const cardIndex = (index + 1) as 1 | 2
                 return (
-                  <li key={index} className="flex flex-col gap-1.5 border-b border-border pb-3 last:border-0 last:pb-0">
+                  <li key={index} className="rounded-control border border-border/70 bg-background/35 px-3 py-3">
                     <p className="text-foreground">
                       <span className="font-medium">{card.name}</span> — {card.category}
                     </p>
-                    <p className="text-xs text-muted">{card.effect}</p>
+                    <p className="mt-1 text-xs text-muted">{card.effect}</p>
                     {card.used ? (
-                      <span className="text-xs text-muted">{t('publicBunker.abilityUsed')}</span>
+                      <span className="mt-2 inline-block text-xs text-muted">{t('publicBunker.abilityUsed')}</span>
                     ) : abilityCardIndex === cardIndex ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="mt-3 flex flex-col gap-2">
                         <Select
                           value={abilityTarget}
                           onChange={setAbilityTarget}
@@ -301,7 +364,7 @@ export function PublicBunkerActionPage() {
                       </div>
                     ) : (
                       canUseAbility && (
-                        <div>
+                        <div className="mt-2">
                           <Button variant="secondary" onClick={() => openAbilityForm(cardIndex)}>
                             {t('publicBunker.useAbility')}
                           </Button>
@@ -313,15 +376,15 @@ export function PublicBunkerActionPage() {
               })}
             </ul>
             {abilityMessage && <p className="text-sm text-primary">{abilityMessage}</p>}
-          </Card>
+          </section>
         )}
 
         {state.action_required && (
-          <Card className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+          <section className="game-panel game-panel--action flex flex-col gap-3 rounded-[var(--radius-card)] border border-primary/40 p-4">
+            <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-foreground">{t('publicBunker.voteTitle')}</h2>
-              <span className="text-sm text-muted">
-                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+              <span className={`font-mono text-sm tabular-nums ${timerUrgent ? 'text-danger' : 'text-muted'}`}>
+                {timerText}
               </span>
             </div>
             <Select
@@ -337,40 +400,59 @@ export function PublicBunkerActionPage() {
               <p className="text-xs text-muted">{t('publicBunker.voteSent')}</p>
             )}
             {voteMessage && <p className="text-sm text-primary">{voteMessage}</p>}
-          </Card>
+          </section>
         )}
 
         {state.phase === 'vote' && state.vote_tally && state.vote_tally.length > 0 && (
-          <Card className="flex flex-col gap-2">
+          <section className="game-panel flex flex-col gap-2 rounded-[var(--radius-card)] border border-border/70 p-4">
             <h2 className="text-sm font-semibold text-foreground">{t('game.currentVotes')}</h2>
-            <ul className="flex flex-col gap-0.5 text-sm text-foreground">
+            <ul className="flex flex-col gap-1.5 text-sm text-foreground">
               {state.vote_tally.map((entry) => (
-                <li key={entry.target ?? 'skip'}>
+                <li key={entry.target ?? 'skip'} className="rounded-control bg-background/40 px-3 py-2 text-sm text-foreground">
                   {entry.target_display ?? t('game.skip')}: {entry.count}
                 </li>
               ))}
             </ul>
-          </Card>
+          </section>
         )}
 
-        <Card className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-foreground">
-            {t('game.players', { alive: aliveCount, total: state.roster.length })}
-          </h2>
-          <ul className="flex flex-col gap-2 text-sm">
+        <section className="game-panel flex flex-col gap-3 rounded-[var(--radius-card)] border border-border/70 p-4">
+          <div className="flex items-center gap-2">
+            <UsersThree size={18} weight="fill" className="text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">
+              {t('game.players', { alive: aliveCount, total: state.roster.length })}
+            </h2>
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2">
             {state.roster.map((p) => {
               const revealedKeys = BUNKER_FIELD_KEYS.filter((key) => key in p.character)
               return (
-                <li key={p.user_id} className={p.alive ? 'text-foreground' : 'text-muted'}>
-                  <p className={p.alive ? '' : 'line-through'}>
-                    {p.display_name}
-                    {!p.alive && ' 💀'}
-                  </p>
+                <li
+                  key={p.user_id}
+                  className={`rounded-control border px-3 py-3 ${
+                    p.alive ? 'border-border/70 bg-background/35' : 'border-border/40 bg-background/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <GameAvatar name={p.display_name} avatarUrl={p.avatar_url} alive={p.alive} size="md" />
+                    <div className="min-w-0">
+                      <p className={`truncate text-sm font-medium ${p.alive ? 'text-foreground' : 'text-muted line-through'}`}>
+                        {p.display_name}
+                        {!p.alive && ' 💀'}
+                      </p>
+                      {!p.alive && (
+                        <p className="text-[11px] uppercase tracking-wide text-danger">{t('game.eliminatedBunker')}</p>
+                      )}
+                    </div>
+                  </div>
                   {revealedKeys.length > 0 && (
-                    <ul className="ml-3 flex flex-col gap-0.5 text-xs text-muted">
+                    <ul className="mt-2 flex flex-col gap-0.5 border-t border-border/50 pt-2 text-xs text-muted">
                       {revealedKeys.map((key) => (
-                        <li key={key}>
-                          {fieldLabel(key)}: {fieldValue(key, p.character)}
+                        <li key={key} className="flex items-start gap-1.5">
+                          <span className="mt-0.5 text-primary/80">{FIELD_ICON[key]}</span>
+                          <span>
+                            {fieldLabel(key)}: {fieldValue(key, p.character)}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -379,10 +461,10 @@ export function PublicBunkerActionPage() {
               )
             })}
           </ul>
-        </Card>
+        </section>
 
         {!state.action_required && state.your_alive && state.game_status === 'active' && state.phase === 'discussion' && (
-          <p className="text-sm text-muted">{t('publicBunker.discussHint')}</p>
+          <p className="text-center text-sm text-muted">{t('publicBunker.discussHint')}</p>
         )}
       </div>
     </div>

@@ -90,6 +90,8 @@ async def test_public_state_basic_fields_and_flavor_text(aiohttp_client):
     assert body["your_character"]["profession"]["name"] == "Пожарный"
     assert body["your_revealed_fields"] == []
     assert body["action_required"] is False
+    assert body["roster"][0]["avatar_url"] == str(p1.display_avatar.url)
+    assert body["alive_players"][0]["avatar_url"] == str(p1.display_avatar.url)
 
 
 @pytest.mark.asyncio

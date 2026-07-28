@@ -22,6 +22,7 @@ MESSAGES: dict[str, str] = {
     "mafia.lobby.no_access": "Access denied.",
     "mafia.lobby.min_players": "At least {min} players required (currently {count}).",
     "mafia.started.title": "🎭 Mafia game started!",
+    "mafia.started.title_test": "🧪 [TEST] Mafia game started!",
     "mafia.started.description": (
         "Roles were sent in DMs. Each player got a personal dashboard link — "
         "the full match is there: role, player list, timer, and day lynch vote."
@@ -54,9 +55,17 @@ MESSAGES: dict[str, str] = {
     "mafia.error.channel_busy": "This channel already has an active lobby/game.",
     "mafia.error.min_gt_max": "Minimum players cannot exceed maximum.",
     "mafia.error.no_active_game": "No active game in this channel.",
+    "mafia.error.guild_only": "This command can only be used on a server.",
     "mafia.stopped": "Stopped.",
     "mafia.voice_channel": "Mafia · Game #{game_id}",
+    "mafia.voice_channel_test": "TEST · Mafia #{game_id}",
     "mafia.voice_delete_reason": "Mafia game finished",
+    "mafia.test.ready": (
+        "🧪 Test Mafia started with **{count}** players ({bots} bots).\n"
+        "Your personal link: {link}\n"
+        "Stop with `/mafia-stop` when done."
+    ),
+    "mafia.test.failed": "Test game failed to start (no token for your seat).",
     "mafia.dm.started": (
         "Mafia game started. Your role: **{role}**.\n"
         "Personal dashboard link (valid for the whole game): {link}\n{note}"

@@ -22,6 +22,7 @@ MESSAGES: dict[str, str] = {
     "bunker.lobby.no_access": "Access denied.",
     "bunker.lobby.min_players": "At least {min} players required (currently {count}).",
     "bunker.started.title": "🚪 Bunker game started!",
+    "bunker.started.title_test": "🧪 [TEST] Bunker game started!",
     "bunker.started.description": (
         "Character cards were sent in DMs. Each player got a personal dashboard link — "
         "the full game is there: card, trait reveals, special abilities, and expulsion vote."
@@ -54,9 +55,17 @@ MESSAGES: dict[str, str] = {
     "bunker.error.min_gt_max": "Minimum players cannot exceed maximum.",
     "bunker.error.capacity_too_high": "Bunker capacity must be less than max players.",
     "bunker.error.no_active_game": "No active game in this channel.",
+    "bunker.error.guild_only": "This command can only be used on a server.",
     "bunker.stopped": "Stopped.",
     "bunker.voice_channel": "Bunker · Game #{game_id}",
+    "bunker.voice_channel_test": "TEST · Bunker #{game_id}",
     "bunker.voice_delete_reason": "Bunker game finished",
+    "bunker.test.ready": (
+        "🧪 Test Bunker started with **{count}** players ({bots} bots).\n"
+        "Your personal link: {link}\n"
+        "Stop with `/bunker-stop` when done."
+    ),
+    "bunker.test.failed": "Test game failed to start (no token for your seat).",
     "bunker.dm.started": (
         "Bunker game started. Your personal character card (profession, health, backpack, "
         "special abilities, etc.) is on your personal link (valid for the whole game): "

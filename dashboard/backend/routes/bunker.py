@@ -19,9 +19,26 @@ def _is_id(value) -> bool:
     return isinstance(value, str) and (value == "" or value.isdigit())
 
 
-def _display_name(guild, user_id: int) -> str:
+def _display_name(guild, user_id: int, stored: str | None = None) -> str:
     member = guild.get_member(user_id) if guild else None
-    return member.display_name if member else str(user_id)
+    if member is not None:
+        return member.display_name
+    return stored or str(user_id)
+
+
+def _avatar_url(guild, user_id: int, stored: str | None = None) -> str | None:
+    member = guild.get_member(user_id) if guild else None
+    if member is not None and getattr(member, "display_avatar", None) is not None:
+        return str(member.display_avatar.url)
+    return stored or None
+
+
+def _player_ref(guild, player: dict) -> dict:
+    return {
+        "user_id": str(player["user_id"]),
+        "display_name": _display_name(guild, player["user_id"], player.get("display_name")),
+        "avatar_url": _avatar_url(guild, player["user_id"], player.get("avatar_url")),
+    }
 
 
 def _serialize_game_summary(game: dict, bot) -> dict:
@@ -56,12 +73,18 @@ def _serialize_ability_announcement(announcement: dict, guild) -> dict:
         "id": announcement["id"],
         "round_number": announcement["round_number"],
         "player_user_id": str(announcement["player_user_id"]),
-        "player_display_name": _display_name(guild, announcement["player_user_id"]),
+        "player_display_name": _display_name(
+            guild, announcement["player_user_id"], announcement.get("player_display_name")
+        ),
         "card_index": announcement["card_index"],
         "card_name": announcement["card_name"],
         "target_user_id": str(announcement["target_user_id"]) if announcement["target_user_id"] is not None else None,
         "target_display_name": (
-            _display_name(guild, announcement["target_user_id"]) if announcement["target_user_id"] is not None else None
+            _display_name(
+                guild, announcement["target_user_id"], announcement.get("target_display_name")
+            )
+            if announcement["target_user_id"] is not None
+            else None
         ),
         "note": announcement["note"],
         "applied": bool(announcement["applied"]),
@@ -258,8 +281,7 @@ async def bunker_public_state(request: web.Request) -> web.Response:
         full = not bool(p["alive"]) or p["user_id"] == player["user_id"]
         raw_character = p["character"] if full else _public_character_view(p["character"], p["revealed_fields"])
         roster.append({
-            "user_id": str(p["user_id"]),
-            "display_name": _display_name(guild, p["user_id"]),
+            **_player_ref(guild, p),
             "alive": bool(p["alive"]),
             "character": bunker_localize.localize_character(raw_character, lang),
             "revealed_fields": p["revealed_fields"],
@@ -287,15 +309,13 @@ async def bunker_public_state(request: web.Request) -> web.Response:
         "action_required": action_required,
         "your_vote_submitted": vote is not None,
         "your_submitted_target": str(vote["target_user_id"]) if vote and vote["target_user_id"] is not None else None,
-        "alive_players": [
-            {"user_id": str(p["user_id"]), "display_name": _display_name(guild, p["user_id"])}
-            for p in alive_players
-        ],
+        "alive_players": [_player_ref(guild, p) for p in alive_players],
         "roster": roster,
     }
 
     if game["phase"] == "vote":
         votes = bunker_db.get_votes(game["id"], round_number)
+        by_id = {p["user_id"]: p for p in all_players}
         tally: dict[str | None, int] = {}
         for v in votes:
             key = str(v["target_user_id"]) if v["target_user_id"] is not None else None
@@ -303,7 +323,15 @@ async def bunker_public_state(request: web.Request) -> web.Response:
         body["vote_tally"] = [
             {
                 "target": key,
-                "target_display": _display_name(guild, int(key)) if key else None,
+                "target_display": (
+                    _display_name(
+                        guild,
+                        int(key),
+                        by_id.get(int(key), {}).get("display_name"),
+                    )
+                    if key
+                    else None
+                ),
                 "count": count,
             }
             for key, count in sorted(tally.items(), key=lambda kv: -kv[1])

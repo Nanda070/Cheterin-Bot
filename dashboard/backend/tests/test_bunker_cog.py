@@ -44,6 +44,25 @@ def _cleanup_timer(cog, game_id):
 
 
 @pytest.mark.asyncio
+async def test_start_game_uses_cheterin_online_when_frontend_url_unset(monkeypatch):
+    monkeypatch.delenv("DASHBOARD_FRONTEND_URL", raising=False)
+    monkeypatch.delenv("FRONTEND_URL", raising=False)
+    player_ids = (20, 21, 22, 23)
+    bot, guild, channel, cog, members = build(player_ids)
+    game = _make_lobby(guild, channel, player_ids)
+
+    await cog.start_game(game["id"])
+    try:
+        for member in members:
+            player = bunker_db.get_player(game["id"], member.id)
+            dm_text = member.send_calls[0]["content"]
+            assert f"https://cheterin.online/bunker/{player['token']}" in dm_text
+            assert player["avatar_url"] == str(member.display_avatar.url)
+    finally:
+        _cleanup_timer(cog, game["id"])
+
+
+@pytest.mark.asyncio
 async def test_start_game_full_flow():
     player_ids = (20, 21, 22, 23)
     bot, guild, channel, cog, members = build(player_ids)
@@ -201,3 +220,85 @@ async def test_full_round_vote_ends_game_at_capacity():
     assert guild.created_voice_channels[0].deleted is True
     alive = bunker_db.list_alive_players(game_id)
     assert {p["user_id"] for p in alive} == {20, 21}
+
+
+# ────────────────────────── Тестовая игра с ботами ──────────────────────────
+
+
+class _FakeResponse:
+    def __init__(self):
+        self.messages = []
+        self.deferred = False
+
+    async def send_message(self, content=None, embed=None, view=None, ephemeral=False, **kwargs):
+        self.messages.append({"content": content, "embed": embed, "view": view, "ephemeral": ephemeral})
+
+    async def defer(self, ephemeral=False, **kwargs):
+        self.deferred = True
+        self.ephemeral = ephemeral
+
+
+class _FakeFollowup:
+    def __init__(self):
+        self.messages = []
+
+    async def send(self, content=None, embed=None, ephemeral=False, **kwargs):
+        self.messages.append({"content": content, "embed": embed, "ephemeral": ephemeral})
+
+
+class _FakeInteraction:
+    def __init__(self, user, guild, channel):
+        self.user = user
+        self.guild = guild
+        self.guild_id = guild.id
+        self.channel = channel
+        self.response = _FakeResponse()
+        self.followup = _FakeFollowup()
+
+
+@pytest.mark.asyncio
+async def test_start_test_game_fills_bots_and_returns_link():
+    import bunker_core
+
+    admin = FakeMember(10, name="admin", manage_guild=True)
+    channel = FakeChannel(500, name="bunker-test")
+    guild = FakeGuild(members=[admin], channels=[channel])
+    bot = FakeBot(guild)
+    cog = BunkerCog(bot)
+    bunker_core.save_config(guild.id, {"enabled": True})
+
+    interaction = _FakeInteraction(admin, guild, channel)
+    await BunkerCog.start_test_game.callback(cog, interaction, 5)
+
+    try:
+        game = bunker_db.get_active_game_in_channel(channel.id)
+        assert game is not None
+        assert game["status"] == "active"
+        assert game["phase"] == "discussion"
+        assert bool(game["is_test"]) is True
+
+        players = bunker_db.list_players(game["id"])
+        assert len(players) == 5
+        host = bunker_db.get_player(game["id"], admin.id)
+        assert host["token"]
+        bots = [p for p in players if p["user_id"] != admin.id]
+        assert len(bots) == 4
+        assert all(p["user_id"] < 0 for p in bots)
+        assert all(p.get("display_name") for p in bots)
+        assert all(p.get("avatar_url") for p in bots)
+        assert all(p.get("character") for p in players)
+
+        assert interaction.response.deferred is True
+        assert len(interaction.followup.messages) == 1
+        text = interaction.followup.messages[0]["content"]
+        assert f"/bunker/{host['token']}" in text or host["token"] in text
+        assert interaction.followup.messages[0]["ephemeral"] is True
+
+        assert channel.send_calls
+        embed = channel.send_calls[0]["embed"]
+        assert "TEST" in embed.title or "ТЕСТ" in embed.title
+    finally:
+        active = bunker_db.get_active_game_in_channel(channel.id)
+        if active:
+            _cleanup_timer(cog, active["id"])
+
