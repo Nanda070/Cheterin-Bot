@@ -190,9 +190,9 @@
     "semantic_hash": ""
   },
   "dashboard/backend/static.py": {
-    "mtime": 1783356778.0,
-    "ast_hash": "3045eaf1385a4def5304fc0b1e3d3611",
-    "semantic_hash": "3045eaf1385a4def5304fc0b1e3d3611"
+    "mtime": 1785511323.6965163,
+    "ast_hash": "02a89a55eb981afecf8cfd11e1e47411",
+    "semantic_hash": ""
   },
   "dashboard/backend/tests/__init__.py": {
     "mtime": 1784632287.1242683,
@@ -470,9 +470,9 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_static.py": {
-    "mtime": 1784632287.085059,
-    "ast_hash": "3cb4ed6ca4cc6498914f1cc48c345401",
-    "semantic_hash": "3cb4ed6ca4cc6498914f1cc48c345401"
+    "mtime": 1785511336.1294608,
+    "ast_hash": "4842cb92861c561f09c509336daa671b",
+    "semantic_hash": ""
   },
   "dashboard/backend/tests/test_superadmin_routes.py": {
     "mtime": 1784632287.0954187,
