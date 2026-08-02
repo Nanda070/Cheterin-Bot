@@ -8,9 +8,12 @@ import {
   Sparkle,
   TelegramLogo,
 } from '@phosphor-icons/react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { PublicLayout } from '../components/PublicLayout'
 import { useLanguage } from '../context/LanguageContext'
+import { useSecretClicks } from '../hooks/useSecretClicks'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 
 const SUPPORT_INVITE = 'https://discord.gg/cheterin'
 const GITHUB_PROFILE = 'https://github.com/nanda070'
@@ -188,6 +191,9 @@ function ProjectRow(props: { project: Project; t: (key: string) => string; delay
 
 export function CreditsPage() {
   const { lang, t } = useLanguage()
+  const [alsoOpen, setAlsoOpen] = useState(false)
+  const [tobyNope, setTobyNope] = useState(false)
+  const revealAlso = useSecretClicks(5, () => setAlsoOpen(true))
 
   return (
     <PublicLayout>
@@ -316,6 +322,65 @@ export function CreditsPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 border-t border-border/60 pt-6">
+            {!alsoOpen ? (
+              <button
+                type="button"
+                onClick={revealAlso}
+                className="text-sm text-muted/70 transition hover:text-muted"
+                title={t('egg.credits.teaserHint')}
+              >
+                {t('egg.credits.teaser')}
+              </button>
+            ) : (
+              <div className="animate-fade-in-up space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-primary/90">
+                  {t('egg.credits.alsoTitle')}
+                </h3>
+                <ul className="space-y-2 text-sm text-muted">
+                  <li>{t('egg.credits.coffee')}</li>
+                  <li>{t('egg.credits.sleep')}</li>
+                  <li>{t('egg.credits.git')}</li>
+                  <li>{t('egg.credits.test')}</li>
+                  <li>
+                    <button
+                      type="button"
+                      className="text-left text-muted transition hover:text-foreground"
+                      onClick={() => setTobyNope(true)}
+                    >
+                      {tobyNope ? t('egg.credits.tobyNope') : t('egg.credits.toby')}
+                    </button>
+                  </li>
+                </ul>
+                <p className="pt-2 text-xs font-medium uppercase tracking-[0.12em] text-muted">
+                  {t('egg.credits.doors')}
+                </p>
+                <ul className="flex flex-wrap gap-3 text-sm">
+                  <li>
+                    <Link to={SECRET_ROOMS.snowdin} className="text-primary hover:text-primary-hover">
+                      {t('egg.credits.snowdin')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={SECRET_ROOMS.waterfall} className="text-primary hover:text-primary-hover">
+                      {t('egg.credits.waterfall')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={SECRET_ROOMS.core} className="text-primary hover:text-primary-hover">
+                      {t('egg.credits.core')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={SECRET_ROOMS.judgment} className="text-primary hover:text-primary-hover">
+                      {t('egg.credits.judgment')}
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Contact */}

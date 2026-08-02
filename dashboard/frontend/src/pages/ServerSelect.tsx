@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, DiscordLogo, Plus, SignOut, Sparkle } from '@phosphor-icons/react'
+import { BookOpen, DiscordLogo, Plus, SignOut } from '@phosphor-icons/react'
 import {
   fetchInviteUrl,
   fetchManageableGuilds,
@@ -11,6 +11,7 @@ import {
 import { formatApiError, isForbiddenError } from '../api/errors'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+import { BrandMark } from '../components/BrandMark'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { Card } from '../components/ui/Card'
 
@@ -127,10 +128,7 @@ export function ServerSelectPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center gap-8 px-4 py-10">
       <div className="flex w-full max-w-2xl items-center justify-between gap-3">
-        <Link to="/about" className="flex items-center gap-2 text-foreground">
-          <Sparkle size={22} weight="fill" className="text-primary" />
-          <span className="text-lg font-semibold">Cheterin</span>
-        </Link>
+        <BrandMark to="/about" iconSize={22} labelClassName="text-lg font-semibold" />
         <div className="flex items-center gap-3">
           <LanguageToggle />
           <button

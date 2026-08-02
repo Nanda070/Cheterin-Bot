@@ -25,7 +25,6 @@ import {
   ShieldWarning,
   SignOut,
   Skull,
-  Sparkle,
   Stack,
   Ticket,
   TrendUp,
@@ -38,6 +37,7 @@ import {
 } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { BrandMark } from '../components/BrandMark'
 import { fetchModules, logout } from '../api/client'
 import { CommandPalette } from '../components/CommandPalette'
 import { LanguageToggle } from '../components/LanguageToggle'
@@ -335,10 +335,7 @@ export function DashboardShell() {
           >
             {mobileNavOpen ? <X size={20} /> : <List size={20} />}
           </button>
-          <Link to="/about" className="flex items-center gap-2 text-foreground">
-            <Sparkle size={20} weight="fill" className="text-primary" />
-            <span className="font-semibold">Cheterin</span>
-          </Link>
+          <BrandMark to="/about" iconSize={20} />
           <nav className="hidden items-center gap-3 text-sm text-muted sm:flex">
             <Link to="/docs" className="transition-colors hover:text-foreground">
               {t('nav.docs')}

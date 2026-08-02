@@ -274,3 +274,35 @@
     animation: none;
   }
 }
+
+/* Logo easter-egg glitch (idea 2) */
+@keyframes cheterin-logo-glitch-skew {
+  0%,
+  100% {
+    filter: none;
+    transform: none;
+  }
+  20% {
+    filter: hue-rotate(-25deg) saturate(1.4);
+    transform: translate(-2px, 1px) skewX(-1deg);
+  }
+  40% {
+    filter: hue-rotate(15deg) contrast(1.15);
+    transform: translate(2px, -1px);
+  }
+  60% {
+    filter: saturate(1.6);
+    transform: translate(-1px, 0) skewX(1deg);
+  }
+}
+
+html.cheterin-logo-glitch body {
+  animation: cheterin-logo-glitch-skew 0.7s steps(2, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.cheterin-logo-glitch body {
+    animation: none;
+    filter: saturate(1.25);
+  }
+}

@@ -1,7 +1,9 @@
 import { Compass } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { Card } from '../components/ui/Card'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 
 export function NotFoundPage() {
   const t = useT()
@@ -14,7 +16,9 @@ export function NotFoundPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold text-foreground">{t('notFound.title')}</h1>
+          <SecretClickTarget clicks={10} to={SECRET_ROOMS.core} className="cursor-default">
+            <h1 className="text-xl font-semibold text-foreground">{t('notFound.title')}</h1>
+          </SecretClickTarget>
           <p className="text-sm text-muted">{t('notFound.body')}</p>
         </div>
 

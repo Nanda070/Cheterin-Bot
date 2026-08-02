@@ -18,9 +18,12 @@ import {
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchInviteUrl, loginUrl } from '../api/client'
+import { BrandMark } from '../components/BrandMark'
 import { LanguageToggle } from '../components/LanguageToggle'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 
 const SUPPORT_INVITE = 'https://discord.gg/cheterin'
 
@@ -301,10 +304,12 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
     <div className="landing flex min-h-dvh flex-col bg-background text-foreground">
       <header className="landing-header sticky top-0 z-20 border-b border-white/10 text-white backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link to="/about" className="flex items-center gap-2 font-semibold tracking-tight">
-            <Sparkle size={22} weight="fill" className="text-white" />
-            <span>Cheterin</span>
-          </Link>
+          <BrandMark
+            to="/about"
+            className="flex items-center gap-2 font-semibold tracking-tight text-white"
+            iconClassName="text-white"
+            iconSize={22}
+          />
 
           <div className="flex items-center gap-2 sm:gap-3">
             <nav className="hidden items-center gap-1 md:flex">
@@ -422,11 +427,10 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
       <footer className="border-t border-border bg-background">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
           <div>
-            <Link to="/about" className="flex items-center gap-2 text-foreground">
-              <Sparkle size={20} weight="fill" className="text-primary" />
-              <span className="font-semibold">Cheterin</span>
-            </Link>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
+            <BrandMark to="/about" iconSize={20} />
+            <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mt-3 block max-w-xs cursor-default">
+              <p className="text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
+            </SecretClickTarget>
             <p className="mt-4 text-xs text-muted">{t('landing.footer.copyright')}</p>
           </div>
 

@@ -7,9 +7,11 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchSetupHealth, type SetupHealth } from '../api/client'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { WhatsNewCard, WhatsNewModal } from '../components/WhatsNew'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 
 // Where the dashboard admin can go fix a module-health issue.
 const MODULE_ROUTE: Record<string, string> = {
@@ -46,9 +48,11 @@ export function HomePage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold text-foreground">
-        {t('home.welcome', { username: user?.username ?? '' })}
-      </h1>
+      <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mb-4 block cursor-default">
+        <h1 className="text-lg font-semibold text-foreground">
+          {t('home.welcome', { username: user?.username ?? '' })}
+        </h1>
+      </SecretClickTarget>
 
       <WhatsNewModal />
       <WhatsNewCard />

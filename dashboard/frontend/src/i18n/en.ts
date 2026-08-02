@@ -11,6 +11,7 @@ import landing from './en/landing'
 import whatsNew from './en/whatsNew'
 import credits from './en/credits'
 import sans from './en/sans'
+import egg from './en/egg'
 
 const en: TranslationDict = {
   ...shell,
@@ -25,6 +26,7 @@ const en: TranslationDict = {
   ...whatsNew,
   ...credits,
   ...sans,
+  ...egg,
 }
 
 export default en

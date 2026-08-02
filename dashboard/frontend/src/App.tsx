@@ -23,6 +23,7 @@ import { TermsPage } from './pages/Terms'
 import { PrivacyPage } from './pages/Privacy'
 import { CreditsPage } from './pages/Credits'
 import { SansPage } from './pages/Sans'
+import { WaterfallRoomPage, CoreRoomPage, JudgmentRoomPage } from './pages/SecretRoom'
 import { ServerLogPage } from './pages/ServerLog'
 import { LevelsPage } from './pages/Levels'
 import { VoiceStatsPage } from './pages/VoiceStats'
@@ -73,6 +74,10 @@ function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/credits" element={<CreditsPage />} />
             <Route path="/sans" element={<SansPage />} />
+            <Route path="/snowdin" element={<SansPage />} />
+            <Route path="/waterfall" element={<WaterfallRoomPage />} />
+            <Route path="/core" element={<CoreRoomPage />} />
+            <Route path="/judgment" element={<JudgmentRoomPage />} />
             <Route path="/leaderboard/:guildId" element={<LeaderboardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route

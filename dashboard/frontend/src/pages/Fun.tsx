@@ -24,7 +24,9 @@ import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 import { AutoReactionsPage } from './AutoReactions'
 import { DailyTopicPage } from './DailyTopic'
 
@@ -339,10 +341,12 @@ export function FunPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Confetti size={22} className="text-primary" />
-          {t('fun.title')}
-        </h1>
+        <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="cursor-default">
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Confetti size={22} className="text-primary" />
+            {t('fun.title')}
+          </h1>
+        </SecretClickTarget>
         <p className="mt-1 text-sm text-muted">{t('fun.intro')}</p>
       </div>
 

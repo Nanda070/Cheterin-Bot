@@ -17,7 +17,9 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Toggle } from '../components/ui/Toggle'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 import { CasinoPage } from './Casino'
 
 type Tab = 'settings' | 'casino' | 'balances'
@@ -145,10 +147,12 @@ export function EconomyPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Coins size={22} className="text-primary" />
-          {t('economy.title')}
-        </h1>
+        <SecretClickTarget clicks={8} to={SECRET_ROOMS.core} className="cursor-default">
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Coins size={22} className="text-primary" />
+            {t('economy.title')}
+          </h1>
+        </SecretClickTarget>
         {tab === 'settings' && settings && (
           <Toggle
             checked={settings.enabled}

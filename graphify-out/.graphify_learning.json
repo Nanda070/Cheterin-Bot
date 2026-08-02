@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T22:35:17.339069+00:00",
+  "generated_at": "2026-08-02T23:03:40.335239+00:00",
   "nodes": {
     "dashboard_backend_tests_fakes_fakemember": {
       "code_fingerprint": "f41c9b39ea10ffe134073ea5743b1fbd66beec6175e0509651e58af4b62e1c95",
@@ -12,7 +12,7 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.67109225,
+      "score": 0.670786696,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -28,7 +28,7 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.67109225,
+      "score": 0.670786696,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -44,7 +44,7 @@
           "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
         }
       ],
-      "score": 0.671091686,
+      "score": 0.670786133,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -60,7 +60,7 @@
           "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
         }
       ],
-      "score": 0.671090624,
+      "score": 0.670785071,
       "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
       "status": "tentative",
       "uses": 1
@@ -76,7 +76,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.671092788,
+      "score": 0.670787234,
       "source_file": "dashboard/frontend/.oxlintrc.json",
       "status": "tentative",
       "uses": 1
@@ -92,7 +92,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.671092788,
+      "score": 0.670787234,
       "source_file": "dashboard/frontend/package.json",
       "status": "tentative",
       "uses": 1

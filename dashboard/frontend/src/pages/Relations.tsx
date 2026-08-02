@@ -20,7 +20,9 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
@@ -153,10 +155,12 @@ export function RelationsPage() {
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <Heart size={22} className="text-primary" weight="fill" />
-            {t('relations.title')}
-          </h1>
+          <SecretClickTarget clicks={8} to={SECRET_ROOMS.judgment} className="cursor-default">
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Heart size={22} className="text-primary" weight="fill" />
+              {t('relations.title')}
+            </h1>
+          </SecretClickTarget>
           <p className="mt-1 text-sm text-muted">{t('relations.intro')}</p>
         </div>
         <Toggle

@@ -27,7 +27,9 @@ import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useAuth } from '../context/AuthContext'
+import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useT } from '../context/LanguageContext'
+import { SECRET_ROOMS } from '../utils/easterEggs'
 import { formatDuration, formatDurationMinutes } from '../utils/formatDuration'
 
 type Tab = 'settings' | 'level-rewards' | 'voice-rewards' | 'card' | 'members'
@@ -188,10 +190,12 @@ export function LevelsPage() {
   return (
     <div className="flex max-w-4xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <ChartBar size={22} className="text-primary" />
-          {t('levels.title')}
-        </h1>
+        <SecretClickTarget clicks={8} to={SECRET_ROOMS.judgment} className="cursor-default">
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <ChartBar size={22} className="text-primary" />
+            {t('levels.title')}
+          </h1>
+        </SecretClickTarget>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => patch((p) => ({ ...p, enabled: v }))}

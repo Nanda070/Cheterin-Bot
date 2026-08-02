@@ -2,6 +2,7 @@ import { Sparkle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { loginUrl } from '../api/client'
+import { BrandMark } from './BrandMark'
 import { LanguageToggle } from './LanguageToggle'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
@@ -23,10 +24,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     <div className="public flex min-h-dvh flex-col">
       <header className="public-header sticky top-0 z-10 border-b backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link to="/about" className="flex items-center gap-2 text-foreground">
-            <Sparkle size={20} weight="fill" className="text-primary" />
-            <span className="font-semibold">Cheterin</span>
-          </Link>
+          <BrandMark to="/about" iconSize={20} />
 
           <div className="flex items-center gap-2 sm:gap-3">
             <LanguageToggle />
