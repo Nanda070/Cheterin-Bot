@@ -4,7 +4,7 @@ const egg: TranslationDict = {
   'egg.logo.tagline': "you weren't supposed to click that",
   'egg.credits.alsoTitle': 'Also helped',
   'egg.credits.teaser': '…',
-  'egg.credits.teaserHint': 'keep clicking',
+  'egg.credits.teaserHint': 'open',
   'egg.credits.coffee': 'coffee (industrial quantities)',
   'egg.credits.sleep': 'sleep deprivation',
   'egg.credits.git': 'git push --force (once. never again.)',

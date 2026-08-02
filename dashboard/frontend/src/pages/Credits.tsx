@@ -12,7 +12,6 @@ import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PublicLayout } from '../components/PublicLayout'
 import { useLanguage } from '../context/LanguageContext'
-import { useSecretClicks } from '../hooks/useSecretClicks'
 import { SECRET_ROOMS } from '../utils/easterEggs'
 
 const SUPPORT_INVITE = 'https://discord.gg/cheterin'
@@ -193,7 +192,6 @@ export function CreditsPage() {
   const { lang, t } = useLanguage()
   const [alsoOpen, setAlsoOpen] = useState(false)
   const [tobyNope, setTobyNope] = useState(false)
-  const revealAlso = useSecretClicks(5, () => setAlsoOpen(true))
 
   return (
     <PublicLayout>
@@ -327,7 +325,7 @@ export function CreditsPage() {
             {!alsoOpen ? (
               <button
                 type="button"
-                onClick={revealAlso}
+                onClick={() => setAlsoOpen(true)}
                 className="text-sm text-muted/70 transition hover:text-muted"
                 title={t('egg.credits.teaserHint')}
               >
