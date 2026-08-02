@@ -1,7 +1,4 @@
-/** Session-scoped easter-egg state (logo glitch / secret rooms). */
-
-export const LOGO_TAGLINE_KEY = 'cheterin.egg.logoTagline'
-export const LOGO_UNLOCKED_KEY = 'cheterin.egg.logoUnlocked'
+/** In-memory easter-egg state — survives SPA navigations, clears on full reload (F5). */
 
 export const SECRET_ROOMS = {
   snowdin: '/sans',
@@ -12,29 +9,29 @@ export const SECRET_ROOMS = {
 
 export type SecretRoomId = keyof typeof SECRET_ROOMS
 
-export function isLogoEggUnlocked(): boolean {
-  try {
-    return sessionStorage.getItem(LOGO_UNLOCKED_KEY) === '1'
-  } catch {
-    return false
-  }
+/** Module memory (not sessionStorage) so F5 resets the logo egg. */
+let logoEggUnlocked = false
+let logoEggTagline = false
+
+// Drop legacy session keys from earlier builds.
+try {
+  sessionStorage.removeItem('cheterin.egg.logoTagline')
+  sessionStorage.removeItem('cheterin.egg.logoUnlocked')
+} catch {
+  /* private browsing */
 }
 
-export function unlockLogoEgg(): void {
-  try {
-    sessionStorage.setItem(LOGO_UNLOCKED_KEY, '1')
-    sessionStorage.setItem(LOGO_TAGLINE_KEY, '1')
-  } catch {
-    /* private browsing */
-  }
+export function isLogoEggUnlocked(): boolean {
+  return logoEggUnlocked
 }
 
 export function logoShowsEggTagline(): boolean {
-  try {
-    return sessionStorage.getItem(LOGO_TAGLINE_KEY) === '1'
-  } catch {
-    return false
-  }
+  return logoEggTagline
+}
+
+export function unlockLogoEgg(): void {
+  logoEggUnlocked = true
+  logoEggTagline = true
 }
 
 /** Brief crimson glitch on the document root. */
