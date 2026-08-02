@@ -1,4 +1,4 @@
-"""Member-facing /help command with paginated embed pages."""
+"""Member-facing /help — category select + leaders-style pagination."""
 
 from __future__ import annotations
 
@@ -10,48 +10,133 @@ import embed_style
 import i18n
 import slash_registry
 
-PAGE_COUNT = 7
+# Order matches select options and locale keys help.page.<id>.*
+HELP_CATEGORIES: tuple[str, ...] = (
+    "overview",
+    "levels",
+    "economy",
+    "casino",
+    "fun",
+    "community",
+    "valchecker",
+    "events",
+)
+
+
+class HelpCategorySelect(discord.ui.Select):
+    def __init__(self, view: "HelpView"):
+        self.help_view = view
+        options = [
+            discord.SelectOption(
+                label=i18n.t(f"help.cat.{cat}.label", view.lang),
+                value=cat,
+                description=i18n.t(f"help.cat.{cat}.desc", view.lang)[:100],
+                emoji=i18n.t(f"help.cat.{cat}.emoji", view.lang) or None,
+                default=(cat == view.category),
+            )
+            for cat in HELP_CATEGORIES
+        ]
+        super().__init__(
+            placeholder=i18n.t("help.select_placeholder", view.lang),
+            min_values=1,
+            max_values=1,
+            options=options,
+            row=0,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.help_view.category = self.values[0]
+        self.help_view._rebuild_select()
+        self.help_view._sync_buttons()
+        await interaction.response.edit_message(
+            embed=self.help_view.build_embed(),
+            view=self.help_view,
+        )
 
 
 class HelpView(discord.ui.View):
-    def __init__(self, lang: str, page: int = 0):
+    """Interactive help: category dropdown (row 0) + « ‹ › » ✕ (row 1), like /leaders."""
+
+    def __init__(self, lang: str, category: str = "overview"):
         super().__init__(timeout=180)
         self.lang = lang
-        self.page = max(0, min(page, PAGE_COUNT - 1))
+        self.category = category if category in HELP_CATEGORIES else "overview"
+        self._select: HelpCategorySelect | None = None
+        self._rebuild_select()
         self._sync_buttons()
+
+    def _page_index(self) -> int:
+        return HELP_CATEGORIES.index(self.category)
+
+    def _max_pages(self) -> int:
+        return len(HELP_CATEGORIES)
+
+    def _rebuild_select(self) -> None:
+        if self._select is not None:
+            self.remove_item(self._select)
+        self._select = HelpCategorySelect(self)
+        self.add_item(self._select)
 
     def build_embed(self) -> discord.Embed:
-        n = self.page + 1
-        footer_detail = i18n.t("help.footer", self.lang, page=n, total=PAGE_COUNT)
-        return embed_style.make_embed(
-            title=i18n.t(f"help.page{n}.title", self.lang),
-            description=i18n.t(f"help.page{n}.body", self.lang),
+        lang = self.lang
+        cat = self.category
+        embed = embed_style.make_embed(
+            title=i18n.t(f"help.page.{cat}.title", lang),
+            description=i18n.t(f"help.page.{cat}.body", lang),
             color=embed_style.INFO,
-            footer=f"{embed_style.module_footer('Cheterin', 'Help')} · {footer_detail}",
+            footer=i18n.t(
+                "help.footer",
+                lang,
+                category=i18n.t(f"help.cat.{cat}.label", lang),
+                page=self._page_index() + 1,
+                max_pages=self._max_pages(),
+            ),
         )
+        # Optional extra fields (field1..field6) — skip missing keys.
+        for i in range(1, 7):
+            name_key = f"help.page.{cat}.field{i}.name"
+            value_key = f"help.page.{cat}.field{i}.value"
+            name = i18n.t(name_key, lang)
+            value = i18n.t(value_key, lang)
+            if name == name_key or value == value_key:
+                continue
+            embed.add_field(name=name, value=value, inline=False)
+        return embed
 
     def _sync_buttons(self) -> None:
-        at_start = self.page == 0
-        at_end = self.page >= PAGE_COUNT - 1
+        at_start = self._page_index() == 0
+        at_end = self._page_index() >= self._max_pages() - 1
+        self.btn_first.disabled = at_start
         self.btn_prev.disabled = at_start
         self.btn_next.disabled = at_end
-        self.btn_prev.label = i18n.t("help.btn.prev", self.lang)
-        self.btn_next.label = i18n.t("help.btn.next", self.lang)
-        self.btn_close.label = i18n.t("help.btn.close", self.lang)
+        self.btn_last.disabled = at_end
 
-    @discord.ui.button(style=discord.ButtonStyle.secondary, row=0)
+    def _go(self, index: int) -> None:
+        self.category = HELP_CATEGORIES[max(0, min(index, self._max_pages() - 1))]
+        self._rebuild_select()
+        self._sync_buttons()
+
+    @discord.ui.button(label="\u00ab", style=discord.ButtonStyle.grey, row=1)
+    async def btn_first(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self._go(0)
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="\u2039", style=discord.ButtonStyle.grey, row=1)
     async def btn_prev(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.page = max(0, self.page - 1)
-        self._sync_buttons()
+        self._go(self._page_index() - 1)
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="\u203a", style=discord.ButtonStyle.grey, row=1)
     async def btn_next(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.page = min(PAGE_COUNT - 1, self.page + 1)
-        self._sync_buttons()
+        self._go(self._page_index() + 1)
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(style=discord.ButtonStyle.danger, row=0)
+    @discord.ui.button(label="\u00bb", style=discord.ButtonStyle.grey, row=1)
+    async def btn_last(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self._go(self._max_pages() - 1)
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
+
+    @discord.ui.button(label="\u2715", style=discord.ButtonStyle.red, row=1)
     async def btn_close(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.edit_message(view=None)
         self.stop()

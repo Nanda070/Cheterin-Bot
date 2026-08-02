@@ -92,6 +92,9 @@ const shell: TranslationDict = {
 
   'settings.title': 'Server settings',
   'settings.intro': 'General settings for the current server. Bot language affects Discord messages and command replies on this server.',
+  'settings.tab.general': 'General',
+  'settings.tab.botProfile': 'Bot profile',
+  'settings.tab.audit': 'Dashboard audit',
   'settings.botLanguage': 'Bot language',
   'settings.botLanguageHint': 'Bot messages, embeds and command replies on this server.',
   'settings.lang.ru': 'Russian',

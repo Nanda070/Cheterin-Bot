@@ -93,6 +93,9 @@ const shell: TranslationDict = {
 
   'settings.title': 'Настройки сервера',
   'settings.intro': 'Общие параметры текущего сервера. Язык бота влияет на сообщения и команды в Discord для этого сервера.',
+  'settings.tab.general': 'Общие',
+  'settings.tab.botProfile': 'Профиль бота',
+  'settings.tab.audit': 'Аудит дашборда',
   'settings.botLanguage': 'Язык бота',
   'settings.botLanguageHint': 'Сообщения бота, эмбеды и ответы команд на этом сервере.',
   'settings.lang.ru': 'Русский',

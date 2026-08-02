@@ -103,3 +103,36 @@ def test_save_drops_rules_without_emojis():
         rules=[{"id": "x", "emojis": [], "keywords": [], "channel_mode": "all"}],
     )
     assert out["rules"] == []
+
+
+def test_all_guild_emoji_mode():
+    out = auto_reactions_core.save_config(
+        GUILD_ID,
+        enabled=True,
+        rules=[
+            {
+                "id": "all",
+                "emoji_mode": "all_guild",
+                "emojis": ["👍"],
+                "keywords": [],
+                "channel_mode": "all",
+                "channel_ids": [],
+                "exclude_channel_ids": [],
+                "ignore_bots": True,
+            }
+        ],
+    )
+    assert out["rules"][0]["emoji_mode"] == "all_guild"
+    assert out["rules"][0]["emojis"] == []
+
+    matched = auto_reactions_core.matching_rules_for_message(
+        out, channel_id=1, content="hi", author_is_bot=False,
+    )
+    assert [r["id"] for r in matched] == ["all"]
+
+    class Emoji:
+        def __init__(self, emoji_id):
+            self.id = emoji_id
+
+    tokens = auto_reactions_core.guild_emoji_tokens([Emoji(i) for i in range(25)])
+    assert len(tokens) == auto_reactions_core.MAX_GUILD_EMOJIS_REACT

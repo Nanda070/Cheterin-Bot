@@ -451,6 +451,9 @@ class MatchNavView(discord.ui.View):
             )
 
 
+PROFILE_FETCH_TIMEOUT = 20.0
+
+
 async def load_profile_payload(session: dict, view: str) -> dict:
     lang = session.get("locale") or "en"
     player = {
@@ -462,12 +465,28 @@ async def load_profile_payload(session: dict, view: str) -> dict:
     }
     count = session.get("count") or 10
 
-    mmr_raw, acc_raw, matches_raw = await asyncio.gather(
-        henrik.mmr_by_puuid(player["region"], "pc", player["puuid"]),
-        henrik.account_by_puuid(player["puuid"]),
-        henrik.matches_by_puuid(player["region"], "pc", player["puuid"], size=count),
-        return_exceptions=True,
+    # Cap wait so Discord always gets a followup. Cancel the gather on timeout so
+    # in-flight Henrik calls release the shared semaphore (otherwise they linger).
+    fetch_task = asyncio.create_task(
+        asyncio.gather(
+            henrik.mmr_by_puuid(player["region"], "pc", player["puuid"]),
+            henrik.account_by_puuid(player["puuid"]),
+            henrik.matches_by_puuid(player["region"], "pc", player["puuid"], size=count),
+            return_exceptions=True,
+        )
     )
+    try:
+        mmr_raw, acc_raw, matches_raw = await asyncio.wait_for(fetch_task, timeout=PROFILE_FETCH_TIMEOUT)
+    except asyncio.TimeoutError:
+        logger.warning("profile fetch timed out puuid=%s", player["puuid"])
+        if not fetch_task.done():
+            fetch_task.cancel()
+        try:
+            await fetch_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        mmr_raw, acc_raw, matches_raw = {}, None, {}
+
     mmr_body = mmr_raw if isinstance(mmr_raw, dict) else {}
     acc_body = acc_raw if isinstance(acc_raw, dict) else None
     matches_body = matches_raw if isinstance(matches_raw, dict) else {}
@@ -1261,15 +1280,21 @@ class ValCheckerCog(commands.Cog):
             sort_val = sort.value if sort else "rank"
             lim = limit or 15
             rows: list[dict] = []
-            sem = asyncio.Semaphore(2)
+            # Must stay at 1: each row does two Henrik calls. An outer sem>1 plus
+            # henrik.MAX_CONCURRENT=2 deadlocks (each worker holds 1 global slot and
+            # waits for a second — /val-profile then spins forever too).
+            sem = asyncio.Semaphore(1)
 
             async def one(u):
                 async with sem:
                     try:
-                        mmr_body, matches_body = await asyncio.gather(
+                        mmr_raw, matches_raw = await asyncio.gather(
                             henrik.mmr_by_puuid(u["region"], "pc", u["puuid"]),
                             henrik.matches_by_puuid(u["region"], "pc", u["puuid"], size=10),
+                            return_exceptions=True,
                         )
+                        mmr_body = mmr_raw if isinstance(mmr_raw, dict) else {}
+                        matches_body = matches_raw if isinstance(matches_raw, dict) else {}
                         mmr = stats.normalize_mmr(mmr_body)
                         summaries = stats.summaries_from_matches(
                             matches_body.get("data"), u["puuid"], u["name"], u["tag"]

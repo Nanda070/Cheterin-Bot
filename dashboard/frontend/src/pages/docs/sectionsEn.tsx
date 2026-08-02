@@ -2079,7 +2079,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ],
             [
               '/help',
-              'Paginated member help: levels, economy, casino, games, community, ValChecker, events.',
+              'Member help menu (like /leaders): section dropdown + « ‹ › » pages — levels, economy, casino, fun, community, ValChecker, events.',
               'Everyone',
             ],
             [

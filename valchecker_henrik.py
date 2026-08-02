@@ -15,7 +15,7 @@ HENRIK_BASE = "https://api.henrikdev.xyz"
 MAX_CONCURRENT = 2
 MIN_GAP_MS = 700
 USER_AGENT = "Cheterin-ValChecker/1.0"
-REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=25, sock_connect=10, sock_read=20)
 
 
 class HenrikError(Exception):

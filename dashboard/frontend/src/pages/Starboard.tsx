@@ -17,7 +17,7 @@ import { useT } from '../context/LanguageContext'
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-export function StarboardPage() {
+export function StarboardPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [settings, setSettings] = useState<StarboardSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -56,17 +56,26 @@ export function StarboardPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Star size={22} className="text-primary" weight="fill" />
-          {t('starboard.title')}
-        </h1>
+        <div>
+          {!embedded ? (
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Star size={22} className="text-primary" weight="fill" />
+              {t('starboard.title')}
+            </h1>
+          ) : (
+            <h2 className="flex items-center gap-2 font-semibold text-foreground">
+              <Star size={20} className="text-primary" weight="fill" />
+              {t('starboard.title')}
+            </h2>
+          )}
+          <p className="mt-1 text-sm text-muted">{t('starboard.intro')}</p>
+        </div>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
           label={settings.enabled ? t('starboard.moduleOn') : t('starboard.moduleOff')}
         />
       </div>
-      <p className="text-sm text-muted">{t('starboard.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-primary">{saved}</p>}

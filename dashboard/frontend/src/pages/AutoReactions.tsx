@@ -21,6 +21,7 @@ const inputClass =
 function newRule(): AutoReactionRule {
   return {
     id: crypto.randomUUID().replace(/-/g, '').slice(0, 12),
+    emoji_mode: 'list',
     emojis: ['👍'],
     keywords: [],
     channel_mode: 'all',
@@ -41,7 +42,13 @@ export function AutoReactionsPage() {
   useEffect(() => {
     Promise.all([fetchAutoReactions(), fetchChannels()])
       .then(([data, ch]) => {
-        setSettings(data)
+        setSettings({
+          ...data,
+          rules: data.rules.map((r) => ({
+            ...r,
+            emoji_mode: r.emoji_mode === 'all_guild' ? 'all_guild' : 'list',
+          })),
+        })
         setChannels(ch)
       })
       .catch((err) => setError(formatApiError(err, t, 'autoReactions.errorLoad')))
@@ -116,23 +123,55 @@ export function AutoReactionsPage() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted">{t('autoReactions.emojis')}</label>
-            <input
-              className={inputClass}
-              value={rule.emojis.join(' ')}
-              onChange={(e) =>
-                patchRule(rule.id, {
-                  emojis: e.target.value
-                    .split(/\s+/)
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
-              placeholder={t('autoReactions.emojisPlaceholder')}
-            />
-            <span className="text-xs text-muted">{t('autoReactions.emojisHint')}</span>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted">{t('autoReactions.emojiMode')}</span>
+            <div className="flex flex-wrap gap-2">
+              {(['list', 'all_guild'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() =>
+                    patchRule(rule.id, {
+                      emoji_mode: mode,
+                      emojis: mode === 'all_guild' ? [] : rule.emojis.length ? rule.emojis : ['👍'],
+                    })
+                  }
+                  className={`rounded-control border px-3 py-1.5 text-sm ${
+                    rule.emoji_mode === mode
+                      ? 'border-primary bg-primary-muted text-foreground'
+                      : 'border-border text-muted hover:border-primary/40'
+                  }`}
+                >
+                  {mode === 'list'
+                    ? t('autoReactions.emojiModeList')
+                    : t('autoReactions.emojiModeAllGuild')}
+                </button>
+              ))}
+            </div>
+            {rule.emoji_mode === 'all_guild' && (
+              <span className="text-xs text-muted">{t('autoReactions.emojiModeAllGuildHint')}</span>
+            )}
           </div>
+
+          {rule.emoji_mode === 'list' && (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-muted">{t('autoReactions.emojis')}</label>
+              <input
+                className={inputClass}
+                value={rule.emojis.join(' ')}
+                onChange={(e) =>
+                  patchRule(rule.id, {
+                    emojis: e.target.value
+                      .split(/\s+/)
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+                placeholder={t('autoReactions.emojisPlaceholder')}
+              />
+              <span className="text-xs text-muted">{t('autoReactions.emojisHint')}</span>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted">{t('autoReactions.keywords')}</label>

@@ -10,7 +10,6 @@ import {
   ChartBar,
   ChartLine,
   ChatCircleText,
-  ClipboardText,
   Coins,
   Crown,
   DiceThree,
@@ -20,7 +19,6 @@ import {
   Headset,
   House,
   HouseLine,
-  IdentificationCard,
   Lightbulb,
   List,
   ListMagnifyingGlass,
@@ -35,7 +33,6 @@ import {
   Smiley,
   Sparkle,
   Stack,
-  Star,
   Ticket,
   TrendUp,
   Users,
@@ -109,7 +106,6 @@ const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.reactionRoles', icon: Stack, to: '/reaction-roles' },
       { labelKey: 'nav.embedStudio', icon: Palette, to: '/reaction-roles?tab=embeds' },
       { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays', moduleKey: 'birthdays' },
-      { labelKey: 'nav.starboard', icon: Star, to: '/starboard', moduleKey: 'starboard' },
       { labelKey: 'nav.autoReactions', icon: Smiley, to: '/auto-reactions', moduleKey: 'autoReactions' },
     ],
   },
@@ -134,8 +130,6 @@ const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.serverEntry', icon: DoorOpen, to: '/server-entry' },
       { labelKey: 'nav.members', icon: UsersThree, to: '/members' },
       { labelKey: 'nav.customCommands', icon: ChatTeardropText, to: '/custom-commands', moduleKey: 'customCommands' },
-      { labelKey: 'nav.audit', icon: ClipboardText, to: '/audit' },
-      { labelKey: 'nav.botProfile', icon: IdentificationCard, to: '/bot-profile' },
       { labelKey: 'nav.settings', icon: GlobeHemisphereWest, to: '/settings' },
     ],
   },
@@ -173,9 +167,11 @@ function SidebarNav({
   const [modules, setModules] = useState<Record<string, boolean> | null>(null)
   const [showDisabled, setShowDisabled] = useState(() => {
     try {
-      return window.localStorage.getItem(SHOW_DISABLED_MODULES_KEY) === '1'
+      const stored = window.localStorage.getItem(SHOW_DISABLED_MODULES_KEY)
+      // Default ON so disabled modules stay visible until the user hides them.
+      return stored === null ? true : stored === '1'
     } catch {
-      return false
+      return true
     }
   })
 

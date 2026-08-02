@@ -6,6 +6,7 @@ import asyncio
 import io
 import logging
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -14,24 +15,105 @@ import quote_core
 
 logger = logging.getLogger("chetbot.quote")
 
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
 
-async def _avatar_bytes(user) -> bytes | None:
+
+async def _avatar_bytes(guild: discord.Guild | None, user) -> bytes | None:
+    """Prefer guild member display avatar; force static PNG for reliable PIL decode."""
+    subject = user
+    if guild is not None:
+        uid = getattr(user, "id", None)
+        if uid is not None:
+            member = guild.get_member(uid)
+            if member is None:
+                try:
+                    member = await guild.fetch_member(uid)
+                except (discord.NotFound, discord.HTTPException, discord.Forbidden):
+                    member = None
+            if member is not None:
+                subject = member
     try:
-        return await user.display_avatar.replace(size=256).read()
+        asset = subject.display_avatar
+        if hasattr(asset, "replace"):
+            asset = asset.replace(size=256, format="png")
+        return await asset.read()
     except Exception:
         return None
 
 
-async def _first_image_attachment_bytes(message: discord.Message) -> bytes | None:
+def _attachment_is_image(att: discord.Attachment) -> bool:
+    ct = (att.content_type or "").lower()
+    name = (att.filename or "").lower()
+    if ct.startswith("image/"):
+        return True
+    if name.endswith(_IMAGE_EXTS):
+        return True
+    # Discord sets width/height for image uploads even when content_type is missing.
+    return bool(getattr(att, "width", None) and getattr(att, "height", None))
+
+
+async def _read_url_bytes(url: str) -> bytes | None:
+    if not url:
+        return None
+    try:
+        timeout = aiohttp.ClientTimeout(total=12)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.read()
+                return data or None
+    except Exception:
+        return None
+
+
+async def _first_image_bytes(message: discord.Message) -> bytes | None:
+    """Load the first image from attachments, then embed image/thumbnail URLs."""
     for att in message.attachments:
-        ct = (att.content_type or "").lower()
-        name = (att.filename or "").lower()
-        if ct.startswith("image/") or name.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
-            try:
-                return await att.read()
-            except Exception:
-                return None
+        if not _attachment_is_image(att):
+            continue
+        try:
+            return await att.read()
+        except Exception:
+            # Fallback to CDN URL if Attachment.read fails (expired signed URL edge cases).
+            url = getattr(att, "proxy_url", None) or getattr(att, "url", None)
+            data = await _read_url_bytes(str(url) if url else "")
+            if data:
+                return data
+
+    for emb in message.embeds:
+        for slot in (emb.image, emb.thumbnail):
+            if slot is None:
+                continue
+            url = getattr(slot, "proxy_url", None) or getattr(slot, "url", None)
+            data = await _read_url_bytes(str(url) if url else "")
+            if data:
+                return data
     return None
+
+
+async def _resolve_referenced_message(bot: commands.Bot, message: discord.Message) -> discord.Message | None:
+    """Always fetch by id when possible — gateway ``resolved`` can omit attachments."""
+    ref = message.reference
+    if ref is None or ref.message_id is None:
+        return None
+
+    channel = message.channel
+    if ref.channel_id and ref.channel_id != getattr(channel, "id", None):
+        found = bot.get_channel(ref.channel_id)
+        if found is None:
+            try:
+                found = await bot.fetch_channel(ref.channel_id)
+            except (discord.NotFound, discord.HTTPException, discord.Forbidden):
+                found = None
+        if found is not None:
+            channel = found
+
+    try:
+        return await channel.fetch_message(ref.message_id)
+    except (discord.NotFound, discord.HTTPException, discord.Forbidden, AttributeError):
+        resolved = ref.resolved
+        return resolved if isinstance(resolved, discord.Message) else None
 
 
 class QuoteCog(commands.Cog):
@@ -53,21 +135,12 @@ class QuoteCog(commands.Cog):
             mentions=list(message.mentions),
             content=message.content or "",
             has_reference=True,
-            referenced_text=None,  # length checked after fetch
-            settings={**settings, "min_length": 0},  # defer min_length until we have the target
+            referenced_text=None,
+            settings={**settings, "min_length": 0},
         ):
             return
 
-        referenced = message.reference.resolved
-        if referenced is None:
-            try:
-                channel = message.channel
-                if message.reference.channel_id and message.reference.channel_id != channel.id:
-                    channel = self.bot.get_channel(message.reference.channel_id) or channel
-                if message.reference.message_id:
-                    referenced = await channel.fetch_message(message.reference.message_id)
-            except (discord.NotFound, discord.HTTPException, discord.Forbidden):
-                return
+        referenced = await _resolve_referenced_message(self.bot, message)
         if not isinstance(referenced, discord.Message):
             return
 
@@ -75,14 +148,15 @@ class QuoteCog(commands.Cog):
         min_length = int(settings.get("min_length") or 0)
         if min_length > 0 and len(text) < min_length:
             return
-        if not text and not referenced.attachments:
+
+        attachment = await _first_image_bytes(referenced)
+        if not text and not attachment and not referenced.attachments:
             return
 
         author = referenced.author
         display = getattr(author, "display_name", None) or getattr(author, "name", "Unknown")
-        avatar = await _avatar_bytes(author)
-        attachment = await _first_image_attachment_bytes(referenced)
-        quote_body = text or "📎"
+        avatar = await _avatar_bytes(message.guild, author)
+        quote_body = text or ("📎" if attachment or referenced.attachments else "…")
 
         try:
             png = await asyncio.to_thread(

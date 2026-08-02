@@ -22,7 +22,7 @@ async function fileToDataUri(file: File): Promise<string> {
   })
 }
 
-export function BotProfilePage() {
+export function BotProfilePage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [profile, setProfile] = useState<BotProfileResponse | null>(null)
   const [nick, setNick] = useState('')
@@ -104,13 +104,16 @@ export function BotProfilePage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
-      <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <IdentificationCard size={22} className="text-primary" />
-          {t('botProfile.title')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{t('botProfile.intro')}</p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <IdentificationCard size={22} className="text-primary" />
+            {t('botProfile.title')}
+          </h1>
+          <p className="mt-1 text-sm text-muted">{t('botProfile.intro')}</p>
+        </div>
+      )}
+      {embedded && <p className="text-sm text-muted">{t('botProfile.intro')}</p>}
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-primary">{saved}</p>}

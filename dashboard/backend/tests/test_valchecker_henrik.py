@@ -30,6 +30,57 @@ async def test_henrik_semaphore_no_deadlock(monkeypatch):
     await client.close()
 
 
+@pytest.mark.asyncio
+async def test_nested_gather_under_outer_sem_deadlocks_with_max_2():
+    """outer sem=2 + each worker gather(hold, need) with global sem=2 deadlocks.
+
+    Mirrors the old /val-lb pattern that froze /val-profile.
+    """
+    global_sem = asyncio.Semaphore(2)
+    outer = asyncio.Semaphore(2)
+    holds = 0
+    holds_lock = asyncio.Lock()
+    both_held = asyncio.Event()
+
+    async def pair():
+        nonlocal holds
+        async with outer:
+            async def hold():
+                nonlocal holds
+                async with global_sem:
+                    async with holds_lock:
+                        holds += 1
+                        if holds >= 2:
+                            both_held.set()
+                    await asyncio.Event().wait()  # park while holding a global slot
+
+            async def need():
+                await both_held.wait()
+                async with global_sem:
+                    return True
+
+            await asyncio.gather(hold(), need())
+
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(asyncio.gather(pair(), pair()), timeout=0.5)
+
+
+@pytest.mark.asyncio
+async def test_nested_gather_safe_with_outer_sem_1():
+    global_sem = asyncio.Semaphore(2)
+    outer = asyncio.Semaphore(1)
+
+    async def pair():
+        async with outer:
+            async def one():
+                async with global_sem:
+                    await asyncio.sleep(0.01)
+
+            await asyncio.gather(one(), one())
+
+    await asyncio.wait_for(asyncio.gather(pair(), pair(), pair()), timeout=2)
+
+
 def test_friendly_error_mapping():
     assert "API" in henrik.friendly_error(henrik.HenrikError(401, "x"), "en")
     assert "not found" in henrik.friendly_error(henrik.HenrikError(404, "x"), "en").lower()

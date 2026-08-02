@@ -40,7 +40,7 @@ import { useT } from '../context/LanguageContext'
 
 // Where the dashboard admin can go fix a module-health issue.
 const MODULE_ROUTE: Record<string, string> = {
-  starboard: '/starboard',
+  starboard: '/messages?tab=starboard',
   valchecker: '/valchecker',
   birthdays: '/birthdays',
   daily_topic: '/daily-topic',

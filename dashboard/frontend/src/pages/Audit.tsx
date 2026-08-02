@@ -213,7 +213,7 @@ function downloadAuditCsv(entries: AuditEntry[], t: TranslateFn, locale: string)
   URL.revokeObjectURL(url)
 }
 
-export function AuditPage() {
+export function AuditPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const { lang } = useLanguage()
   const locale = lang === 'en' ? 'en-US' : 'ru-RU'
@@ -302,10 +302,17 @@ export function AuditPage() {
     <div className="flex max-w-4xl flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <ClipboardText size={22} className="text-primary" />
-            {t('audit.title')}
-          </h1>
+          {!embedded ? (
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <ClipboardText size={22} className="text-primary" />
+              {t('audit.title')}
+            </h1>
+          ) : (
+            <h2 className="flex items-center gap-2 font-semibold text-foreground">
+              <ClipboardText size={20} className="text-primary" />
+              {t('audit.title')}
+            </h2>
+          )}
           <p className="mt-1 text-sm text-muted">{t('audit.intro', { total: data?.total ?? '…' })}</p>
         </div>
         <div className="flex flex-wrap gap-2">

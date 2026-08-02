@@ -2630,6 +2630,8 @@ export function saveValCheckerSettings(settings: ValCheckerSettings): Promise<Va
 
 export interface AutoReactionRule {
   id: string
+  /** `list` = use `emojis`; `all_guild` = react with every custom emoji on the server (up to Discord’s 20-reaction limit). */
+  emoji_mode: 'list' | 'all_guild'
   emojis: string[]
   keywords: string[]
   channel_mode: 'all' | 'include'

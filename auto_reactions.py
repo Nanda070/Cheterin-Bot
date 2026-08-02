@@ -25,6 +25,12 @@ def _resolve_emoji(guild: discord.Guild, token: str):
     return token
 
 
+def _emoji_targets(guild: discord.Guild, rule: dict) -> list:
+    if rule.get("emoji_mode") == "all_guild":
+        return auto_reactions_core.guild_emoji_tokens(guild.emojis)
+    return list(rule.get("emojis") or [])
+
+
 class AutoReactionsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -50,12 +56,18 @@ class AutoReactionsCog(commands.Cog):
 
         seen: set[str] = set()
         for rule in rules:
-            for token in rule.get("emojis") or []:
-                key = token.strip()
-                if not key or key in seen:
+            for token in _emoji_targets(message.guild, rule):
+                if isinstance(token, discord.Emoji):
+                    key = str(token.id)
+                    emoji = token
+                else:
+                    key = str(token).strip()
+                    if not key:
+                        continue
+                    emoji = _resolve_emoji(message.guild, key)
+                if key in seen:
                     continue
                 seen.add(key)
-                emoji = _resolve_emoji(message.guild, key)
                 try:
                     await message.add_reaction(emoji)
                 except discord.HTTPException:

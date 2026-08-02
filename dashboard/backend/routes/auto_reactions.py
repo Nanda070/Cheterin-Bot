@@ -20,14 +20,25 @@ def _validate_rules(rules) -> tuple[list[dict] | None, str | None]:
         rule_id = raw.get("id")
         if rule_id is None or not isinstance(rule_id, str) or not rule_id.strip():
             rule_id = auto_reactions_core.new_rule_id()
+
+        emoji_mode = raw.get("emoji_mode", "list")
+        if emoji_mode not in auto_reactions_core.EMOJI_MODES:
+            return None, "invalid_emoji_mode"
+
         emojis = raw.get("emojis") or []
-        if not isinstance(emojis, list) or not emojis:
+        if not isinstance(emojis, list):
             return None, "invalid_emojis"
-        if len(emojis) > auto_reactions_core.MAX_EMOJIS_PER_RULE:
-            return None, "too_many_emojis"
-        for e in emojis:
-            if not auto_reactions_core.is_valid_emoji_token(e):
-                return None, "invalid_emoji"
+        if emoji_mode == "list":
+            if not emojis:
+                return None, "invalid_emojis"
+            if len(emojis) > auto_reactions_core.MAX_EMOJIS_PER_RULE:
+                return None, "too_many_emojis"
+            for e in emojis:
+                if not auto_reactions_core.is_valid_emoji_token(e):
+                    return None, "invalid_emoji"
+        else:
+            # all_guild — emojis resolved live from the guild; ignore saved list
+            emojis = []
 
         keywords = raw.get("keywords") or []
         if not isinstance(keywords, list):
@@ -68,6 +79,7 @@ def _validate_rules(rules) -> tuple[list[dict] | None, str | None]:
 
         cleaned.append({
             "id": rule_id.strip(),
+            "emoji_mode": emoji_mode,
             "emojis": [str(e).strip() for e in emojis],
             "keywords": [str(k).strip() for k in keywords],
             "channel_mode": mode,

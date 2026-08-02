@@ -26,7 +26,6 @@ import { CreditsPage } from './pages/Credits'
 import { ServerLogPage } from './pages/ServerLog'
 import { LevelsPage } from './pages/Levels'
 import { VoiceStatsPage } from './pages/VoiceStats'
-import { AuditPage } from './pages/Audit'
 import { StreamsPage } from './pages/Streams'
 import { LeaderboardPage } from './pages/Leaderboard'
 import { NotFoundPage } from './pages/NotFound'
@@ -47,8 +46,6 @@ import { CtdPage } from './pages/Ctd'
 import { CustomCommandsPage } from './pages/CustomCommands'
 import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
-import { BotProfilePage } from './pages/BotProfile'
-import { StarboardPage } from './pages/Starboard'
 import { AutoReactionsPage } from './pages/AutoReactions'
 import { ValCheckerPage } from './pages/ValChecker'
 
@@ -112,10 +109,10 @@ function App() {
               <Route path="invites" element={<Navigate to="/server-entry?tab=invites" replace />} />
               <Route path="timed-roles" element={<Navigate to="/members?tab=timedRoles" replace />} />
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
-              <Route path="starboard" element={<StarboardPage />} />
+              <Route path="starboard" element={<Navigate to="/messages?tab=starboard" replace />} />
               <Route path="valchecker" element={<ValCheckerPage />} />
               <Route path="auto-reactions" element={<AutoReactionsPage />} />
-              <Route path="bot-profile" element={<BotProfilePage />} />
+              <Route path="bot-profile" element={<Navigate to="/settings?tab=botProfile" replace />} />
               <Route path="automod" element={<AutoModPage />} />
               <Route path="server-entry" element={<ServerEntryPage />} />
               <Route path="antiraid" element={<Navigate to="/lockdown?tab=antiraid" replace />} />
@@ -128,7 +125,7 @@ function App() {
               <Route path="streams" element={<StreamsPage />} />
               <Route path="serverlog" element={<ServerLogPage />} />
               <Route path="voice-stats" element={<VoiceStatsPage />} />
-              <Route path="audit" element={<AuditPage />} />
+              <Route path="audit" element={<Navigate to="/settings?tab=audit" replace />} />
               <Route path="welcome" element={<Navigate to="/server-entry" replace />} />
               <Route path="auto-roles" element={<Navigate to="/server-entry?tab=autoroles" replace />} />
               <Route path="config" element={<Navigate to="/lockdown" replace />} />

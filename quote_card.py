@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import os
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 CARD_W = 900
 PAD = 40
@@ -16,6 +16,9 @@ PANEL = (22, 18, 24)
 TEXT = (236, 232, 230)
 MUTED = (160, 150, 148)
 QUOTE_MARK = (212, 69, 86, 180)
+# Keep photos readable on Discord clients (was easy to miss at 200px).
+MAX_ATTACH_W = CARD_W - 2 * PAD - 24
+MAX_ATTACH_H = 360
 
 FONT_BOLD = [
     "C:/Windows/Fonts/arialbd.ttf",
@@ -38,10 +41,21 @@ def _font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont | ImageFon
     return ImageFont.load_default()
 
 
+def _load_rgb(image_bytes: bytes) -> Image.Image:
+    """Decode first frame; honour EXIF orientation (phone photos)."""
+    raw = Image.open(io.BytesIO(image_bytes))
+    try:
+        raw.seek(0)
+    except EOFError:
+        pass
+    raw = ImageOps.exif_transpose(raw) or raw
+    return raw.convert("RGB")
+
+
 def _circle_avatar(avatar_bytes: bytes | None, size: int) -> Image.Image:
     if avatar_bytes:
         try:
-            avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGB").resize((size, size), Image.LANCZOS)
+            avatar = _load_rgb(avatar_bytes).resize((size, size), Image.LANCZOS)
         except OSError:
             avatar = Image.new("RGB", (size, size), (60, 50, 55))
     else:
@@ -129,13 +143,12 @@ def render_quote_card(
     thumb_img = None
     if attachment_bytes:
         try:
-            raw = Image.open(io.BytesIO(attachment_bytes)).convert("RGB")
-            tw = min(280, CARD_W - 2 * PAD)
-            ratio = tw / max(1, raw.width)
-            th = int(raw.height * ratio)
-            th = min(th, 200)
+            raw = _load_rgb(attachment_bytes)
+            scale = min(MAX_ATTACH_W / max(1, raw.width), MAX_ATTACH_H / max(1, raw.height), 1.0)
+            tw = max(1, int(raw.width * scale))
+            th = max(1, int(raw.height * scale))
             thumb_img = raw.resize((tw, th), Image.LANCZOS)
-            thumb_h = th + 20
+            thumb_h = th + 24
         except OSError:
             thumb_img = None
 
@@ -180,10 +193,11 @@ def render_quote_card(
     for i, line in enumerate(lines):
         draw.text((text_x, qy + i * line_h), line, font=font_quote, fill=TEXT)
 
-    # Optional attachment thumbnail
+    # Optional attachment photo (full-width under the quote text)
     if thumb_img is not None:
         ty = qy + quote_h + 12
-        card_rgba.paste(thumb_img, (text_x, ty))
+        tx = PAD + 24
+        card_rgba.paste(thumb_img.convert("RGBA"), (tx, ty))
 
     out = io.BytesIO()
     card_rgba.convert("RGB").save(out, format="PNG", optimize=True)

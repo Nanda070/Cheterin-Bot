@@ -1,5 +1,14 @@
-import { Bell, Clock, GlobeHemisphereWest, Warning } from '@phosphor-icons/react'
+import {
+  Bell,
+  ClipboardText,
+  Clock,
+  GearSix,
+  GlobeHemisphereWest,
+  IdentificationCard,
+  Warning,
+} from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   fetchChannels,
   fetchLanguage,
@@ -20,6 +29,8 @@ import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
+import { AuditPage } from './Audit'
+import { BotProfilePage } from './BotProfile'
 
 const LANGUAGE_OPTIONS = [
   { value: 'ru', labelKey: 'settings.lang.ru' },
@@ -43,7 +54,47 @@ const defaultAlerts: OwnerAlertsSettings = {
   weekly_digest_channel_id: '',
 }
 
-export function ServerSettingsPage() {
+type SettingsTab = 'general' | 'botProfile' | 'audit'
+
+function parseSettingsTab(raw: string | null): SettingsTab {
+  if (raw === 'botProfile' || raw === 'audit') return raw
+  return 'general'
+}
+
+function TabBar({
+  tab,
+  setTab,
+  t,
+}: {
+  tab: SettingsTab
+  setTab: (t: SettingsTab) => void
+  t: (key: string) => string
+}) {
+  const tabs: { key: SettingsTab; labelKey: string; icon: typeof GearSix }[] = [
+    { key: 'general', labelKey: 'settings.tab.general', icon: GearSix },
+    { key: 'botProfile', labelKey: 'settings.tab.botProfile', icon: IdentificationCard },
+    { key: 'audit', labelKey: 'settings.tab.audit', icon: ClipboardText },
+  ]
+  return (
+    <div className="flex flex-wrap gap-1 border-b border-border">
+      {tabs.map(({ key, labelKey, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setTab(key)}
+          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
+            tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          <Icon size={15} />
+          {t(labelKey)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function GeneralSettings() {
   const t = useT()
   const [language, setLanguage] = useState<ServerLanguage['code']>('ru')
   const [loading, setLoading] = useState(true)
@@ -155,14 +206,6 @@ export function ServerSettingsPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <GlobeHemisphereWest size={22} className="text-primary" />
-          {t('settings.title')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">{t('settings.intro')}</p>
-      </div>
-
       {error && (
         <div className="rounded-control border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">{error}</div>
       )}
@@ -203,7 +246,10 @@ export function ServerSettingsPage() {
                 <ul className="mt-1 list-inside list-disc text-muted">
                   {health.module_issues.map((issue, index) => (
                     <li key={index}>
-                      {issue.module}: {issue.kind === 'missing_role' ? t('setupHealth.missingRole') : t('setupHealth.missingChannel')}
+                      {issue.module}:{' '}
+                      {issue.kind === 'missing_role'
+                        ? t('setupHealth.missingRole')
+                        : t('setupHealth.missingChannel')}
                     </li>
                   ))}
                 </ul>
@@ -362,7 +408,9 @@ export function ServerSettingsPage() {
               min={2}
               max={100}
               value={alerts.module_error_threshold}
-              onChange={(e) => setAlerts((a) => ({ ...a, module_error_threshold: Number(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setAlerts((a) => ({ ...a, module_error_threshold: Number(e.target.value) || 0 }))
+              }
               className={inputClass}
               disabled={alertsBusy}
             />
@@ -378,6 +426,34 @@ export function ServerSettingsPage() {
           </Button>
         </div>
       </section>
+    </div>
+  )
+}
+
+export function ServerSettingsPage() {
+  const t = useT()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseSettingsTab(searchParams.get('tab'))
+  const setTab = (next: SettingsTab) => {
+    if (next === 'general') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+          <GlobeHemisphereWest size={22} className="text-primary" />
+          {t('settings.title')}
+        </h1>
+        <p className="mt-1 text-sm text-muted">{t('settings.intro')}</p>
+      </div>
+
+      <TabBar tab={tab} setTab={setTab} t={t} />
+
+      {tab === 'general' && <GeneralSettings />}
+      {tab === 'botProfile' && <BotProfilePage embedded />}
+      {tab === 'audit' && <AuditPage embedded />}
     </div>
   )
 }

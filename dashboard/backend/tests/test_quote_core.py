@@ -80,3 +80,49 @@ def test_render_quote_card_png_bytes():
     )
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
     assert len(png) > 200
+
+
+def test_render_quote_card_with_attachment():
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (320, 240), (200, 40, 40)).save(buf, format="PNG")
+    att = buf.getvalue()
+    png = quote_card.render_quote_card(
+        display_name="Ada",
+        quote_text="13414",
+        avatar_bytes=None,
+        attachment_bytes=att,
+    )
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+    # With a photo the card should be taller than a text-only quote.
+    tall = Image.open(io.BytesIO(png))
+    short = Image.open(
+        io.BytesIO(
+            quote_card.render_quote_card(
+                display_name="Ada",
+                quote_text="13414",
+                avatar_bytes=None,
+                attachment_bytes=None,
+            )
+        )
+    )
+    assert tall.size[1] > short.size[1]
+
+
+def test_attachment_is_image_helpers():
+    import quote as quote_cog
+
+    class Att:
+        def __init__(self, content_type="", filename="", width=None, height=None):
+            self.content_type = content_type
+            self.filename = filename
+            self.width = width
+            self.height = height
+
+    assert quote_cog._attachment_is_image(Att(content_type="image/png")) is True
+    assert quote_cog._attachment_is_image(Att(filename="shot.JPEG")) is True
+    assert quote_cog._attachment_is_image(Att(width=100, height=80)) is True
+    assert quote_cog._attachment_is_image(Att(content_type="text/plain", filename="a.txt")) is False

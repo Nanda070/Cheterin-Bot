@@ -11,10 +11,13 @@ MODULE_NAME = "auto_reactions"
 
 MAX_RULES = 25
 MAX_EMOJIS_PER_RULE = 10
+# Discord allows at most 20 unique reactions on a message.
+MAX_GUILD_EMOJIS_REACT = 20
 MAX_KEYWORDS_PER_RULE = 30
 MAX_KEYWORD_LEN = 100
 MAX_EMOJI_LEN = 64
 CHANNEL_MODES = frozenset({"all", "include"})
+EMOJI_MODES = frozenset({"list", "all_guild"})
 
 _CUSTOM_EMOJI_RE = re.compile(r"^<a?:\w+:\d+>$")
 
@@ -37,9 +40,13 @@ def _normalize_rule(raw: dict) -> dict | None:
     if not rule_id:
         return None
 
+    emoji_mode = raw.get("emoji_mode") or "list"
+    if emoji_mode not in EMOJI_MODES:
+        emoji_mode = "list"
+
     emojis_raw = raw.get("emojis") or []
     if not isinstance(emojis_raw, list):
-        return None
+        emojis_raw = []
     emojis = [str(e).strip() for e in emojis_raw if isinstance(e, str) and str(e).strip()]
     emojis = emojis[:MAX_EMOJIS_PER_RULE]
 
@@ -69,7 +76,8 @@ def _normalize_rule(raw: dict) -> dict | None:
 
     return {
         "id": rule_id,
-        "emojis": emojis,
+        "emoji_mode": emoji_mode,
+        "emojis": [] if emoji_mode == "all_guild" else emojis,
         "keywords": keywords,
         "channel_mode": mode,
         "channel_ids": _id_list("channel_ids"),
@@ -98,7 +106,7 @@ def save_config(guild_id: int, *, enabled: bool, rules: list[dict]) -> dict:
         rule = _normalize_rule(raw if isinstance(raw, dict) else {})
         if rule is None:
             continue
-        if not rule["emojis"]:
+        if rule["emoji_mode"] != "all_guild" and not rule["emojis"]:
             continue
         normalized_rules.append(rule)
     data["enabled"] = bool(enabled)
@@ -151,10 +159,20 @@ def matching_rules_for_message(
             continue
         if not keywords_match(rule.get("keywords") or [], content):
             continue
+        if rule.get("emoji_mode") == "all_guild":
+            matched.append(rule)
+            continue
         if not rule.get("emojis"):
             continue
         matched.append(rule)
     return matched
+
+
+def guild_emoji_tokens(guild_emojis) -> list:
+    """Return up to Discord's per-message reaction limit of guild emoji objects."""
+    if not guild_emojis:
+        return []
+    return list(guild_emojis)[:MAX_GUILD_EMOJIS_REACT]
 
 
 def is_valid_emoji_token(token: str) -> bool:
