@@ -10,7 +10,7 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.autoReactions': 'Auto-reactions with channel scope and exclusions',
   'whatsNew.item.botProfile': 'Per-guild bot nick, avatar, and banner',
   'whatsNew.item.caseTimeline': 'Member case timeline + warn / timeout from the panel',
-  'whatsNew.item.profileCard': '/profile card and Levels preview with frames and titles',
+  'whatsNew.item.profileCard': '/levels profile card and Levels preview with frames and titles',
   'whatsNew.item.commandPalette': 'Ctrl+K jump palette; hide disabled modules in the sidebar',
   'whatsNew.item.weeklyDigest': 'Weekly settings digest for admins',
   'whatsNew.item.gameHost': 'Mafia/Bunker host controls and turn sound on public pages',

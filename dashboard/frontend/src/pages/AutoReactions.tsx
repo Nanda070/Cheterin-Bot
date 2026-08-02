@@ -82,27 +82,32 @@ export function AutoReactionsPage({ embedded = false }: { embedded?: boolean }) 
 
   return (
     <div className={`flex flex-col gap-5 pb-4 ${embedded ? '' : 'max-w-3xl'}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          {!embedded ? (
+      {!embedded && (
+        <div className="flex items-center justify-between gap-3">
+          <div>
             <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
               <Smiley size={22} className="text-primary" />
               {t('autoReactions.title')}
             </h1>
-          ) : (
-            <h2 className="flex items-center gap-2 font-semibold text-foreground">
-              <Smiley size={20} className="text-primary" />
-              {t('autoReactions.title')}
-            </h2>
-          )}
-          <p className="mt-1 text-sm text-muted">{t('autoReactions.intro')}</p>
+            <p className="mt-1 text-sm text-muted">{t('autoReactions.intro')}</p>
+          </div>
+          <Toggle
+            checked={settings.enabled}
+            onChange={(v) => setSettings({ ...settings, enabled: v })}
+            label={settings.enabled ? t('autoReactions.moduleOn') : t('autoReactions.moduleOff')}
+          />
         </div>
-        <Toggle
-          checked={settings.enabled}
-          onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? t('autoReactions.moduleOn') : t('autoReactions.moduleOff')}
-        />
-      </div>
+      )}
+
+      {embedded && (
+        <div className="flex items-center justify-between gap-3">
+          <Toggle
+            checked={settings.enabled}
+            onChange={(v) => setSettings({ ...settings, enabled: v })}
+            label={settings.enabled ? t('autoReactions.moduleOn') : t('autoReactions.moduleOff')}
+          />
+        </div>
+      )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-primary">{saved}</p>}
@@ -259,7 +264,11 @@ export function AutoReactionsPage({ embedded = false }: { embedded?: boolean }) 
           {t('autoReactions.addRule')}
         </Button>
         <Button variant="primary" onClick={save} disabled={busy}>
-          {busy ? t('common.saving') : t('common.save')}
+          {busy
+            ? t('common.saving')
+            : embedded
+              ? t('fun.autoEmoji.saveRules')
+              : t('common.save')}
         </Button>
       </div>
     </div>

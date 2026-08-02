@@ -12,10 +12,11 @@ _g = si.localize_group
 # Keys used by tests to verify locale coverage.
 SLASH_KEYS: tuple[str, ...] = (
     "help",
+    "levels_group",
     "rank",
     "profile",
+    "xp",  # levels manage subcommand uses slash.xp keys
     "leaders",
-    "xp",
     "wordle",
     "russian_roulette",
     "verify_setup",
@@ -35,9 +36,10 @@ SLASH_KEYS: tuple[str, ...] = (
     "unmute",
     "unban",
     "clear",
-    "blackjack",
+    "casino_group",
     "slots",
     "coinflip",
+    "blackjack",
     "casino_top",
     "daily",
     "balance",
@@ -58,12 +60,28 @@ SLASH_KEYS: tuple[str, ...] = (
     "button_role",
     "giveaway",
     "event",
+    "val_group",
     "val_setup",
     "val_profile",
     "val_match",
     "val_compare",
     "val_lb",
     "val_status",
+    "relations_group",
+    "relations_hug",
+    "relations_kiss",
+    "relations_slap",
+    "relations_pat",
+    "relations_highfive",
+    "relations_cuddle",
+    "relations_poke",
+    "relations_card",
+    "relations_top",
+    "relations_marry",
+    "relations_divorce",
+    "relations_marriages_top",
+    "relations_ship",
+    "relations_date",
 )
 
 
@@ -86,9 +104,10 @@ def register_help(cog) -> None:
 
 
 def register_xp(cog) -> None:
-    _cmd(cog.xp_command, "xp")
+    _grp(cog.levels_group, "levels_group")
     _cmd(cog.rank_command, "rank")
     _cmd(cog.profile_command, "profile")
+    _cmd(cog.xp_command, "xp")
     _cmd(cog.leaders_command, "leaders")
 
 
@@ -148,13 +167,16 @@ def register_moderation(cog) -> None:
 
 
 def register_blackjack(cog) -> None:
-    _cmd(cog.blackjack_command, "blackjack")
+    # Blackjack is a subcommand of /casino — see register_casino.
+    return
 
 
-def register_casino(cog, casino_top_command) -> None:
+def register_casino(cog, casino_top_command=None) -> None:
+    _grp(cog.casino_group, "casino_group")
     _cmd(cog.slots_command, "slots")
     _cmd(cog.coinflip_command, "coinflip")
-    _cmd(casino_top_command, "casino_top")
+    _cmd(cog.casino_blackjack, "blackjack")
+    _cmd(cog.casino_top_command, "casino_top")
 
 
 def register_economy(cog) -> None:
@@ -204,9 +226,28 @@ def register_events(cog) -> None:
 
 
 def register_valchecker(cog) -> None:
+    _grp(cog.val_group, "val_group")
     _cmd(cog.val_setup, "val_setup")
     _cmd(cog.val_profile, "val_profile")
     _cmd(cog.val_match, "val_match")
     _cmd(cog.val_compare, "val_compare")
     _cmd(cog.val_lb, "val_lb")
     _cmd(cog.val_status, "val_status")
+
+
+def register_relations(cog) -> None:
+    _grp(cog.relations_group, "relations_group")
+    _cmd(cog.relations_hug, "relations_hug")
+    _cmd(cog.relations_kiss, "relations_kiss")
+    _cmd(cog.relations_slap, "relations_slap")
+    _cmd(cog.relations_pat, "relations_pat")
+    _cmd(cog.relations_highfive, "relations_highfive")
+    _cmd(cog.relations_cuddle, "relations_cuddle")
+    _cmd(cog.relations_poke, "relations_poke")
+    _cmd(cog.relations_card, "relations_card")
+    _cmd(cog.relations_top, "relations_top")
+    _cmd(cog.relations_marry, "relations_marry")
+    _cmd(cog.relations_divorce, "relations_divorce")
+    _cmd(cog.relations_marriages_top, "relations_marriages_top")
+    _cmd(cog.relations_ship, "relations_ship")
+    _cmd(cog.relations_date, "relations_date")

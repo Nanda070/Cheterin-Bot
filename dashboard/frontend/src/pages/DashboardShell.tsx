@@ -4,7 +4,6 @@ import {
   Cake,
   CalendarCheck,
   Crosshair,
-  ChatTeardropText,
   Chats,
   Confetti,
   ChartBar,
@@ -12,19 +11,16 @@ import {
   ChatCircleText,
   Coins,
   Crown,
-  DiceThree,
-  FilmSlate,
   DoorOpen,
   GlobeHemisphereWest,
   Headset,
+  Heart,
   House,
   HouseLine,
-  Lightbulb,
   List,
   ListMagnifyingGlass,
   MagnifyingGlass,
   Megaphone,
-  Package,
   Shield,
   ShieldWarning,
   SignOut,
@@ -75,57 +71,48 @@ const NAV_GROUPS: NavGroup[] = [
     items: [{ labelKey: 'nav.home', icon: HouseLine, to: '/' }],
   },
   {
-    titleKey: 'nav.group.activity',
+    titleKey: 'nav.group.engage',
     icon: TrendUp,
     items: [
       { labelKey: 'nav.levels', icon: ChartBar, to: '/levels', moduleKey: 'levels' },
       { labelKey: 'nav.economy', icon: Coins, to: '/economy', moduleKey: 'economy' },
-      { labelKey: 'nav.casino', icon: DiceThree, to: '/casino', moduleKey: 'casino' },
       { labelKey: 'nav.voiceStats', icon: ChartLine, to: '/voice-stats' },
-      { labelKey: 'nav.voiceRooms', icon: Headset, to: '/voice-rooms' },
     ],
   },
   {
-    titleKey: 'nav.group.gta5rp',
-    icon: Crosshair,
-    items: [
-      { labelKey: 'nav.family', icon: House, to: '/family', moduleKey: 'family' },
-      { labelKey: 'nav.supply', icon: Package, to: '/supply' },
-      { labelKey: 'nav.valchecker', icon: Crosshair, to: '/valchecker', moduleKey: 'valchecker' },
-    ],
-  },
-  {
-    titleKey: 'nav.group.community',
+    titleKey: 'nav.group.people',
     icon: Users,
     items: [
-      { labelKey: 'nav.feedback', icon: ChatCircleText, to: '/feedback' },
+      { labelKey: 'nav.relations', icon: Heart, to: '/relations', moduleKey: 'relations' },
+      { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays', moduleKey: 'birthdays' },
+      { labelKey: 'nav.voiceRooms', icon: Headset, to: '/voice-rooms' },
       { labelKey: 'nav.events', icon: CalendarCheck, to: '/events' },
+      { labelKey: 'nav.feedback', icon: ChatCircleText, to: '/feedback' },
       { labelKey: 'nav.messages', icon: Chats, to: '/messages', moduleKey: 'messages' },
       { labelKey: 'nav.reactionRoles', icon: Stack, to: '/reaction-roles' },
-      { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays', moduleKey: 'birthdays' },
     ],
   },
   {
-    titleKey: 'nav.group.content',
-    icon: FilmSlate,
+    titleKey: 'nav.group.play',
+    icon: Confetti,
     items: [
       { labelKey: 'nav.fun', icon: Confetti, to: '/fun', moduleKey: 'fun' },
-      { labelKey: 'nav.streams', icon: Broadcast, to: '/streams' },
-      { labelKey: 'nav.dailyTopic', icon: Lightbulb, to: '/daily-topic', moduleKey: 'dailyTopic' },
       { labelKey: 'nav.mafia', icon: Skull, to: '/mafia', moduleKey: 'mafia' },
       { labelKey: 'nav.bunker', icon: Vault, to: '/bunker', moduleKey: 'bunker' },
+      { labelKey: 'nav.valchecker', icon: Crosshair, to: '/valchecker', moduleKey: 'valchecker' },
+      { labelKey: 'nav.family', icon: House, to: '/family', moduleKey: 'family' },
+      { labelKey: 'nav.streams', icon: Broadcast, to: '/streams' },
     ],
   },
   {
-    titleKey: 'nav.group.admin',
+    titleKey: 'nav.group.server',
     icon: Wrench,
     items: [
-      { labelKey: 'nav.serverlog', icon: ListMagnifyingGlass, to: '/serverlog' },
       { labelKey: 'nav.lockdown', icon: ShieldWarning, to: '/lockdown' },
       { labelKey: 'nav.automod', icon: Shield, to: '/automod', moduleKey: 'automod' },
+      { labelKey: 'nav.serverlog', icon: ListMagnifyingGlass, to: '/serverlog' },
       { labelKey: 'nav.serverEntry', icon: DoorOpen, to: '/server-entry' },
       { labelKey: 'nav.members', icon: UsersThree, to: '/members' },
-      { labelKey: 'nav.customCommands', icon: ChatTeardropText, to: '/custom-commands', moduleKey: 'customCommands' },
       { labelKey: 'nav.settings', icon: GlobeHemisphereWest, to: '/settings' },
     ],
   },
@@ -151,38 +138,19 @@ function navItemActive(to: string, pathname: string, search: string): boolean {
 function SidebarNav({
   onNavigate,
   itemBase,
+  modules,
+  showDisabled,
+  onShowDisabledChange,
 }: {
   onNavigate?: () => void
   itemBase: string
+  modules: Record<string, boolean> | null
+  showDisabled: boolean
+  onShowDisabledChange: (v: boolean) => void
 }) {
   const { user } = useAuth()
   const t = useT()
   const location = useLocation()
-  const [modules, setModules] = useState<Record<string, boolean> | null>(null)
-  const [showDisabled, setShowDisabled] = useState(() => {
-    try {
-      const stored = window.localStorage.getItem(SHOW_DISABLED_MODULES_KEY)
-      // Default ON so disabled modules stay visible until the user hides them.
-      return stored === null ? true : stored === '1'
-    } catch {
-      return true
-    }
-  })
-
-  useEffect(() => {
-    fetchModules()
-      .then(setModules)
-      .catch(() => setModules({}))
-  }, [user?.active_guild_id])
-
-  const toggleShowDisabled = (v: boolean) => {
-    setShowDisabled(v)
-    try {
-      window.localStorage.setItem(SHOW_DISABLED_MODULES_KEY, v ? '1' : '0')
-    } catch {
-      /* localStorage unavailable (privacy mode, test env) — in-memory toggle still works */
-    }
-  }
 
   const isModuleDisabled = (moduleKey?: string) => !!moduleKey && modules?.[moduleKey] === false
 
@@ -211,17 +179,19 @@ function SidebarNav({
         </div>
       </Link>
       <nav className="flex flex-col gap-5" aria-label={t('nav.menu')}>
-        {NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).map((group, groupIndex) => (
+        {NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).map((group, groupIndex) => {
+          const visibleItems = group.items
+            .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
+            .filter((item) => showDisabled || !isModuleDisabled(item.moduleKey))
+          if (visibleItems.length === 0) return null
+          return (
           <div key={group.titleKey} className="animate-fade-in-up" style={{ animationDelay: `${groupIndex * 60}ms` }}>
             <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
               <group.icon size={13} weight="bold" className="shrink-0" />
               {t(group.titleKey)}
             </p>
             <div className="flex flex-col gap-0.5">
-              {group.items
-                .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
-                .filter((item) => showDisabled || !isModuleDisabled(item.moduleKey))
-                .map(({ labelKey, icon: SectionIcon, to, moduleKey }) => {
+              {visibleItems.map(({ labelKey, icon: SectionIcon, to, moduleKey }) => {
                   const disabled = isModuleDisabled(moduleKey)
                   return (
                     <NavLink
@@ -261,10 +231,11 @@ function SidebarNav({
                 })}
             </div>
           </div>
-        ))}
+          )
+        })}
       </nav>
       <div className="mt-5 border-t border-border px-2.5 pt-4">
-        <Toggle checked={showDisabled} onChange={toggleShowDisabled} label={t('nav.showDisabledModules')} />
+        <Toggle checked={showDisabled} onChange={onShowDisabledChange} label={t('nav.showDisabledModules')} />
       </div>
     </>
   )
@@ -278,15 +249,43 @@ export function DashboardShell() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [modules, setModules] = useState<Record<string, boolean> | null>(null)
+  const [showDisabled, setShowDisabled] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(SHOW_DISABLED_MODULES_KEY)
+      // Default OFF — only show enabled modules until the user opts in.
+      return stored === null ? false : stored === '1'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    fetchModules()
+      .then(setModules)
+      .catch(() => setModules({}))
+  }, [user?.active_guild_id])
+
+  const toggleShowDisabled = (v: boolean) => {
+    setShowDisabled(v)
+    try {
+      window.localStorage.setItem(SHOW_DISABLED_MODULES_KEY, v ? '1' : '0')
+    } catch {
+      /* localStorage unavailable (privacy mode, test env) — in-memory toggle still works */
+    }
+  }
+
+  const isModuleDisabled = (moduleKey?: string) => !!moduleKey && modules?.[moduleKey] === false
 
   const paletteItems = useMemo(
     () =>
       NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).flatMap((group) =>
         group.items
           .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
+          .filter((item) => showDisabled || !isModuleDisabled(item.moduleKey))
           .map((item) => ({ id: item.to, title: t(item.labelKey), group: t(group.titleKey) })),
       ),
-    [user?.is_super_admin, user?.is_main_guild, t],
+    [user?.is_super_admin, user?.is_main_guild, t, modules, showDisabled],
   )
 
   useEffect(() => {
@@ -396,7 +395,12 @@ export function DashboardShell() {
 
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-72 shrink-0 overflow-y-auto border-r border-border p-4 md:block">
-          <SidebarNav itemBase={itemBase} />
+          <SidebarNav
+            itemBase={itemBase}
+            modules={modules}
+            showDisabled={showDisabled}
+            onShowDisabledChange={toggleShowDisabled}
+          />
         </aside>
 
         {mobileNavOpen && (
@@ -411,7 +415,13 @@ export function DashboardShell() {
               id="dashboard-mobile-nav"
               className="absolute inset-y-0 left-0 flex w-[min(20rem,85vw)] flex-col overflow-y-auto border-r border-border bg-background p-4 shadow-lg"
             >
-              <SidebarNav itemBase={itemBase} onNavigate={() => setMobileNavOpen(false)} />
+              <SidebarNav
+                itemBase={itemBase}
+                modules={modules}
+                showDisabled={showDisabled}
+                onShowDisabledChange={toggleShowDisabled}
+                onNavigate={() => setMobileNavOpen(false)}
+              />
             </aside>
           </div>
         )}

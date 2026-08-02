@@ -12,6 +12,7 @@ import invites_db
 import mafia_db
 import polls_db
 import starboard_db
+import relations_db
 import valchecker_db
 import stats_db
 import sticky_roles_core
@@ -72,6 +73,7 @@ from .routes.bot_profile import routes as bot_profile_routes
 from .routes.starboard import routes as starboard_routes
 from .routes.auto_reactions import routes as auto_reactions_routes
 from .routes.quote import routes as quote_routes
+from .routes.relations import routes as relations_routes
 from .routes.valchecker import routes as valchecker_routes
 from .routes.modules import routes as modules_routes
 from .audit_middleware import audit_middleware
@@ -111,6 +113,7 @@ def create_app(
     invites_db.init()
     sticky_roles_core.init()
     starboard_db.init()
+    relations_db.init()
     valchecker_db.init()
 
     app = web.Application(middlewares=[json_error_middleware, guild_context_middleware, audit_middleware])
@@ -171,6 +174,7 @@ def create_app(
     app.add_routes(starboard_routes)
     app.add_routes(auto_reactions_routes)
     app.add_routes(quote_routes)
+    app.add_routes(relations_routes)
     app.add_routes(valchecker_routes)
     app.add_routes(modules_routes)
 

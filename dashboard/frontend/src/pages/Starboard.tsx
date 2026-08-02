@@ -8,6 +8,7 @@ import {
   type StarboardSettings,
 } from '../api/client'
 import { formatApiError } from '../api/errors'
+import { EmojiPickerTabs } from '../components/EmojiPickerTabs'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
@@ -90,35 +91,31 @@ export function StarboardPage({ embedded = false }: { embedded?: boolean }) {
             placeholder={t('starboard.channelPlaceholder')}
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="sb-emoji">
-              {t('starboard.emoji')}
-            </label>
-            <input
-              id="sb-emoji"
-              value={settings.emoji}
-              onChange={(e) => setSettings({ ...settings, emoji: e.target.value })}
-              className={inputClass}
-              maxLength={64}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-muted" htmlFor="sb-threshold">
-              {t('starboard.threshold')}
-            </label>
-            <input
-              id="sb-threshold"
-              type="number"
-              min={1}
-              max={100}
-              value={settings.threshold}
-              onChange={(e) =>
-                setSettings({ ...settings, threshold: Number(e.target.value) })
-              }
-              className={inputClass}
-            />
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-muted" htmlFor="sb-emoji">
+            {t('starboard.emoji')}
+          </label>
+          <EmojiPickerTabs
+            id="sb-emoji"
+            value={settings.emoji}
+            onChange={(emoji) => setSettings({ ...settings, emoji })}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-muted" htmlFor="sb-threshold">
+            {t('starboard.threshold')}
+          </label>
+          <input
+            id="sb-threshold"
+            type="number"
+            min={1}
+            max={100}
+            value={settings.threshold}
+            onChange={(e) =>
+              setSettings({ ...settings, threshold: Number(e.target.value) })
+            }
+            className={`${inputClass} max-w-[12rem]`}
+          />
         </div>
         <Toggle
           checked={settings.self_star}

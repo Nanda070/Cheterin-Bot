@@ -10,6 +10,7 @@ import legal from './ru/legal'
 import landing from './ru/landing'
 import whatsNew from './ru/whatsNew'
 import credits from './ru/credits'
+import sans from './ru/sans'
 
 const ru: TranslationDict = {
   ...shell,
@@ -23,6 +24,7 @@ const ru: TranslationDict = {
   ...landing,
   ...whatsNew,
   ...credits,
+  ...sans,
 }
 
 export default ru

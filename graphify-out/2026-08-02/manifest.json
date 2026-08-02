@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.tsx": {
-    "mtime": 1785642804.872044,
-    "ast_hash": "0bcd3b60f559364e69e195afe4e96abb",
+    "mtime": 1785642901.0945969,
+    "ast_hash": "40504fad6598d88758ea821d2c4c8f05",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.test.tsx": {
@@ -2010,8 +2010,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/shell.ts": {
-    "mtime": 1785641061.8559766,
-    "ast_hash": "2a3a4f283479769b68e96cf34b99733d",
+    "mtime": 1785642901.7561269,
+    "ast_hash": "f1a4b74f6b463037633fa2217c9ab125",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/activity.ts": {
@@ -2040,8 +2040,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/shell.ts": {
-    "mtime": 1785641062.5209725,
-    "ast_hash": "e4d38a6f74aeacc6665b747fc70a6958",
+    "mtime": 1785642902.2312512,
+    "ast_hash": "05a581f1e27fa82fe755c527536d8d36",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/test/renderWithI18n.tsx": {

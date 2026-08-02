@@ -10,6 +10,7 @@ import legal from './en/legal'
 import landing from './en/landing'
 import whatsNew from './en/whatsNew'
 import credits from './en/credits'
+import sans from './en/sans'
 
 const en: TranslationDict = {
   ...shell,
@@ -23,6 +24,7 @@ const en: TranslationDict = {
   ...landing,
   ...whatsNew,
   ...credits,
+  ...sans,
 }
 
 export default en

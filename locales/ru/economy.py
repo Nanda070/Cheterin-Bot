@@ -41,7 +41,7 @@ MESSAGES: dict[str, str] = {
     "economy.cosmetics.title_placeholder": "Титул под именем",
     "economy.cosmetics.no_title": "Без титула",
     "economy.cosmetics.empty": "У вас пока нет купленной косметики — загляните в /магазин.",
-    "economy.cosmetics.prompt": "Выберите рамку и/или титул для карточки /ранг:",
+    "economy.cosmetics.prompt": "Выберите рамку и/или титул для карточки /уровни rank:",
     "economy.purchase.item_removed": "Этот товар уже убрали из магазина.",
     "economy.purchase.role_not_found": "Роль товара не найдена на сервере — сообщите админам.",
     "economy.purchase.role_already_owned": "Роль {mention} у вас уже есть.",
@@ -56,7 +56,7 @@ MESSAGES: dict[str, str] = {
     ),
     "economy.equip.frame_removed": "Рамка снят(а).",
     "economy.equip.title_removed": "Титул снят(а).",
-    "economy.equip.frame_applied": "Рамка применён(а)! Проверьте /ранг.",
-    "economy.equip.title_applied": "Титул применён(а)! Проверьте /ранг.",
+    "economy.equip.frame_applied": "Рамка применён(а)! Проверьте /уровни rank.",
+    "economy.equip.title_applied": "Титул применён(а)! Проверьте /уровни rank.",
     "economy.equip.not_owned": "Вы не владеете этим товаром.",
 }

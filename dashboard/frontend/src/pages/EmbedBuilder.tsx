@@ -24,7 +24,7 @@ import { Toggle } from '../components/ui/Toggle'
 import { EmbedPreview } from '../components/EmbedPreview'
 import { EMPTY_EMBED_SPEC, validateEmbedSpec } from '../utils/embedUtils'
 
-// Deep-link hints (?target=welcome|feedback|events) — Embeds tab under Buttons & embeds
+// Deep-link hints (?target=welcome|feedback|events) — Embeds tab under Roles & embeds
 // when someone is really looking for a specific embed surface elsewhere in the dashboard.
 const DEEP_LINK_HINTS: Record<string, { labelKey: string; to: string }> = {
   welcome: { labelKey: 'embedBuilder.deepLink.welcome', to: '/server-entry' },

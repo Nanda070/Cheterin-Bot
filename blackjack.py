@@ -296,12 +296,15 @@ class BlackjackCog(commands.Cog):
     def cooldown_ready_at(self, guild_id: int, user_id: int) -> float:
         return self._cooldowns.get((guild_id, user_id), 0.0)
 
-    @app_commands.command(
-        name="блэкджек",
-        description="Сыграть в блэкджек против дилера на ставку монет",
-    )
-    @app_commands.describe(ставка="Сколько монет поставить")
-    async def blackjack_command(self, interaction: discord.Interaction, ставка: int):
+    async def blackjack_command(self, interaction: discord.Interaction, ставка: int | None = None, bet: int | None = None):
+        if ставка is None:
+            ставка = bet
+        if ставка is None:
+            lang = i18n.lang_for(interaction.guild_id)
+            return await interaction.response.send_message(
+                i18n.t("casino.bj.need_bet", lang) if i18n.t("casino.bj.need_bet", lang) != "casino.bj.need_bet" else "Bet required.",
+                ephemeral=True,
+            )
 
         lang = i18n.lang_for(interaction.guild_id)
         if interaction.guild is None or interaction.guild_id is None:
@@ -394,5 +397,5 @@ class BlackjackCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     cog = BlackjackCog(bot)
-    slash_registry.register_blackjack(cog)
+    # blackjack is exposed as /casino blackjack (see CasinoCog)
     await bot.add_cog(cog)

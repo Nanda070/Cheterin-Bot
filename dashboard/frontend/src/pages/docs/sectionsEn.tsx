@@ -57,51 +57,52 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <Table
           headers={['Module', 'What it does', 'Panel section']}
           rows={[
-            ['Member levels', 'XP for text and voice, reward roles, /rank, leaderboard', 'Member levels'],
-            ['Voice statistics', 'Activity by hour/day, top channels and members', 'Voice statistics'],
-            ['Logging', 'Server events to Discord channels, per event type', 'Logging'],
-            ['Dashboard audit', 'Which moderators changed what in the panel', 'Dashboard audit'],
-            ['Streams & subscriptions', 'Twitch stream and YouTube video notifications', 'Streams & subscriptions'],
-            ['Anti-spam', 'Mass mentions (@everyone/roles) → 24h timeout and a 20-minute message purge', 'Moderation'],
-            ['Spam traps', 'Trap channel: a non-admin message auto-bans (message purge) and unbans a few seconds later', 'Moderation'],
-            ['Lockdown', 'Emergency server isolation during a raid', 'Moderation'],
-            ['CTD tickets', 'Private support threads with auto-close', 'Feedback & tickets'],
-            ['Feedback', 'Category-based submissions with moderator decisions', 'Feedback & tickets'],
-            ['Welcomes', 'Channel message + DM guide for newcomers', 'Server entry'],
-            ['Invite tracker', 'Who invited whom, joins and leaves', 'Server entry → Invites'],
-            ['Auto-roles', 'Roles for new members on join', 'Server entry → Auto-roles'],
-            ['Sticky roles', 'Remember roles on leave and restore them on rejoin', 'Server entry → Sticky roles'],
-            ['Reaction roles', 'Self-assign roles via reactions', 'Buttons & embeds'],
-            ['Embed Builder', 'Embed constructor, form buttons, templates', 'Buttons & embeds'],
-            ['Events', 'Events and polls with join buttons', 'Events & polls'],
-            ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'Events → Brackets'],
-            ['Mafia', 'Role-playing game: lobby in Discord; full match on a personal link', 'Mafia'],
-            ['Bunker', 'Role-playing game: lobby in Discord; character card and voting on a personal link', 'Bunker'],
-            ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events → Giveaways'],
-            ['Daily topic', 'Question/topic of the day on a schedule', 'Daily topic'],
-            ['Fun', 'Russian roulette, Auto-Emoji, and Russian Wordle', 'Fun'],
-            ['Economy', 'Server currency: activity payouts, transfers, role shop, weekly report', 'Economy'],
-            ['Casino', 'Slots, coinflip, blackjack, Russian roulette bets, leaderboard', 'Casino'],
-            ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Custom commands'],
-            ['Scheduled messages', 'One-shot or recurring posts on a schedule', 'Messages → Scheduled'],
-            ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'Messages → Sticky'],
-            ['Polls', 'Dedicated polls with live tallies; end early from the panel', 'Events → Polls'],
-            ['Timed roles', 'Temporary role grants that expire automatically', 'Members → Timed roles'],
-            ['Birthdays', 'Server-wide birthday calendar and announcements', 'Birthdays'],
-            ['Command preview', 'Try bot replies in the panel without posting to Discord', 'Custom commands → Preview'],
-            ['Server timezone', 'Timezone for schedules, Wordle day, birthdays, supply times, voice-stats hours', 'Server settings'],
-            ['Setup health', 'Check that the bot has critical permissions', 'Home / Server settings'],
-            ['Owner alerts', 'Notify the owner on missing permissions, mass bans, or module errors', 'Server settings'],
-            ['Automod', 'Message filters with punishments and warn escalation', 'Automod'],
-            ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins — off by default', 'Moderation → Anti-raid'],
-            ['Verification', '“I am not a bot” / accept-rules panel; optional re-verify — off by default', 'Moderation → Verification'],
-            ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Games → Supply runs'],
-            ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Games → Family'],
-            ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Games → ValChecker'],
-            ['Private voice rooms', 'Personal voice channels with a control panel', 'Private voice rooms'],
-            ['News relay', 'Forward messages from a source server', 'News relay'],
-            ['Bulk role assign', 'Background role assignment to many members', 'Members & roles'],
-            ['Super Admin', 'List of servers the bot is in', 'Super Admin'],
+            ['Member levels', 'XP for text and voice, reward roles, /levels rank, leaderboard', 'Engage → Member levels'],
+            ['Voice statistics', 'Activity by hour/day, top channels and members', 'Engage → Voice statistics'],
+            ['Logging', 'Server events to Discord channels, per event type', 'Server → Logging'],
+            ['Dashboard audit', 'Which moderators changed what in the panel', 'Server → Settings → Dashboard audit'],
+            ['Streams & subscriptions', 'Twitch stream and YouTube video notifications', 'Play → Streams'],
+            ['Anti-spam', 'Mass mentions (@everyone/roles) → 24h timeout and a 20-minute message purge', 'Server → Moderation'],
+            ['Spam traps', 'Trap channel: a non-admin message auto-bans (message purge) and unbans a few seconds later', 'Server → Moderation'],
+            ['Lockdown', 'Emergency server isolation during a raid', 'Server → Moderation'],
+            ['CTD tickets', 'Private support threads with auto-close', 'People → Feedback & tickets'],
+            ['Feedback', 'Category-based submissions with moderator decisions', 'People → Feedback & tickets'],
+            ['Welcomes', 'Channel message + DM guide for newcomers', 'Server → Server entry'],
+            ['Invite tracker', 'Who invited whom, joins and leaves', 'Server → Server entry → Invites'],
+            ['Auto-roles', 'Roles for new members on join', 'Server → Server entry → Auto-roles'],
+            ['Sticky roles', 'Remember roles on leave and restore them on rejoin', 'Server → Server entry → Sticky roles'],
+            ['Reaction roles', 'Self-assign roles via reactions', 'People → Roles & embeds'],
+            ['Embed Builder', 'Embed constructor, form buttons, templates', 'People → Roles & embeds'],
+            ['Events', 'Events and polls with join buttons', 'People → Events & polls'],
+            ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'People → Events → Brackets'],
+            ['Mafia', 'Role-playing game: lobby in Discord; full match on a personal link', 'Play → Mafia'],
+            ['Bunker', 'Role-playing game: lobby in Discord; character card and voting on a personal link', 'Play → Bunker'],
+            ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'People → Events → Giveaways'],
+            ['Daily topic', 'Question/topic of the day on a schedule', 'Play → Fun → Daily topic'],
+            ['Fun', 'Russian roulette, Auto-Emoji, Wordle, Quote, Daily topic', 'Play → Fun'],
+            ['Economy', 'Server currency: activity payouts, transfers, role shop, weekly report', 'Engage → Economy'],
+            ['Casino', 'Slots, coinflip, blackjack, Russian roulette bets, leaderboard', 'Engage → Economy → Casino'],
+            ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Server → Settings → Custom commands'],
+            ['Scheduled messages', 'One-shot or recurring posts on a schedule', 'People → Messages → Scheduled'],
+            ['Sticky messages', 'Keep a message at the bottom of a channel by re-posting', 'People → Messages → Sticky'],
+            ['Polls', 'Dedicated polls with live tallies; end early from the panel', 'People → Events → Polls'],
+            ['Timed roles', 'Temporary role grants that expire automatically', 'Server → Members → Timed roles'],
+            ['Birthdays', 'Server-wide birthday calendar and announcements', 'People → Birthdays'],
+            ['Command preview', 'Try bot replies in the panel without posting to Discord', 'Server → Settings → Custom commands → Preview'],
+            ['Server timezone', 'Timezone for schedules, Wordle day, birthdays, supply times, voice-stats hours', 'Server → Settings'],
+            ['Setup health', 'Check that the bot has critical permissions', 'Home / Server → Settings'],
+            ['Owner alerts', 'Notify the owner on missing permissions, mass bans, or module errors', 'Server → Settings'],
+            ['Automod', 'Message filters with punishments and warn escalation', 'Server → Automod'],
+            ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins — off by default', 'Server → Moderation → Anti-raid'],
+            ['Verification', '“I am not a bot” / accept-rules panel; optional re-verify — off by default', 'Server → Moderation → Verification'],
+            ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Play → Family → Supply'],
+            ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Play → Family'],
+            ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Play → ValChecker'],
+            ['Private voice rooms', 'Personal voice channels with a control panel', 'People → Private voice rooms'],
+            ['Relations', 'Pair HP actions, romance, marriages', 'People → Relations'],
+            ['News relay', 'Forward messages from a source server', 'Super admin → News relay'],
+            ['Bulk role assign', 'Background role assignment to many members', 'Server → Members & roles'],
+            ['Super Admin', 'List of servers the bot is in', 'Super admin'],
           ]}
         />
       </>
@@ -154,42 +155,29 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <Table
           headers={['Section', 'Purpose']}
           rows={[
-            ['Member levels', 'XP settings, rewards, leaderboard, member editing'],
-            ['Economy', 'Currency, XP rate, daily bonus, transfers, role shop, balance top, weekly report'],
-            ['Casino', 'Slots / coinflip / blackjack, Russian roulette bets, leaderboard'],
-            ['Voice statistics', 'Activity charts, top channels and members'],
-            ['Private voice rooms', 'Active rooms, publish control panel'],
-            ['Family', 'Module toggle, role roster, ticket applications, birthdays (Games)'],
-            ['Supply runs', 'Active runs, history, top participants, create a run (Games)'],
-            ['ValChecker', 'Module toggle, match/status channels, poll interval (Games)'],
-            ['Feedback & tickets', 'Feedback cases, categories, ticket panel'],
-            ['Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
-            ['Messages', 'Tabs: scheduled posts and sticky messages'],
-            ['Buttons & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
-            ['Birthdays', 'Member birthday calendar and announce channel'],
-            ['Fun', 'Module toggle, Russian roulette timeout and cooldown, Auto-Emoji, Wordle'],
-            ['Streams & subscriptions', 'Twitch streamer and YouTube channel subscriptions; test announce'],
-            ['Daily topic', 'Topic list, channel and publish times, manual publish'],
-            ['Mafia', 'Module toggle, default players and timers, log channel, active games'],
-            ['Bunker', 'Module toggle, default players and timers, active games, special-ability requests'],
-            ['Logging', 'Toggle and channel for each server event type'],
-            [
-              'Moderation',
-              'Tabs: Lockdown & log, Settings (server logging), Anti-spam, Spam traps, Verification, Anti-raid',
-            ],
-            ['Automod', 'Message filters, punishments, warn escalation'],
-            [
-              'Server entry',
-              'Welcomes, goodbyes, DM guide, auto-roles, sticky roles, invites; test send',
-            ],
-            ['Members & roles', 'Member search, cards, bans/kicks, bulk roles, timed roles'],
-            ['Custom commands', 'Trigger → reply rules; Preview tab without posting to Discord'],
-            ['Dashboard audit', 'History of moderator actions in the panel'],
-            [
-              'Server settings',
-              'Bot language (RU/EN), server timezone, setup health, owner alerts',
-            ],
-            ['Super Admin', 'Bot server list, news relay, CTD tickets (main server only)'],
+            ['Engage → Member levels', 'XP settings, rewards, leaderboard, member editing'],
+            ['Engage → Economy', 'Currency, shop, balances; Casino tab for games and casino leaderboard'],
+            ['Engage → Voice statistics', 'Activity charts, top channels and members'],
+            ['People → Relations', 'Pair HP, romance, marriages'],
+            ['People → Birthdays', 'Member birthday calendar and announce channel'],
+            ['People → Private voice rooms', 'Active rooms, publish control panel'],
+            ['People → Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
+            ['People → Feedback & tickets', 'Feedback cases, categories, ticket panel'],
+            ['People → Messages', 'Tabs: scheduled, sticky, starboard'],
+            ['People → Roles & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
+            ['Play → Fun', 'Roulette, Auto-Emoji, Wordle, Quote, Daily topic'],
+            ['Play → Mafia', 'Module toggle, defaults, active games'],
+            ['Play → Bunker', 'Module toggle, defaults, active games'],
+            ['Play → ValChecker', 'Module toggle, match/status channels, poll interval'],
+            ['Play → Family', 'Roster, applications, birthdays; Supply tab for runs'],
+            ['Play → Streams', 'Twitch / YouTube subscriptions'],
+            ['Server → Moderation', 'Lockdown, anti-spam, spam traps, verification, anti-raid'],
+            ['Server → Automod', 'Message filters, punishments, warn escalation'],
+            ['Server → Logging', 'Toggle and channel for each server event type'],
+            ['Server → Server entry', 'Welcomes, auto-roles, sticky roles, invites'],
+            ['Server → Members & roles', 'Member search, cards, bulk roles, timed roles'],
+            ['Server → Settings', 'Language, timezone, setup health, owner alerts, custom commands, audit'],
+            ['Super admin', 'Bot servers, news relay, CTD (main guild only)'],
           ]}
         />
       </>
@@ -203,8 +191,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       <>
         <P>
           There is no separate “Configuration” page: channels and roles are set in the matching panel sections
-          (Settings tab for Supply runs, Private voice rooms, Buttons & embeds; Settings / Anti-spam / Spam traps under
-          Moderation; Server entry for welcomes and roles). Values are stored per server and apply immediately.
+          (Family → Supply settings, People → Private voice rooms, People → Roles & embeds; Server → Moderation for
+          anti-spam / spam traps; Server → Server entry for welcomes and roles). Values are stored per server and apply
+          immediately.
         </P>
 
         <H>Moderation and spam</H>
@@ -347,8 +336,11 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Rank card and leaderboard</H3>
         <UL>
           <li>
-            The <Code>/rank</Code> (<Code>/ранг</Code>) command generates a PNG card: avatar, level, progress to next
+            <Code>/levels rank</Code> (<Code>/уровни rank</Code>) generates a PNG card: avatar, level, progress to next
             level, rank place, voice time. Card background is configurable — upload your own image in the panel.
+          </li>
+          <li>
+            <Code>/levels profile</Code> — animated profile card (frames and titles from the shop).
           </li>
           <li>
             The leaderboard is in the panel and on the public{' '}
@@ -360,22 +352,21 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           </li>
         </UL>
 
-        <H3>/xp and /leaders commands</H3>
+        <H3>/levels commands</H3>
         <P>
-          Both commands work only while Member levels is enabled — otherwise they reply that the level system is
-          disabled.
+          The <Code>/levels</Code> (<Code>/уровни</Code>) group works only while Member levels is enabled — otherwise
+          subcommands reply that the level system is disabled.
         </P>
         <UL>
           <li>
-            <Code>/xp add member amount</Code> - add (or subtract with a negative number) XP; result never goes below
-            zero.
+            <Code>/levels manage</Code> with action <Code>add</Code> / <Code>set</Code> / <Code>clear</Code> — add (or
+            subtract with a negative number), set exact XP, or zero a member&apos;s XP (also removes reward roles).
+            Requires Manage Server. Result never goes below zero.
           </li>
-          <li><Code>/xp set member amount</Code> - set exact XP.</li>
-          <li><Code>/xp clear member</Code> - zero a member&apos;s XP (also removes reward roles).</li>
           <li>
-            <Code>/leaders</Code> - interactive leaderboard in Discord (up to 1000 members, 10 per page). Sort buttons:{' '}
-            <strong>🏆 XP</strong> / <strong>🗣️ Voice</strong>; pagination «‹ › »; close - ✕. Each row shows @mention
-            (nickname), level, XP, and voice time as H:MM:SS. Available to everyone.
+            <Code>/levels leaders</Code> — interactive leaderboard in Discord (up to 1000 members, 10 per page). Sort
+            buttons: <strong>🏆 XP</strong> / <strong>🗣️ Voice</strong>; pagination «‹ › »; close — ✕. Each row shows
+            @mention (nickname), level, XP, and voice time as H:MM:SS. Available to everyone.
           </li>
         </UL>
       </>
@@ -854,7 +845,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           collecting applications into a dedicated channel.
         </P>
         <UL>
-          <li>Only roles allowed in Buttons & embeds settings can create buttons.</li>
+          <li>Only roles allowed in Roles & embeds settings can create buttons.</li>
           <li>Up to 5 questions per form (Discord limit).</li>
           <li>5-second per-user cooldown — anti-spam for forms.</li>
           <li>Buttons are persistent: they work after a bot restart.</li>
@@ -1183,7 +1174,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <P>
           The bot posts a daily question/topic to a chosen channel so conversation does not die on quiet days. The
           topic is a plain text message from the bot (not an embed). The module is{' '}
-          <strong>off by default</strong> — toggle under Daily topic, like Member levels / Family.
+          <strong>off by default</strong> — toggle under Play → Fun → Daily topic, like Member levels / Family.
         </P>
 
         <H3>Setup</H3>
@@ -1394,10 +1385,10 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           </li>
           <li>
             <strong>Card frame</strong> — color as <Code>#RRGGBB</Code> (color picker or typed). Changes the ring
-            around the avatar on the <Code>/rank</Code> card.
+            around the avatar on the <Code>/levels rank</Code> card.
           </li>
           <li>
-            <strong>Title</strong> — short text (1–30 chars) shown next to the name on the <Code>/rank</Code> card, in
+            <strong>Title</strong> — short text (1–30 chars) shown next to the name on the <Code>/levels rank</Code> card, in
             the equipped frame color (or default blue).
           </li>
           <li>
@@ -1408,25 +1399,26 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>If funds are insufficient for any item, the bot shows the current balance and does not deduct.</li>
         </UL>
 
-        <H3>🎰 Casino — /slots, /coinflip, /blackjack, /casino-top</H3>
+        <H3>🎰 Casino — /casino slots · coinflip · blackjack · top</H3>
         <P>
-          A separate Casino page in the dashboard (Activity) with its own toggle; only works with Economy enabled. All
+          Casino settings live under <strong>Engage → Economy → Casino</strong>; only works with Economy enabled. All
           games share one per-player cooldown — you cannot spam bets by alternating slots, coinflip, and blackjack.
+          Commands live under the <Code>/casino</Code> (<Code>/казино</Code>) group.
         </P>
         <UL>
           <li>
-            <Code>/slots bet</Code> — three reels (🍒 🍋 🔔 ⭐ 💎 7️⃣, common to rare). Three matching symbols pay a large
+            <Code>/casino slots bet</Code> — three reels (🍒 🍋 🔔 ⭐ 💎 7️⃣, common to rare). Three matching symbols pay a large
             multiplier (×3 for 🍒 up to ×50 for 7️⃣, “Jackpot”); two matching — ×1.5 (“Match”); no match — bet lost.
           </li>
           <li>
-            <Code>/coinflip bet side</Code> — heads or tails; correct — ×2, wrong — bet lost.
+            <Code>/casino coinflip bet side</Code> — heads or tails; correct — ×2, wrong — bet lost.
           </li>
           <li>
-            <Code>/blackjack bet</Code> — classic blackjack vs the bot dealer with Hit / Stand / Double. Reach 21 or beat
+            <Code>/casino blackjack bet</Code> — classic blackjack vs the bot dealer with Hit / Stand / Double. Reach 21 or beat
             the dealer without busting (win ×2, natural blackjack ×2.5, push returns the bet). Dealer stands on 17+.
           </li>
           <li>
-            <Code>/casino-top</Code> — interactive casino leaderboard: wins or losses, by slots/coinflip, blackjack, or
+            <Code>/casino top</Code> — interactive casino leaderboard: wins or losses, by slots/coinflip, blackjack, or
             combined, with pagination.
           </li>
           <li>
@@ -1696,18 +1688,18 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H>ValChecker (Valorant)</H>
         <P>
           Link Riot accounts, view profiles and matches, compare players, server leaderboard, and Valorant status.
-          Off by default — enable under <strong>Games → ValChecker</strong>. Admin setup is dashboard-only (no Discord
+          Off by default — enable under <strong>Play → ValChecker</strong>. Admin setup is dashboard-only (no Discord
           admin slash command). Requires <Code>HENRIK_API_KEY</Code> on the bot host.
         </P>
         <Table
           headers={['Command', 'Purpose']}
           rows={[
-            ['/val-setup', 'Link, track matches, or unlink your Riot ID'],
-            ['/val-profile', 'Overview, stats, agents, maps'],
-            ['/val-match', 'Latest match or recent history'],
-            ['/val-compare', 'Compare two linked or Riot IDs'],
-            ['/val-lb', 'Server leaderboard (rank / WR / ACS)'],
-            ['/val-status', 'Incidents, queues, or both'],
+            ['/val setup', 'Link, track matches, or unlink your Riot ID'],
+            ['/val profile', 'Overview, stats, agents, maps'],
+            ['/val match', 'Latest match or recent history'],
+            ['/val compare', 'Compare two linked or Riot IDs'],
+            ['/val lb', 'Server leaderboard (rank / WR / ACS)'],
+            ['/val status', 'Incidents, queues, or both'],
           ]}
         />
         <P>
@@ -1940,7 +1932,15 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Starboard</H3>
         <P>
           Community → Starboard: when a message reaches the reaction threshold, the bot posts a highlight in the starboard
-          channel. Configure emoji, threshold, and excluded channels.
+          channel. Configure emoji, threshold, and excluded channels under <strong>People → Messages → Starboard</strong>.
+        </P>
+
+        <H3>Relations</H3>
+        <P>
+          People → Relations: actions under <Code>/relations</Code> (hug, kiss, …) build pair HP (up to 11 levels).
+          Romance: <Code>/relations marry</Code>, divorce, card, marriages-top,{' '}
+          ship, date; married role, spouse HP bonus, and wedding/divorce announces under the
+          Romance tab.
         </P>
 
         <H3>Auto-reactions</H3>
@@ -1998,8 +1998,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone',
             ],
             [
-              '/rank',
-              'Rank card (yours or another member): level, progress, top place, voice time.',
+              '/levels rank|profile|leaders',
+              'Rank card, animated profile, interactive XP/voice leaderboard. Only when Member levels is enabled.',
               'Everyone',
             ],
             [
@@ -2038,14 +2038,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Manage Messages',
             ],
             [
-              '/xp',
+              '/levels manage',
               'Change a member’s XP with action add / set / clear. Only when Member levels is enabled.',
               'Manage Server',
-            ],
-            [
-              '/leaders',
-              'Interactive leaderboard (up to 1000 members, 10 per page). Sort by XP or Voice, pagination «‹ › », close ✕. Only when Member levels is enabled.',
-              'Everyone',
             ],
             [
               '/mafia-start, /mafia-stop',
@@ -2079,7 +2074,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ],
             [
               '/help',
-              'Member help menu (like /leaders): section dropdown + « ‹ › » pages — levels, economy, casino, fun, community, ValChecker, events.',
+              'Member help menu: section dropdown + « ‹ › » pages — levels, economy, casino, fun, community, Relations, ValChecker, events.',
               'Everyone',
             ],
             [
@@ -2088,8 +2083,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone',
             ],
             [
-              '/val-setup, /val-profile, /val-match, /val-compare, /val-lb, /val-status',
+              '/val setup|profile|match|compare|lb|status',
               'ValChecker (module must be on): link Riot account, stats, matches, compare, guild LB, Valorant status.',
+              'Everyone',
+            ],
+            [
+              '/relations …',
+              'Relations & romance group: hug/kiss/…, card, top, marry, divorce, marriages-top, ship, date. Module must be on.',
               'Everyone',
             ],
             [
@@ -2113,23 +2113,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone',
             ],
             [
-              '/slots',
-              'Three reels for a coin bet: matches pay (up to x50 jackpot). Requires Economy and Casino enabled.',
-              'Everyone',
-            ],
-            [
-              '/coinflip',
-              'Heads/tails coin bet: correct side pays x2 (minus house edge).',
-              'Everyone',
-            ],
-            [
-              '/blackjack',
-              'Blackjack vs the dealer for a coin bet: Hit/Stand/Double; win x2, natural blackjack x2.5.',
-              'Everyone',
-            ],
-            [
-              '/casino-top',
-              'Interactive casino leaderboard: wins/losses for slots and coinflip, blackjack, or combined.',
+              '/casino slots|coinflip|blackjack|top',
+              'Casino games and wins/losses leaderboard. Requires Economy and Casino enabled.',
               'Everyone',
             ],
             [

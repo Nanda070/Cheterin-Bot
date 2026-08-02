@@ -1,5 +1,6 @@
-import { Coins, Gear, Plus, Trash, UsersThree } from '@phosphor-icons/react'
+import { Coins, DiceThree, Gear, Plus, Trash, UsersThree } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   fetchEconomySettings,
   fetchEconomyTop,
@@ -17,15 +18,26 @@ import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
+import { CasinoPage } from './Casino'
 
-type Tab = 'settings' | 'balances'
+type Tab = 'settings' | 'casino' | 'balances'
+
+function parseEconomyTab(raw: string | null): Tab {
+  if (raw === 'casino' || raw === 'balances') return raw
+  return 'settings'
+}
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
 export function EconomyPage() {
   const t = useT()
-  const [tab, setTab] = useState<Tab>('settings')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseEconomyTab(searchParams.get('tab'))
+  const setTab = (next: Tab) => {
+    if (next === 'settings') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
   const [settings, setSettings] = useState<EconomySettings | null>(null)
   const [top, setTop] = useState<EconomyTopEntry[] | null>(null)
   const [weeklyRows, setWeeklyRows] = useState<EconomyWeeklyReportRow[] | null>(null)
@@ -38,6 +50,7 @@ export function EconomyPage() {
   const tabs = useMemo(
     (): { key: Tab; label: string; icon: typeof Gear }[] => [
       { key: 'settings', label: t('economy.tab.settings'), icon: Gear },
+      { key: 'casino', label: t('economy.tab.casino'), icon: DiceThree },
       { key: 'balances', label: t('economy.tab.balances'), icon: UsersThree },
     ],
     [t],
@@ -75,11 +88,12 @@ export function EconomyPage() {
     reloadTop()
   }, [tab])
 
-  if (!settings) {
+  if (tab === 'settings' && !settings) {
     return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
   const save = async () => {
+    if (!settings) return
     setBusy(true)
     setError('')
     setSaved('')
@@ -108,6 +122,7 @@ export function EconomyPage() {
   }
 
   const updateItem = (index: number, patch: Partial<EconomySettings['shop_items'][number]>) => {
+    if (!settings) return
     const items = settings.shop_items.map((item, i) => (i === index ? { ...item, ...patch } : item))
     setSettings({ ...settings, shop_items: items })
   }
@@ -134,7 +149,7 @@ export function EconomyPage() {
           <Coins size={22} className="text-primary" />
           {t('economy.title')}
         </h1>
-        {tab === 'settings' && (
+        {tab === 'settings' && settings && (
           <Toggle
             checked={settings.enabled}
             onChange={(v) => setSettings({ ...settings, enabled: v })}
@@ -159,11 +174,13 @@ export function EconomyPage() {
         ))}
       </nav>
 
-      {tab === 'settings' && <p className="text-sm text-muted">{t('economy.intro')}</p>}
+      {tab === 'casino' && <CasinoPage embedded />}
+
+      {tab === 'settings' && settings && <p className="text-sm text-muted">{t('economy.intro')}</p>}
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {tab === 'settings' && (
+      {tab === 'settings' && settings && (
         <>
           <Card className="flex flex-col gap-3">
             <h2 className="font-semibold text-foreground">{t('economy.currencySection')}</h2>

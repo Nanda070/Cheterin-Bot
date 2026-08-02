@@ -39,6 +39,7 @@ const activity: Record<string, string> = {
   'home.setupHealth.moduleIssue.missing_role': '{module}: настроенная роль больше не существует',
   'home.quickLinks.moderation': 'Модерация и lockdown',
   'home.quickLinks.settings': 'Настройки сервера',
+  'home.quickLinks.members': 'Участники и роли',
   'home.quickLinks.moderationLog': 'Журнал модерации',
 
   // Levels
@@ -108,7 +109,7 @@ const activity: Record<string, string> = {
   'levels.bgUploaded': 'Фон загружен.',
   'levels.bgDeleted': 'Фон удалён.',
   'levels.previewCard': 'Превью карточки профиля',
-  'levels.previewCardHint': 'Рендер премиум-карточки для вас (или выбранного участника из топа). Тот же вид, что у /профиль.',
+  'levels.previewCardHint': 'Рендер премиум-карточки для вас (или выбранного участника из топа). Тот же вид, что у /уровни profile.',
   'levels.previewCardError': 'Не удалось отрисовать превью',
   'levels.previewCardLoading': 'Рендер…',
   'levels.previewAnimated': 'Анимация (GIF)',
@@ -136,7 +137,7 @@ const activity: Record<string, string> = {
   'economy.moduleEnabled': 'Модуль включён',
   'economy.moduleDisabled': 'Модуль выключен',
   'economy.intro':
-    'Серверная валюта: монеты начисляются как процент от XP, тратятся в магазине ролей, на ставках в рулетке и в казино (слоты, монетка, блэкджек). Команды: /баланс, /daily, /перевести, /монеты-топ, /магазин, /слоты, /монетка, /блэкджек.',
+    'Серверная валюта: монеты начисляются как процент от XP, тратятся в магазине ролей, на ставках в рулетке и в казино (слоты, монетка, блэкджек). Команды: /баланс, /daily, /перевести, /монеты-топ, /магазин, /казино slots|coinflip|blackjack.',
   'economy.errorLoad': 'Не удалось загрузить настройки модуля «Экономика»',
   'economy.saved': 'Сохранено.',
   'economy.errorSave': 'Не удалось сохранить настройки — проверьте поля',
@@ -170,7 +171,7 @@ const activity: Record<string, string> = {
   'economy.weeklyEmpty': 'Пока нет движений за выбранный период.',
   'economy.shop': '🛒 Магазин — /магазин, /косметика',
   'economy.shopHint':
-    'До 25 товаров трёх типов. Роль выдаётся в Discord сразу; рамка карточки и титул — косметика для карточки /ранг, покупатель выбирает купленное командой /косметика. Монеты списываются сразу; если роль не удалось выдать — возвращаются автоматически.',
+    'До 25 товаров трёх типов. Роль выдаётся в Discord сразу; рамка карточки и титул — косметика для карточки /уровни rank, покупатель выбирает купленное командой /косметика. Монеты списываются сразу; если роль не удалось выдать — возвращаются автоматически.',
   'economy.itemTypeAria': 'Тип товара {index}',
   'economy.itemType.role': 'Роль',
   'economy.itemType.frame': 'Рамка карточки',
@@ -190,6 +191,7 @@ const activity: Record<string, string> = {
   'economy.addItem': 'Добавить товар',
   'economy.topBalances': 'Топ балансов',
   'economy.tab.settings': 'Настройки',
+  'economy.tab.casino': 'Казино',
   'economy.tab.balances': 'Топ балансов',
   'economy.resetAllBalances': 'Сбросить весь баланс',
   'economy.resetAllTitle': 'Сбросить все балансы?',

@@ -100,6 +100,9 @@ const legal: TranslationDict = {
   'privacy.table.starboard.module': 'Starboard',
   'privacy.table.starboard.data': 'Starred message IDs, reaction counts, starboard channel post IDs',
   'privacy.table.starboard.retention': 'Until removed from starboard or deleted by admins',
+  'privacy.table.relations.module': 'Relations',
+  'privacy.table.relations.data': 'Member pair IDs, relationship HP/level, marriages/proposals, action cooldowns',
+  'privacy.table.relations.retention': 'Until cleared by admins / guild removed',
   'privacy.table.autoReactions.module': 'Auto-reactions',
   'privacy.table.autoReactions.data': 'Emoji and channel scope settings only — no message content stored',
   'privacy.table.autoReactions.retention': 'Settings — until changed',
@@ -168,7 +171,7 @@ const legal: TranslationDict = {
   'privacy.s7.p3':
     '7.3. For stream alerts, the Service calls public Twitch APIs and YouTube RSS feeds. Only streamer logins/IDs chosen by admins are sent; server member data is not shared with those services.',
   'privacy.s7.p4':
-    '7.4. For ValChecker, the Service calls HenrikDev and valorant-api.com to fetch Valorant profiles, matches, and status. When you use those commands, your linked Riot ID (name#tag), region, and related identifiers are sent to those APIs. Unlink with /val-setup to stop tracking.',
+    '7.4. For ValChecker, the Service calls HenrikDev and valorant-api.com to fetch Valorant profiles, matches, and status. When you use those commands, your linked Riot ID (name#tag), region, and related identifiers are sent to those APIs. Unlink with /val setup to stop tracking.',
 
   'privacy.s8.title': '8. Retention and deletion',
   'privacy.s8.p1': '8.1. Automatic deletion:',
@@ -180,7 +183,7 @@ const legal: TranslationDict = {
   'privacy.s8.li6': 'dashboard session — when you sign out;',
   'privacy.s8.li7': 'timed roles — when they expire or are cancelled;',
   'privacy.s8.li8': 'finished Mafia/Bunker games — after the match ends (or a short cleanup window).',
-  'privacy.s8.li9': 'ValChecker Riot link — when you unlink in /val-setup or admins clear data.',
+  'privacy.s8.li9': 'ValChecker Riot link — when you unlink in /val setup or admins clear data.',
   'privacy.s8.p2.label': 'Deletion on request.',
   'privacy.s8.p2.rest':
     'You can ask to delete data linked to your account (invite stats, applications, participation history, ranking and XP, economy balance, birthday entry, ValChecker Riot link). Contact your server\'s admins (or open a ticket on the main server) — admins can reset a member\'s ranking or balance in the dashboard. A server owner may request full deletion of that server\'s data when removing the bot.',

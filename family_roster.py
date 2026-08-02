@@ -88,6 +88,7 @@ class RosterCog(commands.Cog):
             self._update_pending = False
 
     @app_commands.command(name="список", description="Создать live-сообщение со списком участников семьи")
+    @app_commands.default_permissions(manage_guild=True)
     async def roster_list(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = family_core.get_settings(interaction.guild.id)

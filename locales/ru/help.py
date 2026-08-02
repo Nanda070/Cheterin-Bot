@@ -20,6 +20,9 @@ MESSAGES: dict[str, str] = {
     "help.cat.community.emoji": "🏠",
     "help.cat.community.label": "Сообщество",
     "help.cat.community.desc": "ДР, комнаты, семья, опросы",
+    "help.cat.relations.emoji": "💕",
+    "help.cat.relations.label": "Отношения",
+    "help.cat.relations.desc": "Действия, HP, брак и развод",
     "help.cat.valchecker.emoji": "🎯",
     "help.cat.valchecker.label": "ValChecker",
     "help.cat.valchecker.desc": "Статистика Valorant",
@@ -38,14 +41,14 @@ MESSAGES: dict[str, str] = {
     "help.page.overview.field1.value": (
         "• Пишите в чат и сидите в войсе → **XP** и иногда **монеты**\n"
         "• `/daily` → ежедневный бонус монет\n"
-        "• `/ранг` / `/профиль` → ваши карточки\n"
-        "• `/leaders` → топ по XP и голосу\n"
+        "• `/уровни rank` / `profile` → ваши карточки\n"
+        "• `/уровни leaders` → топ по XP и голосу\n"
         "• `/help` → это меню (видно только вам)"
     ),
     "help.page.overview.field2.name": "Разделы",
     "help.page.overview.field2.value": (
         "🏆 Уровни · 🪙 Экономика · 🎰 Казино · 🎮 Игры и Fun\n"
-        "🏠 Сообщество · 🎯 ValChecker · 🎉 События"
+        "🏠 Сообщество · 💕 Отношения · 🎯 ValChecker · 🎉 События"
     ),
     "help.page.levels.title": "🏆 Уровни и профиль",
     "help.page.levels.body": (
@@ -54,9 +57,11 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.levels.field1.name": "Команды",
     "help.page.levels.field1.value": (
-        "`/ранг` (`/rank`) — карточка ранга: уровень, XP, голос\n"
-        "`/профиль` (`/profile`) — анимированный профиль (рамки и титулы из магазина)\n"
-        "`/leaders` — интерактивный топ по **опыту** или **голосу** (те же « ‹ › »)"
+        "Группа `/уровни` (`/levels`):\n"
+        "• `rank` — карточка ранга: уровень, XP, голос\n"
+        "• `profile` — анимированный профиль (рамки и титулы из магазина)\n"
+        "• `leaders` — интерактивный топ по **опыту** или **голосу** (кнопки « ‹ › »)\n"
+        "• `manage` — staff: add / set / clear XP (нужны права Manage Server)"
     ),
     "help.page.levels.field2.name": "Как копится XP",
     "help.page.levels.field2.value": (
@@ -91,10 +96,11 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.casino.field1.name": "Команды",
     "help.page.casino.field1.value": (
-        "`/блэкджек` (`/blackjack`) — против дилера на ставку\n"
-        "`/слоты` (`/slots`) — три барабана, совпадения дают выигрыш\n"
-        "`/монетка` (`/coinflip`) — угадай сторону, ставка удваивается\n"
-        "`/казино-топ` (`/casino-top`) — топ по победам и проигрышам"
+        "Группа `/казино` (`/casino`):\n"
+        "• `blackjack` — против дилера на ставку\n"
+        "• `slots` — три барабана, совпадения дают выигрыш\n"
+        "• `coinflip` — угадай сторону, ставка удваивается\n"
+        "• `top` — топ по победам и проигрышам"
     ),
     "help.page.casino.field2.name": "Ставки в русской рулетке",
     "help.page.casino.field2.value": (
@@ -145,6 +151,30 @@ MESSAGES: dict[str, str] = {
         "`/реаки-поставка` (`/supply-run`) — staff создаёт сбор; запись кнопками\n"
         "`/семья-заявки` — заявка в семью, когда вывешена панель"
     ),
+    "help.page.relations.title": "💕 Отношения",
+    "help.page.relations.body": (
+        "Интерактивные действия между участниками копят HP и поднимают уровень пары (до 11). "
+        "Можно сделать предложение, пожениться, развестись и сходить на свидание. "
+        "Модуль должен быть включён в панели."
+    ),
+    "help.page.relations.field1.name": "Действия",
+    "help.page.relations.field1.value": (
+        "Группа `/отношения` (`/relations`):\n"
+        "`hug` · `kiss` · `slap` · `pat` · `highfive` · `cuddle` · `poke`\n"
+        "Каждое даёт HP (настраивается админами), есть кулдаун на пару и дневной лимит. "
+        "С супругом — бонус HP."
+    ),
+    "help.page.relations.field2.name": "Карточка и топ",
+    "help.page.relations.field2.value": (
+        "`/отношения card` [участник] — карточка пары; без участника — ваши браки\n"
+        "`/отношения top` — лучшие пары сервера"
+    ),
+    "help.page.relations.field3.name": "Романтика",
+    "help.page.relations.field3.value": (
+        "`/отношения marry` — предложение с кнопками\n"
+        "`divorce` · `marriages-top` · `ship` · `date` (свидание — бонус HP с супругом)\n"
+        "Мин. уровень для брака, роль супругов и анонсы — в панели → Романтика."
+    ),
     "help.page.valchecker.title": "🎯 ValChecker — Valorant",
     "help.page.valchecker.body": (
         "Привязка Riot ID и статистика. Модуль должен быть **включён**: Игры → ValChecker. "
@@ -152,21 +182,22 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.valchecker.field1.name": "Аккаунт",
     "help.page.valchecker.field1.value": (
-        "`/val-setup` — привязка / перепривязка Riot `Name#TAG`, **трекинг матчей** или отвязка\n"
+        "Группа `/val`:\n"
+        "`setup` — привязка / перепривязка Riot `Name#TAG`, **трекинг матчей** или отвязка\n"
         "Трекинг публикует новые матчи в канал матчей сервера."
     ),
     "help.page.valchecker.field2.name": "Статы и матчи",
     "help.page.valchecker.field2.value": (
-        "`/val-profile` — обзор · статы · агенты · карты (переключение кнопками)\n"
-        "`/val-match` — последний матч или история (`+5` подгружает ещё)\n"
-        "`/val-compare` — сравнение двух игроков (линк или Riot ID)\n"
-        "`/val-lb` — топ сервера по рангу / WR / ACS\n"
-        "`/val-status` — инциденты, очереди или оба (выберите регион)"
+        "`/val profile` — обзор · статы · агенты · карты (кнопки навигации — только у вас)\n"
+        "`/val match` — последний матч или история (`+5` подгружает ещё)\n"
+        "`/val compare` — сравнение двух игроков (линк или Riot ID)\n"
+        "`/val lb` — топ сервера по рангу / WR / ACS\n"
+        "`/val status` — инциденты, очереди или оба (выберите регион)"
     ),
     "help.page.valchecker.field3.name": "Советы",
     "help.page.valchecker.field3.value": (
         "• Чужих можно смотреть опциями `user:` или `riot_id:`\n"
-        "• Отвязка в любой момент через `/val-setup`\n"
+        "• Отвязка в любой момент через `/val setup`\n"
         "• При лимите API подождите минуту и повторите"
     ),
     "help.page.events.title": "🎉 События и обратная связь",

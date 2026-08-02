@@ -1,5 +1,6 @@
 import {
   Bell,
+  ChatTeardropText,
   ClipboardText,
   Clock,
   GearSix,
@@ -31,6 +32,7 @@ import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
 import { AuditPage } from './Audit'
 import { BotProfilePage } from './BotProfile'
+import { CustomCommandsPage } from './CustomCommands'
 
 const LANGUAGE_OPTIONS = [
   { value: 'ru', labelKey: 'settings.lang.ru' },
@@ -54,10 +56,10 @@ const defaultAlerts: OwnerAlertsSettings = {
   weekly_digest_channel_id: '',
 }
 
-type SettingsTab = 'general' | 'botProfile' | 'audit'
+type SettingsTab = 'general' | 'botProfile' | 'customCommands' | 'audit'
 
 function parseSettingsTab(raw: string | null): SettingsTab {
-  if (raw === 'botProfile' || raw === 'audit') return raw
+  if (raw === 'botProfile' || raw === 'audit' || raw === 'customCommands') return raw
   return 'general'
 }
 
@@ -73,6 +75,7 @@ function TabBar({
   const tabs: { key: SettingsTab; labelKey: string; icon: typeof GearSix }[] = [
     { key: 'general', labelKey: 'settings.tab.general', icon: GearSix },
     { key: 'botProfile', labelKey: 'settings.tab.botProfile', icon: IdentificationCard },
+    { key: 'customCommands', labelKey: 'settings.tab.customCommands', icon: ChatTeardropText },
     { key: 'audit', labelKey: 'settings.tab.audit', icon: ClipboardText },
   ]
   return (
@@ -453,6 +456,7 @@ export function ServerSettingsPage() {
 
       {tab === 'general' && <GeneralSettings />}
       {tab === 'botProfile' && <BotProfilePage embedded />}
+      {tab === 'customCommands' && <CustomCommandsPage embedded />}
       {tab === 'audit' && <AuditPage embedded />}
     </div>
   )

@@ -3568,8 +3568,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "bunker_core_save_config",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "save_config()"
     },
     {
@@ -3590,8 +3590,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "bunker_core_has_moderator_access",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "has_moderator_access()"
     },
     {
@@ -3601,8 +3601,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "bunker_core_default_bunker_capacity",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "default_bunker_capacity()"
     },
     {
@@ -3810,8 +3810,8 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "bunker_core_resolve_expulsion_vote",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "resolve_expulsion_vote()"
     },
     {
@@ -3821,8 +3821,8 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "bunker_core_is_game_over",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "is_game_over()"
     },
     {
@@ -3854,8 +3854,8 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "bunker_core_rationale_58",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "\u043f\u043e\u043b\u043e\u0432\u0438\u043d\u0430 \u0438\u0433\u0440\u043e\u043a\u043e\u0432 (\u043e\u043a\u0440\u0443\u0433\u043b\u0435\u043d\u0438\u0435 \u0432\u043d\u0438\u0437, \u043c\u0438\u043d\u0438\u043c\u0443\u043c 1) \u2014 \u0435\u0441\u043b\u0438 \u0432\u0435\u0434\u0443\u0449\u0438\u0438 \u043d\u0435 \u0437\u0430\u0434\u0430\u043b \u0441\u0432\u043e\u0435 \u0447\u0438\u0441\u043b\u043e"
     },
     {
@@ -3887,8 +3887,8 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "bunker_core_rationale_210",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "\u0431\u043e\u043b\u044c\u0448\u0438\u043d\u0441\u0442\u0432\u043e \u0433\u043e\u043b\u043e\u0441\u043e\u0432 \u0437\u0430 \u0438\u0441\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435; \u043d\u0438\u0447\u044c\u044f \u0441\u0440\u0435\u0434\u0438 \u043b\u0438\u0434\u0435\u0440\u043e\u0432 \u2014 \u043d\u0438\u043a\u0442\u043e \u043d\u0435 \u0438\u0441\u043a\u043b\u044e\u0447\u0435\u043d."
     },
     {
@@ -3986,8 +3986,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "bunker_db_init",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "init()"
     },
     {
@@ -4096,8 +4096,8 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "bunker_db_add_player",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "add_player()"
     },
     {
@@ -4162,8 +4162,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "bunker_db_get_player",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "get_player()"
     },
     {
@@ -7968,8 +7968,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker.py"
     },
     {
@@ -7979,8 +7979,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_is_id",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_is_id()"
     },
     {
@@ -8001,8 +8001,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_display_name",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_display_name()"
     },
     {
@@ -8012,8 +8012,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_avatar_url",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_avatar_url()"
     },
     {
@@ -8023,8 +8023,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_player_ref",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_player_ref()"
     },
     {
@@ -8034,8 +8034,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_serialize_game_summary",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_serialize_game_summary()"
     },
     {
@@ -8045,8 +8045,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_public_character_view",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_public_character_view()"
     },
     {
@@ -8056,8 +8056,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_serialize_ability_announcement",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_serialize_ability_announcement()"
     },
     {
@@ -8067,8 +8067,8 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_get",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_get()"
     },
     {
@@ -8078,8 +8078,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_py_request",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "request"
     },
     {
@@ -8089,8 +8089,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_py_response",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "response"
     },
     {
@@ -8100,8 +8100,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_put",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_put()"
     },
     {
@@ -8111,8 +8111,8 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_card_pools",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_card_pools()"
     },
     {
@@ -8122,8 +8122,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_game_for_guild",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "_game_for_guild()"
     },
     {
@@ -8133,8 +8133,8 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_games_list",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_games_list()"
     },
     {
@@ -8144,8 +8144,8 @@
       "source_location": "L200",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_game_detail",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_game_detail()"
     },
     {
@@ -8155,8 +8155,8 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_patch_player",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_patch_player()"
     },
     {
@@ -8166,8 +8166,8 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_apply_ability",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_apply_ability()"
     },
     {
@@ -8177,8 +8177,8 @@
       "source_location": "L283",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_game_end",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_game_end()"
     },
     {
@@ -8188,8 +8188,8 @@
       "source_location": "L302",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_game_advance_phase",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_game_advance_phase()"
     },
     {
@@ -8199,8 +8199,8 @@
       "source_location": "L324",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_public_state",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_public_state()"
     },
     {
@@ -8210,8 +8210,8 @@
       "source_location": "L404",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_bunker_public_reveal",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "bunker_public_reveal()"
     },
     {
@@ -8254,8 +8254,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_rationale_85",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "\u0442\u043e\u043b\u044c\u043a\u043e \u0440\u0430\u0441\u043a\u0440\u044b\u0442\u044b\u0435 \u043f\u043e\u043b\u044f \u2014 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442\u0441\u044f \u0434\u043b\u044f \u043e\u0442\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f \u0434\u0440\u0443\u0433\u0438\u0445 \u0438\u0433\u0440\u043e\u043a\u043e\u0432 \u0432 \u0440\u043e\u0441\u0442\u0435\u0440\u0435."
     },
     {
@@ -8265,8 +8265,8 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_rationale_178",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "\u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u044b\u0435 \u0434\u0430\u043d\u043d\u044b\u0435 \u0434\u043b\u044f \u0442\u0438\u043f\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0433\u043e \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0430 \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438 \u0438\u0433\u0440\u043e\u043a\u0430 \u0432 \u0430\u0434\u043c\u0438\u043d\u043a\u0435."
     },
     {
@@ -8276,8 +8276,8 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_rationale_234",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "\u0440\u0443\u0447\u043d\u043e\u0435 \u043f\u0440\u0438\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u044d\u0444\u0444\u0435\u043a\u0442\u0430 \u0441\u043f\u0435\u0446. \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438 \u0432\u0435\u0434\u0443\u0449\u0438\u043c \u2014 \u0447\u0430\u0441\u0442\u0438\u0447\u043d\u0430\u044f \u0437\u0430\u043c\u0435\u043d\u0430 \u043f\u043e\u043b\u0435\u0438 \u043a\u0430\u0440"
     },
     {
@@ -8287,8 +8287,8 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "dashboard_backend_routes_bunker_rationale_303",
-      "community": 60,
-      "community_name": "voice_rooms.py",
+      "community": 152,
+      "community_name": "FakeVoiceChannel",
       "norm_label": "force-advance the current phase (discussion/vote) without waiting on the     tim"
     },
     {
@@ -10003,8 +10003,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_serialize_game_summary",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "_serialize_game_summary()"
     },
     {
@@ -10080,8 +10080,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_game_detail",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "mafia_game_detail()"
     },
     {
@@ -10113,8 +10113,8 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_mafia_public_state",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "mafia_public_state()"
     },
     {
@@ -10157,8 +10157,8 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "dashboard_backend_routes_mafia_rationale_157",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "host view for the dashboard: full roster with roles, per-phase submission     st"
     },
     {
@@ -17384,8 +17384,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_cog_isolated_state",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "isolated_state()"
     },
     {
@@ -17604,8 +17604,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_bunker_core.py"
     },
     {
@@ -17615,8 +17615,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_isolated_config",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "isolated_config()"
     },
     {
@@ -17626,8 +17626,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_get_settings_defaults",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_get_settings_defaults()"
     },
     {
@@ -17637,8 +17637,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_save_config_roundtrip",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_save_config_roundtrip()"
     },
     {
@@ -17648,8 +17648,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_fakepermissions",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "_fakepermissions"
     },
     {
@@ -17659,8 +17659,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_fakepermissions_init",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": ".__init__()"
     },
     {
@@ -17670,8 +17670,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_fakemember",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "_fakemember"
     },
     {
@@ -17681,8 +17681,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_fakemember_init",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": ".__init__()"
     },
     {
@@ -17692,8 +17692,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_has_moderator_access",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_has_moderator_access()"
     },
     {
@@ -17703,8 +17703,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_default_bunker_capacity",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_default_bunker_capacity()"
     },
     {
@@ -17725,8 +17725,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_generate_characters_health_severity_matches_disease_presence",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_generate_characters_health_severity_matches_disease_presence()"
     },
     {
@@ -17736,8 +17736,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_generate_characters_relationship_card_links_to_another_player",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_generate_characters_relationship_card_links_to_another_player()"
     },
     {
@@ -17769,8 +17769,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_generate_characters_unique_cards_no_duplicates_across_players",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_generate_characters_unique_cards_no_duplicates_across_players()"
     },
     {
@@ -17791,8 +17791,8 @@
       "source_location": "L157",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_generate_characters_with_repeats_allows_duplicates",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_generate_characters_with_repeats_allows_duplicates()"
     },
     {
@@ -17813,8 +17813,8 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_resolve_expulsion_vote_majority",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_resolve_expulsion_vote_majority()"
     },
     {
@@ -17824,8 +17824,8 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_resolve_expulsion_vote_tie_returns_none",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_resolve_expulsion_vote_tie_returns_none()"
     },
     {
@@ -17835,8 +17835,8 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_resolve_expulsion_vote_all_skip_returns_none",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_resolve_expulsion_vote_all_skip_returns_none()"
     },
     {
@@ -17846,8 +17846,8 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_resolve_expulsion_vote_empty_returns_none",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_resolve_expulsion_vote_empty_returns_none()"
     },
     {
@@ -17857,8 +17857,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_core_test_is_game_over",
-      "community": 36,
-      "community_name": "Lockdown Routes",
+      "community": 228,
+      "community_name": "test_bunker_core.py",
       "norm_label": "test_is_game_over()"
     },
     {
@@ -17868,8 +17868,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_bunker_db.py"
     },
     {
@@ -17879,8 +17879,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_isolated_db",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "isolated_db()"
     },
     {
@@ -17890,8 +17890,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_make_game",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "_make_game()"
     },
     {
@@ -17901,8 +17901,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_sample_character",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "_sample_character()"
     },
     {
@@ -17912,8 +17912,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_create_and_get_game",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_create_and_get_game()"
     },
     {
@@ -17923,8 +17923,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_create_game_with_repeats_allowed",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_create_game_with_repeats_allowed()"
     },
     {
@@ -17934,8 +17934,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_update_game_stores_voice_channel_id",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_update_game_stores_voice_channel_id()"
     },
     {
@@ -17945,8 +17945,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_init_migrates_old_schema_without_new_columns",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_init_migrates_old_schema_without_new_columns()"
     },
     {
@@ -17956,8 +17956,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_get_game_by_lobby_message",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_get_game_by_lobby_message()"
     },
     {
@@ -17967,8 +17967,8 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_get_active_game_in_channel_filters_by_status",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_get_active_game_in_channel_filters_by_status()"
     },
     {
@@ -17978,8 +17978,8 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_update_game_generic_fields",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_update_game_generic_fields()"
     },
     {
@@ -17989,8 +17989,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_list_active_games_excludes_finished_and_cancelled",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_list_active_games_excludes_finished_and_cancelled()"
     },
     {
@@ -18000,8 +18000,8 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_list_active_games_filters_by_guild",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_list_active_games_filters_by_guild()"
     },
     {
@@ -18011,8 +18011,8 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_add_player_rejects_duplicate",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_add_player_rejects_duplicate()"
     },
     {
@@ -18022,8 +18022,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_remove_player",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_remove_player()"
     },
     {
@@ -18033,8 +18033,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_list_alive_players_excludes_eliminated",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_list_alive_players_excludes_eliminated()"
     },
     {
@@ -18044,8 +18044,8 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_assign_character_and_get_by_token",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_assign_character_and_get_by_token()"
     },
     {
@@ -18055,8 +18055,8 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_set_player_character_full_replace",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_set_player_character_full_replace()"
     },
     {
@@ -18066,8 +18066,8 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_reveal_fields_accumulates",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_reveal_fields_accumulates()"
     },
     {
@@ -18077,8 +18077,8 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_upsert_vote_overwrites",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_upsert_vote_overwrites()"
     },
     {
@@ -18088,8 +18088,8 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_get_vote_single_row",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_get_vote_single_row()"
     },
     {
@@ -18110,8 +18110,8 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_test_round_events_roundtrip",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "test_round_events_roundtrip()"
     },
     {
@@ -18121,8 +18121,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_db_rationale_54",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "\u0431\u0430\u0437\u0430, \u0441\u043e\u0437\u0434\u0430\u043d\u043d\u0430\u044f \u0434\u043e \u043f\u043e\u044f\u0432\u043b\u0435\u043d\u0438\u044f voice_channel_id/vote_message_id/unique_cards,"
     },
     {
@@ -18198,8 +18198,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_public_routes_isolated_state",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "isolated_state()"
     },
     {
@@ -18616,8 +18616,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_backend_tests_test_bunker_routes_isolated_state",
-      "community": 152,
-      "community_name": "FakeVoiceChannel",
+      "community": 227,
+      "community_name": "test_bunker_db.py",
       "norm_label": "isolated_state()"
     },
     {
@@ -37008,8 +37008,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "ref_react",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "react"
     },
     {
@@ -37756,8 +37756,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_serverlanguage",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "serverlanguage"
     },
     {
@@ -37767,8 +37767,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchlanguage",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "fetchlanguage()"
     },
     {
@@ -37789,8 +37789,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatelanguage",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "updatelanguage()"
     },
     {
@@ -37844,8 +37844,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_membersummary",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "membersummary"
     },
     {
@@ -38009,8 +38009,8 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchlockdownstatus",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "fetchlockdownstatus()"
     },
     {
@@ -38020,8 +38020,8 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_activatelockdown",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "activatelockdown()"
     },
     {
@@ -38031,8 +38031,8 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deactivatelockdown",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "deactivatelockdown()"
     },
     {
@@ -38053,8 +38053,8 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmoderationlog",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "fetchmoderationlog()"
     },
     {
@@ -38064,8 +38064,8 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_massassigntarget",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassigntarget"
     },
     {
@@ -38075,8 +38075,8 @@
       "source_location": "L229",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_massassignstatus",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassignstatus"
     },
     {
@@ -38086,8 +38086,8 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_startmassassign",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "startmassassign()"
     },
     {
@@ -38097,8 +38097,8 @@
       "source_location": "L250",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchmassassignstatus",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "fetchmassassignstatus()"
     },
     {
@@ -38152,8 +38152,8 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_ischanneldead",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "ischanneldead()"
     },
     {
@@ -38163,8 +38163,8 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_syntheticdeletedchannel",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "syntheticdeletedchannel()"
     },
     {
@@ -38174,8 +38174,8 @@
       "source_location": "L299",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_syntheticdeletedrole",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "syntheticdeletedrole()"
     },
     {
@@ -38251,8 +38251,8 @@
       "source_location": "L337",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_embedfieldspec",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedfieldspec"
     },
     {
@@ -38262,8 +38262,8 @@
       "source_location": "L343",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_embedspec",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedspec"
     },
     {
@@ -38273,8 +38273,8 @@
       "source_location": "L356",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_embedmessagepayload",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedmessagepayload"
     },
     {
@@ -38295,8 +38295,8 @@
       "source_location": "L367",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createembedmessage",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "createembedmessage()"
     },
     {
@@ -38306,8 +38306,8 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchembedmessage",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "fetchembedmessage()"
     },
     {
@@ -38317,8 +38317,8 @@
       "source_location": "L375",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateembedmessage",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "updateembedmessage()"
     },
     {
@@ -38394,8 +38394,8 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_feedbackcategoryfieldspec",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategoryfieldspec"
     },
     {
@@ -38405,8 +38405,8 @@
       "source_location": "L428",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_feedbackcategoryspec",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategoryspec"
     },
     {
@@ -38416,8 +38416,8 @@
       "source_location": "L444",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchfeedbackcategories",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "fetchfeedbackcategories()"
     },
     {
@@ -38427,8 +38427,8 @@
       "source_location": "L449",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createfeedbackcategory",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "createfeedbackcategory()"
     },
     {
@@ -38438,8 +38438,8 @@
       "source_location": "L453",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatefeedbackcategory",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "updatefeedbackcategory()"
     },
     {
@@ -38449,8 +38449,8 @@
       "source_location": "L460",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletefeedbackcategory",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "deletefeedbackcategory()"
     },
     {
@@ -38460,8 +38460,8 @@
       "source_location": "L464",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_publishfeedbackpanel",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "publishfeedbackpanel()"
     },
     {
@@ -38779,8 +38779,8 @@
       "source_location": "L667",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_voiceroom",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "voiceroom"
     },
     {
@@ -38790,8 +38790,8 @@
       "source_location": "L678",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchvoicerooms",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "fetchvoicerooms()"
     },
     {
@@ -38801,8 +38801,8 @@
       "source_location": "L683",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletevoiceroom",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "deletevoiceroom()"
     },
     {
@@ -38812,8 +38812,8 @@
       "source_location": "L687",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_publishvoicepanel",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "publishvoicepanel()"
     },
     {
@@ -39065,8 +39065,8 @@
       "source_location": "L845",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_feedbackpanelsettings",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "feedbackpanelsettings"
     },
     {
@@ -39142,8 +39142,8 @@
       "source_location": "L882",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchfeedbackpanelsettings",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "fetchfeedbackpanelsettings()"
     },
     {
@@ -39153,8 +39153,8 @@
       "source_location": "L886",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatefeedbackpanelsettings",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "updatefeedbackpanelsettings()"
     },
     {
@@ -39670,8 +39670,8 @@
       "source_location": "L1230",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_embedtemplate",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedtemplate"
     },
     {
@@ -39681,8 +39681,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchembedtemplates",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "fetchembedtemplates()"
     },
     {
@@ -39692,8 +39692,8 @@
       "source_location": "L1243",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_saveembedtemplate",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "saveembedtemplate()"
     },
     {
@@ -39703,8 +39703,8 @@
       "source_location": "L1252",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deleteembedtemplate",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "deleteembedtemplate()"
     },
     {
@@ -41012,8 +41012,8 @@
       "source_location": "L2068",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_economysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economysettings"
     },
     {
@@ -41023,8 +41023,8 @@
       "source_location": "L2089",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_economyweeklyreportrow",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economyweeklyreportrow"
     },
     {
@@ -41045,8 +41045,8 @@
       "source_location": "L2104",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_economytopentry",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economytopentry"
     },
     {
@@ -41056,8 +41056,8 @@
       "source_location": "L2110",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetcheconomysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetcheconomysettings()"
     },
     {
@@ -41067,8 +41067,8 @@
       "source_location": "L2114",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateeconomysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "updateeconomysettings()"
     },
     {
@@ -41078,8 +41078,8 @@
       "source_location": "L2118",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetcheconomytop",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetcheconomytop()"
     },
     {
@@ -41089,8 +41089,8 @@
       "source_location": "L2122",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetcheconomyweeklyreport",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetcheconomyweeklyreport()"
     },
     {
@@ -41100,8 +41100,8 @@
       "source_location": "L2126",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_seteconomybalance",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "seteconomybalance()"
     },
     {
@@ -41111,8 +41111,8 @@
       "source_location": "L2130",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_resetalleconomybalances",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "resetalleconomybalances()"
     },
     {
@@ -41133,8 +41133,8 @@
       "source_location": "L2142",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_casinosettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinosettings"
     },
     {
@@ -41144,8 +41144,8 @@
       "source_location": "L2151",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchcasinosettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchcasinosettings()"
     },
     {
@@ -41155,8 +41155,8 @@
       "source_location": "L2155",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatecasinosettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "updatecasinosettings()"
     },
     {
@@ -41166,8 +41166,8 @@
       "source_location": "L2159",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_casinoleaderboardentry",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinoleaderboardentry"
     },
     {
@@ -41188,8 +41188,8 @@
       "source_location": "L2176",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchcasinoleaderboard",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "fetchcasinoleaderboard()"
     },
     {
@@ -41320,8 +41320,8 @@
       "source_location": "L2250",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_customcommandssettings",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "customcommandssettings"
     },
     {
@@ -41331,8 +41331,8 @@
       "source_location": "L2255",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchcustomcommands",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "fetchcustomcommands()"
     },
     {
@@ -41342,8 +41342,8 @@
       "source_location": "L2259",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_setcustomcommandsenabled",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "setcustomcommandsenabled()"
     },
     {
@@ -41353,8 +41353,8 @@
       "source_location": "L2263",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_createcustomcommand",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "createcustomcommand()"
     },
     {
@@ -41364,8 +41364,8 @@
       "source_location": "L2273",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatecustomcommand",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "updatecustomcommand()"
     },
     {
@@ -41375,8 +41375,8 @@
       "source_location": "L2280",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_deletecustomcommand",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "deletecustomcommand()"
     },
     {
@@ -41716,8 +41716,8 @@
       "source_location": "L2475",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_owneralertssettings",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "owneralertssettings"
     },
     {
@@ -41727,8 +41727,8 @@
       "source_location": "L2489",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchowneralerts",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "fetchowneralerts()"
     },
     {
@@ -41738,8 +41738,8 @@
       "source_location": "L2493",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updateowneralerts",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "updateowneralerts()"
     },
     {
@@ -41749,8 +41749,8 @@
       "source_location": "L2497",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_testowneralerts",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "testowneralerts()"
     },
     {
@@ -41782,8 +41782,8 @@
       "source_location": "L2515",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchsetuphealth",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 18,
+      "community_name": "Bunker Discord Cog",
       "norm_label": "fetchsetuphealth()"
     },
     {
@@ -41804,8 +41804,8 @@
       "source_location": "L2524",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_fetchtimezone",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "fetchtimezone()"
     },
     {
@@ -41815,8 +41815,8 @@
       "source_location": "L2528",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_client_updatetimezone",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "updatetimezone()"
     },
     {
@@ -42068,8 +42068,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_embedbuilder_test",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedbuilder.test.ts"
     },
     {
@@ -42079,8 +42079,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_embedbuilder_test_okjson",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "okjson()"
     },
     {
@@ -42090,8 +42090,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_embedbuilder_test_samplepayload",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "samplepayload"
     },
     {
@@ -42222,8 +42222,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_feedbackcategories_test",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategories.test.ts"
     },
     {
@@ -42233,8 +42233,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_feedbackcategories_test_okjson",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "okjson()"
     },
     {
@@ -42244,8 +42244,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_feedbackcategories_test_samplespec",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "samplespec"
     },
     {
@@ -42255,8 +42255,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_feedbackpanel_test",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackpanel.test.ts"
     },
     {
@@ -42266,8 +42266,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_massassign_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassign.test.ts"
     },
     {
@@ -42277,8 +42277,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_massassign_test_okjson",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "okjson()"
     },
     {
@@ -42288,8 +42288,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_moderation_test",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "moderation.test.ts"
     },
     {
@@ -42299,8 +42299,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_frontend_src_api_moderation_test_okjson",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "okjson()"
     },
     {
@@ -42431,8 +42431,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_chippicker",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "chippicker.tsx"
     },
     {
@@ -42442,8 +42442,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_chippicker_chippickerkind",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "chippickerkind"
     },
     {
@@ -42453,8 +42453,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_chippicker_chippickerprops",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "chippickerprops"
     },
     {
@@ -42464,8 +42464,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_chippicker_chippicker",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "chippicker()"
     },
     {
@@ -42475,8 +42475,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_commandpalette",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "commandpalette.tsx"
     },
     {
@@ -42486,8 +42486,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_commandpalette_commandpaletteitem",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "commandpaletteitem"
     },
     {
@@ -42497,8 +42497,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_commandpalette_commandpaletteprops",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "commandpaletteprops"
     },
     {
@@ -42508,8 +42508,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_commandpalette_commandpalette",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "commandpalette()"
     },
     {
@@ -42519,8 +42519,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embededitor",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embededitor.tsx"
     },
     {
@@ -42530,8 +42530,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embededitor_props",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "props"
     },
     {
@@ -42541,8 +42541,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embededitor_embededitor",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embededitor()"
     },
     {
@@ -42552,8 +42552,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embedpreview",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedpreview.tsx"
     },
     {
@@ -42563,8 +42563,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embedpreview_props",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "props"
     },
     {
@@ -42574,8 +42574,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_embedpreview_embedpreview",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedpreview()"
     },
     {
@@ -42662,8 +42662,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_test",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassignmodal.test.tsx"
     },
     {
@@ -42673,8 +42673,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassignmodal.tsx"
     },
     {
@@ -42684,8 +42684,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_props",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "props"
     },
     {
@@ -42695,8 +42695,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_massassignmodal_massassignmodal",
-      "community": 4,
-      "community_name": "API Client Types",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "massassignmodal()"
     },
     {
@@ -42706,8 +42706,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_modal_test",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "modal.test.tsx"
     },
     {
@@ -42717,8 +42717,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_moduleconfigpanel",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "moduleconfigpanel.tsx"
     },
     {
@@ -42728,8 +42728,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_moduleconfigpanel_moduleconfigpanelprops",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "moduleconfigpanelprops"
     },
     {
@@ -42915,8 +42915,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docsbanner",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docsbanner.tsx"
     },
     {
@@ -42926,8 +42926,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docsbanner_docsbanner",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docsbanner()"
     },
     {
@@ -42937,8 +42937,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssearch",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssearch.tsx"
     },
     {
@@ -42948,8 +42948,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssearch_docssearchprops",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssearchprops"
     },
     {
@@ -42959,8 +42959,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssearch_docssearch",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssearch()"
     },
     {
@@ -42970,8 +42970,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssidebar",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssidebar.tsx"
     },
     {
@@ -42981,8 +42981,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssidebar_group_icons",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "group_icons"
     },
     {
@@ -42992,8 +42992,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssidebar_docssidebarprops",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssidebarprops"
     },
     {
@@ -43003,8 +43003,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docssidebar_docssidebar",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docssidebar()"
     },
     {
@@ -43014,8 +43014,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docstoc",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docstoc.tsx"
     },
     {
@@ -43025,8 +43025,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docstoc_tocitem",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "tocitem"
     },
     {
@@ -43036,8 +43036,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docstoc_docstocprops",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docstocprops"
     },
     {
@@ -43047,8 +43047,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docstoc_slugify",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "slugify()"
     },
     {
@@ -43058,8 +43058,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docstoc_docstoc",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docstoc()"
     },
     {
@@ -43069,8 +43069,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docsnav",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docsnav.ts"
     },
     {
@@ -43080,8 +43080,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_docs_docsnav_docnavitem",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docnavitem"
     },
     {
@@ -43179,8 +43179,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_checkbox",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "checkbox.tsx"
     },
     {
@@ -43190,8 +43190,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_checkbox_checkboxprops",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "checkboxprops"
     },
     {
@@ -43201,8 +43201,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_checkbox_checkbox",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "checkbox()"
     },
     {
@@ -43256,8 +43256,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_modal",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "modal.tsx"
     },
     {
@@ -43267,8 +43267,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_modal_modalprops",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "modalprops"
     },
     {
@@ -43278,8 +43278,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_modal_size_class",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "size_class"
     },
     {
@@ -43289,8 +43289,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_modal_modal",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "modal()"
     },
     {
@@ -43311,8 +43311,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_select",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "select.tsx"
     },
     {
@@ -43322,8 +43322,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_select_selectoption",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "selectoption"
     },
     {
@@ -43333,8 +43333,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_select_selectkind",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "selectkind"
     },
     {
@@ -43344,8 +43344,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_select_selectprops",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "selectprops"
     },
     {
@@ -43355,8 +43355,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "dashboard_frontend_src_components_ui_select_select",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "select()"
     },
     {
@@ -43399,8 +43399,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "botconfigdefaults.ts"
     },
     {
@@ -43410,8 +43410,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults_empty_bot_config",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "empty_bot_config"
     },
     {
@@ -43421,8 +43421,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_botconfigdefaults_moduleconfigvariant",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "moduleconfigvariant"
     },
     {
@@ -43487,8 +43487,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_config_welcomedmdefaults",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "welcomedmdefaults.ts"
     },
     {
@@ -45148,8 +45148,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casino.test.tsx"
     },
     {
@@ -45159,8 +45159,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_emptysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptysettings"
     },
     {
@@ -45170,8 +45170,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_emptyeconomy",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptyeconomy"
     },
     {
@@ -45181,8 +45181,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_emptyleaderboard",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptyleaderboard"
     },
     {
@@ -45192,8 +45192,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_test_mockbase",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "mockbase()"
     },
     {
@@ -45203,8 +45203,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casino.tsx"
     },
     {
@@ -45214,8 +45214,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_tab",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "tab"
     },
     {
@@ -45225,8 +45225,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_casino_casinopage",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "casinopage()"
     },
     {
@@ -45258,8 +45258,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_config_test",
-      "community": 137,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "Event Builder UI",
       "norm_label": "config.test.tsx"
     },
     {
@@ -45445,8 +45445,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_customcommands",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "customcommands.tsx"
     },
     {
@@ -45456,8 +45456,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_customcommands_tab",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "tab"
     },
     {
@@ -45467,8 +45467,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_customcommands_parsetab",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "parsetab()"
     },
     {
@@ -45478,8 +45478,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_customcommands_tabbar",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "tabbar()"
     },
     {
@@ -45489,8 +45489,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_customcommands_customcommandspage",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 2,
+      "community_name": "Dashboard App Bootstrap",
       "norm_label": "customcommandspage()"
     },
     {
@@ -45585,7 +45585,7 @@
       "label": "Section",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L56",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_section",
       "community": 19,
@@ -45596,7 +45596,7 @@
       "label": "NavGroup",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L65",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_navgroup",
       "community": 19,
@@ -45607,7 +45607,7 @@
       "label": "NAV_GROUPS",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L72",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_nav_groups",
       "community": 19,
@@ -45618,7 +45618,7 @@
       "label": "navItemActive()",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L146",
+      "source_location": "L144",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_navitemactive",
       "community": 19,
@@ -45629,7 +45629,7 @@
       "label": "SidebarNav()",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L155",
+      "source_location": "L151",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_sidebarnav",
       "community": 19,
@@ -45640,7 +45640,7 @@
       "label": "DashboardShell()",
       "file_type": "code",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L277",
+      "source_location": "L273",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_dashboardshell_dashboardshell",
       "community": 19,
@@ -45676,8 +45676,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_docs",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docs.tsx"
     },
     {
@@ -45687,8 +45687,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_docs_docspage",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "docspage()"
     },
     {
@@ -45698,8 +45698,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy_test",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economy.test.tsx"
     },
     {
@@ -45709,8 +45709,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy_test_emptysettings",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "emptysettings"
     },
     {
@@ -45720,8 +45720,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy_test_mockbase",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "mockbase()"
     },
     {
@@ -45731,8 +45731,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economy.tsx"
     },
     {
@@ -45742,8 +45742,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy_tab",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "tab"
     },
     {
@@ -45753,8 +45753,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_economy_economypage",
-      "community": 52,
-      "community_name": "Bot Config Store",
+      "community": 4,
+      "community_name": "API Client Types",
       "norm_label": "economypage()"
     },
     {
@@ -45775,8 +45775,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_embedbuilder",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedbuilder.tsx"
     },
     {
@@ -45786,8 +45786,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_embedbuilder_deep_link_hints",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "deep_link_hints"
     },
     {
@@ -45797,8 +45797,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_embedbuilder_embedbuilderpage",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedbuilderpage()"
     },
     {
@@ -46215,8 +46215,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_test",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategories.test.tsx"
     },
     {
@@ -46226,8 +46226,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_test_samplecategory",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "samplecategory"
     },
     {
@@ -46237,8 +46237,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategories.tsx"
     },
     {
@@ -46248,8 +46248,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_empty_field",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "empty_field"
     },
     {
@@ -46259,8 +46259,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_translatefn",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "translatefn"
     },
     {
@@ -46270,8 +46270,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_defaulttemplate",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "defaulttemplate()"
     },
     {
@@ -46281,8 +46281,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_emptyspec",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "emptyspec()"
     },
     {
@@ -46292,8 +46292,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackcategories_feedbackcategoriespage",
-      "community": 13,
-      "community_name": "Test Fake Members",
+      "community": 52,
+      "community_name": "Bot Config Store",
       "norm_label": "feedbackcategoriespage()"
     },
     {
@@ -46303,8 +46303,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackpanel",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "feedbackpanel.tsx"
     },
     {
@@ -46314,8 +46314,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_feedbackpanel_feedbackpanelpage",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "feedbackpanelpage()"
     },
     {
@@ -46842,8 +46842,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "lockdown.tsx"
     },
     {
@@ -46853,8 +46853,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown_tab",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "tab"
     },
     {
@@ -46864,8 +46864,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown_type_icon",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "type_icon"
     },
     {
@@ -46875,8 +46875,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown_valid_tabs",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "valid_tabs"
     },
     {
@@ -46886,8 +46886,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown_tabfromsearch",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "tabfromsearch()"
     },
     {
@@ -46897,8 +46897,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_lockdown_lockdownpage",
-      "community": 18,
-      "community_name": "Bunker Discord Cog",
+      "community": 44,
+      "community_name": "Bunker API Client",
       "norm_label": "lockdownpage()"
     },
     {
@@ -47942,8 +47942,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "serversettings.tsx"
     },
     {
@@ -47953,8 +47953,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_language_options",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "language_options"
     },
     {
@@ -47964,8 +47964,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_defaultalerts",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "defaultalerts"
     },
     {
@@ -47975,8 +47975,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_settingstab",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "settingstab"
     },
     {
@@ -47986,8 +47986,8 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_parsesettingstab",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "parsesettingstab()"
     },
     {
@@ -47997,8 +47997,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_tabbar",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "tabbar()"
     },
     {
@@ -48008,8 +48008,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_generalsettings",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "generalsettings()"
     },
     {
@@ -48019,8 +48019,8 @@
       "source_location": "L433",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_serversettings_serversettingspage",
-      "community": 2,
-      "community_name": "Dashboard App Bootstrap",
+      "community": 194,
+      "community_name": "Mafia.tsx",
       "norm_label": "serversettingspage()"
     },
     {
@@ -48404,8 +48404,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "voicerooms.tsx"
     },
     {
@@ -48415,8 +48415,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms_tab",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "tab"
     },
     {
@@ -48426,8 +48426,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_voicerooms_voiceroomspage",
-      "community": 42,
-      "community_name": "Giveaway Cog",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "voiceroomspage()"
     },
     {
@@ -48701,8 +48701,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_docs_index_getdocsections",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "getdocsections()"
     },
     {
@@ -48712,8 +48712,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "dashboard_frontend_src_pages_docs_index_getdocgroups",
-      "community": 19,
-      "community_name": "Mass Role Assignment",
+      "community": 137,
+      "community_name": ".__init__",
       "norm_label": "getdocgroups()"
     },
     {
@@ -48822,8 +48822,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dashboard_frontend_src_utils_embedutils",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "embedutils.ts"
     },
     {
@@ -48833,8 +48833,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "dashboard_frontend_src_utils_embedutils_empty_embed_spec",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "empty_embed_spec"
     },
     {
@@ -48844,8 +48844,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "dashboard_frontend_src_utils_embedutils_validateembedspec",
-      "community": 47,
-      "community_name": "Event Builder UI",
+      "community": 60,
+      "community_name": "voice_rooms.py",
       "norm_label": "validateembedspec()"
     },
     {
@@ -57589,8 +57589,8 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "mafia_db_list_alive_players",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "list_alive_players()"
     },
     {
@@ -57622,8 +57622,8 @@
       "source_location": "L256",
       "_origin": "ast",
       "id": "mafia_db_get_player_by_token",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "get_player_by_token()"
     },
     {
@@ -57710,8 +57710,8 @@
       "source_location": "L330",
       "_origin": "ast",
       "id": "mafia_db_get_day_votes",
-      "community": 78,
-      "community_name": "reaction_roles.py",
+      "community": 76,
+      "community_name": "test_config_routes.py",
       "norm_label": "get_day_votes()"
     },
     {
@@ -73470,9 +73470,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 19,
+      "community": 137,
       "norm_label": "documentation banner image",
-      "community_name": "Mass Role Assignment",
+      "community_name": ".__init__",
       "id": "dashboard_frontend_src_assets_docs_banner"
     },
     {
@@ -199107,7 +199107,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L44",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -206610,7 +206610,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -207486,7 +207486,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -207499,7 +207499,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L317",
+      "source_location": "L313",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_dashboardshell",
@@ -207786,7 +207786,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -207799,7 +207799,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L177",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_sidebarnav",
@@ -222996,7 +222996,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -223020,7 +223020,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -223503,7 +223503,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L48",
+      "source_location": "L47",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -223587,7 +223587,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L48",
+      "source_location": "L47",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -228112,7 +228112,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L49",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -228136,7 +228136,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L49",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -228160,7 +228160,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L49",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -229831,7 +229831,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L50",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -230203,7 +230203,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L50",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -230875,7 +230875,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L51",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -231091,7 +231091,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L51",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -231104,7 +231104,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L278",
+      "source_location": "L274",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_dashboardshell",
@@ -231116,7 +231116,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L162",
+      "source_location": "L158",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_sidebarnav",
@@ -231624,7 +231624,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L52",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -233208,7 +233208,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L52",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -233221,7 +233221,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L279",
+      "source_location": "L275",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_dashboardshell",
@@ -233233,7 +233233,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L163",
+      "source_location": "L159",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_sidebarnav",
@@ -237928,7 +237928,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L277",
+      "source_location": "L273",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237939,7 +237939,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L72",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237950,7 +237950,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L65",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237961,7 +237961,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L146",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237972,7 +237972,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L56",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237983,7 +237983,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L155",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell",
@@ -237995,7 +237995,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "dashboard/frontend/src/pages/DashboardShell.tsx",
-      "source_location": "L237",
+      "source_location": "L233",
       "weight": 1.0,
       "_origin": "ast",
       "source": "dashboard_frontend_src_pages_dashboardshell_sidebarnav",

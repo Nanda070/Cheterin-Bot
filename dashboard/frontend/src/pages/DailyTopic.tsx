@@ -22,7 +22,7 @@ import { Toggle } from '../components/ui/Toggle'
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-export function DailyTopicPage() {
+export function DailyTopicPage({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT()
   const [settings, setSettings] = useState<DailyTopicSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -107,16 +107,21 @@ export function DailyTopicPage() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Lightbulb size={22} className="text-primary" />
-          {t('dailyTopic.title')}
-        </h1>
-        <p className="mt-1 text-sm text-muted">
+    <div className={`flex flex-col gap-6 ${embedded ? '' : 'max-w-3xl'}`}>
+      {!embedded && (
+        <div>
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Lightbulb size={22} className="text-primary" />
+            {t('dailyTopic.title')}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
 {t('dailyTopic.intro')}
-        </p>
-      </div>
+          </p>
+        </div>
+      )}
+      {embedded && (
+        <p className="text-sm text-muted">{t('dailyTopic.intro')}</p>
+      )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {notice && <p className="text-sm text-primary">{notice}</p>}

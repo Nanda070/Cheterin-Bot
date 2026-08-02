@@ -17,6 +17,7 @@ import economy_core
 import family_core
 import fun_core
 import mafia_core
+import relations_core
 import scheduled_messages_core
 import starboard_core
 import valchecker_core
@@ -38,6 +39,7 @@ MODULE_SETTINGS_GETTERS = {
     "starboard": starboard_core.get_settings,
     "autoReactions": auto_reactions_core.get_settings,
     "fun": fun_core.get_settings,
+    "relations": relations_core.get_settings,
     "dailyTopic": daily_topic_core.get_settings,
     "mafia": mafia_core.get_settings,
     "bunker": bunker_core.get_settings,

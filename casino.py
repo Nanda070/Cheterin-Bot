@@ -1,8 +1,8 @@
-"""Ког «Казино»: /слоты и /монетка на серверную валюту.
+"""Ког «Казино»: /casino slots · coinflip · blackjack · top на серверную валюту.
 
 Требует включённой «Экономики» (баланс/списания идут через economy_db) и
 собственного тумблера в дашборде (раздел «Экономика», карточка «Казино»).
-Обе команды делят один кулдаун на игрока, чтобы не спамили ставками.
+Все игры делят один кулдаун на игрока, чтобы не спамили ставками.
 """
 
 import logging
@@ -87,6 +87,12 @@ async def check_loss_roles(interaction: discord.Interaction, settings: dict):
 
 
 class CasinoCog(commands.Cog):
+    casino_group = app_commands.Group(
+        name="casino",
+        description="Slots, coinflip, blackjack and casino leaderboard",
+        guild_only=True,
+    )
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._cooldowns: dict[tuple[int, int], float] = {}
@@ -128,7 +134,7 @@ class CasinoCog(commands.Cog):
     def _start_cooldown(self, guild_id: int, user_id: int, cooldown_sec: int):
         self._cooldowns[(guild_id, user_id)] = time.monotonic() + cooldown_sec
 
-    @app_commands.command(name="слоты", description="Крутить слоты на ставку монет: 3 барабана, совпадения дают выигрыш")
+    @casino_group.command(name="slots", description="Spin slots for a coin bet")
     @app_commands.describe(ставка="Сколько монет поставить")
     async def slots_command(self, interaction: discord.Interaction, ставка: int):
         settings, econ, error, lang = self._gate(interaction)
@@ -186,7 +192,7 @@ class CasinoCog(commands.Cog):
             )
         )
 
-    @app_commands.command(name="монетка", description="Подбросить монетку на ставку: угадал сторону — выигрыш")
+    @casino_group.command(name="coinflip", description="Coin flip bet — pick a side to win")
     @app_commands.describe(ставка="Сколько монет поставить", сторона="Орёл или решка")
     @app_commands.choices(сторона=COINFLIP_CHOICES)
     async def coinflip_command(
@@ -243,6 +249,37 @@ class CasinoCog(commands.Cog):
                 balance=economy_core.format_amount(balance, econ),
             )
         )
+
+
+
+    @casino_group.command(name="top", description="Casino leaderboard by wins and losses")
+    async def casino_top_command(self, interaction: discord.Interaction):
+        lang = i18n.lang_for(interaction.guild_id)
+        settings = casino_core.get_settings(interaction.guild.id)
+        if not settings["enabled"]:
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "casino"), ephemeral=True,
+            )
+        econ = economy_core.get_settings(interaction.guild.id)
+        if not econ["enabled"]:
+            return await interaction.response.send_message(
+                i18n.t("error.economy_disabled_casino", lang), ephemeral=True,
+            )
+
+        view = CasinoLeaderboardView(self.bot, interaction, lang)
+        embed = view.build_embed(interaction.guild)
+        await interaction.response.send_message(embed=embed, view=view)
+
+    @casino_group.command(name="blackjack", description="Play blackjack against the dealer for coins")
+    @app_commands.describe(bet="How many coins to wager")
+    async def casino_blackjack(self, interaction: discord.Interaction, bet: int):
+        bj = self.bot.get_cog("BlackjackCog")
+        if bj is None:
+            lang = i18n.lang_for(interaction.guild_id)
+            return await interaction.response.send_message(
+                i18n.module_disabled(lang, "casino"), ephemeral=True,
+            )
+        await bj.blackjack_command(interaction, bet)
 
 
 class CasinoLeaderboardView(discord.ui.View):
@@ -428,27 +465,7 @@ class CasinoLeaderboardView(discord.ui.View):
         self.stop()
 
 
-@app_commands.command(name="казино-топ", description="Таблица лидеров казино по победам и проигрышам")
-async def casino_top_command(interaction: discord.Interaction):
-    lang = i18n.lang_for(interaction.guild_id)
-    settings = casino_core.get_settings(interaction.guild.id)
-    if not settings["enabled"]:
-        return await interaction.response.send_message(
-            i18n.module_disabled(lang, "casino"), ephemeral=True,
-        )
-    econ = economy_core.get_settings(interaction.guild.id)
-    if not econ["enabled"]:
-        return await interaction.response.send_message(
-            i18n.t("error.economy_disabled_casino", lang), ephemeral=True,
-        )
-
-    view = CasinoLeaderboardView(interaction.client, interaction, lang)
-    embed = view.build_embed(interaction.guild)
-    await interaction.response.send_message(embed=embed, view=view)
-
-
 async def setup(bot: commands.Bot):
     cog = CasinoCog(bot)
-    slash_registry.register_casino(cog, casino_top_command)
-    bot.tree.add_command(casino_top_command)
+    slash_registry.register_casino(cog)
     await bot.add_cog(cog)

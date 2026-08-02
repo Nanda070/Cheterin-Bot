@@ -27,6 +27,7 @@ from locales.en.spam import MESSAGES as spam_messages
 from locales.en.streams import MESSAGES as streams_messages
 from locales.en.supply import MESSAGES as supply_messages
 from locales.en.quote import MESSAGES as quote_messages
+from locales.en.relations import MESSAGES as relations_messages
 from locales.en.valchecker import MESSAGES as valchecker_messages
 from locales.en.tempban import MESSAGES as tempban_messages
 from locales.en.verification import MESSAGES as verification_messages
@@ -55,6 +56,7 @@ MESSAGES = merge_messages(
     spam_messages,
     tempban_messages,
     quote_messages,
+    relations_messages,
     valchecker_messages,
     daily_topic_messages,
     streams_messages,

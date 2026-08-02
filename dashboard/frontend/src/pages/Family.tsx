@@ -1,6 +1,7 @@
 import {
   Cake,
   Gear,
+  Package,
   Plus,
   Ticket as TicketIcon,
   Trash,
@@ -8,6 +9,7 @@ import {
 } from '@phosphor-icons/react'
 import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   decideFamilyTicket,
   deleteFamilyBirthday,
@@ -38,8 +40,14 @@ import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
+import { SupplyPage } from './Supply'
 
-type Tab = 'settings' | 'roster' | 'tickets' | 'birthdays'
+type Tab = 'settings' | 'roster' | 'tickets' | 'birthdays' | 'supply'
+
+function parseFamilyTab(raw: string | null): Tab {
+  if (raw === 'roster' || raw === 'tickets' || raw === 'birthdays' || raw === 'supply') return raw
+  return 'settings'
+}
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
@@ -56,7 +64,12 @@ function ticketStatusLabel(status: FamilyTicketStatus, t: (k: string) => string)
 
 export function FamilyPage() {
   const t = useT()
-  const [tab, setTab] = useState<Tab>('settings')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseFamilyTab(searchParams.get('tab'))
+  const setTab = (next: Tab) => {
+    if (next === 'settings') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
   const [settings, setSettings] = useState<FamilySettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -124,7 +137,7 @@ export function FamilyPage() {
     return () => clearTimeout(timer)
   }, [birthdaySearch])
 
-  if (!settings) {
+  if (tab !== 'supply' && !settings) {
     return <p className="text-sm text-muted">{error || t('common.loading')}</p>
   }
 
@@ -133,6 +146,7 @@ export function FamilyPage() {
   }
 
   const save = async () => {
+    if (!settings) return
     setBusy(true)
     setError('')
     setSaved('')
@@ -194,11 +208,13 @@ export function FamilyPage() {
           <UsersThree size={22} className="text-primary" />
           {t('family.title')}
         </h1>
-        <Toggle
-          checked={settings.enabled}
-          onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
-        />
+        {settings && (
+          <Toggle
+            checked={settings.enabled}
+            onChange={(v) => setSettings({ ...settings, enabled: v })}
+            label={settings.enabled ? t('common.moduleEnabled') : t('common.moduleDisabled')}
+          />
+        )}
       </div>
       <p className="text-sm text-muted">
 {t('family.intro')}
@@ -206,12 +222,13 @@ export function FamilyPage() {
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex flex-wrap gap-1 border-b border-border">
         {[
           { key: 'settings' as Tab, labelKey: 'common.settings', icon: Gear },
           { key: 'roster' as Tab, labelKey: 'family.tab.roster', icon: UsersThree },
           { key: 'tickets' as Tab, labelKey: 'family.tab.tickets', icon: TicketIcon },
           { key: 'birthdays' as Tab, labelKey: 'family.tab.birthdays', icon: Cake },
+          { key: 'supply' as Tab, labelKey: 'family.tab.supply', icon: Package },
         ].map(({ key, labelKey, icon: Icon }) => (
           <button
             key={key}
@@ -227,7 +244,9 @@ export function FamilyPage() {
         ))}
       </div>
 
-      {tab === 'settings' && (
+      {tab === 'supply' && <SupplyPage embedded />}
+
+      {tab === 'settings' && settings && (
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3">
             <h2 className="font-semibold text-foreground">{t('family.roster.title')}</h2>

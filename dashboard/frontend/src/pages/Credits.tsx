@@ -283,11 +283,17 @@ export function CreditsPage() {
                 style={{ animationDelay: `${index * 70}ms` }}
               >
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-primary/90">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary/90">
                     {t(member.roleKey)}
                   </p>
-                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                    {t(member.nameKey)}
+                  <p className="mt-2 text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">
+                    <span className="relative inline-block pb-1">
+                      {t(member.nameKey)}
+                      <span
+                        className="absolute bottom-0 left-0 h-[3px] w-[min(100%,4.75rem)] rounded-full bg-primary"
+                        aria-hidden
+                      />
+                    </span>
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">

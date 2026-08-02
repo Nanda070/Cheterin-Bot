@@ -27,6 +27,7 @@ from locales.ru.spam import MESSAGES as spam_messages
 from locales.ru.streams import MESSAGES as streams_messages
 from locales.ru.supply import MESSAGES as supply_messages
 from locales.ru.quote import MESSAGES as quote_messages
+from locales.ru.relations import MESSAGES as relations_messages
 from locales.ru.valchecker import MESSAGES as valchecker_messages
 from locales.ru.tempban import MESSAGES as tempban_messages
 from locales.ru.verification import MESSAGES as verification_messages
@@ -55,6 +56,7 @@ MESSAGES = merge_messages(
     spam_messages,
     tempban_messages,
     quote_messages,
+    relations_messages,
     valchecker_messages,
     daily_topic_messages,
     streams_messages,

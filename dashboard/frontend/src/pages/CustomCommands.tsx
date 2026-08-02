@@ -1,6 +1,6 @@
 import { ChatTeardropText, Eye, Plus, Trash } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import {
   createCustomCommand,
   deleteCustomCommand,
@@ -24,6 +24,13 @@ type Tab = 'commands' | 'preview'
 
 function parseTab(raw: string | null): Tab {
   return raw === 'preview' ? 'preview' : 'commands'
+}
+
+/** Old /custom-commands?tab=preview → settings nested view. */
+export function RedirectCustomCommands() {
+  const [sp] = useSearchParams()
+  const view = sp.get('tab') === 'preview' ? '&view=preview' : ''
+  return <Navigate to={`/settings?tab=customCommands${view}`} replace />
 }
 
 function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (t: Tab) => void; t: (key: string) => string }) {
@@ -50,11 +57,20 @@ function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (t: Tab) => void; t: (ke
   )
 }
 
-export function CustomCommandsPage() {
+export function CustomCommandsPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = parseTab(searchParams.get('tab'))
+  // Parent ServerSettings owns `tab=`; nested preview uses `view=`.
+  const tab = parseTab(searchParams.get(embedded ? 'view' : 'tab'))
   const setTab = (next: Tab) => {
+    if (embedded) {
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('tab', 'customCommands')
+      if (next === 'commands') nextParams.delete('view')
+      else nextParams.set('view', next)
+      setSearchParams(nextParams, { replace: true })
+      return
+    }
     if (next === 'commands') setSearchParams({}, { replace: true })
     else setSearchParams({ tab: next }, { replace: true })
   }
@@ -106,14 +122,21 @@ export function CustomCommandsPage() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
+    <div className={`flex flex-col gap-5 ${embedded ? '' : 'max-w-3xl'}`}>
       <TabBar tab={tab} setTab={setTab} t={t} />
 
       <div>
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <ChatTeardropText size={22} className="text-primary" />
-          {t('customCommands.title')}
-        </h1>
+        {embedded ? (
+          <h2 className="flex items-center gap-2 font-semibold text-foreground">
+            <ChatTeardropText size={20} className="text-primary" />
+            {t('customCommands.title')}
+          </h2>
+        ) : (
+          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <ChatTeardropText size={22} className="text-primary" />
+            {t('customCommands.title')}
+          </h1>
+        )}
         <p className="mt-1 text-sm text-muted">{t('customCommands.intro')}</p>
       </div>
 

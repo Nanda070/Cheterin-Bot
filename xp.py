@@ -1,4 +1,4 @@
-"""Ког системы уровней: XP за текст, обработка уровней и наград, /ранг, /профиль.
+"""Ког системы уровней: XP за текст, обработка уровней и наград, /levels (ранг, профиль, leaders, manage).
 
 XP за войс начисляет voice_tracker и передаёт сюда через apply_voice_session().
 """
@@ -198,6 +198,12 @@ class LeaderboardView(discord.ui.View):
 # ────────────────── Основной Cog ──────────────────
 
 class XPCog(commands.Cog):
+    levels_group = app_commands.Group(
+        name="levels",
+        description="Rank card, profile, leaderboard and XP admin",
+        guild_only=True,
+    )
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -405,9 +411,9 @@ class XPCog(commands.Cog):
             "lang": lang,
         }
 
-    # ────────────────── Команда /ранг ──────────────────
+    # ────────────────── /levels rank ──────────────────
 
-    @app_commands.command(name="ранг", description="Показать карточку ранга участника")
+    @levels_group.command(name="rank", description="Show a member rank card")
     @app_commands.describe(участник="Чей ранг показать (по умолчанию — свой)")
     async def rank_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
         lang = i18n.lang_for(interaction.guild_id)
@@ -425,9 +431,9 @@ class XPCog(commands.Cog):
         file = discord.File(fp=io.BytesIO(png), filename="rank.png")
         await interaction.followup.send(file=file)
 
-    # ────────────────── Команда /профиль ──────────────────
+    # ────────────────── /levels profile ──────────────────
 
-    @app_commands.command(name="профиль", description="Показать анимированную карточку профиля")
+    @levels_group.command(name="profile", description="Show an animated profile card")
     @app_commands.describe(участник="Чей профиль показать (по умолчанию — свой)")
     async def profile_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
         lang = i18n.lang_for(interaction.guild_id)
@@ -450,9 +456,9 @@ class XPCog(commands.Cog):
             file = discord.File(fp=io.BytesIO(png), filename="profile.png")
         await interaction.followup.send(file=file)
 
-    # ────────────────── Команда /xp (action: add | set | clear) ──────────────────
+    # ────────────────── /levels manage (action: add | set | clear) ──────────────────
 
-    @app_commands.command(name="xp", description="Изменить количество опыта участника")
+    @levels_group.command(name="manage", description="Add, set, or clear member XP")
     @app_commands.describe(
         action="Действие: add / set / clear",
         member="Участник",
@@ -512,9 +518,9 @@ class XPCog(commands.Cog):
             ephemeral=True,
         )
 
-    # ────────────────── Команда /leaders ──────────────────
+    # ────────────────── /levels leaders ──────────────────
 
-    @app_commands.command(name="leaders", description="Показать таблицу лидеров")
+    @levels_group.command(name="leaders", description="Show the server leaderboard")
     async def leaders_command(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)

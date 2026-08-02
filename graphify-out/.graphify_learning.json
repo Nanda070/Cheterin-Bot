@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T03:46:37.279188+00:00",
+  "generated_at": "2026-08-02T03:56:59.708605+00:00",
   "nodes": {
     "dashboard_backend_config_dashboardconfig": {
       "code_fingerprint": "8904a853bc2a6d92ed7ad2c1e6a5dc472bc9425244824db07cb8d1b819a1b76e",
@@ -12,7 +12,7 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.683356144,
+      "score": 0.68324241,
       "source_file": "dashboard/backend/config.py",
       "status": "tentative",
       "uses": 1
@@ -28,7 +28,7 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.683356144,
+      "score": 0.68324241,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -44,7 +44,7 @@
           "q": "Are the inferred relationships involving mock objects (FakeMember, FakeGuild, FakeBot, FakeRole) with DashboardConfig and _StubForbidden correct?"
         }
       ],
-      "score": 0.683356144,
+      "score": 0.68324241,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -60,7 +60,7 @@
           "q": "Why does force_login() connect Mock Services & Unit Tests to a wide array of system modules and tests?"
         }
       ],
-      "score": 0.68335557,
+      "score": 0.683241836,
       "source_file": "dashboard/backend/tests/fakes.py",
       "status": "tentative",
       "uses": 1
@@ -76,7 +76,7 @@
           "q": "Why does SelectOption connect Mafia Game Engine to Discord Embed Builder, Supply Cog Tests?"
         }
       ],
-      "score": 0.683354488,
+      "score": 0.683240754,
       "source_file": "dashboard/frontend/src/components/ui/Select.tsx",
       "status": "tentative",
       "uses": 1
@@ -92,7 +92,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.683356692,
+      "score": 0.683242957,
       "source_file": "dashboard/frontend/.oxlintrc.json",
       "status": "tentative",
       "uses": 1
@@ -108,7 +108,7 @@
           "q": "What connects schema, typescript, oxc to the rest of the system?"
         }
       ],
-      "score": 0.683356692,
+      "score": 0.683242957,
       "source_file": "dashboard/frontend/package.json",
       "status": "tentative",
       "uses": 1

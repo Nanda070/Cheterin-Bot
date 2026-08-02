@@ -18,6 +18,7 @@ HELP_CATEGORIES: tuple[str, ...] = (
     "casino",
     "fun",
     "community",
+    "relations",
     "valchecker",
     "events",
 )

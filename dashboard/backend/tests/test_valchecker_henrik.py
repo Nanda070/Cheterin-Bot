@@ -34,7 +34,7 @@ async def test_henrik_semaphore_no_deadlock(monkeypatch):
 async def test_nested_gather_under_outer_sem_deadlocks_with_max_2():
     """outer sem=2 + each worker gather(hold, need) with global sem=2 deadlocks.
 
-    Mirrors the old /val-lb pattern that froze /val-profile.
+    Mirrors the old /val lb pattern that froze /val profile.
     """
     global_sem = asyncio.Semaphore(2)
     outer = asyncio.Semaphore(2)

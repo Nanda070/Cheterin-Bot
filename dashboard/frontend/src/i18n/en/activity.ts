@@ -39,6 +39,7 @@ const activity: Record<string, string> = {
   'home.setupHealth.moduleIssue.missing_role': '{module}: configured role no longer exists',
   'home.quickLinks.moderation': 'Moderation & lockdown',
   'home.quickLinks.settings': 'Server settings',
+  'home.quickLinks.members': 'Members & roles',
   'home.quickLinks.moderationLog': 'Moderation log',
 
   // Levels
@@ -108,7 +109,7 @@ const activity: Record<string, string> = {
   'levels.bgUploaded': 'Background uploaded.',
   'levels.bgDeleted': 'Background removed.',
   'levels.previewCard': 'Preview profile card',
-  'levels.previewCardHint': 'Renders the premium card for you (or a selected leaderboard member). Same look as /profile.',
+  'levels.previewCardHint': 'Renders the premium card for you (or a selected leaderboard member). Same look as /levels profile.',
   'levels.previewCardError': 'Could not render preview',
   'levels.previewCardLoading': 'Rendering…',
   'levels.previewAnimated': 'Animated (GIF)',
@@ -136,7 +137,7 @@ const activity: Record<string, string> = {
   'economy.moduleEnabled': 'Module enabled',
   'economy.moduleDisabled': 'Module disabled',
   'economy.intro':
-    'Server currency: coins are earned as a percentage of XP, spent in the role shop, on roulette bets and in the casino (slots, coinflip, blackjack). Commands: /balance, /daily, /transfer, /coins-top, /shop, /slots, /coinflip, /blackjack.',
+    'Server currency: coins are earned as a percentage of XP, spent in the role shop, on roulette bets and in the casino (slots, coinflip, blackjack). Commands: /balance, /daily, /transfer, /coins-top, /shop, /casino slots|coinflip|blackjack.',
   'economy.errorLoad': 'Failed to load Economy module settings',
   'economy.saved': 'Saved.',
   'economy.errorSave': 'Failed to save settings — check the fields',
@@ -170,7 +171,7 @@ const activity: Record<string, string> = {
   'economy.weeklyEmpty': 'No activity for the selected period yet.',
   'economy.shop': '🛒 Shop — /shop, /cosmetics',
   'economy.shopHint':
-    'Up to 25 items of three types. Role is granted in Discord immediately; card frame and title are cosmetics for the /rank card, chosen via /cosmetics. Coins are deducted immediately; if the role cannot be granted — refunded automatically.',
+    'Up to 25 items of three types. Role is granted in Discord immediately; card frame and title are cosmetics for the /levels rank card, chosen via /cosmetics. Coins are deducted immediately; if the role cannot be granted — refunded automatically.',
   'economy.itemTypeAria': 'Item type {index}',
   'economy.itemType.role': 'Role',
   'economy.itemType.frame': 'Card frame',
@@ -190,6 +191,7 @@ const activity: Record<string, string> = {
   'economy.addItem': 'Add item',
   'economy.topBalances': 'Top balances',
   'economy.tab.settings': 'Settings',
+  'economy.tab.casino': 'Casino',
   'economy.tab.balances': 'Top balances',
   'economy.resetAllBalances': 'Reset all balances',
   'economy.resetAllTitle': 'Reset all balances?',

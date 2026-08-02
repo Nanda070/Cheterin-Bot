@@ -120,6 +120,7 @@ class ChetBot(commands.Bot):
         await self.load_extension("starboard")
         await self.load_extension("auto_reactions")
         await self.load_extension("quote")
+        await self.load_extension("relations")
         await self.load_extension("help_cog")
         await self.load_extension("valchecker")
 
@@ -128,10 +129,14 @@ class ChetBot(commands.Bot):
 
     async def _sync_commands(self):
         """Синхронизация слэш-команд по стратегии command_sync_mode() (A/B)."""
+        import slash_modules
+
+        slash_modules.bind_bot(self)
         main_guild = discord.Object(id=get_main_guild_id())
 
         if command_sync_mode() == "global":
             # Вариант B: глобально для всех серверов + guild-команды-привилегии мейна (CTD).
+            # Фильтр по модулям в global-режиме не применяется (один набор на всех).
             await self.tree.sync()
             try:
                 await self.tree.sync(guild=main_guild)
@@ -139,20 +144,13 @@ class ChetBot(commands.Bot):
                 logger.exception("Не удалось синхронизировать guild-команды мейн-сервера")
             return
 
-        # Вариант A (по умолчанию): МГНОВЕННО — пушим команды в каждую гильдию бота как
-        # guild-команды. CTD (@app_commands.guilds на мейн) синкается вместе с остальными
-        # на мейне; на других серверах CTD не появляется (она не глобальная).
+        # Вариант A: guild-sync с фильтром выключенных модулей (команды пропадают из /).
         for guild in self.guilds:
-            self.tree.copy_global_to(guild=guild)
             try:
-                await self.tree.sync(guild=guild)
+                await slash_modules.sync_guild_commands(self, guild)
             except discord.HTTPException:
                 logger.exception("Не удалось синхронизировать команды для guild=%s", guild.id)
 
-        # Разовая зачистка СТАРЫХ глобальных регистраций при миграции с режима 'global'
-        # (иначе дубли: глобальная + гильдейная копии). Делается через низкоуровневый
-        # bulk-upsert, чтобы НЕ трогать локальное дерево — copy_global_to в on_guild_join
-        # должен продолжать видеть глобальные команды. Включается COMMAND_SYNC_CLEAR_GLOBAL=1.
         if os.getenv("COMMAND_SYNC_CLEAR_GLOBAL", "").strip().lower() in ("1", "true", "yes"):
             try:
                 await self.http.bulk_upsert_global_commands(self.application_id, [])
@@ -188,12 +186,13 @@ async def on_guild_join(guild: discord.Guild):
     logger.info("Бот добавлен на сервер %s (%s)", guild.name, guild.id)
     settings_db.set_guild_active(guild.id, True)
 
-    # Вариант A: новый сервер получает команды МГНОВЕННО (guild-sync). В режиме global
-    # это не нужно — глобальные команды и так доступны всем.
+    # Вариант A: новый сервер получает команды МГНОВЕННО (guild-sync с фильтром модулей).
     if command_sync_mode() != "global":
         try:
-            bot.tree.copy_global_to(guild=guild)
-            await bot.tree.sync(guild=guild)
+            import slash_modules
+
+            slash_modules.bind_bot(bot)
+            await slash_modules.sync_guild_commands(bot, guild)
         except discord.HTTPException:
             logger.exception("on_guild_join: не удалось синхронизировать команды для guild=%s", guild.id)
 

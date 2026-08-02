@@ -95,7 +95,7 @@ function SupplyCard({
   )
 }
 
-export function SupplyPage() {
+export function SupplyPage({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT()
   const [tab, setTab] = useState<Tab>('runs')
   const [overview, setOverview] = useState<SupplyOverview | null>(null)
@@ -156,21 +156,39 @@ export function SupplyPage() {
   ]
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div className="flex gap-1 border-b border-border">
-        {tabs.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`border-b-2 px-3 py-2 text-sm transition-colors ${
-              tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+    <div className={`flex flex-col gap-6 ${embedded ? '' : 'max-w-3xl'}`}>
+      {!embedded && (
+        <div className="flex gap-1 border-b border-border">
+          {tabs.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`border-b-2 px-3 py-2 text-sm transition-colors ${
+                tab === key ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {embedded && (
+        <div className="flex gap-1 rounded-card border border-border bg-surface p-1.5">
+          {tabs.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`rounded-control px-3 py-1.5 text-sm transition-colors ${
+                tab === key ? 'bg-primary-muted text-foreground' : 'text-muted hover:bg-surface-hover hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === 'settings' && (
         <ModuleConfigPanel variant="supply" title={t('config.section.supply')} intro={t('supply.settingsIntro')} />
@@ -179,10 +197,10 @@ export function SupplyPage() {
       {tab === 'runs' && (
         <>
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Package size={22} className="text-primary" />
+        <h2 className={`flex items-center gap-2 font-semibold text-foreground ${embedded ? 'text-base' : 'text-lg'}`}>
+          <Package size={embedded ? 18 : 22} className="text-primary" />
           {t('supply.title')}
-        </h1>
+        </h2>
         <Button variant="primary" onClick={() => setCreating(true)}>
           <Plus size={16} />
           {t('supply.new')}

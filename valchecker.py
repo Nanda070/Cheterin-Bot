@@ -103,6 +103,14 @@ class SetupLinkModal(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         lang = self.lang
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message(
+                embed=embeds.error_embed(
+                    i18n.t("valchecker.setup.err_not_yours", lang), lang
+                ),
+                ephemeral=True,
+            )
+            return
         await interaction.response.defer(ephemeral=True)
         if await _deny_disabled_followup(interaction):
             return
@@ -135,6 +143,15 @@ class SetupLinkModal(discord.ui.Modal):
                 rank_line = f"\n**{mmr['rank']}**  ·  {mmr['rr']} RR"
             except Exception:
                 pass
+            panel = build_setup_panel(interaction.user, lang)
+            # Refresh the original /val setup message in place (buttons + status).
+            if interaction.message is not None:
+                try:
+                    await interaction.message.edit(**panel)
+                except discord.HTTPException:
+                    await interaction.followup.send(**panel, ephemeral=True)
+            else:
+                await interaction.followup.send(**panel, ephemeral=True)
             await interaction.followup.send(
                 embed=embeds.simple_embed(
                     i18n.t("valchecker.setup.linked_title", lang),
@@ -147,10 +164,6 @@ class SetupLinkModal(discord.ui.Modal):
                     ),
                     embeds.COLORS["win"],
                 ),
-                ephemeral=True,
-            )
-            await interaction.followup.send(
-                **build_setup_panel(interaction.user, lang),
                 ephemeral=True,
             )
         except Exception as e:
@@ -166,7 +179,7 @@ class SetupLinkModal(discord.ui.Modal):
 class SetupView(discord.ui.View):
     def __init__(self, user_id: int, lang: str):
         super().__init__(timeout=1800)
-        self.user_id = user_id
+        self.user_id = int(user_id)
         self.lang = lang
         linked = valchecker_db.get_user(str(user_id))
         link_btn = discord.ui.Button(
@@ -196,7 +209,7 @@ class SetupView(discord.ui.View):
         self.add_item(track_btn)
         self.add_item(unlink_btn)
 
-    async def _guard(self, interaction: discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.user_id:
             await interaction.response.send_message(
                 embed=embeds.error_embed(
@@ -205,6 +218,9 @@ class SetupView(discord.ui.View):
                 ephemeral=True,
             )
             return False
+        return True
+
+    async def _guard(self, interaction: discord.Interaction) -> bool:
         if await _deny_disabled(interaction):
             return False
         return True
@@ -307,10 +323,11 @@ def build_setup_panel(discord_user: discord.abc.User, lang: str) -> dict:
 # ── Nav panels ──────────────────────────────────────────────────────────────
 
 class ProfileNavView(discord.ui.View):
-    def __init__(self, session_id: str, active: str, lang: str):
+    def __init__(self, session_id: str, active: str, lang: str, owner_id: int):
         super().__init__(timeout=1800)
         self.session_id = session_id
         self.lang = lang
+        self.owner_id = int(owner_id)
         for view, key in (
             ("overview", "valchecker.nav.overview"),
             ("stats", "valchecker.nav.stats"),
@@ -330,6 +347,17 @@ class ProfileNavView(discord.ui.View):
             await self._nav(interaction, view)
         return cb
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.owner_id:
+            await interaction.response.send_message(
+                embed=embeds.error_embed(
+                    i18n.t("valchecker.nav.err_not_yours", self.lang), self.lang
+                ),
+                ephemeral=True,
+            )
+            return False
+        return True
+
     async def on_timeout(self) -> None:
         for item in self.children:
             if isinstance(item, discord.ui.Button):
@@ -344,12 +372,6 @@ class ProfileNavView(discord.ui.View):
                 ephemeral=True,
             )
             return
-        if session.get("ownerId") != interaction.user.id:
-            await interaction.response.send_message(
-                embed=embeds.error_embed(i18n.t("valchecker.nav.err_not_yours", lang), lang),
-                ephemeral=True,
-            )
-            return
         if await _deny_disabled(interaction):
             return
         await interaction.response.defer()
@@ -357,7 +379,7 @@ class ProfileNavView(discord.ui.View):
             payload = await load_profile_payload(session, view, mode="fast")
             await interaction.edit_original_response(
                 embeds=payload["embeds"],
-                view=ProfileNavView(self.session_id, view, lang),
+                view=ProfileNavView(self.session_id, view, lang, self.owner_id),
             )
             asyncio.create_task(
                 _background_profile_refresh(
@@ -365,6 +387,7 @@ class ProfileNavView(discord.ui.View):
                     self.session_id,
                     view,
                     lang,
+                    self.owner_id,
                 )
             )
         except Exception as e:
@@ -611,6 +634,7 @@ async def _background_profile_refresh(
     session_id: str,
     view: str,
     lang: str,
+    owner_id: int,
 ) -> None:
     try:
         session = stats.get_session(session_id)
@@ -619,7 +643,7 @@ async def _background_profile_refresh(
         payload = await load_profile_payload(session, view, mode="full")
         await message.edit(
             embeds=payload["embeds"],
-            view=ProfileNavView(session_id, view, lang),
+            view=ProfileNavView(session_id, view, lang, owner_id),
         )
     except Exception:
         logger.debug("profile background refresh failed", exc_info=True)
@@ -677,10 +701,11 @@ async def build_profile_reply(owner_id: int, player: dict, view: str, *, count=5
     payload = await load_profile_payload(session, view, mode="fast")
     return {
         **payload,
-        "view": ProfileNavView(sid, view, lang),
+        "view": ProfileNavView(sid, view, lang, owner_id),
         "_session_id": sid,
         "_active_view": view,
         "_lang": lang,
+        "_owner_id": owner_id,
     }
 
 
@@ -753,6 +778,12 @@ async def resolve_player(
 # ── Cog ─────────────────────────────────────────────────────────────────────
 
 class ValCheckerCog(commands.Cog):
+    val_group = app_commands.Group(
+        name="val",
+        description="Valorant profiles, matches, tracking and status",
+        guild_only=True,
+    )
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._poll_running = False
@@ -1144,7 +1175,7 @@ class ValCheckerCog(commands.Cog):
 
     # ── slash commands ──────────────────────────────────────────────────────
 
-    @app_commands.command(name="val-setup", description="Open your account panel — link, track, unlink")
+    @val_group.command(name="setup", description="Open your account panel — link, track, unlink")
     async def val_setup(self, interaction: discord.Interaction):
         if await _deny_disabled(interaction):
             return
@@ -1152,7 +1183,7 @@ class ValCheckerCog(commands.Cog):
         panel = build_setup_panel(interaction.user, lang)
         await interaction.response.send_message(**panel, ephemeral=True)
 
-    @app_commands.command(name="val-profile", description="Player profile — rank, form, agents and maps")
+    @val_group.command(name="profile", description="Player profile — rank, form, agents and maps")
     @app_commands.describe(
         riot_id="Riot ID Name#TAG",
         user="Linked Discord user",
@@ -1203,10 +1234,13 @@ class ValCheckerCog(commands.Cog):
             )
             sid = reply.pop("_session_id", None)
             active = reply.pop("_active_view", view.value if view else "overview")
+            owner_id = reply.pop("_owner_id", interaction.user.id)
             reply.pop("_lang", None)
             msg = await interaction.followup.send(**reply)
             if sid:
-                asyncio.create_task(_background_profile_refresh(msg, sid, active, lang))
+                asyncio.create_task(
+                    _background_profile_refresh(msg, sid, active, lang, int(owner_id))
+                )
         except Exception as e:
             await interaction.followup.send(
                 embed=embeds.error_embed(
@@ -1215,7 +1249,7 @@ class ValCheckerCog(commands.Cog):
                 )
             )
 
-    @app_commands.command(name="val-match", description="Latest match or recent history")
+    @val_group.command(name="match", description="Latest match or recent history")
     @app_commands.describe(
         riot_id="Riot ID Name#TAG",
         user="Linked Discord user",
@@ -1262,7 +1296,7 @@ class ValCheckerCog(commands.Cog):
                 )
             )
 
-    @app_commands.command(name="val-compare", description="Compare two players")
+    @val_group.command(name="compare", description="Compare two players")
     @app_commands.describe(
         user_a="Player A (Discord)",
         user_b="Player B (Discord)",
@@ -1348,7 +1382,7 @@ class ValCheckerCog(commands.Cog):
                 )
             )
 
-    @app_commands.command(name="val-lb", description="Server leaderboard of linked players")
+    @val_group.command(name="lb", description="Server leaderboard of linked players")
     @app_commands.describe(sort="Sort by", limit="Max players (default 15)")
     @app_commands.choices(
         sort=[
@@ -1384,7 +1418,7 @@ class ValCheckerCog(commands.Cog):
             rows: list[dict] = []
             # Must stay at 1: each row does two Henrik calls. An outer sem>1 plus
             # henrik.MAX_CONCURRENT=2 deadlocks (each worker holds 1 global slot and
-            # waits for a second — /val-profile then spins forever too).
+            # waits for a second — /val profile then spins forever too).
             sem = asyncio.Semaphore(1)
 
             async def one(u):
@@ -1462,7 +1496,7 @@ class ValCheckerCog(commands.Cog):
                 )
             )
 
-    @app_commands.command(name="val-status", description="Valorant server / queue status")
+    @val_group.command(name="status", description="Valorant server / queue status")
     @app_commands.describe(region="Region", type="What to show")
     @app_commands.choices(
         region=REGION_CHOICES,

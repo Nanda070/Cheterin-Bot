@@ -59,5 +59,10 @@
   "57": "fetchProfileCardPreview",
   "58": "Bunker.test.tsx",
   "59": "MessageBuilder.tsx",
-  "60": "Fun.test.tsx"
+  "60": "Fun.test.tsx",
+  "61": "Verification.tsx",
+  "62": "Messages.tsx",
+  "63": "AntiRaid.tsx",
+  "64": "ReactionRoles.tsx",
+  "65": "BotProfile.tsx"
 }

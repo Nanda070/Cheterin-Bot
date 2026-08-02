@@ -2,6 +2,7 @@ import {
   ChatsCircle,
   Confetti,
   GameController,
+  Lightbulb,
   Quotes,
   Smiley,
   type Icon,
@@ -25,15 +26,16 @@ import { Card } from '../components/ui/Card'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
 import { AutoReactionsPage } from './AutoReactions'
+import { DailyTopicPage } from './DailyTopic'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
-type FunTab = 'general' | 'autoEmoji' | 'wordle' | 'quote'
+type FunTab = 'general' | 'autoEmoji' | 'wordle' | 'quote' | 'dailyTopic'
 
 function parseFunTab(raw: string | null): FunTab {
   if (raw === 'autoEmoji' || raw === 'auto-reactions' || raw === 'autoReactions') return 'autoEmoji'
-  if (raw === 'wordle' || raw === 'quote') return raw
+  if (raw === 'wordle' || raw === 'quote' || raw === 'dailyTopic') return raw
   return 'general'
 }
 
@@ -51,6 +53,7 @@ function TabBar({
     { key: 'autoEmoji', labelKey: 'fun.tab.autoEmoji', icon: Smiley },
     { key: 'wordle', labelKey: 'fun.tab.wordle', icon: ChatsCircle },
     { key: 'quote', labelKey: 'fun.tab.quote', icon: Quotes },
+    { key: 'dailyTopic', labelKey: 'fun.tab.dailyTopic', icon: Lightbulb },
   ]
   return (
     <div className="flex flex-wrap gap-1 border-b border-border">
@@ -169,19 +172,26 @@ function AutoEmojiTab({
 }) {
   return (
     <div className="flex max-w-3xl flex-col gap-5 pb-4">
+      <div>
+        <h2 className="font-semibold text-foreground">{t('fun.autoEmoji.title')}</h2>
+        <p className="mt-1 text-sm text-muted">{t('fun.autoEmoji.pageIntro')}</p>
+      </div>
+
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-primary">{saved}</p>}
 
       <Card className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">{t('fun.autoEmoji.title')}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-foreground">{t('fun.autoEmoji.randomTitle')}</h3>
+            <p className="mt-1 text-sm text-muted">{t('fun.autoEmoji.desc')}</p>
+          </div>
           <Toggle
             checked={settings.auto_emoji_enabled}
             onChange={(v) => setSettings({ ...settings, auto_emoji_enabled: v })}
             label={settings.auto_emoji_enabled ? t('fun.autoEmoji.on') : t('fun.autoEmoji.off')}
           />
         </div>
-        <p className="text-sm text-muted">{t('fun.autoEmoji.desc')}</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-muted" htmlFor="fun-ae-chance">
@@ -228,12 +238,16 @@ function AutoEmojiTab({
         </div>
         <div>
           <Button variant="primary" onClick={onSave} disabled={busy}>
-            {busy ? t('common.saving') : t('fun.saveFun')}
+            {busy ? t('common.saving') : t('fun.autoEmoji.saveRandom')}
           </Button>
         </div>
       </Card>
 
-      <div className="border-t border-border pt-4">
+      <div className="flex flex-col gap-3 border-t border-border pt-5">
+        <div>
+          <h3 className="font-semibold text-foreground">{t('fun.autoEmoji.rulesTitle')}</h3>
+          <p className="mt-1 text-sm text-muted">{t('fun.autoEmoji.rulesIntro')}</p>
+        </div>
         <AutoReactionsPage embedded />
       </div>
     </div>
@@ -334,7 +348,7 @@ export function FunPage() {
 
       <TabBar tab={tab} setTab={setTab} t={t} />
 
-      {!settings && tab !== 'wordle' && tab !== 'quote' && (
+      {!settings && tab !== 'wordle' && tab !== 'quote' && tab !== 'dailyTopic' && (
         <p className="text-sm text-muted">{error || t('common.loading')}</p>
       )}
 
@@ -457,6 +471,8 @@ export function FunPage() {
           </Card>
         </div>
       )}
+
+      {tab === 'dailyTopic' && <DailyTopicPage embedded />}
     </div>
   )
 }

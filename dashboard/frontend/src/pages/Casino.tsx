@@ -20,7 +20,7 @@ const inputClass =
 
 type Tab = 'settings' | 'leaderboard'
 
-export function CasinoPage() {
+export function CasinoPage({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT()
   const [tab, setTab] = useState<Tab>('settings')
   const [settings, setSettings] = useState<CasinoSettings | null>(null)
@@ -146,21 +146,35 @@ export function CasinoPage() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-5 pb-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <DiceThree size={22} className="text-primary" />
-          {t('casino.title')}
-        </h1>
-        {tab === 'settings' && (
+    <div className={`flex flex-col gap-5 pb-4 ${embedded ? '' : 'max-w-3xl'}`}>
+      {!embedded && (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <DiceThree size={22} className="text-primary" />
+              {t('casino.title')}
+            </h1>
+            {tab === 'settings' && (
+              <Toggle
+                checked={settings.enabled}
+                onChange={(v) => setSettings({ ...settings, enabled: v })}
+                label={settings.enabled ? t('casino.enabled') : t('casino.disabled')}
+              />
+            )}
+          </div>
+          <p className="text-sm text-muted">{t('casino.intro')}</p>
+        </>
+      )}
+      {embedded && tab === 'settings' && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted">{t('casino.intro')}</p>
           <Toggle
             checked={settings.enabled}
             onChange={(v) => setSettings({ ...settings, enabled: v })}
             label={settings.enabled ? t('casino.enabled') : t('casino.disabled')}
           />
-        )}
-      </div>
-      <p className="text-sm text-muted">{t('casino.intro')}</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1 rounded-card border border-border bg-surface p-1.5">
         {tabs.map(({ key, label, icon: TabIcon }) => (

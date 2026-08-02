@@ -367,6 +367,7 @@ class MafiaCog(commands.Cog):
     # ────────────────────────── Команды ──────────────────────────
 
     @app_commands.command(name="мафия-игра", description="Создать лобби игры «Мафия»")
+    @app_commands.default_permissions(manage_guild=True)
     @app_commands.describe(
         мин_игроков="Минимум игроков (5-99, по умолчанию из настроек модуля)",
         макс_игроков="Максимум игроков (5-99, по умолчанию из настроек модуля)",

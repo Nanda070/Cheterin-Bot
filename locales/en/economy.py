@@ -41,7 +41,7 @@ MESSAGES: dict[str, str] = {
     "economy.cosmetics.title_placeholder": "Title under name",
     "economy.cosmetics.no_title": "No title",
     "economy.cosmetics.empty": "You don't own any cosmetics yet — check /магазин.",
-    "economy.cosmetics.prompt": "Choose a frame and/or title for your /ранг card:",
+    "economy.cosmetics.prompt": "Choose a frame and/or title for your /levels rank card:",
     "economy.purchase.item_removed": "This item was removed from the shop.",
     "economy.purchase.role_not_found": "The item's role wasn't found on the server — tell the admins.",
     "economy.purchase.role_already_owned": "You already have role {mention}.",
@@ -56,7 +56,7 @@ MESSAGES: dict[str, str] = {
     ),
     "economy.equip.frame_removed": "Frame removed.",
     "economy.equip.title_removed": "Title removed.",
-    "economy.equip.frame_applied": "Frame applied! Check /ранг.",
-    "economy.equip.title_applied": "Title applied! Check /ранг.",
+    "economy.equip.frame_applied": "Frame applied! Check /levels rank.",
+    "economy.equip.title_applied": "Title applied! Check /levels rank.",
     "economy.equip.not_owned": "You don't own this item.",
 }

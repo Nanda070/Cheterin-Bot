@@ -16,13 +16,13 @@ import { FeedbackPage } from './pages/Feedback'
 import { EventsPage } from './pages/Events'
 import { BracketDetailPage } from './pages/BracketDetail'
 import { PublicBracketPage } from './pages/PublicBracket'
-import { SupplyPage } from './pages/Supply'
 import { VoiceRoomsPage } from './pages/VoiceRooms'
 import { NewsPage } from './pages/News'
 import { DocsPage } from './pages/Docs'
 import { TermsPage } from './pages/Terms'
 import { PrivacyPage } from './pages/Privacy'
 import { CreditsPage } from './pages/Credits'
+import { SansPage } from './pages/Sans'
 import { ServerLogPage } from './pages/ServerLog'
 import { LevelsPage } from './pages/Levels'
 import { VoiceStatsPage } from './pages/VoiceStats'
@@ -35,17 +35,16 @@ import { PublicMafiaActionPage } from './pages/PublicMafiaAction'
 import { BunkerPage } from './pages/Bunker'
 import { PublicBunkerActionPage } from './pages/PublicBunkerAction'
 import { FunPage } from './pages/Fun'
-import { CasinoPage } from './pages/Casino'
 import { EconomyPage } from './pages/Economy'
 import { SuperAdminPage } from './pages/SuperAdmin'
-import { DailyTopicPage } from './pages/DailyTopic'
 import { ServerSettingsPage } from './pages/ServerSettings'
 import { AutoModPage } from './pages/AutoMod'
 import { ServerEntryPage } from './pages/ServerEntry'
 import { CtdPage } from './pages/Ctd'
-import { CustomCommandsPage } from './pages/CustomCommands'
+import { RedirectCustomCommands } from './pages/CustomCommands'
 import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
+import { RelationsPage } from './pages/Relations'
 import { ValCheckerPage } from './pages/ValChecker'
 
 function App() {
@@ -73,6 +72,7 @@ function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/credits" element={<CreditsPage />} />
+            <Route path="/sans" element={<SansPage />} />
             <Route path="/leaderboard/:guildId" element={<LeaderboardPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route
@@ -91,23 +91,27 @@ function App() {
               <Route path="events" element={<EventsPage />} />
               <Route path="brackets" element={<Navigate to="/events?tab=brackets" replace />} />
               <Route path="brackets/:id" element={<BracketDetailPage />} />
-              <Route path="supply" element={<SupplyPage />} />
+              <Route path="supply" element={<Navigate to="/family?tab=supply" replace />} />
               <Route path="family" element={<FamilyPage />} />
               <Route path="mafia" element={<MafiaPage />} />
               <Route path="bunker" element={<BunkerPage />} />
               <Route path="fun" element={<FunPage />} />
               <Route path="giveaways" element={<Navigate to="/events?tab=giveaways" replace />} />
-              <Route path="daily-topic" element={<DailyTopicPage />} />
-              <Route path="custom-commands" element={<CustomCommandsPage />} />
+              <Route path="daily-topic" element={<Navigate to="/fun?tab=dailyTopic" replace />} />
+              <Route path="custom-commands" element={<RedirectCustomCommands />} />
               <Route path="messages" element={<MessagesPage />} />
               <Route path="scheduled-messages" element={<Navigate to="/messages?tab=scheduled" replace />} />
               <Route path="sticky" element={<Navigate to="/messages?tab=sticky" replace />} />
               <Route path="polls" element={<Navigate to="/events?tab=polls" replace />} />
-              <Route path="preview" element={<Navigate to="/custom-commands?tab=preview" replace />} />
-              <Route path="command-preview" element={<Navigate to="/custom-commands?tab=preview" replace />} />
+              <Route path="preview" element={<Navigate to="/settings?tab=customCommands&view=preview" replace />} />
+              <Route
+                path="command-preview"
+                element={<Navigate to="/settings?tab=customCommands&view=preview" replace />}
+              />
               <Route path="invites" element={<Navigate to="/server-entry?tab=invites" replace />} />
               <Route path="timed-roles" element={<Navigate to="/members?tab=timedRoles" replace />} />
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
+              <Route path="relations" element={<RelationsPage />} />
               <Route path="starboard" element={<Navigate to="/messages?tab=starboard" replace />} />
               <Route path="valchecker" element={<ValCheckerPage />} />
               <Route path="auto-reactions" element={<Navigate to="/fun?tab=autoEmoji" replace />} />
@@ -120,7 +124,7 @@ function App() {
               <Route path="news" element={<NewsPage />} />
               <Route path="levels" element={<LevelsPage />} />
               <Route path="economy" element={<EconomyPage />} />
-              <Route path="casino" element={<CasinoPage />} />
+              <Route path="casino" element={<Navigate to="/economy?tab=casino" replace />} />
               <Route path="streams" element={<StreamsPage />} />
               <Route path="serverlog" element={<ServerLogPage />} />
               <Route path="voice-stats" element={<VoiceStatsPage />} />

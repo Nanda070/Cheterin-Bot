@@ -1055,7 +1055,7 @@ export function profileCardPreviewUrl(userId?: string): string {
   return q ? `/api/xp/profile-card-preview?${q}` : '/api/xp/profile-card-preview'
 }
 
-/** URL for the animated GIF profile-card preview (same cosmetics, mirrors the bot's /профиль command). */
+/** URL for the animated GIF profile-card preview (same cosmetics, mirrors the bot's /levels profile command). */
 export function profileCardPreviewGifUrl(userId?: string): string {
   const params = new URLSearchParams()
   if (userId) params.set('user_id', userId)
@@ -2607,6 +2607,70 @@ export function fetchStarboard(): Promise<StarboardSettings> {
 
 export function updateStarboard(settings: StarboardSettings): Promise<StarboardSettings> {
   return apiFetch('/api/starboard', jsonInit('PUT', settings))
+}
+
+// ── Relations ──
+
+export interface RelationsAction {
+  id: string
+  emoji: string
+  hp_gain: number
+  cooldown_sec: number
+  enabled: boolean
+}
+
+export interface RelationsSettings {
+  enabled: boolean
+  announce_channel_id: string
+  max_actions_per_day: number
+  actions: RelationsAction[]
+  level_thresholds: number[]
+  reward_roles: Record<string, string>
+  marriage_enabled: boolean
+  min_level_to_marry: number
+  married_role_id: string
+  allow_polygamy: boolean
+  proposal_timeout_sec: number
+  married_hp_bonus_percent: number
+  divorce_requires_accept: boolean
+  date_hp_gain: number
+  date_cooldown_sec: number
+}
+
+export interface RelationsPairRow {
+  user_a: string | number
+  user_b: string | number
+  hp: number
+  level: number
+  updated_at: number
+}
+
+export interface RelationsMarriageRow {
+  user_a: string | number
+  user_b: string | number
+  married_at: number
+  hp: number
+  level: number
+}
+
+export function fetchRelations(): Promise<RelationsSettings> {
+  return apiFetch('/api/relations')
+}
+
+export function updateRelations(settings: RelationsSettings): Promise<RelationsSettings> {
+  return apiFetch('/api/relations', jsonInit('PUT', settings))
+}
+
+export async function fetchRelationsTop(limit = 15): Promise<RelationsPairRow[]> {
+  const body = await apiFetch<{ pairs: RelationsPairRow[] }>(`/api/relations/top?limit=${limit}`)
+  return body.pairs
+}
+
+export async function fetchRelationsMarriages(limit = 15): Promise<RelationsMarriageRow[]> {
+  const body = await apiFetch<{ marriages: RelationsMarriageRow[] }>(
+    `/api/relations/marriages?limit=${limit}`,
+  )
+  return body.marriages
 }
 
 // ── ValChecker ──

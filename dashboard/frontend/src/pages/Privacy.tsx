@@ -51,6 +51,7 @@ const TABLE_ROW_KEYS = [
   'events',
   'reactionRoles',
   'starboard',
+  'relations',
   'autoReactions',
   'quote',
   'botProfile',

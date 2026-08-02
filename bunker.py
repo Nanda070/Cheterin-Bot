@@ -396,6 +396,7 @@ class BunkerCog(commands.Cog):
     # ────────────────────────── Команды ──────────────────────────
 
     @app_commands.command(name="бункер-игра", description="Создать лобби игры «Бункер»")
+    @app_commands.default_permissions(manage_guild=True)
     @app_commands.describe(
         мин_игроков="Минимум игроков (по умолчанию из настроек модуля)",
         макс_игроков="Максимум игроков (по умолчанию из настроек модуля)",

@@ -571,6 +571,7 @@ class SupplyCog(commands.Cog):
         return supply
 
     @app_commands.command(name="реаки-поставка", description="Создать сбор на поставку")
+    @app_commands.default_permissions(manage_guild=True)
     @app_commands.describe(
         против="Фракция/цель, против которой идет поставка",
         лимит="Максимальное количество участников",

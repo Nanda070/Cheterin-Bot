@@ -494,6 +494,7 @@ class FamilyTicketsCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="семья-заявки", description="Развернуть панель создания заявки в семью")
+    @app_commands.default_permissions(manage_guild=True)
     async def create_panel(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         if not family_core.get_settings(interaction.guild.id)["enabled"]:

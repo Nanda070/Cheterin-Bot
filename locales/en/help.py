@@ -20,6 +20,9 @@ MESSAGES: dict[str, str] = {
     "help.cat.community.emoji": "🏠",
     "help.cat.community.label": "Community",
     "help.cat.community.desc": "Birthdays, rooms, family, polls",
+    "help.cat.relations.emoji": "💕",
+    "help.cat.relations.label": "Relations",
+    "help.cat.relations.desc": "Actions, HP, marriage and divorce",
     "help.cat.valchecker.emoji": "🎯",
     "help.cat.valchecker.label": "ValChecker",
     "help.cat.valchecker.desc": "Valorant stats & tracking",
@@ -38,14 +41,14 @@ MESSAGES: dict[str, str] = {
     "help.page.overview.field1.value": (
         "• Chat & sit in voice → earn **XP** and sometimes **coins**\n"
         "• `/daily` → daily coin bonus\n"
-        "• `/rank` / `/profile` → your cards\n"
-        "• `/leaders` → server XP & voice top\n"
+        "• `/levels rank` / `profile` → your cards\n"
+        "• `/levels leaders` → server XP & voice top\n"
         "• `/help` → this menu (ephemeral, only you see it)"
     ),
     "help.page.overview.field2.name": "Sections",
     "help.page.overview.field2.value": (
         "🏆 Levels · 🪙 Economy · 🎰 Casino · 🎮 Games & fun\n"
-        "🏠 Community · 🎯 ValChecker · 🎉 Events"
+        "🏠 Community · 💕 Relations · 🎯 ValChecker · 🎉 Events"
     ),
     "help.page.levels.title": "🏆 Levels & profile",
     "help.page.levels.body": (
@@ -54,9 +57,11 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.levels.field1.name": "Commands",
     "help.page.levels.field1.value": (
-        "`/rank` (`/ранг`) — rank card: level, XP, voice time\n"
-        "`/profile` (`/профиль`) — animated profile card (frames & titles from the shop)\n"
-        "`/leaders` — interactive top by **XP** or **voice** (same « ‹ › » controls)"
+        "Group `/levels` (`/уровни`):\n"
+        "• `rank` — rank card: level, XP, voice time\n"
+        "• `profile` — animated profile card (frames & titles from the shop)\n"
+        "• `leaders` — interactive top by **XP** or **voice** (same « ‹ › » controls)\n"
+        "• `manage` — staff: add / set / clear XP (Manage Server required)"
     ),
     "help.page.levels.field2.name": "How XP works",
     "help.page.levels.field2.value": (
@@ -91,10 +96,11 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.casino.field1.name": "Commands",
     "help.page.casino.field1.value": (
-        "`/blackjack` (`/блэкджек`) — hit/stand vs the dealer; stake coins\n"
-        "`/slots` (`/слоты`) — three reels; matching symbols pay out\n"
-        "`/coinflip` (`/монетка`) — pick a side; win doubles your stake\n"
-        "`/casino-top` (`/казино-топ`) — wins / losses leaderboard"
+        "Group `/casino` (`/казино`):\n"
+        "• `blackjack` — hit/stand vs the dealer; stake coins\n"
+        "• `slots` — three reels; matching symbols pay out\n"
+        "• `coinflip` — pick a side; win doubles your stake\n"
+        "• `top` — wins / losses leaderboard"
     ),
     "help.page.casino.field2.name": "Russian roulette bets",
     "help.page.casino.field2.value": (
@@ -145,6 +151,30 @@ MESSAGES: dict[str, str] = {
         "`/supply-run` (`/реаки-поставка`) — staff starts a supply sign-up; join with buttons\n"
         "`/family-applications` — apply to join the family when the panel is posted"
     ),
+    "help.page.relations.title": "💕 Relations",
+    "help.page.relations.body": (
+        "Interactive actions between members raise relationship HP and pair level (up to 11). "
+        "Propose, marry, divorce, and go on dates. "
+        "The module must be enabled in the dashboard."
+    ),
+    "help.page.relations.field1.name": "Actions",
+    "help.page.relations.field1.value": (
+        "Group `/relations` (`/отношения`):\n"
+        "`hug` · `kiss` · `slap` · `pat` · `highfive` · `cuddle` · `poke`\n"
+        "Each grants HP (admin-configured), with per-pair cooldown and a daily limit. "
+        "Married pairs get a spouse HP bonus."
+    ),
+    "help.page.relations.field2.name": "Card & top",
+    "help.page.relations.field2.value": (
+        "`/relations card` [member] — pair card; omit member to see your marriages\n"
+        "`/relations top` — top pairs on the server"
+    ),
+    "help.page.relations.field3.name": "Romance",
+    "help.page.relations.field3.value": (
+        "`/relations marry` — proposal with buttons\n"
+        "`divorce` · `marriages-top` · `ship` · `date` (bonus HP with spouse)\n"
+        "Min level, married role, and announces — Dashboard → Romance."
+    ),
     "help.page.valchecker.title": "🎯 ValChecker — Valorant",
     "help.page.valchecker.body": (
         "Link your Riot ID and check stats. Module must be **enabled** under Games → ValChecker. "
@@ -152,21 +182,22 @@ MESSAGES: dict[str, str] = {
     ),
     "help.page.valchecker.field1.name": "Account",
     "help.page.valchecker.field1.value": (
-        "`/val-setup` — link / relink Riot `Name#TAG`, toggle **match tracking**, or unlink\n"
+        "Group `/val`:\n"
+        "`setup` — link / relink Riot `Name#TAG`, toggle **match tracking**, or unlink\n"
         "Tracking posts new competitive (and similar) matches to the server’s match channel."
     ),
     "help.page.valchecker.field2.name": "Stats & matches",
     "help.page.valchecker.field2.value": (
-        "`/val-profile` — overview · stats · agents · maps (buttons to switch views)\n"
-        "`/val-match` — latest match or recent history (`+5` loads more)\n"
-        "`/val-compare` — compare two linked users or Riot IDs\n"
-        "`/val-lb` — guild leaderboard by rank / WR / ACS\n"
-        "`/val-status` — incidents, queue times, or both (pick a region)"
+        "`/val profile` — overview · stats · agents · maps (nav buttons — only you can use them)\n"
+        "`/val match` — latest match or recent history (`+5` loads more)\n"
+        "`/val compare` — compare two linked users or Riot IDs\n"
+        "`/val lb` — guild leaderboard by rank / WR / ACS\n"
+        "`/val status` — incidents, queue times, or both (pick a region)"
     ),
     "help.page.valchecker.field3.name": "Tips",
     "help.page.valchecker.field3.value": (
         "• You can look up others with `user:` or `riot_id:` options\n"
-        "• Unlink anytime in `/val-setup`\n"
+        "• Unlink anytime in `/val setup`\n"
         "• Rate limits: if the API is busy, wait a minute and retry"
     ),
     "help.page.events.title": "🎉 Events & feedback",

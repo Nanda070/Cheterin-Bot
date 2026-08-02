@@ -10,7 +10,7 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.autoReactions': 'Авто-реакции с областью каналов и исключениями',
   'whatsNew.item.botProfile': 'Профиль бота на сервере: ник, аватар и баннер',
   'whatsNew.item.caseTimeline': 'Таймлайн кейса участника + warn / таймаут из панели',
-  'whatsNew.item.profileCard': 'Карточка /профиль и превью с рамками и титулами в Levels',
+  'whatsNew.item.profileCard': 'Карточка /уровни profile и превью с рамками и титулами в Levels',
   'whatsNew.item.commandPalette': 'Ctrl+K — быстрый переход; скрытие выключенных модулей в меню',
   'whatsNew.item.weeklyDigest': 'Недельный дайджест изменений настроек для админов',
   'whatsNew.item.gameHost': 'Хост-пульт Mafia/Bunker и звук вашего хода на публичной странице',

@@ -226,6 +226,8 @@
   "224": "warns_db.py",
   "225": "Exception",
   "226": "python-dotenv Dependency",
+  "227": "test_bunker_db.py",
+  "228": "test_bunker_core.py",
   "232": "owner_alerts.py",
   "234": "test_feedback_panel_routes.py",
   "236": "test_tempban_routes.py",

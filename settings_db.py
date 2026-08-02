@@ -73,6 +73,12 @@ def put(guild_id: int, module: str, data: dict) -> None:
             (guild_id, module, json.dumps(data, ensure_ascii=False), now),
         )
     _cache[(guild_id, module)] = copy.deepcopy(data)
+    try:
+        import slash_modules
+
+        slash_modules.on_settings_put(guild_id, module, data)
+    except Exception:
+        pass
 
 
 def has(guild_id: int, module: str) -> bool:

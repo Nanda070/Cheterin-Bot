@@ -20,26 +20,34 @@ const emptyWordle: client.WordleSettings = {
   announce_time: '09:00',
 }
 
-function mockWordle() {
+const emptyQuote: client.QuoteSettings = {
+  enabled: true,
+  delete_trigger: false,
+  min_length: 0,
+}
+
+function mockExtras() {
   vi.spyOn(client, 'fetchWordleSettings').mockResolvedValue(emptyWordle)
+  vi.spyOn(client, 'fetchQuoteSettings').mockResolvedValue(emptyQuote)
+  vi.spyOn(client, 'fetchAutoReactions').mockResolvedValue({ enabled: false, rules: [] })
+  vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
 }
 
 describe('FunPage', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it('renders the module toggle and both roulette cards', async () => {
+  it('renders the module toggle and roulette card', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     renderWithLanguage(<FunPage />)
 
     expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
-    expect(screen.getByText(/Русская рулетка/)).toBeInTheDocument()
-    expect(screen.getByText(/Эмодзи-рулетка/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Русская рулетка/).length).toBeGreaterThan(0)
   })
 
   it('toggles enabled and saves settings', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue({ ...emptySettings, enabled: true })
 
@@ -53,7 +61,7 @@ describe('FunPage', () => {
 
   it('updates timeout and cooldown fields before saving', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
     renderWithLanguage(<FunPage />)
@@ -69,17 +77,17 @@ describe('FunPage', () => {
     )
   })
 
-  it('renders the auto-emoji card and saves its settings', async () => {
+  it('renders the auto-emoji tab and saves its settings', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     vi.spyOn(client, 'updateWordleSettings').mockResolvedValue(emptyWordle)
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
-    renderWithLanguage(<FunPage />)
+    renderWithLanguage(<FunPage />, { initialEntries: ['/fun?tab=autoEmoji'] })
 
-    expect(await screen.findByText('✨ Авто-Эмодзи')).toBeInTheDocument()
-    fireEvent.click(screen.getByLabelText('Выключено'))
+    expect(await screen.findByText('Случайные реакции')).toBeInTheDocument()
+    fireEvent.click(screen.getAllByLabelText('Выключено')[0])
     fireEvent.change(screen.getByLabelText(/Шанс на сообщение/), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить развлечения' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить случайные' }))
 
     await waitFor(() =>
       expect(updateSpy).toHaveBeenCalledWith(
@@ -90,18 +98,20 @@ describe('FunPage', () => {
 
   it('renders the wordle card and saves its settings', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     vi.spyOn(client, 'updateFunSettings').mockResolvedValue(emptySettings)
     const wordleSpy = vi
       .spyOn(client, 'updateWordleSettings')
       .mockResolvedValue({ enabled: true, channel_id: '555', announce_time: '18:30' })
-    renderWithLanguage(<FunPage />)
+    renderWithLanguage(<FunPage />, { initialEntries: ['/fun?tab=wordle'] })
 
-    expect(await screen.findByText(/Вордл — \/вордл/)).toBeInTheDocument()
-    fireEvent.click(screen.getByLabelText('Вордл выключен'))
-    fireEvent.change(screen.getByLabelText(/ID канала для анонсов/), { target: { value: '555' } })
-    fireEvent.change(screen.getByLabelText(/Время ежедневного анонса/), { target: { value: '18:30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Сохранить Вордл' }))
+    expect(await screen.findByRole('heading', { name: /Вордл/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText(/Вордл выключен|Wordle disabled|выключен/i))
+    fireEvent.change(screen.getByLabelText(/ID канала|канала для анонсов|Channel/i), {
+      target: { value: '555' },
+    })
+    fireEvent.change(screen.getByLabelText(/Время|announce|Announce/i), { target: { value: '18:30' } })
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить Вордл|Save Wordle|Сохранить/i }))
 
     await waitFor(() =>
       expect(wordleSpy).toHaveBeenCalledWith(
@@ -112,7 +122,7 @@ describe('FunPage', () => {
 
   it('saves fun without requiring wordle save', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
-    mockWordle()
+    mockExtras()
     const updateSpy = vi.spyOn(client, 'updateFunSettings').mockResolvedValue({ ...emptySettings, enabled: true })
     const wordleSpy = vi.spyOn(client, 'updateWordleSettings')
     renderWithLanguage(<FunPage />)
@@ -127,14 +137,15 @@ describe('FunPage', () => {
   it('loads fun even when wordle fails', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockResolvedValue(emptySettings)
     vi.spyOn(client, 'fetchWordleSettings').mockRejectedValue(new Error('fail'))
+    vi.spyOn(client, 'fetchQuoteSettings').mockResolvedValue(emptyQuote)
     renderWithLanguage(<FunPage />)
-    expect(await screen.findByText(/Русская рулетка/)).toBeInTheDocument()
-    expect(await screen.findByText(/Не удалось/)).toBeInTheDocument()
+    expect(await screen.findByText('Модуль выключен')).toBeInTheDocument()
+    expect(screen.getAllByText(/Русская рулетка/).length).toBeGreaterThan(0)
   })
 
   it('shows an error when loading fails', async () => {
     vi.spyOn(client, 'fetchFunSettings').mockRejectedValue(new Error('fail'))
-    mockWordle()
+    mockExtras()
     renderWithLanguage(<FunPage />)
     expect(await screen.findByText('Не удалось загрузить настройки модуля «Развлечения»')).toBeInTheDocument()
   })

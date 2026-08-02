@@ -127,7 +127,7 @@ def render_quote_card(
 
     font_name = _font(FONT_BOLD, 28)
     font_quote = _font(FONT_REG, 26)
-    font_mark = _font(FONT_BOLD, 72)
+    font_mark = _font(FONT_BOLD, 120)
 
     text_x = PAD + AVATAR + 28
     text_max_w = CARD_W - text_x - PAD
@@ -153,7 +153,8 @@ def render_quote_card(
             thumb_img = None
 
     header_h = max(AVATAR, 48) + 16
-    card_h = PAD + header_h + 12 + quote_h + thumb_h + PAD + 8
+    # Extra space for oversized opening quote mark above the body
+    card_h = PAD + header_h + 28 + quote_h + thumb_h + PAD + 8
 
     card = Image.new("RGB", (CARD_W, card_h), BG)
     draw = ImageDraw.Draw(card)
@@ -185,11 +186,11 @@ def render_quote_card(
         fill=ACCENT,
     )
 
-    # Large quote mark
-    draw.text((text_x - 4, PAD + header_h - 8), "“", font=font_mark, fill=QUOTE_MARK)
+    # Large quote mark (taller glyph so it reads as a design accent)
+    draw.text((text_x - 6, PAD + header_h - 28), "“", font=font_mark, fill=QUOTE_MARK)
 
-    # Quote body
-    qy = PAD + header_h + 20
+    # Quote body — leave room under the oversized mark
+    qy = PAD + header_h + 36
     for i, line in enumerate(lines):
         draw.text((text_x, qy + i * line_h), line, font=font_quote, fill=TEXT)
 

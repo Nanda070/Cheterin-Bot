@@ -1,11 +1,11 @@
 # Graph Report - Cheterin_Bot_Dashboard  (2026-08-02)
 
 ## Corpus Check
-- 646 files · ~461,298 words
+- 646 files · ~461,265 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6676 nodes · 18801 edges · 232 communities (222 shown, 10 thin omitted)
+- 6676 nodes · 18801 edges · 234 communities (224 shown, 10 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 259 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
@@ -234,6 +234,8 @@
 - warns_db.py
 - Exception
 - python-dotenv Dependency
+- test_bunker_db.py
+- test_bunker_core.py
 - owner_alerts.py
 - test_feedback_panel_routes.py
 - test_tempban_routes.py
@@ -273,7 +275,7 @@
 - **Docs Page User Interface** — dashboard_frontend_src_pages_docs, dashboard_frontend_src_components_docs_docsbanner, dashboard_frontend_src_assets_docs_banner [INFERRED 0.90]
 - **Hero Page Visual Branding Elements** — dashboard_frontend_src_assets_hero, dashboard_frontend_src_assets_hero_branding, dashboard_frontend_src_assets_hero_layered_stack [INFERRED 0.85]
 
-## Communities (232 total, 10 thin omitted)
+## Communities (234 total, 10 thin omitted)
 
 ### Community 0 - "Game Settings & Bunker DB"
 Cohesion: 0.13
@@ -285,7 +287,7 @@ Nodes (43): _display_name(), _finalize(), Request, Response, _serialize_supply()
 
 ### Community 2 - "Dashboard App Bootstrap"
 Cohesion: 0.05
-Nodes (81): advanceBunkerGamePhase(), apiFetch(), applyBunkerAbility(), banMember(), BunkerCardPools, BunkerCharacter, BunkerGameDetail, BunkerGameSummary (+73 more)
+Nodes (74): advanceBunkerGamePhase(), apiFetch(), applyBunkerAbility(), banMember(), BunkerCardPools, BunkerCharacter, BunkerGameDetail, BunkerGameSummary (+66 more)
 
 ### Community 3 - "Test Fake Channels"
 Cohesion: 0.08
@@ -293,7 +295,7 @@ Nodes (30): AutomodFilter, AutomodPunishment, AutomodSettings, createEscalationR
 
 ### Community 4 - "API Client Types"
 Cohesion: 0.03
-Nodes (100): advanceMafiaGamePhase(), AutoRolesSettings, BirthdayEntry, BotProfileSettings, BracketStandingsRow, BunkerAbilityAnnouncement, BunkerAdditionalInfo, BunkerAgeInfo (+92 more)
+Nodes (115): advanceMafiaGamePhase(), AutoRolesSettings, BirthdayEntry, BotProfileSettings, BracketStandingsRow, BunkerAbilityAnnouncement, BunkerAdditionalInfo, BunkerAgeInfo (+107 more)
 
 ### Community 5 - "Test Fake Bot"
 Cohesion: 0.03
@@ -328,8 +330,8 @@ Cohesion: 0.09
 Nodes (34): _default_filter(), _default_notify_template(), detect_bad_words(), detect_caps_lock(), detect_emoji_spam(), detect_invites(), detect_links(), detect_mentions() (+26 more)
 
 ### Community 13 - "Test Fake Members"
-Cohesion: 0.06
-Nodes (37): createFeedbackCategory(), decideFeedbackCase(), deleteFeedbackCategory(), FeedbackCaseDetail, FeedbackCaseSummary, FeedbackCategoryFieldSpec, FeedbackCategorySpec, fetchFeedbackCaseDetail() (+29 more)
+Cohesion: 0.08
+Nodes (23): decideFeedbackCase(), FeedbackCaseDetail, FeedbackCaseSummary, fetchFeedbackCaseDetail(), fetchFeedbackCases(), baseGameSummary, emptySettings, mockPools (+15 more)
 
 ### Community 14 - "Daily Topic Module"
 Cohesion: 0.10
@@ -348,12 +350,12 @@ Cohesion: 0.22
 Nodes (28): _assignable_roles(), ban_member(), dashboard_reason(), _get_guild_or_none(), get_moderation_log(), _get_target_or_response(), grant_role(), kick_member() (+20 more)
 
 ### Community 18 - "Bunker Discord Cog"
-Cohesion: 0.08
-Nodes (34): activateLockdown(), createGiveaway(), deactivateLockdown(), endGiveaway(), fetchGiveawayOverview(), fetchLockdownStatus(), fetchMembers(), fetchModerationLog() (+26 more)
+Cohesion: 0.10
+Nodes (26): createGiveaway(), endGiveaway(), fetchGiveawayOverview(), fetchMembers(), fetchSetupHealth(), Giveaway, GiveawayOverview, LockdownStatus (+18 more)
 
 ### Community 19 - "Mass Role Assignment"
 Cohesion: 0.04
-Nodes (88): DashboardUser, fetchCurrentUser(), fetchInviteUrl(), fetchManageableGuilds(), fetchModules(), fetchPublicLeaderboard(), fetchSuperAdminGuilds(), loginUrl() (+80 more)
+Nodes (69): DashboardUser, fetchCurrentUser(), fetchInviteUrl(), fetchManageableGuilds(), fetchModules(), fetchPublicLeaderboard(), fetchSuperAdminGuilds(), loginUrl() (+61 more)
 
 ### Community 20 - "Embed Builder Routes"
 Cohesion: 0.11
@@ -420,8 +422,8 @@ Cohesion: 0.12
 Nodes (31): _cmd(), _grp(), _key(), Any, Apply slash command localizations for every cog (Phase 3.2(3))., register_automod(), register_birthdays(), register_blackjack() (+23 more)
 
 ### Community 36 - "Lockdown Routes"
-Cohesion: 0.05
-Nodes (72): _Deck, default_bunker_capacity(), generate_characters(), has_moderator_access(), is_game_over(), _pick_additional_info(), _pick_age(), _pick_backpack_item() (+64 more)
+Cohesion: 0.07
+Nodes (49): _Deck, generate_characters(), _pick_additional_info(), _pick_age(), _pick_backpack_item(), _pick_body_type(), pick_bunker_conditions(), pick_catastrophe() (+41 more)
 
 ### Community 37 - "Events Route Tests"
 Cohesion: 0.14
@@ -444,24 +446,24 @@ Cohesion: 0.06
 Nodes (44): isolated_config(), Тесты ядра Вордла: целостность словаря, оценка догадок, слово дня, настройки., test_board_lines_pads_empty_rows(), test_day_number_epoch(), test_evaluate_all_green(), test_evaluate_duplicate_letters_consume_stock(), test_evaluate_green_priority_over_yellow(), test_evaluate_yellow_and_gray() (+36 more)
 
 ### Community 42 - "Giveaway Cog"
-Cohesion: 0.06
-Nodes (47): BracketFormat, BracketSummary, closeEvent(), createBracket(), createCustomCommand(), createEvent(), CreateEventSpec, CustomCommandsSettings (+39 more)
+Cohesion: 0.09
+Nodes (29): BracketFormat, BracketSummary, closeEvent(), createBracket(), createEvent(), CreateEventSpec, deleteEvent(), EventDetail (+21 more)
 
 ### Community 43 - "Brackets Client Tests"
 Cohesion: 0.15
 Nodes (21): FakeAsset, build(), test_leaderboard_guild_unavailable(), test_leaderboard_keeps_members_who_left(), test_leaderboard_pagination_over_merged_roster(), test_leaderboard_search_filters_by_display_name(), test_leaderboard_shows_every_guild_member_even_without_xp(), test_leaderboard_sorted_by_xp_desc() (+13 more)
 
 ### Community 44 - "Bunker API Client"
-Cohesion: 0.05
-Nodes (78): AntiRaidSettings, ApiError, AutoReactionRule, AutoReactionsSettings, BotProfileResponse, ChannelInfo, deleteTimedRole(), endPoll() (+70 more)
+Cohesion: 0.04
+Nodes (87): activateLockdown(), AntiRaidSettings, ApiError, AutoReactionRule, AutoReactionsSettings, BotProfileResponse, ChannelInfo, deactivateLockdown() (+79 more)
 
 ### Community 45 - "Automod API Client"
 Cohesion: 0.16
 Nodes (8): AutoMod, BaseException, Bot, Guild, Interaction, Message, User, setup()
 
 ### Community 47 - "Event Builder UI"
-Cohesion: 0.06
-Nodes (49): BotConfig, createEmbedMessage(), deleteEmbedTemplate(), EmbedFieldSpec, EmbedMessagePayload, EmbedSpec, EmbedTemplate, FeedbackPanelSettings (+41 more)
+Cohesion: 0.08
+Nodes (37): BotConfig, fetchAutoRoles(), fetchConfig(), fetchWelcomeSettings(), isChannelDead(), syntheticDeletedChannel(), syntheticDeletedRole(), testWelcomeSettings() (+29 more)
 
 ### Community 48 - "Family Core Tests"
 Cohesion: 0.13
@@ -480,8 +482,8 @@ Cohesion: 0.08
 Nodes (23): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+15 more)
 
 ### Community 52 - "Bot Config Store"
-Cohesion: 0.11
-Nodes (22): CasinoLeaderboardEntry, CasinoSettings, EconomySettings, EconomyTopEntry, EconomyWeeklyReportRow, fetchCasinoLeaderboard(), fetchCasinoSettings(), fetchEconomySettings() (+14 more)
+Cohesion: 0.09
+Nodes (23): createFeedbackCategory(), deleteFeedbackCategory(), FeedbackCategoryFieldSpec, FeedbackCategorySpec, fetchFeedbackCategories(), fetchMassAssignStatus(), MassAssignStatus, MassAssignTarget (+15 more)
 
 ### Community 53 - "Family Birthdays"
 Cohesion: 0.23
@@ -512,8 +514,8 @@ Cohesion: 0.06
 Nodes (58): add(), connect(), get_by_user(), get_db_path(), init(), list_all(), _now(), Connection (+50 more)
 
 ### Community 60 - "voice_rooms.py"
-Cohesion: 0.19
-Nodes (25): _avatar_url(), bunker_apply_ability(), bunker_card_pools(), bunker_game_advance_phase(), bunker_game_detail(), bunker_game_end(), bunker_games_list(), bunker_get() (+17 more)
+Cohesion: 0.12
+Nodes (23): createEmbedMessage(), deleteEmbedTemplate(), EmbedFieldSpec, EmbedMessagePayload, EmbedSpec, EmbedTemplate, FeedbackPanelSettings, fetchEmbedMessage() (+15 more)
 
 ### Community 61 - "XPCog"
 Cohesion: 0.10
@@ -576,16 +578,16 @@ Cohesion: 0.22
 Nodes (15): Request, Response, sticky_roles_get(), sticky_roles_put(), connect(), filter_member_roles(), get_db_path(), get_settings() (+7 more)
 
 ### Community 76 - "test_config_routes.py"
-Cohesion: 0.12
-Nodes (40): _make_game(), test_add_player_rejects_duplicate(), test_assign_player_role_and_get_by_token(), test_create_and_get_game(), test_get_active_game_in_channel_filters_by_status(), test_get_day_vote_single_row(), test_get_game_by_lobby_and_vote_message(), test_get_night_actions_filters_by_role() (+32 more)
+Cohesion: 0.11
+Nodes (47): mafia_game_detail(), mafia_public_state(), Host view for the dashboard: full roster with roles, per-phase submission     st, _serialize_game_summary(), _make_game(), test_add_player_rejects_duplicate(), test_assign_player_role_and_get_by_token(), test_create_and_get_game() (+39 more)
 
 ### Community 77 - "RosterCog"
 Cohesion: 0.21
 Nodes (8): generate_roster_text(), Bot, Guild, Interaction, Live-ростер семьи: список участников по настроенным ролям.  Портировано из FamQ, Debounce: аккумулирует изменения и обновляет сообщение через 10 секунд., RosterCog, setup()
 
 ### Community 78 - "reaction_roles.py"
-Cohesion: 0.21
-Nodes (23): _avatar_url(), _display_name(), _game_for_guild(), _is_id(), mafia_game_advance_phase(), mafia_game_detail(), mafia_game_end(), mafia_games_list() (+15 more)
+Cohesion: 0.26
+Nodes (16): _avatar_url(), _display_name(), _game_for_guild(), _is_id(), mafia_game_advance_phase(), mafia_game_end(), mafia_games_list(), mafia_get() (+8 more)
 
 ### Community 79 - "PublicBunkerAction.tsx"
 Cohesion: 0.10
@@ -776,8 +778,8 @@ Cohesion: 0.04
 Nodes (51): DashboardConfig, guild_context_middleware(), Request, Per-request guild-контекст (Фаза 2.3).  Раньше гильдия была одна на всё приложен, FakeAuditLogExtra, _FakeChannelType, FakeColor, FakeComponentRow (+43 more)
 
 ### Community 137 - ".__init__"
-Cohesion: 0.13
-Nodes (21): cancelSupply(), closeSupply(), createSupply(), fetchSupplyOverview(), isChannelDead(), Supply, SupplyOverview, syntheticDeletedChannel() (+13 more)
+Cohesion: 0.07
+Nodes (36): cancelSupply(), closeSupply(), createSupply(), deleteVoiceRoom(), fetchSupplyOverview(), fetchVoiceRooms(), publishVoicePanel(), Supply (+28 more)
 
 ### Community 138 - "Docs.tsx"
 Cohesion: 0.29
@@ -836,8 +838,8 @@ Cohesion: 0.38
 Nodes (4): Lockdown, Guild, Interaction, setup()
 
 ### Community 152 - "FakeVoiceChannel"
-Cohesion: 0.08
-Nodes (61): add_player(), add_round_event(), connect(), count_players(), create_ability_announcement(), get_ability_announcement(), get_active_game_in_channel(), get_db_path() (+53 more)
+Cohesion: 0.09
+Nodes (58): add_round_event(), connect(), count_players(), create_ability_announcement(), get_ability_announcement(), get_active_game_in_channel(), get_db_path(), get_game_by_lobby_message() (+50 more)
 
 ### Community 153 - "Fun.tsx"
 Cohesion: 0.26
@@ -992,8 +994,8 @@ Cohesion: 0.28
 Nodes (4): Bot, Timed roles: slash assign + background sweeper., setup(), TimedRolesCog
 
 ### Community 194 - "Mafia.tsx"
-Cohesion: 0.20
-Nodes (14): AuditEntry, AuditModerator, AuditPage, fetchAudit(), AuditPage(), csvEscape(), downloadAuditCsv(), EntryRow() (+6 more)
+Cohesion: 0.09
+Nodes (29): AuditEntry, AuditModerator, AuditPage, fetchAudit(), fetchLanguage(), fetchOwnerAlerts(), fetchTimezone(), OwnerAlertsSettings (+21 more)
 
 ### Community 196 - "test_module_test_send.py"
 Cohesion: 0.20
@@ -1115,6 +1117,14 @@ Nodes (7): build(), isolated_settings_db(), test_publish_feedback_panel_404_when
 Cohesion: 0.27
 Nodes (7): CustomCommandsCog, _embed_from_spec(), Bot, Embed, Message, Custom commands / auto-replies cog., setup()
 
+### Community 227 - "test_bunker_db.py"
+Cohesion: 0.14
+Nodes (28): add_player(), get_player(), init(), isolated_state(), isolated_db(), _make_game(), База, созданная до появления voice_channel_id/vote_message_id/unique_cards,, _sample_character() (+20 more)
+
+### Community 228 - "test_bunker_core.py"
+Cohesion: 0.09
+Nodes (23): default_bunker_capacity(), has_moderator_access(), is_game_over(), Большинство голосов за исключение; ничья среди лидеров — никто не исключён., Половина игроков (округление вниз, минимум 1) — если ведущий не задал своё число, resolve_expulsion_vote(), save_config(), _FakeMember (+15 more)
+
 ### Community 234 - "test_feedback_panel_routes.py"
 Cohesion: 0.60
 Nodes (5): Request, Response, verification_get(), verification_publish(), verification_put()
@@ -1139,7 +1149,7 @@ Nodes (13): save_config(), build_cog(), isolated_config(), make_joining_member()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SelectOption` connect `.__init__` to `Dashboard App Bootstrap`, `format_voice_time`?**
+- **Why does `SelectOption` connect `Event Builder UI` to `Dashboard App Bootstrap`, `format_voice_time`?**
   _High betweenness centrality (0.211) - this node is a cross-community bridge._
 - **Why does `Choice` connect `DocsSearch.tsx` to `events.py`, `Test Fake Bot`, `Family Tickets`, `family.py`, `embed_style.py`, `format_voice_time`, `Automod API Client`, `PublicBunkerAction.tsx`, `Streams API Client`, `format_voice_time`, `events.py`, `XPCog`?**
   _High betweenness centrality (0.139) - this node is a cross-community bridge._

@@ -88,13 +88,22 @@ describe('DashboardShell', () => {
       is_super_admin: false,
       active_guild_id: '1',
     })
+    vi.spyOn(client, 'fetchModules').mockResolvedValue({})
 
     renderShell()
 
     expect(await screen.findByText('Модерация')).toBeInTheDocument()
     expect(screen.getByText('События и голосования')).toBeInTheDocument()
-    expect(screen.getByText('Ежедневная рубрика')).toBeInTheDocument()
-    // Слиты в табы внутри разделов — отдельных пунктов меню больше нет.
+    expect(screen.getByText('Развлечения')).toBeInTheDocument()
+    expect(screen.getByText('Экономика')).toBeInTheDocument()
+    expect(screen.getByText('Активность')).toBeInTheDocument()
+    expect(screen.getByText('Люди')).toBeInTheDocument()
+    expect(screen.getByText('Игры')).toBeInTheDocument()
+    expect(screen.getByText('Сервер')).toBeInTheDocument()
+    // Merged into host page tabs — no longer top-level sidebar items.
+    expect(screen.queryByText('Ежедневная рубрика')).not.toBeInTheDocument()
+    expect(screen.queryByText('Казино')).not.toBeInTheDocument()
+    expect(screen.queryByText('Поставки')).not.toBeInTheDocument()
     expect(screen.queryByText('Приветствие и прощание')).not.toBeInTheDocument()
     expect(screen.queryByText('Авто-роли')).not.toBeInTheDocument()
     expect(screen.queryByText('Розыгрыши')).not.toBeInTheDocument()
