@@ -12,6 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import giveaway_core
 import i18n
 import slash_registry
@@ -23,15 +24,15 @@ def generate_embed(giveaway: dict, lang: str) -> discord.Embed:
     is_closed = giveaway["status"] != "active"
 
     if giveaway["status"] == "cancelled":
-        color = 0x2B2D31
+        color = embed_style.NEUTRAL_INT
         title = i18n.t("giveaways.embed.cancelled_title", lang)
         timer_text = i18n.t("giveaways.embed.cancelled_timer", lang)
     elif is_closed:
-        color = 0x2B2D31
+        color = embed_style.NEUTRAL_INT
         title = i18n.t("giveaways.embed.finished_title", lang)
         timer_text = i18n.t("giveaways.embed.finished_timer", lang)
     else:
-        color = 0xFEE75C
+        color = embed_style.GOLD_INT
         title = i18n.t("giveaways.embed.active_title", lang)
         timer_text = f"<t:{giveaway['target_ts']}:R>"
 
@@ -93,12 +94,6 @@ class GiveawayView(discord.ui.View):
 
 
 class GiveawayCog(commands.Cog):
-    giveaway_group = app_commands.Group(
-        name="giveaway",
-        description="Розыгрыши призов",
-        default_permissions=discord.Permissions(manage_guild=True),
-    )
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._timers: dict[str, asyncio.Task] = {}
@@ -193,29 +188,6 @@ class GiveawayCog(commands.Cog):
         self.schedule_giveaway(giveaway)
         return giveaway
 
-    @giveaway_group.command(name="start", description="Начать розыгрыш приза")
-    @app_commands.describe(
-        приз="Что разыгрывается",
-        время="Длительность розыгрыша (например, 10m, 2h, 1d)",
-        победителей="Сколько победителей выбрать",
-    )
-    async def giveaway_start(
-        self,
-        interaction: discord.Interaction,
-        приз: str,
-        время: str,
-        победителей: app_commands.Range[int, 1, 20] = 1,
-    ):
-        lang = i18n.lang_for(interaction.guild_id)
-        try:
-            giveaway_core.parse_duration(время, lang)
-        except ValueError as exc:
-            return await interaction.response.send_message(f"❌ {exc}", ephemeral=True)
-
-        await interaction.response.defer()
-        giveaway = await self.publish_giveaway(interaction.guild_id, interaction.channel, interaction.user.id, приз, время, победителей)
-        await interaction.followup.send(i18n.t("giveaways.started", lang, id=giveaway["id"]), ephemeral=True)
-
     async def reroll_and_announce(self, guild_id: int, giveaway_id: str) -> list[str] | None:
         """Перевыбирает победителей и объявляет в канале розыгрыша. Используется командой и дашбордом."""
         lang = i18n.lang_for(guild_id)
@@ -240,23 +212,69 @@ class GiveawayCog(commands.Cog):
                     pass
         return winners
 
-    @giveaway_group.command(name="reroll", description="Перевыбрать победителя(ей) завершённого розыгрыша")
-    @app_commands.describe(giveaway_id="ID розыгрыша (указан в футере эмбеда)")
-    async def giveaway_reroll(self, interaction: discord.Interaction, giveaway_id: str):
+    @app_commands.command(name="giveaway", description="Розыгрыши призов")
+    @app_commands.describe(
+        action="Действие: start / end / reroll",
+        prize="Приз (для start)",
+        duration="Длительность, напр. 10m / 2h / 1d (для start)",
+        winners="Число победителей (для start, по умолчанию 1)",
+        giveaway_id="ID розыгрыша из футера эмбеда (для end / reroll)",
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="start", value="start"),
+            app_commands.Choice(name="end", value="end"),
+            app_commands.Choice(name="reroll", value="reroll"),
+        ]
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def giveaway_command(
+        self,
+        interaction: discord.Interaction,
+        action: app_commands.Choice[str],
+        prize: str | None = None,
+        duration: str | None = None,
+        winners: app_commands.Range[int, 1, 20] = 1,
+        giveaway_id: str | None = None,
+    ):
         lang = i18n.lang_for(interaction.guild_id)
-        await interaction.response.defer(ephemeral=True)
-        winners = await self.reroll_and_announce(interaction.guild_id, giveaway_id)
-        if winners is None:
-            return await interaction.followup.send(i18n.t("giveaways.reroll.not_found", lang), ephemeral=True)
-        if not winners:
-            return await interaction.followup.send(i18n.t("giveaways.reroll.no_entrants", lang), ephemeral=True)
-        await interaction.followup.send(i18n.t("giveaways.reroll.done", lang), ephemeral=True)
+        act = action.value
 
-    @giveaway_group.command(name="end", description="Досрочно завершить розыгрыш")
-    @app_commands.describe(giveaway_id="ID розыгрыша (указан в футере эмбеда)")
-    async def giveaway_end(self, interaction: discord.Interaction, giveaway_id: str):
-        lang = i18n.lang_for(interaction.guild_id)
+        if act == "start":
+            if not prize or not duration:
+                return await interaction.response.send_message(
+                    i18n.t("giveaways.error.start_args", lang), ephemeral=True,
+                )
+            try:
+                giveaway_core.parse_duration(duration, lang)
+            except ValueError as exc:
+                return await interaction.response.send_message(f"❌ {exc}", ephemeral=True)
+            await interaction.response.defer()
+            giveaway = await self.publish_giveaway(
+                interaction.guild_id,
+                interaction.channel,
+                interaction.user.id,
+                prize,
+                duration,
+                winners,
+            )
+            await interaction.followup.send(i18n.t("giveaways.started", lang, id=giveaway["id"]), ephemeral=True)
+            return
+
+        if not giveaway_id:
+            return await interaction.response.send_message(
+                i18n.t("giveaways.error.id_required", lang), ephemeral=True,
+            )
         await interaction.response.defer(ephemeral=True)
+        if act == "reroll":
+            winners_list = await self.reroll_and_announce(interaction.guild_id, giveaway_id)
+            if winners_list is None:
+                return await interaction.followup.send(i18n.t("giveaways.reroll.not_found", lang), ephemeral=True)
+            if not winners_list:
+                return await interaction.followup.send(i18n.t("giveaways.reroll.no_entrants", lang), ephemeral=True)
+            await interaction.followup.send(i18n.t("giveaways.reroll.done", lang), ephemeral=True)
+            return
+
         ok = await self.finalize_giveaway(interaction.guild_id, giveaway_id)
         if not ok:
             return await interaction.followup.send(i18n.t("giveaways.end.not_found", lang), ephemeral=True)

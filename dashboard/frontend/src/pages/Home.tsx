@@ -3,7 +3,9 @@ import {
   CalendarCheck,
   ChatCircleText,
   Clock,
+  ClipboardText,
   Gift,
+  GlobeHemisphereWest,
   LockKeyOpen,
   Prohibit,
   ShieldCheck,
@@ -35,6 +37,27 @@ import { WhatsNewCard, WhatsNewModal } from '../components/WhatsNew'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+
+// Where the dashboard admin can go fix a module-health issue.
+const MODULE_ROUTE: Record<string, string> = {
+  starboard: '/starboard',
+  valchecker: '/valchecker',
+  birthdays: '/birthdays',
+  daily_topic: '/daily-topic',
+  wordle: '/fun',
+  levels: '/levels',
+  verification: '/lockdown',
+}
+
+const MODULE_LABEL_KEY: Record<string, string> = {
+  starboard: 'nav.starboard',
+  valchecker: 'nav.valchecker',
+  birthdays: 'nav.birthdays',
+  daily_topic: 'nav.dailyTopic',
+  wordle: 'nav.fun',
+  levels: 'nav.levels',
+  verification: 'nav.lockdown',
+}
 
 const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   spam_punish: Warning,
@@ -133,11 +156,11 @@ export function HomePage() {
       <WhatsNewModal />
       <WhatsNewCard />
 
-      {health && !health.ok && (
+      {health && health.missing_permissions.length > 0 && (
         <button
           type="button"
           onClick={() => navigate('/settings')}
-          className="mb-4 flex w-full items-start gap-2 rounded-control border border-warning/40 bg-warning/10 px-4 py-3 text-left text-sm text-foreground transition hover:border-warning"
+          className="mb-3 flex w-full items-start gap-2 rounded-control border border-warning/40 bg-warning/10 px-4 py-3 text-left text-sm text-foreground transition hover:border-warning"
         >
           <ShieldWarning size={18} className="mt-0.5 shrink-0 text-warning" />
           <span>
@@ -148,6 +171,57 @@ export function HomePage() {
           </span>
         </button>
       )}
+
+      {health && health.module_issues.length > 0 && (
+        <div className="mb-4 flex flex-col gap-1.5 rounded-control border border-danger/40 bg-danger/10 px-4 py-3">
+          <span className="flex items-center gap-2 text-sm font-medium text-danger">
+            <Warning size={16} weight="fill" />
+            {t('home.setupHealth.moduleIssuesTitle')}
+          </span>
+          <ul className="flex flex-col gap-1">
+            {health.module_issues.map((issue, index) => (
+              <li key={index}>
+                <button
+                  type="button"
+                  onClick={() => navigate(MODULE_ROUTE[issue.module] ?? '/settings')}
+                  className="cursor-pointer text-left text-sm text-foreground underline-offset-2 hover:text-primary hover:underline"
+                >
+                  {t(`home.setupHealth.moduleIssue.${issue.kind}`, {
+                    module: MODULE_LABEL_KEY[issue.module] ? t(MODULE_LABEL_KEY[issue.module]) : issue.module,
+                  })}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => navigate('/lockdown')}
+          className="flex cursor-pointer items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-1.5 text-sm text-muted transition hover:border-primary hover:text-foreground"
+        >
+          <ShieldWarning size={14} />
+          {t('home.quickLinks.moderation')}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/lockdown')}
+          className="flex cursor-pointer items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-1.5 text-sm text-muted transition hover:border-primary hover:text-foreground"
+        >
+          <ClipboardText size={14} />
+          {t('home.quickLinks.moderationLog')}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/settings')}
+          className="flex cursor-pointer items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-1.5 text-sm text-muted transition hover:border-primary hover:text-foreground"
+        >
+          <GlobeHemisphereWest size={14} />
+          {t('home.quickLinks.settings')}
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card interactive className="animate-fade-in-up" onClick={() => navigate('/feedback')}>

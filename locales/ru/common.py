@@ -37,6 +37,7 @@ MESSAGES: dict[str, str] = {
     "module.news": "Ретрансляция новостей",
     "module.brackets": "Турнирные сетки",
     "module.reaction_roles": "Роли по реакциям",
+    "module.valchecker": "ValChecker",
     "economy.bet_disabled": "Ставки в рулетке отключены.",
     "economy.bet_min": "Ставка должна быть не меньше 1.",
     "economy.bet_max": "Максимальная ставка — {max}.",

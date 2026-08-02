@@ -9,6 +9,7 @@ import bot_config
 import i18n
 import voice_db as db
 import voice_logs as logs
+import embed_style
 from voice_logs import VCTheme, logger
 
 MODULE_NAME = "voice_panel"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
@@ -156,7 +157,7 @@ def build_embed(lang: str, guild_id: int) -> discord.Embed:
     embed = discord.Embed(
         title=i18n.t("voice_rooms.panel.title", lang),
         description=i18n.t("voice_rooms.panel.description", lang),
-        color=VCTheme.COLOR
+        color=embed_style.INFO
     )
     embed.add_field(
         name=i18n.t("voice_rooms.panel.access", lang),

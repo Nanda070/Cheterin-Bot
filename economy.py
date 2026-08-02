@@ -12,6 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import economy_core
 import economy_db
 import i18n
@@ -118,7 +119,7 @@ class EconomyCog(commands.Cog):
         rows = economy_db.weekly_report(guild.id, days=days)[:15]
         embed = discord.Embed(
             title=i18n.t("economy.weekly.title", lang, days=days, emoji=settings["currency_emoji"]),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
             timestamp=discord.utils.utcnow(),
         )
         if not rows:
@@ -255,7 +256,7 @@ class EconomyCog(commands.Cog):
             ),
             description=f"**{economy_core.format_amount(balance, settings)}**"
             + (i18n.t("economy.balance.rank", lang, rank=rank) if rank else ""),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -391,7 +392,7 @@ class EconomyCog(commands.Cog):
                 currency_name=settings["currency_name"],
             ),
             description="\n".join(lines),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
         )
         await interaction.response.send_message(embed=embed)
 
@@ -423,7 +424,7 @@ class EconomyCog(commands.Cog):
                 lang,
                 balance=economy_core.format_amount(balance, settings),
             ),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
         )
         await interaction.response.send_message(
             embed=embed, view=ShopView(self, items, lang), ephemeral=True

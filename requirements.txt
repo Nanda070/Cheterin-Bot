@@ -1,8 +1,15 @@
+# Runtime
 discord.py>=2.7.1
 python-dotenv>=1.0.1
 aiohttp>=3.9
 aiohttp-session>=2.12
 cryptography>=42.0
 Pillow>=10.0
+# IANA zones for zoneinfo. On Ubuntu usually covered by apt tzdata;
+# keep the pip package so slim/Docker images without /usr/share/zoneinfo still work.
+tzdata>=2024.1
+
+# Tests (pytest.ini: asyncio_mode = auto)
 pytest>=8.0
 pytest-aiohttp>=1.0
+pytest-asyncio>=0.23

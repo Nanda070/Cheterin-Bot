@@ -12,6 +12,7 @@
 
 import re
 
+import embed_style
 import i18n
 import settings_db
 
@@ -99,7 +100,12 @@ def can_manage_tickets(member) -> bool:
 # ────────────────────────── Статусы тикета ──────────────────────────
 
 def status_color(status: str) -> int:
-    return {"open": 0x5865F2, "approved": 0x57F287, "denied": 0xED4245, "closed": 0xFEE75C}.get(status, 0x2B2D31)
+    return {
+        "open": embed_style.INFO_INT,
+        "approved": embed_style.SUCCESS_INT,
+        "denied": embed_style.DANGER_INT,
+        "closed": embed_style.GOLD_INT,
+    }.get(status, embed_style.NEUTRAL_INT)
 
 
 def status_label(status: str, lang: str = i18n.DEFAULT_LANGUAGE) -> str:

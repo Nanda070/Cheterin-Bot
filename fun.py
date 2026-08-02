@@ -216,21 +216,6 @@ class FunCog(commands.Cog):
             )
         )
 
-    @app_commands.command(name="эмодзи-рулетка", description="Крутануть рулетку и получить случайное эмодзи сервера")
-    async def emoji_roulette(self, interaction: discord.Interaction):
-        lang = i18n.lang_for(interaction.guild_id)
-        settings = fun_core.get_settings(interaction.guild.id)
-        if not settings["enabled"]:
-            return await interaction.response.send_message(
-                i18n.module_disabled(lang, "fun"), ephemeral=True
-            )
-
-        emojis = list(interaction.guild.emojis) if interaction.guild else []
-        emoji = fun_core.pick_emoji(emojis)
-        await interaction.response.send_message(
-            i18n.t("fun.emoji.result", lang, mention=interaction.user.mention, emoji=emoji)
-        )
-
 
 async def setup(bot: commands.Bot):
     cog = FunCog(bot)

@@ -37,6 +37,7 @@ MESSAGES: dict[str, str] = {
     "module.news": "News relay",
     "module.brackets": "Brackets",
     "module.reaction_roles": "Reaction roles",
+    "module.valchecker": "ValChecker",
     "economy.bet_disabled": "Roulette bets are disabled.",
     "economy.bet_min": "Bet must be at least 1.",
     "economy.bet_max": "Maximum bet is {max}.",

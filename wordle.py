@@ -21,6 +21,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import i18n
 import slash_registry
 import wordle_card
@@ -59,7 +60,7 @@ def build_board_embed(
     lang: str = i18n.DEFAULT_LANGUAGE,
 ) -> discord.Embed:
     lines = wordle_core.board_lines(guesses, states)
-    embed = discord.Embed(title=day_title, description="\n".join(lines), color=discord.Color.from_str("#538d4e"))
+    embed = discord.Embed(title=day_title, description="\n".join(lines), color=embed_style.WORDLE)
     if finished:
         score = wordle_core.result_score_text(won, len(guesses))
         if won:
@@ -304,12 +305,7 @@ class WordleCog(commands.Cog):
             self._training.pop((interaction.guild_id, interaction.user.id), None)
         await interaction.response.edit_message(embed=embed, view=view)
 
-    @app_commands.command(name="вордл", description="Слово дня: 6 попыток угадать слово из 5 букв")
-    async def wordle_command(self, interaction: discord.Interaction):
-        await self.open_daily_board(interaction)
-
-    @app_commands.command(name="вордл-тренировка", description="Тренировочный Вордл со случайным словом (без статистики)")
-    async def training_command(self, interaction: discord.Interaction):
+    async def open_training_board(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
@@ -326,8 +322,7 @@ class WordleCog(commands.Cog):
             embed=embed, view=BoardView(self, training=True, lang=lang), ephemeral=True,
         )
 
-    @app_commands.command(name="вордл-стата", description="Ваша статистика Вордла: победы, стрики, распределение")
-    async def stats_command(self, interaction: discord.Interaction):
+    async def show_stats(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
@@ -348,7 +343,7 @@ class WordleCog(commands.Cog):
             bar = "█" * max(1, round(count / max_bucket * 12)) if count else "▏"
             dist_lines.append(f"`{i}` {bar} {count}")
 
-        embed = discord.Embed(title=i18n.t("wordle.stats.title", lang), color=discord.Color.from_str("#538d4e"))
+        embed = discord.Embed(title=i18n.t("wordle.stats.title", lang), color=embed_style.WORDLE)
         embed.add_field(name=i18n.t("wordle.stats.played", lang), value=str(stats["played"]))
         embed.add_field(
             name=i18n.t("wordle.stats.won", lang),
@@ -365,8 +360,7 @@ class WordleCog(commands.Cog):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="вордл-топ", description="Топ игроков сервера в Вордл")
-    async def top_command(self, interaction: discord.Interaction):
+    async def show_top(self, interaction: discord.Interaction):
         lang = i18n.lang_for(interaction.guild_id)
         settings = wordle_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
@@ -394,9 +388,30 @@ class WordleCog(commands.Cog):
         embed = discord.Embed(
             title=i18n.t("wordle.top.title", lang),
             description="\n".join(lines),
-            color=discord.Color.from_str("#538d4e"),
+            color=embed_style.WORDLE,
         )
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="вордл", description="Вордл: play / training / stats / top")
+    @app_commands.describe(action="Действие: play / training / stats / top")
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="play", value="play"),
+            app_commands.Choice(name="training", value="training"),
+            app_commands.Choice(name="stats", value="stats"),
+            app_commands.Choice(name="top", value="top"),
+        ]
+    )
+    async def wordle_command(self, interaction: discord.Interaction, action: app_commands.Choice[str]):
+        act = action.value
+        if act == "play":
+            await self.open_daily_board(interaction)
+        elif act == "training":
+            await self.open_training_board(interaction)
+        elif act == "stats":
+            await self.show_stats(interaction)
+        else:
+            await self.show_top(interaction)
 
     @tasks.loop(minutes=1)
     async def announce_loop(self):

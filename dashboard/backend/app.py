@@ -11,6 +11,8 @@ import family_db
 import invites_db
 import mafia_db
 import polls_db
+import starboard_db
+import valchecker_db
 import stats_db
 import sticky_roles_core
 import timed_roles_db
@@ -66,6 +68,12 @@ from .routes.owner_alerts import routes as owner_alerts_routes
 from .routes.timezone import routes as timezone_routes
 from .routes.sticky_roles import routes as sticky_roles_routes
 from .routes.preview import routes as preview_routes
+from .routes.bot_profile import routes as bot_profile_routes
+from .routes.starboard import routes as starboard_routes
+from .routes.auto_reactions import routes as auto_reactions_routes
+from .routes.quote import routes as quote_routes
+from .routes.valchecker import routes as valchecker_routes
+from .routes.modules import routes as modules_routes
 from .audit_middleware import audit_middleware
 from .guild_context import guild_context_middleware
 from .session import setup_session
@@ -102,6 +110,8 @@ def create_app(
     polls_db.init()
     invites_db.init()
     sticky_roles_core.init()
+    starboard_db.init()
+    valchecker_db.init()
 
     app = web.Application(middlewares=[json_error_middleware, guild_context_middleware, audit_middleware])
     app["bot"] = bot
@@ -157,6 +167,12 @@ def create_app(
     app.add_routes(timezone_routes)
     app.add_routes(sticky_roles_routes)
     app.add_routes(preview_routes)
+    app.add_routes(bot_profile_routes)
+    app.add_routes(starboard_routes)
+    app.add_routes(auto_reactions_routes)
+    app.add_routes(quote_routes)
+    app.add_routes(valchecker_routes)
+    app.add_routes(modules_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

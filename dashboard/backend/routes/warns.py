@@ -1,6 +1,9 @@
 from aiohttp import web
 
 import automod_core
+import i18n
+import moderation_embed_core
+import moderation_log
 import warns_core
 
 from ..access_middleware import require_dashboard_access
@@ -64,6 +67,32 @@ async def member_warns_create(request: web.Request) -> web.Response:
     member = guild.get_member(member_id)
     if cog is not None and member is not None:
         await cog.apply_escalation_if_needed(guild, member)
+
+    lang = i18n.lang_for(guild.id)
+    reason_text = reason.strip()
+    moderation_log.append_event(
+        guild.id,
+        "warn_manual",
+        member_id,
+        member.name if member is not None else str(member_id),
+        reason_text,
+        moderator_id=moderator.id,
+        moderator_display=moderator.name,
+    )
+    target_name = member.name if member is not None else str(member_id)
+    target_mention = getattr(member, "mention", None) if member is not None else None
+    embed = moderation_embed_core.build_user_action_embed(
+        lang,
+        title=i18n.t("moderation.dashboard.warn", lang),
+        actor=moderator,
+        target_name=target_name,
+        target_id=member_id,
+        target_mention=target_mention,
+        reason=reason_text,
+        footer_key="moderation.dashboard.footer",
+        timestamp=request.app["bot"].utcnow(),
+    )
+    await request.app["bot"].send_log(guild.id, embed)
 
     return web.json_response({
         "warn": warn,

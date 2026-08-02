@@ -3,7 +3,7 @@ import {
   Broadcast,
   Cake,
   CalendarCheck,
-  Car,
+  Crosshair,
   ChatTeardropText,
   Chats,
   Confetti,
@@ -19,17 +19,23 @@ import {
   GlobeHemisphereWest,
   Headset,
   House,
+  HouseLine,
+  IdentificationCard,
   Lightbulb,
   List,
   ListMagnifyingGlass,
+  MagnifyingGlass,
   Megaphone,
   Package,
+  Palette,
   Shield,
   ShieldWarning,
   SignOut,
   Skull,
+  Smiley,
   Sparkle,
   Stack,
+  Star,
   Ticket,
   TrendUp,
   Users,
@@ -39,19 +45,25 @@ import {
   X,
   type Icon,
 } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { logout } from '../api/client'
+import { fetchModules, logout } from '../api/client'
+import { CommandPalette } from '../components/CommandPalette'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { Dropdown, DropdownItem } from '../components/ui/Dropdown'
+import { Toggle } from '../components/ui/Toggle'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+
+const SHOW_DISABLED_MODULES_KEY = 'cheterin.showDisabledModules'
 
 interface Section {
   labelKey: string
   icon: Icon
   to: string
   mainGuildOnly?: boolean
+  /** Key returned by GET /api/modules — hides the item when that module is disabled (unless "show disabled" is on). */
+  moduleKey?: string
 }
 
 interface NavGroup {
@@ -63,22 +75,28 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    titleKey: 'nav.group.home',
+    icon: HouseLine,
+    items: [{ labelKey: 'nav.home', icon: HouseLine, to: '/' }],
+  },
+  {
     titleKey: 'nav.group.activity',
     icon: TrendUp,
     items: [
-      { labelKey: 'nav.levels', icon: ChartBar, to: '/levels' },
-      { labelKey: 'nav.economy', icon: Coins, to: '/economy' },
-      { labelKey: 'nav.casino', icon: DiceThree, to: '/casino' },
+      { labelKey: 'nav.levels', icon: ChartBar, to: '/levels', moduleKey: 'levels' },
+      { labelKey: 'nav.economy', icon: Coins, to: '/economy', moduleKey: 'economy' },
+      { labelKey: 'nav.casino', icon: DiceThree, to: '/casino', moduleKey: 'casino' },
       { labelKey: 'nav.voiceStats', icon: ChartLine, to: '/voice-stats' },
       { labelKey: 'nav.voiceRooms', icon: Headset, to: '/voice-rooms' },
     ],
   },
   {
     titleKey: 'nav.group.gta5rp',
-    icon: Car,
+    icon: Crosshair,
     items: [
-      { labelKey: 'nav.family', icon: House, to: '/family' },
+      { labelKey: 'nav.family', icon: House, to: '/family', moduleKey: 'family' },
       { labelKey: 'nav.supply', icon: Package, to: '/supply' },
+      { labelKey: 'nav.valchecker', icon: Crosshair, to: '/valchecker', moduleKey: 'valchecker' },
     ],
   },
   {
@@ -87,20 +105,23 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: 'nav.feedback', icon: ChatCircleText, to: '/feedback' },
       { labelKey: 'nav.events', icon: CalendarCheck, to: '/events' },
-      { labelKey: 'nav.messages', icon: Chats, to: '/messages' },
+      { labelKey: 'nav.messages', icon: Chats, to: '/messages', moduleKey: 'messages' },
       { labelKey: 'nav.reactionRoles', icon: Stack, to: '/reaction-roles' },
-      { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays' },
+      { labelKey: 'nav.embedStudio', icon: Palette, to: '/reaction-roles?tab=embeds' },
+      { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays', moduleKey: 'birthdays' },
+      { labelKey: 'nav.starboard', icon: Star, to: '/starboard', moduleKey: 'starboard' },
+      { labelKey: 'nav.autoReactions', icon: Smiley, to: '/auto-reactions', moduleKey: 'autoReactions' },
     ],
   },
   {
     titleKey: 'nav.group.content',
     icon: FilmSlate,
     items: [
-      { labelKey: 'nav.fun', icon: Confetti, to: '/fun' },
+      { labelKey: 'nav.fun', icon: Confetti, to: '/fun', moduleKey: 'fun' },
       { labelKey: 'nav.streams', icon: Broadcast, to: '/streams' },
-      { labelKey: 'nav.dailyTopic', icon: Lightbulb, to: '/daily-topic' },
-      { labelKey: 'nav.mafia', icon: Skull, to: '/mafia' },
-      { labelKey: 'nav.bunker', icon: Vault, to: '/bunker' },
+      { labelKey: 'nav.dailyTopic', icon: Lightbulb, to: '/daily-topic', moduleKey: 'dailyTopic' },
+      { labelKey: 'nav.mafia', icon: Skull, to: '/mafia', moduleKey: 'mafia' },
+      { labelKey: 'nav.bunker', icon: Vault, to: '/bunker', moduleKey: 'bunker' },
     ],
   },
   {
@@ -109,11 +130,12 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: 'nav.serverlog', icon: ListMagnifyingGlass, to: '/serverlog' },
       { labelKey: 'nav.lockdown', icon: ShieldWarning, to: '/lockdown' },
-      { labelKey: 'nav.automod', icon: Shield, to: '/automod' },
+      { labelKey: 'nav.automod', icon: Shield, to: '/automod', moduleKey: 'automod' },
       { labelKey: 'nav.serverEntry', icon: DoorOpen, to: '/server-entry' },
       { labelKey: 'nav.members', icon: UsersThree, to: '/members' },
-      { labelKey: 'nav.customCommands', icon: ChatTeardropText, to: '/custom-commands' },
+      { labelKey: 'nav.customCommands', icon: ChatTeardropText, to: '/custom-commands', moduleKey: 'customCommands' },
       { labelKey: 'nav.audit', icon: ClipboardText, to: '/audit' },
+      { labelKey: 'nav.botProfile', icon: IdentificationCard, to: '/bot-profile' },
       { labelKey: 'nav.settings', icon: GlobeHemisphereWest, to: '/settings' },
     ],
   },
@@ -129,6 +151,15 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ]
 
+function navItemActive(to: string, pathname: string, search: string): boolean {
+  const [path, query = ''] = to.split('?')
+  if (pathname !== path) return false
+  if (query) return search.includes(query)
+  // Plain /reaction-roles should not stay active on Embed Studio tab.
+  if (path === '/reaction-roles' && search.includes('tab=embeds')) return false
+  return true
+}
+
 function SidebarNav({
   onNavigate,
   itemBase,
@@ -138,6 +169,32 @@ function SidebarNav({
 }) {
   const { user } = useAuth()
   const t = useT()
+  const location = useLocation()
+  const [modules, setModules] = useState<Record<string, boolean> | null>(null)
+  const [showDisabled, setShowDisabled] = useState(() => {
+    try {
+      return window.localStorage.getItem(SHOW_DISABLED_MODULES_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    fetchModules()
+      .then(setModules)
+      .catch(() => setModules({}))
+  }, [user?.active_guild_id])
+
+  const toggleShowDisabled = (v: boolean) => {
+    setShowDisabled(v)
+    try {
+      window.localStorage.setItem(SHOW_DISABLED_MODULES_KEY, v ? '1' : '0')
+    } catch {
+      /* localStorage unavailable (privacy mode, test env) — in-memory toggle still works */
+    }
+  }
+
+  const isModuleDisabled = (moduleKey?: string) => !!moduleKey && modules?.[moduleKey] === false
 
   return (
     <>
@@ -173,35 +230,52 @@ function SidebarNav({
             <div className="flex flex-col gap-0.5">
               {group.items
                 .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
-                .map(({ labelKey, icon: SectionIcon, to }) => (
-                  <NavLink
-                    key={labelKey}
-                    to={to}
-                    onClick={onNavigate}
-                    className={({ isActive }) =>
-                      `${itemBase} cursor-pointer ${
-                        isActive
-                          ? 'border-primary bg-primary-muted font-medium text-foreground'
-                          : 'border-transparent text-muted hover:bg-surface-hover hover:text-foreground'
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <SectionIcon
-                          size={17}
-                          weight={isActive ? 'fill' : 'regular'}
-                          className={`shrink-0 ${isActive ? 'text-primary' : ''}`}
-                        />
-                        {t(labelKey)}
-                      </>
-                    )}
-                  </NavLink>
-                ))}
+                .filter((item) => showDisabled || !isModuleDisabled(item.moduleKey))
+                .map(({ labelKey, icon: SectionIcon, to, moduleKey }) => {
+                  const disabled = isModuleDisabled(moduleKey)
+                  return (
+                    <NavLink
+                      key={labelKey}
+                      to={to}
+                      end={to === '/'}
+                      onClick={onNavigate}
+                      className={() => {
+                        const isActive = navItemActive(to, location.pathname, location.search)
+                        return `${itemBase} cursor-pointer ${disabled ? 'opacity-50' : ''} ${
+                          isActive
+                            ? 'border-primary bg-primary-muted font-medium text-foreground'
+                            : 'border-transparent text-muted hover:bg-surface-hover hover:text-foreground'
+                        }`
+                      }}
+                    >
+                      {() => {
+                        const isActive = navItemActive(to, location.pathname, location.search)
+                        return (
+                        <>
+                          <SectionIcon
+                            size={17}
+                            weight={isActive ? 'fill' : 'regular'}
+                            className={`shrink-0 ${isActive ? 'text-primary' : ''}`}
+                          />
+                          <span className="min-w-0 flex-1 truncate">{t(labelKey)}</span>
+                          {disabled && (
+                            <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted bg-surface-hover">
+                              {t('nav.moduleDisabledBadge')}
+                            </span>
+                          )}
+                        </>
+                        )
+                      }}
+                    </NavLink>
+                  )
+                })}
             </div>
           </div>
         ))}
       </nav>
+      <div className="mt-5 border-t border-border px-2.5 pt-4">
+        <Toggle checked={showDisabled} onChange={toggleShowDisabled} label={t('nav.showDisabledModules')} />
+      </div>
     </>
   )
 }
@@ -213,6 +287,17 @@ export function DashboardShell() {
   const location = useLocation()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  const paletteItems = useMemo(
+    () =>
+      NAV_GROUPS.filter((group) => !group.superAdminOnly || user?.is_super_admin).flatMap((group) =>
+        group.items
+          .filter((item) => !item.mainGuildOnly || user?.is_main_guild)
+          .map((item) => ({ id: item.to, title: t(item.labelKey), group: t(group.titleKey) })),
+      ),
+    [user?.is_super_admin, user?.is_main_guild, t],
+  )
 
   useEffect(() => {
     setMobileNavOpen(false)
@@ -279,6 +364,17 @@ export function DashboardShell() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            aria-label={t('nav.commandPalette.open')}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 py-1.5 text-xs text-muted transition-colors hover:border-primary hover:text-foreground"
+          >
+            <MagnifyingGlass size={14} />
+            <span className="hidden rounded-[6px] border border-border bg-background px-1.5 py-0.5 text-[11px] sm:inline">
+              Ctrl K
+            </span>
+          </button>
           <LanguageToggle />
           <Dropdown
             trigger={
@@ -334,6 +430,17 @@ export function DashboardShell() {
           <Outlet />
         </main>
       </div>
+
+      <CommandPalette
+        items={paletteItems}
+        onSelect={(id) => navigate(id)}
+        title={t('nav.commandPalette.title')}
+        placeholder={t('nav.commandPalette.placeholder')}
+        emptyLabel={t('nav.commandPalette.empty')}
+        hideTrigger
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+      />
     </div>
   )
 }

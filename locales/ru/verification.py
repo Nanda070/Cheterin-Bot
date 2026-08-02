@@ -17,4 +17,6 @@ MESSAGES: dict[str, str] = {
     "verification.role_reason_verified": "Верификация: подтверждение по кнопке",
     "verification.role_reason_remove_unverified": "Верификация пройдена",
     "verification.role_reason_reverify": "Верификация: требуется повторное подтверждение",
+    "verification.embed.pass_title": "✅ Верификация пройдена",
+    "verification.embed.expire_title": "🔁 Срок верификации истёк",
 }

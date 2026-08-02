@@ -1,7 +1,7 @@
 MESSAGES: dict[str, str] = {
     "tempban.reason": "Автоматический Tempban (Сброс сообщений за 20 мин.)",
     "tempban.recovery_unban_reason": "Авто-разбан после перезапуска (Tempban recovery)",
-    "tempban.dm_message": 'Вы были исключены из сервера "404 : Server Not Found" за запись в канале, в котором вы не должны были писать. Ссылка на сервер: https://discord.gg/cheterin',
+    "tempban.dm_message": 'Вы были исключены из сервера "{guild}" за запись в канале, в котором вы не должны были писать. Ссылка на сервер: {invite}',
     "tempban.dm_success": "✅ Успешно",
     "tempban.dm_failed": "❌ Ошибка (ЛС закрыты)",
     "tempban.dm_disabled": "⏭ ЛС отключено в настройках",
@@ -22,5 +22,16 @@ MESSAGES: dict[str, str] = {
     "tempban.embed.unban_error": "⚠️ Ошибка разбана",
     "tempban.embed.unban_error_value": "{error}\n> Пользователь может остаться в бан-листе!",
     "tempban.embed.footer": "Пользователь кикнут (сообщения за 20 минут удалены).",
+    "tempban.embed.permanent": "Навсегда (без разбана)",
     "tempban.log_extra": "Канал: {channel}; unban: {status}",
+    "tempban.action_label.softban": "бан + мгновенный разбан (очистка сообщений)",
+    "tempban.action_label.ban": "постоянный бан",
+    "tempban.action_label.disabled": "выключено",
+    "tempban.warning_title": "⚠️ Сюда писать нельзя",
+    "tempban.warning_default": (
+        "⚠️ Сюда писать нельзя\n\n"
+        "Этот канал — ловушка от спама. Сообщение здесь приведёт к: {action}.\n"
+        "Сервер: {guild}"
+    ),
+    "tempban.warning_footer": "Банов: {count}",
 }

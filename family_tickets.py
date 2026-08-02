@@ -13,6 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import family_core
 import family_db
 import i18n
@@ -67,7 +68,7 @@ def build_ticket_status_embed(lang: str) -> discord.Embed:
     return discord.Embed(
         title=i18n.t("family.tickets.status_title", lang),
         description=i18n.t("family.tickets.status_description", lang),
-        color=0xFEE75C,
+        color=embed_style.GOLD,
         timestamp=datetime.now(timezone.utc),
     )
 
@@ -84,7 +85,7 @@ def build_ticket_result_embed(
         embed = discord.Embed(
             title=i18n.t("family.tickets.approved_title", lang),
             description=i18n.t("family.tickets.approved_description", lang, mention=applicant.mention),
-            color=0x57F287,
+            color=embed_style.SUCCESS,
             timestamp=datetime.now(timezone.utc),
         )
         embed.add_field(name=i18n.t("family.tickets.field_moderator", lang), value=moderator.mention, inline=False)
@@ -102,7 +103,7 @@ def build_ticket_result_embed(
         embed = discord.Embed(
             title=i18n.t("family.tickets.denied_title", lang),
             description=i18n.t("family.tickets.denied_description", lang),
-            color=0xED4245,
+            color=embed_style.DANGER,
             timestamp=datetime.now(timezone.utc),
         )
         embed.add_field(name=i18n.t("family.tickets.field_moderator", lang), value=moderator.mention, inline=True)
@@ -116,7 +117,7 @@ def build_ticket_result_embed(
         embed = discord.Embed(
             title=i18n.t("family.tickets.closed_title", lang),
             description=i18n.t("family.tickets.closed_description", lang, mention=moderator.mention),
-            color=0xFEE75C,
+            color=embed_style.GOLD,
             timestamp=datetime.now(timezone.utc),
         )
         embed.add_field(
@@ -153,7 +154,7 @@ async def send_log(bot: commands.Bot, guild_id: int, title: str, description: st
 
 
 async def send_ticket_created_log(bot, applicant, ticket, active_role, thread, message, lang: str):
-    await send_log(bot, applicant.guild.id, i18n.t("family.tickets.log_created_title", lang), i18n.t("family.tickets.log_created_body", lang), 0x5865F2, [
+    await send_log(bot, applicant.guild.id, i18n.t("family.tickets.log_created_title", lang), i18n.t("family.tickets.log_created_body", lang), embed_style.INFO_INT, [
         (i18n.t("family.tickets.log_field_member", lang), member_log_value(applicant), True),
         (i18n.t("family.tickets.log_field_nickname", lang), ticket["nickname"], True),
         (i18n.t("family.tickets.log_field_name", lang), ticket["real_name"], True),
@@ -167,7 +168,7 @@ async def send_ticket_created_log(bot, applicant, ticket, active_role, thread, m
 async def send_ticket_result_log(bot, status, applicant, moderator, roles_added, removed_role, thread, lang: str):
     guild_id = applicant.guild.id
     if status == "approved":
-        await send_log(bot, guild_id, i18n.t("family.tickets.log_approved_title", lang), i18n.t("family.tickets.log_approved_body", lang), 0x57F287, [
+        await send_log(bot, guild_id, i18n.t("family.tickets.log_approved_title", lang), i18n.t("family.tickets.log_approved_body", lang), embed_style.SUCCESS_INT, [
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(applicant), True),
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(moderator), True),
             (i18n.t("family.tickets.log_field_roles", lang), "\n".join(r.mention for r in roles_added) or i18n.t("family.tickets.none", lang), False),
@@ -175,14 +176,14 @@ async def send_ticket_result_log(bot, status, applicant, moderator, roles_added,
             (i18n.t("family.tickets.log_field_thread", lang), thread.mention, False),
         ], lang=lang)
     elif status == "denied":
-        await send_log(bot, guild_id, i18n.t("family.tickets.log_denied_title", lang), i18n.t("family.tickets.log_denied_body", lang), 0xED4245, [
+        await send_log(bot, guild_id, i18n.t("family.tickets.log_denied_title", lang), i18n.t("family.tickets.log_denied_body", lang), embed_style.DANGER_INT, [
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(applicant), True),
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(moderator), True),
             (i18n.t("family.tickets.field_role_removed", lang), removed_role.mention if removed_role else i18n.t("family.tickets.none", lang), False),
             (i18n.t("family.tickets.log_field_thread", lang), thread.mention, False),
         ], lang=lang)
     else:
-        await send_log(bot, guild_id, i18n.t("family.tickets.log_closed_title", lang), i18n.t("family.tickets.log_closed_body", lang), 0xFEE75C, [
+        await send_log(bot, guild_id, i18n.t("family.tickets.log_closed_title", lang), i18n.t("family.tickets.log_closed_body", lang), embed_style.GOLD_INT, [
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(applicant), True),
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(moderator), True),
             (i18n.t("family.tickets.field_role_removed", lang), removed_role.mention if removed_role else i18n.t("family.tickets.none", lang), False),

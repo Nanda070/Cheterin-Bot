@@ -95,6 +95,12 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("DELETE", "/api/automod/escalation/", "audit.action.automod_escalation_delete"),
     ("PUT", "/api/automod", "audit.action.automod"),
     ("DELETE", "/api/warns/", "audit.action.warn_remove"),
+    ("PUT", "/api/bot-profile", "audit.action.bot_profile"),
+    ("PUT", "/api/starboard", "audit.action.starboard"),
+    ("PUT", "/api/valchecker", "audit.action.valchecker"),
+    ("PUT", "/api/auto-reactions", "audit.action.auto_reactions"),
+    ("PUT", "/api/quote", "audit.action.quote"),
+    ("POST", "/api/tempban-settings/publish-warning", "audit.action.tempban_publish"),
 ]
 
 # Path-only fallbacks (any method) for older/unknown verb combinations.
@@ -133,6 +139,10 @@ PATH_LABELS: list[tuple[str, str]] = [
     ("/api/members", "audit.action.member"),
     ("/api/roles", "audit.action.mass_assign"),
     ("/api/lockdown", "audit.action.lockdown_on"),
+    ("/api/bot-profile", "audit.action.bot_profile"),
+    ("/api/starboard", "audit.action.starboard"),
+    ("/api/valchecker", "audit.action.valchecker"),
+    ("/api/auto-reactions", "audit.action.auto_reactions"),
 ]
 
 _RAW_ACTION_RE = re.compile(r"^(GET|POST|PUT|PATCH|DELETE)\s+(/api/\S+)$", re.I)

@@ -1,5 +1,6 @@
 import pytest
 
+import economy_db
 import settings_db
 import stats_db
 import xp_core
@@ -14,6 +15,8 @@ def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.setattr(settings_db, "_cache", {})
     settings_db.init()
+    monkeypatch.setenv("ECONOMY_DB_PATH", str(tmp_path / "economy.db"))
+    economy_db.init()
 
 
 def build(members):
@@ -249,3 +252,41 @@ async def test_public_leaderboard_invalid_guild_id(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.get("/api/public/leaderboard/not-a-number")
     assert resp.status == 400
+
+
+@pytest.mark.asyncio
+async def test_profile_card_preview_returns_png(aiohttp_client):
+    active = FakeMember(20, name="active", display_name="Active")
+    # Valid tiny PNG so avatar decode does not fail oddly in CI
+    from dashboard.backend.tests.fakes import FakeAsset
+    import struct
+    import zlib
+
+    def _tiny_png() -> bytes:
+        def chunk(tag: bytes, data: bytes) -> bytes:
+            return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+        sig = b"\x89PNG\r\n\x1a\n"
+        ihdr = chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
+        raw = zlib.compress(b"\x00\xff\x00\x00")
+        idat = chunk(b"IDAT", raw)
+        iend = chunk(b"IEND", b"")
+        return sig + ihdr + idat + iend
+
+    active.display_avatar = FakeAsset(data=_tiny_png())
+    _, app = build([active])
+    stats_db.xp_add_text(1, 20, 500, 1000)
+
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/xp/profile-card-preview?user_id=20")
+    assert resp.status == 200
+    assert resp.content_type == "image/png"
+    body = await resp.read()
+    assert body[:8] == b"\x89PNG\r\n\x1a\n"
+
+    # Default: logged-in moderator
+    resp_me = await client.get("/api/xp/profile-card-preview")
+    assert resp_me.status == 200
+    assert (await resp_me.read())[:8] == b"\x89PNG\r\n\x1a\n"

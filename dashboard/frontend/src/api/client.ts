@@ -64,6 +64,12 @@ export async function fetchLanguage(): Promise<ServerLanguage> {
   return apiFetch<ServerLanguage>('/api/language')
 }
 
+/** moduleKey -> enabled, aggregated across the guild's *_core settings. Powers the sidebar's disabled-module filter. */
+export async function fetchModules(): Promise<Record<string, boolean>> {
+  const data = await apiFetch<{ modules: Record<string, boolean> }>('/api/modules')
+  return data.modules
+}
+
 export async function updateLanguage(code: ServerLanguage['code']): Promise<ServerLanguage> {
   return apiFetch<ServerLanguage>('/api/language', jsonInit('PUT', { code }))
 }
@@ -153,6 +159,14 @@ export async function banMember(id: string, reason: string, deleteMessageDays: 0
 
 export async function kickMember(id: string, reason: string): Promise<void> {
   await apiFetch(`/api/members/${id}/kick`, jsonInit('POST', { reason }))
+}
+
+export async function timeoutMember(id: string, reason: string, duration: string): Promise<void> {
+  await apiFetch(`/api/members/${id}/timeout`, jsonInit('POST', { reason, duration }))
+}
+
+export async function untimeoutMember(id: string, reason = ''): Promise<void> {
+  await apiFetch(`/api/members/${id}/timeout`, jsonInit('DELETE', { reason }))
 }
 
 export async function fetchRoles(): Promise<RoleInfo[]> {
@@ -262,14 +276,28 @@ export interface ChannelInfo {
   bot_can_view?: boolean
   /** Bot can Send Messages in this channel. Omitted/true = usable. */
   bot_can_send?: boolean
+  /** Synthetic client-side flag: a saved channel_id no longer present in fetchChannels() — the channel was deleted. */
+  deleted?: boolean
 }
 
-/** Channel is unusable for the bot (not visible or cannot send). */
+/** Channel is unusable for the bot (not visible, cannot send, or no longer exists). */
 export function isChannelDead(ch: {
   bot_can_view?: boolean
   bot_can_send?: boolean
+  deleted?: boolean
 }): boolean {
-  return ch.bot_can_view === false || ch.bot_can_send === false
+  return ch.deleted === true || ch.bot_can_view === false || ch.bot_can_send === false
+}
+
+/** Synthesizes a placeholder option for a saved channel_id missing from fetchChannels() so it still
+ * renders (marked deleted) instead of silently falling back to a blank/placeholder Select. */
+export function syntheticDeletedChannel(id: string): ChannelInfo {
+  return { id, name: `#${id}`, deleted: true }
+}
+
+/** Same as syntheticDeletedChannel, but labeled as a role (`@id`) for role pickers. */
+export function syntheticDeletedRole(id: string): ChannelInfo {
+  return { id, name: `@${id}`, deleted: true }
 }
 
 export async function fetchReactionRoles(): Promise<ReactionRoleEntry[]> {
@@ -799,11 +827,19 @@ export interface WelcomeSettings {
   messages: WelcomeMessageSettings
 }
 
+export type TempbanAction = 'softban' | 'ban' | 'disabled'
+
 export interface TempbanSettings {
+  action: TempbanAction
   dm_enabled: boolean
   dm_message: string
   log_enabled: boolean
+  log_message: string
   unban_reason: string
+  warning_message: string
+  warning_thumbnail_url: string
+  warning_message_id: string
+  ban_count: number
 }
 
 export interface FeedbackPanelSettings {
@@ -818,6 +854,29 @@ export function fetchTempbanSettings(): Promise<TempbanSettings> {
 
 export function updateTempbanSettings(settings: TempbanSettings): Promise<TempbanSettings> {
   return apiFetch('/api/tempban-settings', jsonInit('PUT', settings))
+}
+
+export function publishTempbanWarning(): Promise<{
+  ok: boolean
+  message_id: string
+  ban_count: number
+  warning_message_id: string
+}> {
+  return apiFetch('/api/tempban-settings/publish-warning', jsonInit('POST', {}))
+}
+
+export interface QuoteSettings {
+  enabled: boolean
+  delete_trigger: boolean
+  min_length: number
+}
+
+export function fetchQuoteSettings(): Promise<QuoteSettings> {
+  return apiFetch('/api/quote')
+}
+
+export function updateQuoteSettings(settings: QuoteSettings): Promise<QuoteSettings> {
+  return apiFetch('/api/quote', jsonInit('PUT', settings))
 }
 
 export function fetchFeedbackPanelSettings(): Promise<FeedbackPanelSettings> {
@@ -933,6 +992,8 @@ export interface XpLeaderboardEntry {
   voice_seconds: number
   voice_time_text: string
   rank: number
+  frame_color: string | null
+  title_text: string | null
 }
 
 export interface XpLeaderboardPage {
@@ -986,13 +1047,58 @@ export async function deleteCardBg(): Promise<void> {
   await apiFetch('/api/xp/card-bg', { method: 'DELETE' })
 }
 
+/** URL for the PNG profile-card preview (credentials via cookie on <img> need same-origin). */
+export function profileCardPreviewUrl(userId?: string): string {
+  const params = new URLSearchParams()
+  if (userId) params.set('user_id', userId)
+  const q = params.toString()
+  return q ? `/api/xp/profile-card-preview?${q}` : '/api/xp/profile-card-preview'
+}
+
+/** URL for the animated GIF profile-card preview (same cosmetics, mirrors the bot's /профиль command). */
+export function profileCardPreviewGifUrl(userId?: string): string {
+  const params = new URLSearchParams()
+  if (userId) params.set('user_id', userId)
+  const q = params.toString()
+  return q ? `/api/xp/profile-card-preview.gif?${q}` : '/api/xp/profile-card-preview.gif'
+}
+
+async function fetchPreviewBlobUrl(url: string): Promise<string> {
+  const response = await fetch(url, { credentials: 'include' })
+  if (!response.ok) {
+    let code = 'preview_failed'
+    try {
+      const body = (await response.json()) as { error?: string }
+      if (body?.error) code = body.error
+    } catch {
+      /* keep fallback */
+    }
+    throw new ApiError(response.status, code)
+  }
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
+}
+
+/** Fetch preview as a blob object URL (auth cookies included). Caller should revoke when done. */
+export async function fetchProfileCardPreview(userId?: string): Promise<string> {
+  return fetchPreviewBlobUrl(profileCardPreviewUrl(userId))
+}
+
+/** Fetch the animated GIF preview as a blob object URL. Caller should revoke when done. */
+export async function fetchProfileCardPreviewGif(userId?: string): Promise<string> {
+  return fetchPreviewBlobUrl(profileCardPreviewGifUrl(userId))
+}
+
 export interface PublicLeaderboardEntry {
   rank: number
   display: string
   avatar: string | null
   level: number
   xp: number
+  voice_seconds: number
   voice_time_text: string
+  frame_color: string | null
+  title_text: string | null
 }
 
 export interface PublicLeaderboardResponse {
@@ -1294,6 +1400,39 @@ export async function fetchMafiaGames(): Promise<MafiaGameSummary[]> {
   return body.games
 }
 
+export interface MafiaGameDetailPlayer {
+  user_id: string
+  display_name: string
+  alive: boolean
+  role: MafiaRole
+  action_submitted: boolean
+}
+
+export interface MafiaGameEvent {
+  round_number: number
+  event_type: string
+  payload: string
+  created_at: string
+}
+
+export interface MafiaGameDetail {
+  game: MafiaGameSummary
+  players: MafiaGameDetailPlayer[]
+  events: MafiaGameEvent[]
+}
+
+export function fetchMafiaGameDetail(id: number): Promise<MafiaGameDetail> {
+  return apiFetch(`/api/mafia/games/${id}`)
+}
+
+export async function endMafiaGame(id: number): Promise<void> {
+  await apiFetch(`/api/mafia/games/${id}/end`, jsonInit('POST'))
+}
+
+export async function advanceMafiaGamePhase(id: number): Promise<void> {
+  await apiFetch(`/api/mafia/games/${id}/advance-phase`, jsonInit('POST'))
+}
+
 export type MafiaRole = 'mafia' | 'citizen' | 'doctor' | 'sheriff'
 
 export interface MafiaPlayerRef {
@@ -1558,6 +1697,54 @@ export async function deleteWarn(warnId: number): Promise<void> {
   await apiFetch(`/api/warns/${warnId}`, { method: 'DELETE' })
 }
 
+export type CaseTimelineKind =
+  | 'warn'
+  | 'warn_manual'
+  | 'warn_escalation'
+  | 'spam_punish'
+  | 'tempban'
+  | 'manual_ban'
+  | 'manual_kick'
+  | 'manual_mute'
+  | 'manual_unmute'
+  | 'command_ban'
+  | 'command_kick'
+  | 'command_mute'
+  | 'command_unmute'
+  | 'command_unban'
+  | 'command_clear'
+  | 'antiraid_trigger'
+  | 'verification_pass'
+  | 'verification_expired'
+  | `automod_${string}`
+  | (string & {})
+
+export interface CaseTimelineItem {
+  id: string
+  kind: CaseTimelineKind
+  timestamp: string
+  reason: string
+  moderator_id: string | null
+  moderator_display: string | null
+  extra: string
+  meta: Record<string, unknown>
+}
+
+export interface CaseTimeline {
+  user: {
+    id: string
+    username: string
+    display_name: string
+    avatar: string | null
+  }
+  in_guild: boolean
+  items: CaseTimelineItem[]
+}
+
+export function fetchCaseTimeline(memberId: string): Promise<CaseTimeline> {
+  return apiFetch(`/api/members/${memberId}/case-timeline`)
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð‘ÑƒÐ½ÐºÐµÑ€ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface BunkerSettings {
@@ -1749,6 +1936,14 @@ export function patchBunkerPlayerCharacter(
   patch: Partial<BunkerCharacter>,
 ): Promise<{ character: BunkerCharacter }> {
   return apiFetch(`/api/bunker/games/${gameId}/players/${userId}`, jsonInit('PATCH', { character: patch }))
+}
+
+export async function endBunkerGame(id: number): Promise<void> {
+  await apiFetch(`/api/bunker/games/${id}/end`, jsonInit('POST'))
+}
+
+export async function advanceBunkerGamePhase(id: number): Promise<void> {
+  await apiFetch(`/api/bunker/games/${id}/advance-phase`, jsonInit('POST'))
 }
 
 export async function applyBunkerAbility(gameId: number, announcementId: number): Promise<void> {
@@ -2037,6 +2232,10 @@ export function updateVerificationSettings(settings: VerificationSettings): Prom
   return apiFetch('/api/verification', jsonInit('PUT', settings))
 }
 
+export function publishVerificationPanel(channelId: string): Promise<{ ok: boolean; message_id: string }> {
+  return apiFetch('/api/verification/publish', jsonInit('POST', { channel_id: channelId }))
+}
+
 // ────────────────────────── New modules ──────────────────────────
 
 export interface CustomCommand {
@@ -2283,6 +2482,8 @@ export interface OwnerAlertsSettings {
   alert_missing_perms: boolean
   alert_mass_ban: boolean
   alert_module_errors: boolean
+  weekly_digest_enabled: boolean
+  weekly_digest_channel_id: string
 }
 
 export function fetchOwnerAlerts(): Promise<OwnerAlertsSettings> {
@@ -2297,9 +2498,16 @@ export async function testOwnerAlerts(): Promise<void> {
   await apiFetch('/api/owner-alerts/test', { method: 'POST' })
 }
 
+export interface SetupHealthModuleIssue {
+  module: string
+  kind: 'missing_channel' | 'missing_role'
+  detail: string
+}
+
 export interface SetupHealth {
   ok: boolean
   missing_permissions: string[]
+  module_issues: SetupHealthModuleIssue[]
   guild_id: string
   guild_name: string
 }
@@ -2351,4 +2559,94 @@ export function previewTemplate(input: {
   variables?: Record<string, string>
 }): Promise<TemplatePreviewResult> {
   return apiFetch('/api/preview/template', jsonInit('POST', input))
+}
+
+// ── Bot profile (per-guild nick / avatar / banner) ──
+
+export interface BotProfileSettings {
+  nick: string
+  has_custom_avatar: boolean
+  has_custom_banner: boolean
+}
+
+export interface BotProfileResponse {
+  nick: string
+  display_name: string
+  avatar_url: string | null
+  banner_url: string | null
+  settings: BotProfileSettings
+  ok?: boolean
+}
+
+export function fetchBotProfile(): Promise<BotProfileResponse> {
+  return apiFetch('/api/bot-profile')
+}
+
+export function updateBotProfile(input: {
+  nick?: string | null
+  avatar?: string | null
+  banner?: string | null
+}): Promise<BotProfileResponse> {
+  return apiFetch('/api/bot-profile', jsonInit('PUT', input))
+}
+
+// ── Starboard ──
+
+export interface StarboardSettings {
+  enabled: boolean
+  channel_id: string
+  emoji: string
+  threshold: number
+  self_star: boolean
+  ignore_nsfw: boolean
+}
+
+export function fetchStarboard(): Promise<StarboardSettings> {
+  return apiFetch('/api/starboard')
+}
+
+export function updateStarboard(settings: StarboardSettings): Promise<StarboardSettings> {
+  return apiFetch('/api/starboard', jsonInit('PUT', settings))
+}
+
+// ── ValChecker ──
+
+export interface ValCheckerSettings {
+  enabled: boolean
+  match_channel_id: string
+  alert_channel_id: string
+  poll_interval_sec: number
+}
+
+export function fetchValCheckerSettings(): Promise<ValCheckerSettings> {
+  return apiFetch('/api/valchecker')
+}
+
+export function saveValCheckerSettings(settings: ValCheckerSettings): Promise<ValCheckerSettings> {
+  return apiFetch('/api/valchecker', jsonInit('PUT', settings))
+}
+
+// ── Auto-reactions ──
+
+export interface AutoReactionRule {
+  id: string
+  emojis: string[]
+  keywords: string[]
+  channel_mode: 'all' | 'include'
+  channel_ids: string[]
+  exclude_channel_ids: string[]
+  ignore_bots: boolean
+}
+
+export interface AutoReactionsSettings {
+  enabled: boolean
+  rules: AutoReactionRule[]
+}
+
+export function fetchAutoReactions(): Promise<AutoReactionsSettings> {
+  return apiFetch('/api/auto-reactions')
+}
+
+export function updateAutoReactions(settings: AutoReactionsSettings): Promise<AutoReactionsSettings> {
+  return apiFetch('/api/auto-reactions', jsonInit('PUT', settings))
 }

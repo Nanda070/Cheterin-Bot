@@ -100,6 +100,7 @@ export function ModuleConfigPanel({ variant, title, intro, children }: ModuleCon
         value={config[key] as string}
         onChange={(id) => setField(key, id)}
         options={roles}
+        kind="role"
         placeholder={t('common.notSet')}
       />
     </div>
@@ -161,6 +162,7 @@ export function ModuleConfigPanel({ variant, title, intro, children }: ModuleCon
           <>
             <ChipPicker
               label={t('config.field.buttonAllowedRoles')}
+              kind="role"
               options={roles.map((r) => ({ id: r.id, name: r.name }))}
               selected={config.BUTTON_CREATE_ALLOWED_ROLES}
               onChange={(ids) => setListField('BUTTON_CREATE_ALLOWED_ROLES', ids)}

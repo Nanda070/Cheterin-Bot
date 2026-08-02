@@ -47,6 +47,10 @@ import { CtdPage } from './pages/Ctd'
 import { CustomCommandsPage } from './pages/CustomCommands'
 import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
+import { BotProfilePage } from './pages/BotProfile'
+import { StarboardPage } from './pages/Starboard'
+import { AutoReactionsPage } from './pages/AutoReactions'
+import { ValCheckerPage } from './pages/ValChecker'
 
 function App() {
   return (
@@ -108,10 +112,14 @@ function App() {
               <Route path="invites" element={<Navigate to="/server-entry?tab=invites" replace />} />
               <Route path="timed-roles" element={<Navigate to="/members?tab=timedRoles" replace />} />
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
+              <Route path="starboard" element={<StarboardPage />} />
+              <Route path="valchecker" element={<ValCheckerPage />} />
+              <Route path="auto-reactions" element={<AutoReactionsPage />} />
+              <Route path="bot-profile" element={<BotProfilePage />} />
               <Route path="automod" element={<AutoModPage />} />
               <Route path="server-entry" element={<ServerEntryPage />} />
-              <Route path="antiraid" element={<Navigate to="/lockdown" replace />} />
-              <Route path="verification" element={<Navigate to="/lockdown" replace />} />
+              <Route path="antiraid" element={<Navigate to="/lockdown?tab=antiraid" replace />} />
+              <Route path="verification" element={<Navigate to="/lockdown?tab=verification" replace />} />
               <Route path="voice-rooms" element={<VoiceRoomsPage />} />
               <Route path="news" element={<NewsPage />} />
               <Route path="levels" element={<LevelsPage />} />

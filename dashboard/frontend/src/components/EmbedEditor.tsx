@@ -1,20 +1,12 @@
 import { useT } from '../context/LanguageContext'
 import type { EmbedFieldSpec, EmbedSpec } from '../api/client'
+import { EMPTY_EMBED_SPEC } from '../utils/embedUtils'
 import { Toggle } from './ui/Toggle'
 import { EmbedPreview } from './EmbedPreview'
 
-export const EMPTY_EMBED_SPEC: EmbedSpec = {
-  title: '',
-  description: '',
-  url: '',
-  color: '#5865F2',
-  author: { name: '', url: '', icon_url: '' },
-  footer: { text: '', icon_url: '' },
-  image: { url: '' },
-  thumbnail: { url: '' },
-  timestamp: null,
-  fields: [],
-}
+// Re-exported for existing importers (ServerEntry, FeedbackPanel, welcomeDmDefaults, …) — the
+// canonical definition now lives in ../utils/embedUtils.ts alongside validateEmbedSpec.
+export { EMPTY_EMBED_SPEC }
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
@@ -86,14 +78,14 @@ export function EmbedEditor({
         <div className="flex gap-2">
           <input
             type="color"
-            value={embed.color || '#5865F2'}
+            value={embed.color || '#D44556'}
             onChange={(e) => updateEmbedField('color', e.target.value)}
             className="h-9 w-12 rounded-control border border-border bg-background"
           />
           <input
             value={embed.color}
             onChange={(e) => updateEmbedField('color', e.target.value)}
-            placeholder="#5865F2"
+            placeholder="#D44556"
             className={`flex-1 ${inputClass}`}
           />
         </div>

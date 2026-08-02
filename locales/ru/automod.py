@@ -8,6 +8,9 @@ MESSAGES: dict[str, str] = {
     "automod.punishment_extra": "Наказание: {punishment}",
     "automod.escalation_extra": "Действие: {action}",
     "automod.guild_only": "Команда доступна только на сервере.",
+    "automod.warn.error.add_args": "Для add укажите участника и причину.",
+    "automod.warn.error.list_args": "Для list укажите участника.",
+    "automod.warn.error.remove_args": "Для remove укажите warn_id из /warn list.",
     "automod.warn.add_success": "⚠️ {mention} получил предупреждение. Активных предупреждений: **{count}**.",
     "automod.warn.no_warns": "У {mention} нет предупреждений.",
     "automod.warn.list_title": "Предупреждения: {name}",
@@ -18,4 +21,7 @@ MESSAGES: dict[str, str] = {
     "automod.warn.list_footer": "Активных: {count}",
     "automod.warn.remove_not_found": "Предупреждение не найдено или уже снято.",
     "automod.warn.remove_success": "✅ Предупреждение `#{id}` снято.",
+    "automod.embed.title": "Автомод · {filter}",
+    "automod.embed.escalation_title": "Автомод · Эскалация",
+    "automod.embed.warn_title": "⚠️ Предупреждение",
 }

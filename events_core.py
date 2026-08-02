@@ -3,6 +3,7 @@ import logging
 
 import discord
 
+import embed_style
 import events
 import i18n
 
@@ -149,7 +150,7 @@ async def publish_event(bot, channel, spec: dict, author_id: int) -> discord.Mes
     emb = discord.Embed(
         title=spec["title"],
         description=spec["description"],
-        color=discord.Color.brand_red() if spec["type"] == "tournament" else discord.Color.blurple(),
+        color=embed_style.DANGER if spec["type"] == "tournament" else embed_style.INFO,
     )
     banner_url = spec.get("banner_url") or ""
     if banner_url:

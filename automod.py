@@ -12,11 +12,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import automod_core
 import bot_config
 import i18n
-import slash_registry
+import moderation_embed_core
 import moderation_log
+import slash_registry
 import warns_core
 import warns_db
 
@@ -36,11 +38,6 @@ def _consecutive_run_length(entries: list[dict], signature: str) -> int:
 
 
 class AutoMod(commands.Cog):
-    warn_group = app_commands.Group(
-        name="warn",
-        description="Управление предупреждениями участников",
-        default_permissions=discord.Permissions(manage_guild=True),
-    )
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -159,14 +156,48 @@ class AutoMod(commands.Cog):
         if cfg["notify_member"]:
             await self._notify(message, cfg, reason)
 
+        extra = i18n.t("automod.punishment_extra", lang, punishment=cfg["punishment"])
         moderation_log.append_event(
             guild.id,
             f"automod_{key}",
             member.id,
             member.name,
             reason,
-            extra=i18n.t("automod.punishment_extra", lang, punishment=cfg["punishment"]),
+            extra=extra,
         )
+        await self._send_mod_log(
+            guild.id,
+            title=i18n.t("automod.embed.title", lang, filter=automod_core.FILTER_LABELS[key]),
+            member=member,
+            reason=reason,
+            extra=extra,
+            lang=lang,
+        )
+
+    async def _send_mod_log(
+        self,
+        guild_id: int,
+        *,
+        title: str,
+        member: discord.abc.User,
+        reason: str,
+        extra: str = "",
+        lang: str,
+        actor: discord.abc.User | None = None,
+    ):
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
+            title=title,
+            actor=actor if actor is not None else self.bot.user,
+            target_name=member.name,
+            target_id=member.id,
+            target_mention=getattr(member, "mention", None),
+            reason=reason,
+            extra=extra,
+            color=embed_style.WARN,
+            footer_key="moderation.embed.footer",
+        )
+        await self.bot.send_log(guild_id, embed)
 
     async def _apply_punishment(
         self,
@@ -211,13 +242,22 @@ class AutoMod(commands.Cog):
         reason = i18n.t("automod.escalation_reason", lang, count=count)
         duration = min(rule["duration_minutes"], automod_core.MAX_DURATION_MINUTES) if rule["duration_minutes"] > 0 else 0
         await self._apply_punishment(guild, member, rule["action"], duration, reason, source="escalation", lang=lang)
+        extra = i18n.t("automod.escalation_extra", lang, action=rule["action"])
         moderation_log.append_event(
             guild.id,
             "warn_escalation",
             member.id,
             member.name,
             reason,
-            extra=i18n.t("automod.escalation_extra", lang, action=rule["action"]),
+            extra=extra,
+        )
+        await self._send_mod_log(
+            guild.id,
+            title=i18n.t("automod.embed.escalation_title", lang),
+            member=member,
+            reason=reason,
+            extra=extra,
+            lang=lang,
         )
 
     async def _scheduled_unban(self, guild: discord.Guild, user_id: int, duration_minutes: int, lang: str):
@@ -243,81 +283,113 @@ class AutoMod(commands.Cog):
         except discord.HTTPException:
             pass
 
-    @warn_group.command(name="add", description="Выдать предупреждение участнику")
-    @app_commands.describe(участник="Кому выдать предупреждение", причина="За что выдано предупреждение")
-    async def warn_add(self, interaction: discord.Interaction, участник: discord.Member, причина: str):
+    @app_commands.command(name="warn", description="Управление предупреждениями участников")
+    @app_commands.describe(
+        action="Действие: add / list / remove",
+        member="Участник (для add и list)",
+        reason="Причина (для add)",
+        warn_id="ID предупреждения (для remove, из /warn list)",
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="add", value="add"),
+            app_commands.Choice(name="list", value="list"),
+            app_commands.Choice(name="remove", value="remove"),
+        ]
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def warn_command(
+        self,
+        interaction: discord.Interaction,
+        action: app_commands.Choice[str],
+        member: discord.Member | None = None,
+        reason: str | None = None,
+        warn_id: int | None = None,
+    ):
         lang = i18n.lang_for(interaction.guild_id)
         if not interaction.guild:
             return await interaction.response.send_message(i18n.t("automod.guild_only", lang), ephemeral=True)
-        await interaction.response.defer(ephemeral=True)
 
-        settings = automod_core.get_settings(interaction.guild.id)
-        warns_core.add_warn(
-            interaction.guild.id,
-            участник.id,
-            причина,
-            interaction.user.id,
-            source="manual",
-            duration_minutes=settings["manual_warn_duration_minutes"],
-        )
-        await self.apply_escalation_if_needed(interaction.guild, участник, lang=lang)
-        moderation_log.append_event(
-            interaction.guild.id,
-            "warn_manual",
-            участник.id,
-            участник.name,
-            причина,
-            moderator_id=interaction.user.id,
-            moderator_display=interaction.user.name,
-        )
-
-        active = warns_core.get_active_warn_count(interaction.guild.id, участник.id)
-        await interaction.followup.send(
-            i18n.t("automod.warn.add_success", lang, mention=участник.mention, count=active),
-            ephemeral=True,
-        )
-
-    @warn_group.command(name="list", description="Показать предупреждения участника")
-    @app_commands.describe(участник="Чьи предупреждения показать")
-    async def warn_list(self, interaction: discord.Interaction, участник: discord.Member):
-        lang = i18n.lang_for(interaction.guild_id)
-        if not interaction.guild:
-            return await interaction.response.send_message(i18n.t("automod.guild_only", lang), ephemeral=True)
-        await interaction.response.defer(ephemeral=True)
-
-        warns = warns_core.get_warns(interaction.guild.id, участник.id)
-        if not warns:
-            return await interaction.followup.send(
-                i18n.t("automod.warn.no_warns", lang, mention=участник.mention), ephemeral=True,
+        act = action.value
+        if act == "add":
+            if member is None or not (reason or "").strip():
+                return await interaction.response.send_message(
+                    i18n.t("automod.warn.error.add_args", lang), ephemeral=True,
+                )
+            await interaction.response.defer(ephemeral=True)
+            settings = automod_core.get_settings(interaction.guild.id)
+            reason_text = reason.strip()
+            warns_core.add_warn(
+                interaction.guild.id,
+                member.id,
+                reason_text,
+                interaction.user.id,
+                source="manual",
+                duration_minutes=settings["manual_warn_duration_minutes"],
             )
+            await self.apply_escalation_if_needed(interaction.guild, member, lang=lang)
+            moderation_log.append_event(
+                interaction.guild.id,
+                "warn_manual",
+                member.id,
+                member.name,
+                reason_text,
+                moderator_id=interaction.user.id,
+                moderator_display=interaction.user.name,
+            )
+            await self._send_mod_log(
+                interaction.guild.id,
+                title=i18n.t("automod.embed.warn_title", lang),
+                member=member,
+                reason=reason_text,
+                lang=lang,
+                actor=interaction.user,
+            )
+            active = warns_core.get_active_warn_count(interaction.guild.id, member.id)
+            await interaction.followup.send(
+                i18n.t("automod.warn.add_success", lang, mention=member.mention, count=active),
+                ephemeral=True,
+            )
+            return
 
-        now = datetime.now(timezone.utc).isoformat()
-        lines = []
-        for w in warns[:20]:
-            active = not w["removed"] and (not w["expires_at"] or w["expires_at"] > now)
-            if active:
-                status = i18n.t("automod.warn.status_active", lang)
-            elif w["removed"]:
-                status = i18n.t("automod.warn.status_removed", lang)
-            else:
-                status = i18n.t("automod.warn.status_expired", lang)
-            lines.append(i18n.t("automod.warn.list_entry", lang, id=w["id"], status=status, reason=w["reason"]))
+        if act == "list":
+            if member is None:
+                return await interaction.response.send_message(
+                    i18n.t("automod.warn.error.list_args", lang), ephemeral=True,
+                )
+            await interaction.response.defer(ephemeral=True)
+            warns = warns_core.get_warns(interaction.guild.id, member.id)
+            if not warns:
+                return await interaction.followup.send(
+                    i18n.t("automod.warn.no_warns", lang, mention=member.mention), ephemeral=True,
+                )
+            now = datetime.now(timezone.utc).isoformat()
+            lines = []
+            for w in warns[:20]:
+                active = not w["removed"] and (not w["expires_at"] or w["expires_at"] > now)
+                if active:
+                    status = i18n.t("automod.warn.status_active", lang)
+                elif w["removed"]:
+                    status = i18n.t("automod.warn.status_removed", lang)
+                else:
+                    status = i18n.t("automod.warn.status_expired", lang)
+                lines.append(i18n.t("automod.warn.list_entry", lang, id=w["id"], status=status, reason=w["reason"]))
+            embed = discord.Embed(
+                title=i18n.t("automod.warn.list_title", lang, name=member.display_name),
+                description="\n".join(lines),
+                color=embed_style.WARN,
+            )
+            embed.set_footer(text=i18n.t(
+                "automod.warn.list_footer", lang,
+                count=warns_core.get_active_warn_count(interaction.guild.id, member.id),
+            ))
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
 
-        embed = discord.Embed(
-            title=i18n.t("automod.warn.list_title", lang, name=участник.display_name),
-            description="\n".join(lines),
-            color=discord.Color.orange(),
-        )
-        embed.set_footer(text=i18n.t(
-            "automod.warn.list_footer", lang,
-            count=warns_core.get_active_warn_count(interaction.guild.id, участник.id),
-        ))
-        await interaction.followup.send(embed=embed, ephemeral=True)
-
-    @warn_group.command(name="remove", description="Снять предупреждение по ID")
-    @app_commands.describe(warn_id="ID предупреждения (из /warn list)")
-    async def warn_remove(self, interaction: discord.Interaction, warn_id: int):
-        lang = i18n.lang_for(interaction.guild_id)
+        if warn_id is None:
+            return await interaction.response.send_message(
+                i18n.t("automod.warn.error.remove_args", lang), ephemeral=True,
+            )
         await interaction.response.defer(ephemeral=True)
         ok = warns_core.remove_warn(warn_id, interaction.user.id, guild_id=interaction.guild.id)
         if not ok:

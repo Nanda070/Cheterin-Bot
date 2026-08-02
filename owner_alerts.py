@@ -1,12 +1,15 @@
-"""Owner alerts: DM/channel notify on missing perms, mass bans, module errors."""
+"""Owner alerts: DM/channel notify on missing perms, mass bans, module errors,
+plus an optional weekly settings/activity digest posted to the alerts channel."""
 
 import logging
 
 import discord
 from discord.ext import commands, tasks
 
+import embed_style
 import i18n
 import owner_alerts_core
+import stats_db
 
 logger = logging.getLogger("owner_alerts")
 
@@ -15,9 +18,11 @@ class OwnerAlertsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.perms_loop.start()
+        self.weekly_digest_loop.start()
 
     def cog_unload(self):
         self.perms_loop.cancel()
+        self.weekly_digest_loop.cancel()
 
     async def send_alert(self, guild: discord.Guild, kind: str, detail: str, *, force: bool = False) -> bool:
         """Send an owner alert. Returns True if at least one delivery succeeded."""
@@ -65,6 +70,71 @@ class OwnerAlertsCog(commands.Cog):
 
     @perms_loop.before_loop
     async def before_perms(self):
+        await self.bot.wait_until_ready()
+
+    def build_weekly_digest_embed(self, guild: discord.Guild, days: int, lang: str) -> discord.Embed:
+        import time as time_module
+
+        since_ts = int(time_module.time()) - days * 86400
+        rows = stats_db.audit_list_since(guild.id, since_ts)
+        summary = owner_alerts_core.summarize_audit_actions([dict(row) for row in rows])
+        embed = discord.Embed(
+            title=i18n.t("owner_alerts.digest.title", lang, days=days),
+            color=embed_style.INFO,
+            timestamp=discord.utils.utcnow(),
+        )
+        if not summary:
+            embed.description = i18n.t("owner_alerts.digest.empty", lang)
+            return embed
+        lines = [
+            i18n.t("owner_alerts.digest.line", lang, label=row["label"], count=row["count"])
+            for row in summary
+        ]
+        embed.description = "\n".join(lines)
+        embed.set_footer(text=i18n.t("owner_alerts.digest.footer", lang, total=len(rows)))
+        return embed
+
+    async def post_weekly_digest(self, guild_id: int) -> bool:
+        settings = owner_alerts_core.get_settings(guild_id)
+        channel_id = owner_alerts_core.weekly_digest_channel_id(settings)
+        if not channel_id:
+            return False
+        channel = self.bot.get_channel(int(channel_id))
+        if channel is None:
+            return False
+        guild = self.bot.get_guild(guild_id)
+        if guild is None:
+            return False
+        lang = i18n.lang_for(guild_id)
+        try:
+            await channel.send(embed=self.build_weekly_digest_embed(guild, 7, lang))
+        except discord.HTTPException:
+            logger.warning("Failed to post weekly settings digest guild=%s", guild_id)
+            return False
+
+        import timezone_core
+
+        week_key = timezone_core.now_local(guild_id).strftime("%G-W%V")
+        owner_alerts_core.mark_weekly_digest_posted(guild_id, week_key)
+        return True
+
+    @tasks.loop(minutes=15)
+    async def weekly_digest_loop(self):
+        try:
+            for guild in self.bot.guilds:
+                try:
+                    if owner_alerts_core.should_post_weekly_digest(guild.id):
+                        await self.post_weekly_digest(guild.id)
+                except Exception as exc:
+                    logger.exception("weekly_digest_loop guild=%s", guild.id)
+                    cog = self.bot.get_cog("OwnerAlertsCog")
+                    if cog:
+                        cog.report_module_error(guild.id, "owner_alerts", str(exc))
+        except Exception:
+            logger.exception("weekly_digest_loop error")
+
+    @weekly_digest_loop.before_loop
+    async def before_weekly_digest(self):
         await self.bot.wait_until_ready()
 
     @commands.Cog.listener()

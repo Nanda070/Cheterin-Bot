@@ -5,6 +5,7 @@ import logging
 import discord
 from discord.ext import commands
 
+import embed_style
 import custom_commands_core
 import i18n
 from message_template_core import normalize_embed_spec, substitute_embed_spec
@@ -17,7 +18,7 @@ def _embed_from_spec(spec: dict | None, lang: str) -> discord.Embed | None:
         return None
     normalized = normalize_embed_spec(spec)
     rendered = substitute_embed_spec(normalized, {})
-    color = discord.Color.blurple()
+    color = embed_style.INFO
     raw_color = (rendered.get("color") or "").strip()
     if raw_color.startswith("#") and len(raw_color) == 7:
         try:

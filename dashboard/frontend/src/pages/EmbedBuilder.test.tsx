@@ -71,7 +71,7 @@ describe('EmbedBuilderPage', () => {
         title: 'Existing title',
         description: '',
         url: '',
-        color: '#5865F2',
+        color: '#D44556',
         author: { name: '', url: '', icon_url: '' },
         footer: { text: '', icon_url: '' },
         image: { url: '' },

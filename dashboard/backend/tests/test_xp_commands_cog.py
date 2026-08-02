@@ -50,6 +50,11 @@ class FakeInteraction:
         return self.response.messages + self.followup.messages
 
 
+class Choice:
+    def __init__(self, value: str):
+        self.value = value
+
+
 def build(enabled=True):
     member = FakeMember(20, name="player", display_name="Player")
     admin = FakeMember(10, name="admin")
@@ -67,7 +72,7 @@ async def test_xp_add_increases_from_zero():
     cog, guild, member, admin = build()
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_add.callback(cog, interaction, member, 150)
+    await XPCog.xp_command.callback(cog, interaction, Choice("add"), member, 150)
 
     row = stats_db.xp_get_member(1, member.id)
     assert row["xp"] == 150
@@ -80,7 +85,7 @@ async def test_xp_add_negative_does_not_go_below_zero():
     stats_db.xp_add_text(1, member.id, 50, 1000)
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_add.callback(cog, interaction, member, -500)
+    await XPCog.xp_command.callback(cog, interaction, Choice("add"), member, -500)
 
     row = stats_db.xp_get_member(1, member.id)
     assert row["xp"] == 0
@@ -91,7 +96,7 @@ async def test_xp_add_disabled_module():
     cog, guild, member, admin = build(enabled=False)
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_add.callback(cog, interaction, member, 100)
+    await XPCog.xp_command.callback(cog, interaction, Choice("add"), member, 100)
 
     assert "отключена" in interaction.response.messages[0]["content"]
     assert stats_db.xp_get_member(1, member.id) is None
@@ -103,7 +108,7 @@ async def test_xp_add_rejects_bots():
     bot_member = FakeMember(30, name="botty", bot=True)
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_add.callback(cog, interaction, bot_member, 100)
+    await XPCog.xp_command.callback(cog, interaction, Choice("add"), bot_member, 100)
 
     assert "ботов" in interaction.response.messages[0]["content"]
 
@@ -115,7 +120,7 @@ async def test_xp_set_exact_value():
     cog, guild, member, admin = build()
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_set.callback(cog, interaction, member, 777)
+    await XPCog.xp_command.callback(cog, interaction, Choice("set"), member, 777)
 
     row = stats_db.xp_get_member(1, member.id)
     assert row["xp"] == 777
@@ -130,7 +135,7 @@ async def test_xp_clear_resets_member():
     stats_db.xp_add_text(1, member.id, 999, 1000)
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_clear.callback(cog, interaction, member)
+    await XPCog.xp_command.callback(cog, interaction, Choice("clear"), member, None)
 
     assert stats_db.xp_get_member(1, member.id) is None
     assert "обнулён" in interaction.all_messages()[0]["content"]
@@ -141,7 +146,7 @@ async def test_xp_clear_disabled_module():
     cog, guild, member, admin = build(enabled=False)
     interaction = FakeInteraction(admin, guild)
 
-    await XPCog.xp_clear.callback(cog, interaction, member)
+    await XPCog.xp_command.callback(cog, interaction, Choice("clear"), member, None)
 
     assert "отключена" in interaction.response.messages[0]["content"]
 

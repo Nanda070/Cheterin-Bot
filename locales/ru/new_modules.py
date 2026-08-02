@@ -20,4 +20,8 @@ MESSAGES = {
     "invites.unknown": "неизвестно",
     "invites.join_line": "{member} зашёл по приглашению {inviter} (`{code}`).",
     "owner_alerts.mass_ban_detail": "{threshold} банов за {window} сек.",
+    "owner_alerts.digest.title": "📋 Еженедельный дайджест настроек ({days} дн.)",
+    "owner_alerts.digest.empty": "Нет активности в дашборде за этот период.",
+    "owner_alerts.digest.line": "**{label}** — {count}×",
+    "owner_alerts.digest.footer": "{total} действий в дашборде за неделю",
 }

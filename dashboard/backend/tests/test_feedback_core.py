@@ -1,6 +1,7 @@
 import discord
 import pytest
 
+import embed_style
 import feedback_core
 import settings_db
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeThread
@@ -70,7 +71,7 @@ def isolated_feedback_categories(tmp_path, monkeypatch):
 
 
 def _base_embed(title="Case"):
-    return discord.Embed(title=title, color=discord.Color.orange())
+    return discord.Embed(title=title, color=embed_style.WARN)
 
 
 def _build_case(public_message_id, decision_message_id, status="pending"):
@@ -153,8 +154,8 @@ async def test_decide_case_approve_updates_status_persists_and_notifies():
     assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "approved"
     assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["reviewed_by"] == 10
     pass # assert bot.update_file_calls == 1
-    assert public_message.edit_calls[0]["embed"].color.value == discord.Color.green().value
-    assert decision_message.edit_calls[0]["embed"].color.value == discord.Color.green().value
+    assert public_message.edit_calls[0]["embed"].color.value == embed_style.SUCCESS.value
+    assert decision_message.edit_calls[0]["embed"].color.value == embed_style.SUCCESS.value
     assert len(submitter.send_calls) == 1
     assert thread.archived is True
     assert thread.locked is True
@@ -181,7 +182,7 @@ async def test_decide_case_reject_sets_denied_status_and_red_color():
 
     assert result == {"ok": True, "error": None}
     assert settings_db.get(1, "feedback_cases", {})["PR-0001"]["status"] == "denied"
-    assert public_message.edit_calls[0]["embed"].color.value == discord.Color.red().value
+    assert public_message.edit_calls[0]["embed"].color.value == embed_style.DANGER.value
 
 
 @pytest.mark.asyncio
@@ -237,7 +238,7 @@ async def test_publish_feedback_panel_sends_embed_and_logs():
     )
 
     assert len(channel.send_calls) == 1
-    assert channel.send_calls[0]["embed"].color.value == discord.Color.from_rgb(44, 47, 51).value
+    assert channel.send_calls[0]["embed"].color.value == 0xD44556
     assert channel.send_calls[0]["view"] is not None
     assert message.id in channel._messages
     assert len(bot.sent_logs) == 1

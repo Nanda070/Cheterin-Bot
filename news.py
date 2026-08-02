@@ -4,6 +4,7 @@ import os
 import discord
 from discord.ext import commands
 
+import embed_style
 import settings_db
 
 import i18n
@@ -114,7 +115,7 @@ class NewsRelay(commands.Cog):
                 await self.send_log(
                     "ERROR",
                     i18n.t("news.log.target_missing", lang, channel_id=target_channel_id),
-                    0xED4245,
+                    embed_style.DANGER_INT,
                 )
                 return
 
@@ -126,7 +127,7 @@ class NewsRelay(commands.Cog):
                     source=message.channel.id,
                     target=target_channel_id,
                 ),
-                0x5865F2,
+                embed_style.INFO_INT,
             )
 
             # Собираем вложения, если они есть
@@ -144,7 +145,7 @@ class NewsRelay(commands.Cog):
                             filename=attachment.filename,
                             error=e,
                         ),
-                        0xED4245,
+                        embed_style.DANGER_INT,
                     )
 
             # Пересылаем текст и вложения
@@ -158,7 +159,7 @@ class NewsRelay(commands.Cog):
                 await self.send_log(
                     "ERROR",
                     i18n.t("news.log.send_error", lang, channel_id=target_channel_id, error=e),
-                    0xED4245,
+                    embed_style.DANGER_INT,
                 )
 
             # Пересылаем embeds (каждый отдельно)
@@ -169,7 +170,7 @@ class NewsRelay(commands.Cog):
                     await self.send_log(
                         "ERROR",
                         i18n.t("news.log.embed_error", lang, channel_id=target_channel_id, error=e),
-                        0xED4245,
+                        embed_style.DANGER_INT,
                     )
 
         except Exception:

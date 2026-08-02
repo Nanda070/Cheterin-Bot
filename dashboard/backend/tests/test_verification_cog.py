@@ -8,8 +8,8 @@ import moderation_log
 import settings_db
 import verification_core
 import verification_db
-from verification import VerificationCog, VerificationView
-from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
+from verification import VerificationCog, VerificationView, publish_verification_panel
+from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeRole
 
 
 @pytest.fixture(autouse=True)
@@ -266,6 +266,20 @@ async def test_setup_posts_panel_with_english_button_when_guild_language_en():
     view = channel.send_calls[0]["view"]
     button = view.children[0]
     assert button.label == "I'm not a bot"
+
+
+@pytest.mark.asyncio
+async def test_publish_verification_panel_helper_sends_welcome_text():
+    cog, guild, member, bot = build()
+    channel = FakeChannel(500)
+    channel.guild = guild
+
+    message = await publish_verification_panel(bot, channel)
+
+    assert len(channel.send_calls) == 1
+    assert channel.send_calls[0]["content"] == verification_core.get_settings(guild.id)["welcome_text"]
+    assert isinstance(channel.send_calls[0]["view"], VerificationView)
+    assert message.id is not None
 
 
 @pytest.mark.asyncio

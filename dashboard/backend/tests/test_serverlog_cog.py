@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import discord
 import pytest
 
+import embed_style
 import serverlog
 import settings_db
 from serverlog import ServerLog
@@ -92,7 +93,7 @@ async def test_member_join_embed_style():
     assert "присоединился к серверу" in embed.description
     assert embed.footer.text == "ID участника: 20"
     assert embed.thumbnail.url == member.display_avatar.url
-    assert embed.color == discord.Color.green()
+    assert embed.color == embed_style.SUCCESS
     field_names = [f.name for f in embed.fields]
     assert "Дата регистрации" in field_names
     assert "Участников" in field_names
@@ -113,7 +114,7 @@ async def test_member_remove_embed_style_with_roles_and_duration():
 
     embed = last_embed(channel)
     assert "покинул сервер" in embed.description
-    assert embed.color == discord.Color.gold()
+    assert embed.color == embed_style.GOLD
     fields = {f.name: f.value for f in embed.fields}
     assert role.mention in fields["Роли"]
     assert fields["Пробыл на сервере"] == "31 секунда"
@@ -204,7 +205,7 @@ async def test_voice_join():
 
     embed = last_embed(channel)
     assert "зашёл в голосовой канал" in embed.description
-    assert embed.color == discord.Color.teal()
+    assert embed.color == embed_style.TEAL
 
 
 @pytest.mark.asyncio

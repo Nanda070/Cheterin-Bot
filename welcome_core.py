@@ -153,7 +153,7 @@ def build_channel_payload(settings: dict, member, guild, lang: str, bot_config_g
             spec = {
                 "title": i18n.t("welcome.title", lang, guild_name="{guild_name}"),
                 "description": default_channel_text(lang),
-                "color": "#5865F2",
+                "color": "#D44556",
                 "thumbnail": {"url": ""},
                 "fields": [],
             }

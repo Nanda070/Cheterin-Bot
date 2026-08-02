@@ -123,7 +123,7 @@ export function MassAssignModal({ open, onClose }: Props) {
           <label className="text-sm text-muted" htmlFor="mass-role">
             Роль
           </label>
-          <Select id="mass-role" value={roleId} onChange={(id) => setRoleId(id)} options={roles} placeholder="Выберите роль…" />
+          <Select id="mass-role" value={roleId} onChange={(id) => setRoleId(id)} options={roles} kind="role" placeholder="Выберите роль…" />
 
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-2 text-sm text-foreground">

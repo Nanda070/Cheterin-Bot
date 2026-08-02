@@ -20,4 +20,8 @@ MESSAGES = {
     "invites.unknown": "unknown",
     "invites.join_line": "{member} joined via invite from {inviter} (`{code}`).",
     "owner_alerts.mass_ban_detail": "{threshold} bans in {window} sec.",
+    "owner_alerts.digest.title": "📋 Weekly settings digest ({days} days)",
+    "owner_alerts.digest.empty": "No dashboard activity in this period.",
+    "owner_alerts.digest.line": "**{label}** — {count}×",
+    "owner_alerts.digest.footer": "{total} dashboard action(s) this week",
 }

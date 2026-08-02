@@ -51,4 +51,40 @@ describe('Select channel dead badge', () => {
     fireEvent.click(lockedOption)
     expect(onChange).toHaveBeenCalledWith('2')
   })
+
+  it('allowClear offers a none option that clears the value', () => {
+    const onChange = vi.fn()
+    renderWithLanguage(
+      <Select
+        value="1"
+        onChange={onChange}
+        options={[{ id: '1', name: 'alive', bot_can_view: true, bot_can_send: true }]}
+        ariaLabel="channel"
+        allowClear
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'channel' }))
+    fireEvent.click(screen.getByRole('option', { name: '—' }))
+    expect(onChange).toHaveBeenCalledWith('')
+  })
+
+  it('synthesizes a placeholder + deleted badge for a saved value missing from options', () => {
+    const onChange = vi.fn()
+    renderWithLanguage(
+      <Select
+        value="999"
+        onChange={onChange}
+        options={[{ id: '1', name: 'alive', bot_can_view: true, bot_can_send: true }]}
+        ariaLabel="channel"
+      />,
+    )
+
+    expect(screen.getByText('#999')).toBeInTheDocument()
+    expect(screen.getByText('удалён')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'channel' }))
+    const deletedOption = screen.getByRole('option', { name: /#999/i })
+    expect(deletedOption).not.toBeDisabled()
+  })
 })

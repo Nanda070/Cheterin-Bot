@@ -3,15 +3,16 @@ import logging
 import discord
 
 import bot_config
+import embed_style
 
 logger = logging.getLogger("voice-rooms")
 
 
 class VCTheme:
-    COLOR = discord.Color.from_str("#B75CFF")
-    SUCCESS = discord.Color.green()
-    WARN = discord.Color.orange()
-    ERROR = discord.Color.red()
+    COLOR = embed_style.ACCENT
+    SUCCESS = embed_style.SUCCESS
+    WARN = embed_style.WARN
+    ERROR = embed_style.DANGER
 
     EMO = {
         "openroom": discord.PartialEmoji(name="openroom", id=1424844208371667187),
@@ -42,7 +43,7 @@ async def send_log_embed(bot: discord.Client, guild_id: int, title: str, descrip
         logger.warning("Log channel not found: %s", log_channel_id)
         return
 
-    embed = discord.Embed(title=title, description=description, color=color)
+    embed = embed_style.make_embed(title=title, description=description, color=color, timestamp=True)
     await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
 
 

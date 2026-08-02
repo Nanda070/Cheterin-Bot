@@ -4,8 +4,10 @@ import asyncio
 from datetime import timedelta
 import logging
 
+import embed_style
 import bot_config
 import i18n
+import moderation_embed_core
 import moderation_log
 import spam_core
 
@@ -274,38 +276,25 @@ class Spam(commands.Cog):
         if not log_channel:
             return
 
-        embed = discord.Embed(
-            title=i18n.t("spam.embed.title", lang),
-            color=discord.Color.orange(),
-        )
-        embed.add_field(
-            name=i18n.t("spam.embed.user", lang),
-            value=f"{member.name} ({member.mention})",
-            inline=False,
-        )
-        embed.add_field(name="ID", value=str(member.id), inline=True)
-        embed.add_field(
-            name=i18n.t("spam.embed.violation", lang),
-            value=log_reason,
-            inline=False,
-        )
         channels_spammed = list(set(f"<#{e['channel_id']}>" for e in matches))
-        embed.add_field(
-            name=i18n.t("spam.embed.channels", lang),
-            value=", ".join(channels_spammed),
-            inline=False,
+        message_preview = signature[:500] if signature else i18n.t("spam.embed.message_media_only", lang)
+        extra = "\n".join([
+            f"{i18n.t('spam.embed.channels', lang)}: {', '.join(channels_spammed)}",
+            f"{i18n.t('spam.embed.message', lang)}: {message_preview}",
+            f"{i18n.t('spam.embed.punishment', lang)}: {i18n.t('spam.embed.punishment_value', lang)}",
+        ])
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
+            title=i18n.t("spam.embed.title", lang),
+            actor=self.bot.user,
+            target_name=member.name,
+            target_id=member.id,
+            target_mention=member.mention,
+            reason=log_reason,
+            extra=extra,
+            color=embed_style.WARN,
+            footer_key="moderation.embed.footer",
         )
-        embed.add_field(
-            name=i18n.t("spam.embed.message", lang),
-            value=signature[:1024] if signature else i18n.t("spam.embed.message_media_only", lang),
-            inline=False,
-        )
-        embed.add_field(
-            name=i18n.t("spam.embed.punishment", lang),
-            value=i18n.t("spam.embed.punishment_value", lang),
-            inline=False,
-        )
-        embed.timestamp = discord.utils.utcnow()
 
         ping_text = f"<@&{role_ping_id}>" if role_ping_id else ""
 

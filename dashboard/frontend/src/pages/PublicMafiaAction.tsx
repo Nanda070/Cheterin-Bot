@@ -4,6 +4,8 @@ import {
   FirstAidKit,
   Knife,
   Moon,
+  SpeakerSimpleHigh,
+  SpeakerSimpleSlash,
   Skull,
   Sun,
   Timer,
@@ -15,6 +17,7 @@ import { fetchPublicMafia, submitMafiaAction, submitMafiaVote, type MafiaPublicS
 import { GameAvatar } from '../components/GameAvatar'
 import { Button } from '../components/ui/Button'
 import { Select } from '../components/ui/Select'
+import { useActionRequiredAlert } from '../hooks/useActionRequiredAlert'
 import { translate, type Lang } from '../i18n'
 
 function useCountdown(deadlineTs: number | null): number {
@@ -43,7 +46,9 @@ const ROLE_ICON: Record<MafiaRole, ReactNode> = {
 
 export function PublicMafiaActionPage() {
   const { token } = useParams<{ token: string }>()
-  const [pageLang, setPageLang] = useState<Lang>('ru')
+  const [pageLang, setPageLang] = useState<Lang>(() =>
+    typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('en') ? 'en' : 'ru',
+  )
   const t = (key: string, params?: Record<string, string | number>) => translate(pageLang, key, params)
   const [state, setState] = useState<MafiaPublicState | null>(null)
   const [error, setError] = useState('')
@@ -78,6 +83,7 @@ export function PublicMafiaActionPage() {
 
   const remaining = useCountdown(state?.phase_deadline_ts ?? null)
   const timerUrgent = remaining > 0 && remaining <= 30
+  const { muted, toggleMuted } = useActionRequiredAlert(state?.action_required ?? false, t('game.titleFlashYourTurn'))
 
   const targetOptions = useMemo(() => {
     if (!state) return []
@@ -140,18 +146,29 @@ export function PublicMafiaActionPage() {
               {t('game.round', { round: state.round_number })} · {phaseLabel(state.phase)}
             </h1>
           </div>
-          {state.game_status === 'active' && state.phase_deadline_ts && (
-            <div
-              className={`game-timer flex items-center gap-2 rounded-control px-3 py-2 ${
-                timerUrgent ? 'game-timer--urgent' : ''
-              }`}
+          <div className="flex items-center gap-2">
+            {state.game_status === 'active' && state.phase_deadline_ts && (
+              <div
+                className={`game-timer flex items-center gap-2 rounded-control px-3 py-2 ${
+                  timerUrgent ? 'game-timer--urgent' : ''
+                }`}
+              >
+                <Timer size={18} weight="bold" className={timerUrgent ? 'text-danger' : 'text-primary'} />
+                <span className={`font-mono text-lg font-semibold tabular-nums ${timerUrgent ? 'text-danger' : 'text-foreground'}`}>
+                  {timerText}
+                </span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={toggleMuted}
+              title={muted ? t('game.unmuteAlerts') : t('game.muteAlerts')}
+              aria-label={muted ? t('game.unmuteAlerts') : t('game.muteAlerts')}
+              className="game-timer flex items-center justify-center rounded-control p-2.5 text-muted transition-colors hover:text-foreground"
             >
-              <Timer size={18} weight="bold" className={timerUrgent ? 'text-danger' : 'text-primary'} />
-              <span className={`font-mono text-lg font-semibold tabular-nums ${timerUrgent ? 'text-danger' : 'text-foreground'}`}>
-                {timerText}
-              </span>
-            </div>
-          )}
+              {muted ? <SpeakerSimpleSlash size={18} weight="bold" /> : <SpeakerSimpleHigh size={18} weight="bold" />}
+            </button>
+          </div>
         </header>
 
         <section className="game-panel game-role-card animate-fade-in-up flex flex-col gap-3 rounded-[var(--radius-card)] border border-border/70 p-5" style={{ animationDelay: '60ms' }}>

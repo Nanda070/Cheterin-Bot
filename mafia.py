@@ -20,9 +20,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import i18n
 import slash_registry
-import game_test_lobby
 import mafia_core
 import mafia_db
 
@@ -100,7 +100,7 @@ def build_lobby_embed(game: dict, players: list[dict], lang: str) -> discord.Emb
     embed = discord.Embed(
         title=i18n.t("mafia.lobby.title", lang),
         description=i18n.t("mafia.lobby.description", lang),
-        color=0x5865F2,
+        color=embed_style.INFO_INT,
     )
     embed.add_field(name=i18n.t("mafia.lobby.initiator", lang), value=f"<@{game['created_by']}>", inline=True)
     embed.add_field(
@@ -134,7 +134,7 @@ def build_lobby_embed(game: dict, players: list[dict], lang: str) -> discord.Emb
 
 
 def build_lobby_cancelled_embed(_game: dict, lang: str) -> discord.Embed:
-    return discord.Embed(title=i18n.t("mafia.lobby.cancelled", lang), color=0x2B2D31)
+    return discord.Embed(title=i18n.t("mafia.lobby.cancelled", lang), color=embed_style.NEUTRAL_INT)
 
 
 def build_game_started_embed(
@@ -144,7 +144,7 @@ def build_game_started_embed(
     embed = discord.Embed(
         title=i18n.t(title_key, lang),
         description=i18n.t("mafia.started.description", lang),
-        color=0xED4245 if game.get("is_test") else 0x5865F2,
+        color=embed_style.DANGER_INT if game.get("is_test") else embed_style.INFO_INT,
     )
     embed.add_field(name=i18n.t("mafia.started.players", lang), value=str(len(players)), inline=True)
     if voice_channel_id:
@@ -166,13 +166,13 @@ def build_morning_embed(died_id: int | None, died_player: dict | None, lang: str
         return discord.Embed(
             title=i18n.t("mafia.morning.title", lang),
             description=i18n.t("mafia.morning.peaceful", lang),
-            color=0x57F287,
+            color=embed_style.SUCCESS_INT,
         )
     role = _role_label(died_player["role"], lang) if died_player else "?"
     return discord.Embed(
         title=i18n.t("mafia.morning.title", lang),
         description=i18n.t("mafia.morning.death", lang, user_id=died_id, role=role),
-        color=0xED4245,
+        color=embed_style.DANGER_INT,
     )
 
 
@@ -180,7 +180,7 @@ def build_vote_embed(game: dict, members: list[dict], votes: list[dict], lang: s
     embed = discord.Embed(
         title=i18n.t("mafia.vote.title", lang),
         description=i18n.t("mafia.vote.description", lang, seconds=game["day_vote_timer_sec"]),
-        color=0xFEE75C,
+        color=embed_style.GOLD_INT,
     )
     if not votes:
         embed.add_field(name=i18n.t("mafia.vote.votes", lang), value=i18n.t("mafia.vote.no_votes", lang), inline=False)
@@ -204,13 +204,13 @@ def build_lynch_result_embed(lynched_id: int | None, lynched_player: dict | None
         return discord.Embed(
             title=i18n.t("mafia.lynch.title", lang),
             description=i18n.t("mafia.lynch.no_majority", lang),
-            color=0x2B2D31,
+            color=embed_style.NEUTRAL_INT,
         )
     role = _role_label(lynched_player["role"], lang) if lynched_player else "?"
     return discord.Embed(
         title=i18n.t("mafia.lynch.title", lang),
         description=i18n.t("mafia.lynch.executed", lang, user_id=lynched_id, role=role),
-        color=0xED4245,
+        color=embed_style.DANGER_INT,
     )
 
 
@@ -218,15 +218,15 @@ def build_result_embed(winner: str | None, players: list[dict], lang: str) -> di
     if winner is None:
         title = i18n.t("mafia.result.stopped_title", lang)
         desc = i18n.t("mafia.result.stopped_desc", lang)
-        color = 0x2B2D31
+        color = embed_style.NEUTRAL_INT
     elif winner == "town":
         title = i18n.t("mafia.result.town_title", lang)
         desc = i18n.t("mafia.result.town_desc", lang)
-        color = 0x57F287
+        color = embed_style.SUCCESS_INT
     else:
         title = i18n.t("mafia.result.mafia_title", lang)
         desc = i18n.t("mafia.result.mafia_desc", lang)
-        color = 0xED4245
+        color = embed_style.DANGER_INT
 
     embed = discord.Embed(title=title, description=desc, color=color)
     lines = [
@@ -448,98 +448,6 @@ class MafiaCog(commands.Cog):
             await self.end_game(game["id"], winner=None)
         await interaction.followup.send(i18n.t("mafia.stopped", lang), ephemeral=True)
 
-    @app_commands.command(name="мафия-тест", description="Тестовая игра «Мафия» с ботами (только админы)")
-    @app_commands.default_permissions(manage_guild=True)
-    @app_commands.describe(
-        игроков="Число игроков включая вас (по умолчанию 6)",
-    )
-    async def start_test_game(
-        self,
-        interaction: discord.Interaction,
-        игроков: app_commands.Range[
-            int, game_test_lobby.MAFIA_PLAYERS_MIN, game_test_lobby.MAFIA_PLAYERS_MAX
-        ] = None,
-    ):
-        if interaction.guild is None:
-            return await interaction.response.send_message(
-                i18n.t("mafia.error.guild_only", i18n.lang_for(None)), ephemeral=True
-            )
-        lang = i18n.lang_for(interaction.guild_id)
-        if not mafia_core.has_moderator_access(interaction.user):
-            return await interaction.response.send_message(
-                i18n.t("mafia.lobby.no_access", lang), ephemeral=True
-            )
-        settings = mafia_core.get_settings(interaction.guild.id)
-        if not settings["enabled"]:
-            return await interaction.response.send_message(
-                i18n.module_disabled(lang, "mafia"), ephemeral=True
-            )
-        if mafia_db.get_active_game_in_channel(interaction.channel.id) is not None:
-            return await interaction.response.send_message(
-                i18n.t("mafia.error.channel_busy", lang), ephemeral=True
-            )
-
-        total = (
-            игроков
-            if игроков is not None
-            else game_test_lobby.DEFAULT_MAFIA_PLAYERS
-        )
-        total = game_test_lobby.clamp_player_count(
-            total, game_test_lobby.MAFIA_PLAYERS_MIN, game_test_lobby.MAFIA_PLAYERS_MAX
-        )
-
-        await interaction.response.defer(ephemeral=True)
-
-        host_name = getattr(interaction.user, "display_name", None) or interaction.user.name
-        seats = game_test_lobby.build_fake_seats(
-            total,
-            host_user_id=interaction.user.id,
-            host_display_name=host_name,
-            host_avatar_url=_member_avatar_url(interaction.user),
-        )
-
-        night_timer = min(settings["default_night_timer_sec"], 90)
-        discussion_timer = min(settings["default_day_discussion_timer_sec"], 120)
-        vote_timer = min(settings["default_day_vote_timer_sec"], 90)
-
-        game = mafia_db.create_game(
-            interaction.guild.id,
-            interaction.channel.id,
-            interaction.user.id,
-            total,
-            total,
-            night_timer,
-            discussion_timer,
-            vote_timer,
-            is_test=True,
-        )
-        for seat in seats:
-            mafia_db.add_player(
-                game["id"],
-                seat.user_id,
-                seat.avatar_url,
-                display_name=seat.display_name,
-            )
-
-        await self.start_game(game["id"])
-        host_player = mafia_db.get_player(game["id"], interaction.user.id)
-        if host_player is None or not host_player.get("token"):
-            return await interaction.followup.send(
-                i18n.t("mafia.test.failed", lang), ephemeral=True
-            )
-
-        link = f"{_frontend_url()}/mafia/{host_player['token']}"
-        await interaction.followup.send(
-            i18n.t(
-                "mafia.test.ready",
-                lang,
-                count=total,
-                bots=total - 1,
-                link=link,
-            ),
-            ephemeral=True,
-        )
-
     # ────────────────────────── Игровой цикл ──────────────────────────
 
     async def start_game(self, game_id: int):
@@ -702,6 +610,31 @@ class MafiaCog(commands.Cog):
             await message.edit(embed=build_vote_embed(game, members, votes, lang))
         except discord.HTTPException:
             pass
+
+    async def force_advance_phase(self, game_id: int) -> bool:
+        """Ведущий/админ форсирует переход фазы из дашборда, не дожидаясь таймера
+        или всех действий/голосов. Возвращает False, если игра не активна."""
+        game = mafia_db.get_game(game_id)
+        if game is None or game["status"] != "active":
+            return False
+        handlers = {
+            "night": self._finish_night,
+            "day_discussion": self._finish_day_discussion,
+            "day_vote": self._finish_day_vote,
+        }
+        handler = handlers.get(game["phase"])
+        if handler is None:
+            return False
+        await handler(game_id)
+        return True
+
+    async def force_end_game(self, game_id: int) -> bool:
+        """Ведущий/админ досрочно завершает игру из дашборда (без победителя)."""
+        game = mafia_db.get_game(game_id)
+        if game is None or game["status"] != "active":
+            return False
+        await self.end_game(game_id, None)
+        return True
 
     async def _finish_night(self, game_id: int):
         game = mafia_db.get_game(game_id)

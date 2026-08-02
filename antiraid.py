@@ -17,9 +17,11 @@ import logging
 import discord
 from discord.ext import commands
 
+import embed_style
 import antiraid_core
 import i18n
 import lockdown_core
+import moderation_embed_core
 import moderation_log
 
 logger = logging.getLogger("antiraid")
@@ -104,24 +106,32 @@ class AntiRaidCog(commands.Cog):
                 channels=slowmode_applied, seconds=settings["action_slowmode_sec"],
             ))
 
+        reason = i18n.t("antiraid.log_reason", lang)
+        extra = " · ".join(extra_parts)
+        bot_user = self.bot.user
         moderation_log.append_event(
-            guild.id, "antiraid_trigger", member.id, member.name,
-            self.bot.user.id, self.bot.user.name,
-            i18n.t("antiraid.log_reason", lang), extra=" · ".join(extra_parts),
+            guild.id,
+            "antiraid_trigger",
+            member.id,
+            member.name,
+            reason,
+            moderator_id=bot_user.id if bot_user else None,
+            moderator_display=bot_user.name if bot_user else None,
+            extra=extra,
         )
 
-        embed = discord.Embed(
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
             title=i18n.t("antiraid.embed.title", lang),
-            description="\n".join(extra_parts),
-            color=discord.Color.orange(),
-            timestamp=discord.utils.utcnow(),
+            actor=bot_user,
+            target_name=member.name,
+            target_id=member.id,
+            target_mention=member.mention,
+            reason=reason,
+            extra=extra,
+            color=embed_style.WARN,
+            footer_key="antiraid.embed.footer",
         )
-        embed.add_field(
-            name=i18n.t("antiraid.embed.last_join", lang),
-            value=f"{member.mention} (`{member.id}`)",
-            inline=False,
-        )
-        embed.set_footer(text=i18n.t("antiraid.embed.footer", lang))
         await self.bot.send_log(guild.id, embed)
 
 

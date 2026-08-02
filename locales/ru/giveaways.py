@@ -22,6 +22,8 @@ MESSAGES: dict[str, str] = {
     "giveaways.start.prize": "Что разыгрывается",
     "giveaways.start.duration": "Длительность розыгрыша (например, 10m, 2h, 1d)",
     "giveaways.start.winners": "Сколько победителей выбрать",
+    "giveaways.error.start_args": "Для start укажите prize и duration.",
+    "giveaways.error.id_required": "Для end / reroll укажите giveaway_id.",
     "giveaways.started": "Розыгрыш №{id} запущен.",
     "giveaways.duration_error": "Используйте формат: число + единица (s/m/h/d), например 10m, 2h, 1d.",
     "giveaways.winners_announce": "🎉 Поздравляем {mentions} — вы выиграли **{prize}**!",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
 import {
   createEmbedMessage,
@@ -21,48 +22,20 @@ import { Checkbox } from '../components/ui/Checkbox'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { EmbedPreview } from '../components/EmbedPreview'
+import { EMPTY_EMBED_SPEC, validateEmbedSpec } from '../utils/embedUtils'
 
-const EMPTY_EMBED_SPEC: EmbedSpec = {
-  title: '',
-  description: '',
-  url: '',
-  color: '#5865F2',
-  author: { name: '', url: '', icon_url: '' },
-  footer: { text: '', icon_url: '' },
-  image: { url: '' },
-  thumbnail: { url: '' },
-  timestamp: null,
-  fields: [],
-}
-
-function validateEmbedSpec(spec: EmbedSpec, content: string): string | null {
-  const hasEmbedContent = Boolean(
-    spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url,
-  )
-  if (!hasEmbedContent && !content.trim()) {
-    return 'embedBuilder.error.validation.empty'
-  }
-  if (spec.title.length > 256) return 'embedBuilder.error.validation.title'
-  if (spec.description.length > 4096) return 'embedBuilder.error.validation.description'
-  if (spec.footer.text.length > 2048) return 'embedBuilder.error.validation.footer'
-  if (spec.author.name.length > 256) return 'embedBuilder.error.validation.author'
-  if (spec.fields.length > 25) return 'embedBuilder.error.validation.fieldsCount'
-  for (const field of spec.fields) {
-    if (field.name.length > 256) return 'embedBuilder.error.validation.fieldName'
-    if (field.value.length > 1024) return 'embedBuilder.error.validation.fieldValue'
-  }
-  const totalLength =
-    spec.title.length +
-    spec.description.length +
-    spec.footer.text.length +
-    spec.author.name.length +
-    spec.fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0)
-  if (totalLength > 6000) return 'embedBuilder.error.validation.totalLength'
-  return null
+// Deep-link hints (?target=welcome|feedback|events) — Embed Studio nav entry points here
+// when someone is really looking for a specific embed surface elsewhere in the dashboard.
+const DEEP_LINK_HINTS: Record<string, { labelKey: string; to: string }> = {
+  welcome: { labelKey: 'embedBuilder.deepLink.welcome', to: '/server-entry' },
+  feedback: { labelKey: 'embedBuilder.deepLink.feedback', to: '/feedback' },
+  events: { labelKey: 'embedBuilder.deepLink.events', to: '/events' },
 }
 
 export function EmbedBuilderPage() {
   const t = useT()
+  const [searchParams] = useSearchParams()
+  const deepLinkHint = DEEP_LINK_HINTS[searchParams.get('target') ?? '']
   const [mode, setMode] = useState<'create' | 'edit'>('create')
   const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [roles, setRoles] = useState<RoleInfo[]>([])
@@ -210,6 +183,14 @@ export function EmbedBuilderPage() {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="flex flex-col gap-3">
+        {deepLinkHint && (
+          <div className="rounded-control border border-primary/40 bg-primary/10 p-3 text-sm text-foreground">
+            {t(deepLinkHint.labelKey)}{' '}
+            <Link to={deepLinkHint.to} className="font-medium text-primary underline">
+              {t('embedBuilder.deepLink.goTo')}
+            </Link>
+          </div>
+        )}
         <div className="flex gap-2">
           <Button variant={mode === 'create' ? 'primary' : 'secondary'} onClick={() => setMode('create')}>
             {t('embedBuilder.mode.create')}
@@ -317,14 +298,14 @@ export function EmbedBuilderPage() {
           <input
             id="eb-color"
             type="color"
-            value={embed.color || '#5865F2'}
+            value={embed.color || '#D44556'}
             onChange={(e) => updateEmbedField('color', e.target.value)}
             className="h-9 w-12 rounded-control border border-border bg-background"
           />
           <input
             value={embed.color}
             onChange={(e) => updateEmbedField('color', e.target.value)}
-            placeholder="#5865F2"
+            placeholder="#D44556"
             className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
           />
         </div>

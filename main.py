@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 import settings_db
 import settings_migration
+import embed_style
 import i18n
 import slash_i18n
 
@@ -116,6 +117,11 @@ class ChetBot(commands.Bot):
         await self.load_extension("polls")
         await self.load_extension("sticky")
         await self.load_extension("owner_alerts")
+        await self.load_extension("starboard")
+        await self.load_extension("auto_reactions")
+        await self.load_extension("quote")
+        await self.load_extension("help_cog")
+        await self.load_extension("valchecker")
 
         # Синхронизация команд вынесена в on_ready: для режима per_guild нужен уже
         # заполненный список self.guilds (в setup_hook он ещё пуст).
@@ -163,6 +169,9 @@ DASHBOARD_URL = os.getenv("DASHBOARD_FRONTEND_URL", "https://cheterin.online")
 @bot.event
 async def on_ready():
     logger.info(f"{bot.user} запущен и готов к работе! Серверов: {len(bot.guilds)}")
+    await bot.change_presence(
+        activity=discord.Activity(type=discord.ActivityType.playing, name="/help • Cheterin"),
+    )
     # Синхронизируем команды один раз за процесс (on_ready может срабатывать повторно
     # при реконнектах). В режиме per_guild нужен заполненный кэш гильдий — он готов здесь.
     if not getattr(bot, "_commands_synced", False):
@@ -191,7 +200,7 @@ async def on_guild_join(guild: discord.Guild):
     embed = discord.Embed(
         title=i18n.guild_t(guild.id, "guild_join.title"),
         description=i18n.guild_t(guild.id, "guild_join.description", dashboard_url=DASHBOARD_URL),
-        color=discord.Color.blurple(),
+        color=embed_style.INFO,
     )
     channel = guild.system_channel
     if channel is None or not channel.permissions_for(guild.me).send_messages:

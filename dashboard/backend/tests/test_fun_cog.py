@@ -134,39 +134,6 @@ async def test_roulette_cooldown(monkeypatch):
     assert "Барабан ещё крутится" in second.response.messages[0]["content"]
 
 
-@pytest.mark.asyncio
-async def test_emoji_roulette_uses_guild_emojis():
-    cog, player, guild = build()
-    guild.emojis = ["<:pepe:123>"]
-    interaction = FakeInteraction(player, guild)
-
-    await FunCog.emoji_roulette.callback(cog, interaction)
-
-    assert "<:pepe:123>" in interaction.response.messages[0]["content"]
-
-
-@pytest.mark.asyncio
-async def test_emoji_roulette_fallback_pool():
-    cog, player, guild = build()
-    guild.emojis = []
-    interaction = FakeInteraction(player, guild)
-
-    await FunCog.emoji_roulette.callback(cog, interaction)
-
-    message = interaction.response.messages[0]["content"]
-    assert any(e in message for e in fun_core.FALLBACK_EMOJIS)
-
-
-@pytest.mark.asyncio
-async def test_emoji_roulette_disabled_module():
-    cog, player, guild = build(enabled=False)
-    interaction = FakeInteraction(player, guild)
-
-    await FunCog.emoji_roulette.callback(cog, interaction)
-
-    assert interaction.response.messages[0]["ephemeral"] is True
-
-
 # ────────────────────────── Авто-Эмодзи ──────────────────────────
 
 class FakeMsg:

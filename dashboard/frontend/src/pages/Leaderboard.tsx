@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 import { fetchPublicLeaderboard, type PublicLeaderboardEntry } from '../api/client'
 import { PublicLayout } from '../components/PublicLayout'
 import { useT } from '../context/LanguageContext'
+import { formatDuration } from '../utils/formatDuration'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 
@@ -54,15 +55,36 @@ export function LeaderboardPage() {
                   {MEDAL[entry.rank - 1] ?? `#${entry.rank}`}
                 </span>
                 {entry.avatar ? (
-                  <img src={entry.avatar} alt="" className="h-8 w-8 rounded-full" />
+                  <img
+                    src={entry.avatar}
+                    alt=""
+                    className="h-8 w-8 rounded-full border-2"
+                    style={{ borderColor: entry.frame_color || 'transparent' }}
+                  />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 bg-primary-muted text-xs font-semibold text-primary"
+                    style={{ borderColor: entry.frame_color || 'transparent' }}
+                  >
                     {entry.display.slice(0, 1).toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-foreground">{entry.display}</p>
-                  <p className="text-xs text-muted">🔊 {entry.voice_time_text}</p>
+                  <p className="flex items-center gap-2 truncate text-sm text-foreground">
+                    <span className="truncate">{entry.display}</span>
+                    {entry.title_text && (
+                      <span
+                        className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                        style={{
+                          borderColor: entry.frame_color || 'var(--color-primary)',
+                          color: entry.frame_color || 'var(--color-primary)',
+                        }}
+                      >
+                        {entry.title_text}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted">🔊 {formatDuration(entry.voice_seconds ?? 0, t)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-primary">

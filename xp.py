@@ -1,4 +1,4 @@
-"""Ког системы уровней: XP за текст, обработка уровней и наград, /ранг.
+"""Ког системы уровней: XP за текст, обработка уровней и наград, /ранг, /профиль.
 
 XP за войс начисляет voice_tracker и передаёт сюда через apply_voice_session().
 """
@@ -12,15 +12,20 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import economy_core
 import economy_db
 import i18n
+import profile_card
 import slash_registry
 import stats_db
 import xp_card
 import xp_core
 
 logger = logging.getLogger("xp")
+
+# Soft cap: if animated GIF is huge, fall back to PNG for /profile.
+_PROFILE_GIF_MAX_BYTES = 3 * 1024 * 1024
 
 
 def member_has_ignored_role(member: discord.Member, ignored_role_ids: list[str]) -> bool:
@@ -108,7 +113,7 @@ class LeaderboardView(discord.ui.View):
         embed = discord.Embed(
             title=i18n.t("xp.leaderboard.title", lang),
             description="\n\n".join(lines) if lines else i18n.t("xp.leaderboard.no_data", lang),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
         )
         embed.set_footer(
             text=i18n.t(
@@ -193,12 +198,6 @@ class LeaderboardView(discord.ui.View):
 # ────────────────── Основной Cog ──────────────────
 
 class XPCog(commands.Cog):
-    xp_group = app_commands.Group(
-        name="xp",
-        description="Изменить количество опыта участника",
-        default_permissions=discord.Permissions(manage_guild=True),
-    )
-
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -334,7 +333,7 @@ class XPCog(commands.Cog):
                 level=level,
                 guild_name=guild_name,
             ),
-            color=discord.Color.gold(),
+            color=embed_style.GOLD,
         )
         if guild and guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
@@ -361,6 +360,51 @@ class XPCog(commands.Cog):
             (stats_db.xp_get_member(member.guild.id, member.id) or {"voice_seconds": 0})["voice_seconds"],
         )
 
+    async def _card_payload(self, guild: discord.Guild, target: discord.Member, lang: str) -> dict:
+        """Assemble stats + cosmetics + optional economy fields for card renderers."""
+        row = stats_db.xp_get_member(guild.id, target.id)
+        xp = row["xp"] if row else 0
+        voice_seconds = row["voice_seconds"] if row else 0
+        messages = int(row["messages"]) if row else 0
+        level, into, step = xp_core.level_progress(xp)
+        rank = stats_db.xp_rank_of(guild.id, target.id)
+        total = stats_db.xp_member_count(guild.id)
+
+        avatar_bytes = None
+        try:
+            avatar_bytes = await target.display_avatar.replace(size=256).read()
+        except discord.HTTPException:
+            pass
+
+        frame = economy_db.get_equipped(guild.id, target.id, "frame_color")
+        title = economy_db.get_equipped(guild.id, target.id, "title")
+
+        balance = None
+        streak = None
+        eco = economy_core.get_settings(guild.id)
+        if eco.get("enabled"):
+            balance = economy_db.get_balance(guild.id, target.id)
+            if eco.get("daily_bonus_enabled"):
+                streak = int(economy_db.get_daily_bonus(guild.id, target.id).get("streak") or 0)
+
+        return {
+            "guild_id": guild.id,
+            "avatar_bytes": avatar_bytes,
+            "display_name": target.display_name,
+            "level": level,
+            "xp_into_level": into,
+            "xp_step": step,
+            "rank": rank,
+            "total_members": total,
+            "voice_time_text": xp_core.format_voice_time(voice_seconds, lang),
+            "frame_color": frame["value"] if frame else None,
+            "title_text": title["value"] if title else None,
+            "messages": messages,
+            "balance": balance,
+            "streak": streak,
+            "lang": lang,
+        }
+
     # ────────────────── Команда /ранг ──────────────────
 
     @app_commands.command(name="ранг", description="Показать карточку ранга участника")
@@ -376,96 +420,95 @@ class XPCog(commands.Cog):
             return await interaction.response.send_message(i18n.t("xp.rank.no_bot_rank", lang), ephemeral=True)
 
         await interaction.response.defer()
-
-        row = stats_db.xp_get_member(interaction.guild.id, target.id)
-        xp = row["xp"] if row else 0
-        voice_seconds = row["voice_seconds"] if row else 0
-        level, into, step = xp_core.level_progress(xp)
-        rank = stats_db.xp_rank_of(interaction.guild.id, target.id)
-        total = stats_db.xp_member_count(interaction.guild.id)
-
-        avatar_bytes = None
-        try:
-            avatar_bytes = await target.display_avatar.replace(size=256).read()
-        except discord.HTTPException:
-            pass
-
-        frame = economy_db.get_equipped(interaction.guild.id, target.id, "frame_color")
-        title = economy_db.get_equipped(interaction.guild.id, target.id, "title")
-
-        png = await asyncio.to_thread(
-            xp_card.render_rank_card,
-            target.guild.id,
-            avatar_bytes,
-            target.display_name,
-            level,
-            into,
-            step,
-            rank,
-            total,
-            xp_core.format_voice_time(voice_seconds, lang),
-            frame_color=frame["value"] if frame else None,
-            title_text=title["value"] if title else None,
-            lang=lang,
-        )
+        payload = await self._card_payload(interaction.guild, target, lang)
+        png = await asyncio.to_thread(xp_card.render_rank_card, **payload)
         file = discord.File(fp=io.BytesIO(png), filename="rank.png")
         await interaction.followup.send(file=file)
 
-    # ────────────────── Команда /xp (add / set / clear) ──────────────────
+    # ────────────────── Команда /профиль ──────────────────
 
-    @xp_group.command(name="add", description="Добавить (или отнять) опыт участнику")
-    @app_commands.describe(участник="Кому изменить опыт", количество="Сколько XP добавить (можно отрицательное число)")
-    async def xp_add(self, interaction: discord.Interaction, участник: discord.Member, количество: int):
+    @app_commands.command(name="профиль", description="Показать анимированную карточку профиля")
+    @app_commands.describe(участник="Чей профиль показать (по умолчанию — свой)")
+    async def profile_command(self, interaction: discord.Interaction, участник: discord.Member | None = None):
         lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
-        if участник.bot:
-            return await interaction.response.send_message(i18n.t("xp.no_bot_xp", lang), ephemeral=True)
-        await interaction.response.defer(ephemeral=True)
 
-        row = stats_db.xp_get_member(interaction.guild.id, участник.id)
-        current = row["xp"] if row else 0
-        new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, current + количество))
-        await self.set_member_xp(участник, new_xp)
+        target = участник or interaction.user
+        if target.bot:
+            return await interaction.response.send_message(i18n.t("xp.profile.no_bot", lang), ephemeral=True)
 
-        await interaction.followup.send(
-            i18n.t("xp.add.success", lang, mention=участник.mention, current=current, new_xp=new_xp),
-            ephemeral=True,
-        )
+        await interaction.response.defer()
+        payload = await self._card_payload(interaction.guild, target, lang)
 
-    @xp_group.command(name="set", description="Установить точное количество опыта участнику")
-    @app_commands.describe(участник="Кому установить опыт", количество="Новое значение XP")
-    async def xp_set(
-        self, interaction: discord.Interaction, участник: discord.Member,
-        количество: app_commands.Range[int, xp_core.XP_ADMIN_MIN, xp_core.XP_ADMIN_MAX],
+        gif = await asyncio.to_thread(profile_card.render_profile_card_gif, **payload)
+        if len(gif) <= _PROFILE_GIF_MAX_BYTES:
+            file = discord.File(fp=io.BytesIO(gif), filename="profile.gif")
+        else:
+            png = await asyncio.to_thread(profile_card.render_profile_card, **payload)
+            file = discord.File(fp=io.BytesIO(png), filename="profile.png")
+        await interaction.followup.send(file=file)
+
+    # ────────────────── Команда /xp (action: add | set | clear) ──────────────────
+
+    @app_commands.command(name="xp", description="Изменить количество опыта участника")
+    @app_commands.describe(
+        action="Действие: add / set / clear",
+        member="Участник",
+        amount="Количество XP (нужно для add и set)",
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="add", value="add"),
+            app_commands.Choice(name="set", value="set"),
+            app_commands.Choice(name="clear", value="clear"),
+        ]
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def xp_command(
+        self,
+        interaction: discord.Interaction,
+        action: app_commands.Choice[str],
+        member: discord.Member,
+        amount: int | None = None,
     ):
         lang = i18n.lang_for(interaction.guild_id)
         settings = xp_core.get_settings(interaction.guild.id)
         if not settings["enabled"]:
             return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
-        if участник.bot:
+
+        act = action.value
+        if act != "clear" and member.bot:
             return await interaction.response.send_message(i18n.t("xp.no_bot_xp", lang), ephemeral=True)
+        if act in ("add", "set") and amount is None:
+            return await interaction.response.send_message(i18n.t("xp.error.amount_required", lang), ephemeral=True)
+
         await interaction.response.defer(ephemeral=True)
 
-        await self.set_member_xp(участник, количество)
-        await interaction.followup.send(
-            i18n.t("xp.set.success", lang, mention=участник.mention, amount=количество),
-            ephemeral=True,
-        )
+        if act == "add":
+            row = stats_db.xp_get_member(interaction.guild.id, member.id)
+            current = row["xp"] if row else 0
+            new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, current + int(amount)))
+            await self.set_member_xp(member, new_xp)
+            await interaction.followup.send(
+                i18n.t("xp.add.success", lang, mention=member.mention, current=current, new_xp=new_xp),
+                ephemeral=True,
+            )
+            return
 
-    @xp_group.command(name="clear", description="Обнулить опыт участника")
-    @app_commands.describe(участник="Кому обнулить опыт")
-    async def xp_clear(self, interaction: discord.Interaction, участник: discord.Member):
-        lang = i18n.lang_for(interaction.guild_id)
-        settings = xp_core.get_settings(interaction.guild.id)
-        if not settings["enabled"]:
-            return await interaction.response.send_message(i18n.t("xp.disabled", lang), ephemeral=True)
-        await interaction.response.defer(ephemeral=True)
+        if act == "set":
+            new_xp = min(xp_core.XP_ADMIN_MAX, max(xp_core.XP_ADMIN_MIN, int(amount)))
+            await self.set_member_xp(member, new_xp)
+            await interaction.followup.send(
+                i18n.t("xp.set.success", lang, mention=member.mention, amount=new_xp),
+                ephemeral=True,
+            )
+            return
 
-        await self.reset_member(участник)
+        await self.reset_member(member)
         await interaction.followup.send(
-            i18n.t("xp.clear.success", lang, mention=участник.mention),
+            i18n.t("xp.clear.success", lang, mention=member.mention),
             ephemeral=True,
         )
 

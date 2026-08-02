@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 /** Privacy policy and terms of service (public pages). */
 const legal: TranslationDict = {
   'privacy.title': 'Privacy Policy',
-  'privacy.lastUpdated': 'Last updated: July 24, 2026',
+  'privacy.lastUpdated': 'Last updated: August 2, 2026',
 
   'privacy.s1.title': '1. General provisions',
   'privacy.s1.p1':
@@ -95,12 +95,33 @@ const legal: TranslationDict = {
   'privacy.table.birthdays.retention': 'Until deleted by the member or admins',
   'privacy.table.ownerAlerts.module': 'Owner alerts',
   'privacy.table.ownerAlerts.data':
-    'Alert thresholds and channel ID; no member message content — only operational signals (missing permissions, mass bans, module errors)',
+    'Alert thresholds and channel ID; weekly settings digest summaries; no member message content — only operational signals (missing permissions, mass bans, module errors)',
   'privacy.table.ownerAlerts.retention': 'Settings — until changed',
+  'privacy.table.starboard.module': 'Starboard',
+  'privacy.table.starboard.data': 'Starred message IDs, reaction counts, starboard channel post IDs',
+  'privacy.table.starboard.retention': 'Until removed from starboard or deleted by admins',
+  'privacy.table.autoReactions.module': 'Auto-reactions',
+  'privacy.table.autoReactions.data': 'Emoji and channel scope settings only — no message content stored',
+  'privacy.table.autoReactions.retention': 'Settings — until changed',
+  'privacy.table.quote.module': 'Make it a Quote',
+  'privacy.table.quote.data':
+    'Trigger settings only; quote images are generated on demand and posted to Discord (not archived by the Service)',
+  'privacy.table.quote.retention': 'Settings — until changed',
+  'privacy.table.botProfile.module': 'Bot profile',
+  'privacy.table.botProfile.data': 'Per-guild nick and asset URLs for avatar/banner',
+  'privacy.table.botProfile.retention': 'Until changed or cleared by admins',
+  'privacy.table.stickyRoles.module': 'Sticky roles',
+  'privacy.table.stickyRoles.data': 'Member ID and role IDs remembered on leave for restore on rejoin',
+  'privacy.table.stickyRoles.retention': 'Until restored, expired, or deleted by admins',
   'privacy.table.games.module': 'Mafia and Bunker',
   'privacy.table.games.data':
     'Active game state, participant IDs, roles for the current match; short-lived tokens for personal action links',
   'privacy.table.games.retention': 'Cleared when the game ends (or after a short cleanup window)',
+  'privacy.table.valchecker.module': 'ValChecker (Valorant)',
+  'privacy.table.valchecker.data':
+    'Discord user ID linked to Riot ID (name#tag), region, PUUID, optional match-tracking flag and last match cursor; optional match cache (stats). Channel IDs for match posts and status alerts. Data is fetched from HenrikDev / valorant-api when you use the commands.',
+  'privacy.table.valchecker.retention':
+    'Link and track settings — until you unlink or admins delete; match cache — until cleared; module settings — until changed',
   'privacy.table.news.module': 'News relay (main server feature)',
   'privacy.table.news.data': 'Source server, bot, and channel IDs; forwarded message content is not stored',
   'privacy.table.news.retention': 'Settings — until changed',
@@ -146,6 +167,8 @@ const legal: TranslationDict = {
     '7.2. If admins set a webhook for form buttons, form replies go to the webhook URL they chose (usually a channel on the same Discord server).',
   'privacy.s7.p3':
     '7.3. For stream alerts, the Service calls public Twitch APIs and YouTube RSS feeds. Only streamer logins/IDs chosen by admins are sent; server member data is not shared with those services.',
+  'privacy.s7.p4':
+    '7.4. For ValChecker, the Service calls HenrikDev and valorant-api.com to fetch Valorant profiles, matches, and status. When you use those commands, your linked Riot ID (name#tag), region, and related identifiers are sent to those APIs. Unlink with /val-setup to stop tracking.',
 
   'privacy.s8.title': '8. Retention and deletion',
   'privacy.s8.p1': '8.1. Automatic deletion:',
@@ -157,9 +180,10 @@ const legal: TranslationDict = {
   'privacy.s8.li6': 'dashboard session — when you sign out;',
   'privacy.s8.li7': 'timed roles — when they expire or are cancelled;',
   'privacy.s8.li8': 'finished Mafia/Bunker games — after the match ends (or a short cleanup window).',
+  'privacy.s8.li9': 'ValChecker Riot link — when you unlink in /val-setup or admins clear data.',
   'privacy.s8.p2.label': 'Deletion on request.',
   'privacy.s8.p2.rest':
-    'You can ask to delete data linked to your account (invite stats, applications, participation history, ranking and XP, economy balance, birthday entry). Contact your server\'s admins (or open a ticket on the main server) — admins can reset a member\'s ranking or balance in the dashboard. A server owner may request full deletion of that server\'s data when removing the bot.',
+    'You can ask to delete data linked to your account (invite stats, applications, participation history, ranking and XP, economy balance, birthday entry, ValChecker Riot link). Contact your server\'s admins (or open a ticket on the main server) — admins can reset a member\'s ranking or balance in the dashboard. A server owner may request full deletion of that server\'s data when removing the bot.',
 
   'privacy.s9.title': '9. Your rights',
   'privacy.s9.li1': 'ask what data the Service stores about you (via server admins or a ticket);',
@@ -181,7 +205,7 @@ const legal: TranslationDict = {
     'Questions about data: contact your server\'s admins (or open a ticket on the main server). The Service is operated by Cheterin Group Ø. For bot and hosting questions — Nandak070.',
 
   'terms.title': 'Terms of Use',
-  'terms.lastUpdated': 'Last updated: July 24, 2026',
+  'terms.lastUpdated': 'Last updated: August 2, 2026',
 
   'terms.s1.title': '1. Terms and definitions',
   'terms.s1.li1.prefix': '"Service"',
@@ -221,12 +245,14 @@ const legal: TranslationDict = {
   'terms.s3.title': '3. What the Service provides',
   'terms.s3.p1': '3.1. The Service helps automate Discord servers. Features may include:',
   'terms.s3.li1':
-    'moderation: anti-spam, AutoMod filters, spam traps, lockdown, verification, action log;',
-  'terms.s3.li2': 'levels and ranking: XP for text and voice, reward roles, rank cards, leaderboards;',
+    'moderation: anti-spam, AutoMod filters, spam traps (softban/ban), lockdown, verification, unified action log, case timeline;',
+  'terms.s3.li2':
+    'levels and ranking: XP for text and voice, reward roles, rank/profile cards, cosmetics, leaderboards;',
   'terms.s3.li3': 'server logging and voice activity statistics;',
   'terms.s3.li4': 'tickets and feedback with categories and resolutions;',
-  'terms.s3.li5': 'welcome messages, invite statistics, auto-roles, and reaction roles;',
-  'terms.s3.li6': 'embed builder, templates, and interactive form buttons;',
+  'terms.s3.li5':
+    'welcome messages, invite statistics, auto-roles, sticky roles, reaction roles, starboard, and auto-reactions;',
+  'terms.s3.li6': 'embed builder / Embed Studio, templates, and interactive form buttons;',
   'terms.s3.li7':
     'events, polls, giveaways, and tournament brackets with public links;',
   'terms.s3.li8': 'supply runs with a waitlist and reminders;',
@@ -235,12 +261,17 @@ const legal: TranslationDict = {
   'terms.s3.li11': 'news relay from a source server (main server feature);',
   'terms.s3.li12':
     'economy and casino: server currency, shop, transfers, games, optional weekly report;',
-  'terms.s3.li13': 'fun commands: Russian roulette, Wordle, Auto-Emoji, and similar;',
+  'terms.s3.li13':
+    'fun commands: Russian roulette, Wordle, Auto-Emoji, Make it a Quote, and similar;',
   'terms.s3.li14': 'custom commands, scheduled and sticky messages;',
-  'terms.s3.li15': 'timed roles, birthday calendar, and owner alerts;',
-  'terms.s3.li16': 'Mafia and Bunker games with personal web action links;',
+  'terms.s3.li15':
+    'timed roles, birthday calendar, per-guild bot profile, and owner alerts (including weekly settings digest);',
+  'terms.s3.li16': 'Mafia and Bunker games with personal web action links and host controls;',
+  'terms.s3.li16b':
+    'ValChecker: Valorant account link, profiles, match history/tracking, compare, server leaderboard, and status alerts (uses HenrikDev / valorant-api);',
+  'terms.s3.li16c': 'member /help command with short paginated feature overview;',
   'terms.s3.li17':
-    'a web dashboard to manage the above, with server selection, RU/EN bot language per server, and an audit of panel actions.',
+    'a web dashboard to manage the above, with server selection, RU/EN UI and bot language, Ctrl+K navigation, and an audit of panel actions.',
   'terms.s3.p2':
     '3.2. You can invite the bot to your server, then pick that server in the dashboard and configure modules independently of other servers. Modules start disabled on a new server.',
   'terms.s3.p3':

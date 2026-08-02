@@ -1,8 +1,10 @@
 import discord
 from aiohttp import web
 
+import embed_style
 import i18n
 import lockdown_core
+import moderation_embed_core
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()
@@ -10,21 +12,24 @@ routes = web.RouteTableDef()
 
 async def _log(bot, guild_id: int, title_key: str, color, moderator, lines: dict, errors: list[str] | None = None):
     lang = i18n.lang_for(guild_id)
-    embed = discord.Embed(title=i18n.t(title_key, lang), color=color, timestamp=bot.utcnow())
-    embed.add_field(
-        name=i18n.t("lockdown.dashboard.who", lang),
-        value=f"{moderator.name} (`{moderator.id}`)",
-        inline=False,
-    )
-    for name_key, value in lines.items():
-        embed.add_field(name=i18n.t(name_key, lang), value=value, inline=True)
+    guild = bot.get_guild(guild_id)
+    extra_parts = [f"{i18n.t(name_key, lang)}: {value}" for name_key, value in lines.items()]
     if errors:
-        embed.add_field(
-            name=i18n.t("lockdown.dashboard.errors", lang),
-            value="\n".join(errors[:10]),
-            inline=False,
+        extra_parts.append(
+            f"{i18n.t('lockdown.dashboard.errors', lang)}:\n" + "\n".join(errors[:10])
         )
-    embed.set_footer(text=i18n.t("lockdown.dashboard.footer", lang))
+    embed = moderation_embed_core.build_user_action_embed(
+        lang,
+        title=i18n.t(title_key, lang),
+        actor=moderator,
+        target_name=guild.name if guild else str(guild_id),
+        target_id=guild_id,
+        reason="",
+        extra="\n".join(extra_parts),
+        color=color,
+        footer_key="lockdown.dashboard.footer",
+        timestamp=bot.utcnow(),
+    )
     await bot.send_log(guild_id, embed)
 
 
@@ -53,7 +58,7 @@ async def lockdown_activate(request: web.Request) -> web.Response:
         request.app["bot"],
         request["guild_id"],
         "lockdown.dashboard.activate_title",
-        discord.Color.red(),
+        embed_style.DANGER,
         request["moderator"],
         {"lockdown.dashboard.roles_modified": str(modified_count)},
         errors=errors if errors else None,
@@ -78,7 +83,7 @@ async def lockdown_deactivate(request: web.Request) -> web.Response:
         request.app["bot"],
         request["guild_id"],
         "lockdown.dashboard.deactivate_title",
-        discord.Color.green(),
+        embed_style.SUCCESS,
         request["moderator"],
         {"lockdown.dashboard.roles_restored": str(restored_count)},
         errors=errors if errors else None,

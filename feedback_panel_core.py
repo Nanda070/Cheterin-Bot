@@ -37,7 +37,7 @@ def default_panel_embed_spec(lang: str, guild_id: int) -> dict:
     return {
         "title": "",
         "description": i18n.t("feedback.panel.description", lang),
-        "color": "#2C2F33",
+        "color": "#D44556",
         "author": {"name": "", "url": "", "icon_url": ""},
         "footer": {"text": "", "icon_url": ""},
         "image": {"url": resolve_banner_url(guild_id)},

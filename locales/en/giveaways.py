@@ -22,6 +22,8 @@ MESSAGES: dict[str, str] = {
     "giveaways.start.prize": "What is being given away",
     "giveaways.start.duration": "Duration (e.g. 10m, 2h, 1d)",
     "giveaways.start.winners": "How many winners to pick",
+    "giveaways.error.start_args": "For start, provide prize and duration.",
+    "giveaways.error.id_required": "For end / reroll, provide giveaway_id.",
     "giveaways.started": "Giveaway #{id} started.",
     "giveaways.duration_error": "Use format: number + unit (s/m/h/d), e.g. 10m, 2h, 1d.",
     "giveaways.winners_announce": "🎉 Congrats {mentions} — you won **{prize}**!",

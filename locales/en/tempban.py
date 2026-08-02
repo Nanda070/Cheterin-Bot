@@ -1,7 +1,7 @@
 MESSAGES: dict[str, str] = {
     "tempban.reason": "Automatic Tempban (purge messages from last 20 min.)",
     "tempban.recovery_unban_reason": "Auto-unban after restart (Tempban recovery)",
-    "tempban.dm_message": 'You were removed from "404 : Server Not Found" for posting in a channel where you should not write. Server link: https://discord.gg/cheterin',
+    "tempban.dm_message": 'You were removed from "{guild}" for posting in a channel where you should not write. Server link: {invite}',
     "tempban.dm_success": "✅ Sent",
     "tempban.dm_failed": "❌ Failed (DMs closed)",
     "tempban.dm_disabled": "⏭ DM disabled in settings",
@@ -22,5 +22,16 @@ MESSAGES: dict[str, str] = {
     "tempban.embed.unban_error": "⚠️ Unban error",
     "tempban.embed.unban_error_value": "{error}\n> User may remain on the ban list!",
     "tempban.embed.footer": "User kicked (messages from last 20 minutes deleted).",
+    "tempban.embed.permanent": "Permanent (no unban)",
     "tempban.log_extra": "Channel: {channel}; unban: {status}",
+    "tempban.action_label.softban": "ban + immediate unban (message purge)",
+    "tempban.action_label.ban": "permanent ban",
+    "tempban.action_label.disabled": "disabled",
+    "tempban.warning_title": "⚠️ Do not write here",
+    "tempban.warning_default": (
+        "⚠️ Do not write here\n\n"
+        "This channel is a spam trap. Posting here will result in a {action}.\n"
+        "Server: {guild}"
+    ),
+    "tempban.warning_footer": "Bans: {count}",
 }

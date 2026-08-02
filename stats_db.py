@@ -317,6 +317,15 @@ def audit_list(
         return conn.execute(query, params).fetchall()
 
 
+def audit_list_since(guild_id: int, since_ts: int) -> list:
+    """All audit rows for a guild since `since_ts` (unpaginated) — used by the weekly digest."""
+    with closing(connect()) as conn:
+        return conn.execute(
+            "SELECT * FROM audit_log WHERE guild_id = ? AND ts >= ? ORDER BY ts DESC",
+            (guild_id, since_ts),
+        ).fetchall()
+
+
 def audit_count(guild_id: int, moderator_id: int | None = None, search: str | None = None) -> int:
     query = "SELECT COUNT(*) AS c FROM audit_log WHERE guild_id = ?"
     params: list = [guild_id]

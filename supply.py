@@ -13,6 +13,7 @@ from discord import app_commands
 from discord.ext import commands
 
 import bot_config
+import embed_style
 import i18n
 import slash_registry
 import supply_core
@@ -62,15 +63,15 @@ def generate_embed(supply: dict, lang: str) -> discord.Embed:
     is_closed = supply["status"] != "active"
 
     if supply["status"] == "cancelled":
-        color = 0x2B2D31
+        color = embed_style.NEUTRAL_INT
         title = i18n.t("supply.embed.cancelled_title", lang)
         timer_text = i18n.t("supply.embed.cancelled_timer", lang)
     elif is_closed:
-        color = 0x2B2D31
+        color = embed_style.NEUTRAL_INT
         title = i18n.t("supply.embed.closed_title", lang)
         timer_text = i18n.t("supply.embed.expired_timer", lang)
     else:
-        color = 0x5865F2
+        color = embed_style.INFO_INT
         title = i18n.t("supply.embed.active_title", lang)
         timer_text = f"<t:{unix_time}:R>"
 
@@ -210,7 +211,7 @@ class SupplyView(discord.ui.View):
                     initiator=supply["initiator_id"],
                     count=len(supply["reserve"]),
                 ),
-                discord.Color.gold(),
+                embed_style.GOLD,
             )
         else:
             await send_dev_log(
@@ -225,7 +226,7 @@ class SupplyView(discord.ui.View):
                     current=len(supply["participants"]),
                     limit=supply["limit"],
                 ),
-                discord.Color.green(),
+                embed_style.SUCCESS,
             )
 
     @discord.ui.button(label="Withdraw", style=discord.ButtonStyle.red, custom_id="supply:leave")
@@ -262,7 +263,7 @@ class SupplyView(discord.ui.View):
                 current=len(supply["participants"]),
                 limit=supply["limit"],
             ),
-            discord.Color.red(),
+            embed_style.DANGER,
         )
 
         if promoted:
@@ -288,7 +289,7 @@ class SupplyView(discord.ui.View):
                     user=promoted,
                     initiator=supply["initiator_id"],
                 ),
-                discord.Color.green(),
+                embed_style.SUCCESS,
             )
 
     @discord.ui.button(label="Close signup", style=discord.ButtonStyle.grey, custom_id="supply:close")
@@ -352,7 +353,7 @@ class SupplyCog(commands.Cog):
                     guild.id,
                     i18n.t("supply.log.recovery", lang),
                     i18n.t("supply.log.recovery_body", lang, count=recovered),
-                    discord.Color.blue(),
+                    embed_style.INFO,
                 )
 
     async def _refresh_supply_message_labels(self, guild_id: int, supply: dict, lang: str) -> None:
@@ -448,7 +449,7 @@ class SupplyCog(commands.Cog):
             guild_id,
             i18n.t("supply.log.reminder", lang),
             i18n.t("supply.log.reminder_body", lang, initiator=supply["initiator_id"]),
-            discord.Color.blue(),
+            embed_style.INFO,
         )
 
     async def finalize_supply(
@@ -506,7 +507,7 @@ class SupplyCog(commands.Cog):
                     reason=reason,
                     count=len(supply["participants"]),
                 ),
-                discord.Color.gold(),
+                embed_style.GOLD,
             )
         except discord.HTTPException as e:
             await send_dev_log(
@@ -519,7 +520,7 @@ class SupplyCog(commands.Cog):
                     initiator=supply["initiator_id"],
                     error=e,
                 ),
-                discord.Color.dark_theme(),
+                embed_style.NEUTRAL,
             )
         return True
 
@@ -565,7 +566,7 @@ class SupplyCog(commands.Cog):
                 limit=limit,
                 time=time_str,
             ),
-            discord.Color.blue(),
+            embed_style.INFO,
         )
         return supply
 
@@ -585,7 +586,7 @@ class SupplyCog(commands.Cog):
                 interaction.guild_id,
                 i18n.t("supply.log.timeout", lang),
                 i18n.t("supply.log.timeout_body", lang, user=interaction.user.id),
-                discord.Color.dark_theme(),
+                embed_style.NEUTRAL,
             )
             return
 
@@ -595,7 +596,7 @@ class SupplyCog(commands.Cog):
                 interaction.guild_id,
                 i18n.t("supply.log.validation", lang),
                 i18n.t("supply.log.validation_time", lang, user=interaction.user.id, time=время),
-                discord.Color.red(),
+                embed_style.DANGER,
             )
             return await interaction.followup.send(
                 i18n.t("supply.error.time_format", lang), ephemeral=True,
@@ -619,7 +620,7 @@ class SupplyCog(commands.Cog):
                 interaction.guild_id,
                 i18n.t("supply.log.critical", lang),
                 i18n.t("supply.log.critical_body", lang, error=str(e)),
-                discord.Color.dark_red(),
+                embed_style.DANGER,
             )
 
 

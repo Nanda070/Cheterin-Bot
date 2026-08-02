@@ -1,5 +1,7 @@
+import discord
 from aiohttp import web
 
+import verification
 import verification_core
 
 from ..access_middleware import require_dashboard_access
@@ -61,3 +63,51 @@ async def verification_put(request: web.Request) -> web.Response:
         **values,
     })
     return web.json_response(verification_core.get_settings(guild_id))
+
+
+@routes.post("/api/verification/publish")
+@require_dashboard_access
+async def verification_publish(request: web.Request) -> web.Response:
+    bot = request.app["bot"]
+    guild_id = request["guild_id"]
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    settings = verification_core.get_settings(guild_id)
+    if not settings["enabled"]:
+        return web.json_response({"error": "module_disabled"}, status=409)
+    if not verification_core.is_configured(settings):
+        return web.json_response({"error": "not_configured"}, status=409)
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    channel_id_raw = body.get("channel_id")
+    if not isinstance(channel_id_raw, str) or not channel_id_raw:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    try:
+        channel_id = int(channel_id_raw)
+    except (TypeError, ValueError):
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    channel = guild.get_channel(channel_id)
+    if channel is None:
+        return web.json_response({"error": "channel_not_found"}, status=404)
+    if not hasattr(channel, "send"):
+        return web.json_response({"error": "channel_not_messageable"}, status=400)
+
+    try:
+        message = await verification.publish_verification_panel(bot, channel)
+    except discord.Forbidden:
+        return web.json_response({"error": "forbidden_by_discord"}, status=403)
+    except discord.HTTPException:
+        return web.json_response({"error": "publish_failed"}, status=502)
+    except Exception:
+        return web.json_response({"error": "publish_failed"}, status=500)
+
+    return web.json_response({"ok": True, "message_id": str(message.id)})

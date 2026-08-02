@@ -1,4 +1,4 @@
-﻿import { CalendarCheck, ChartBar, Gift, Trophy } from '@phosphor-icons/react'
+import { CalendarCheck, ChartBar, Gift, Trophy } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
@@ -394,6 +394,7 @@ export function EventsPage() {
                 value={createSpec.role_reward ?? ''}
                 onChange={(id) => setCreateSpec((prev) => ({ ...prev, role_reward: id || null }))}
                 options={roles}
+                kind="role"
                 placeholder={t('events.noRole')}
               />
             </>

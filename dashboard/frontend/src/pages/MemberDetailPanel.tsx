@@ -1,15 +1,19 @@
-import { Trash, Warning, X } from '@phosphor-icons/react'
+import { ClockCounterClockwise, Trash, Warning, X } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import {
   banMember,
   createMemberWarn,
   deleteWarn,
+  fetchCaseTimeline,
   fetchMemberDetail,
   fetchMemberWarns,
   fetchRoles,
   grantRole,
   kickMember,
   revokeRole,
+  timeoutMember,
+  type CaseTimeline,
+  type CaseTimelineItem,
   type MemberDetail,
   type RoleInfo,
   type Warn,
@@ -22,12 +26,30 @@ import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { useLanguage, useT } from '../context/LanguageContext'
 
-type PendingAction = 'ban' | 'kick' | 'warn' | null
+type PendingAction = 'ban' | 'kick' | 'warn' | 'timeout' | null
 
 interface Props {
   memberId: string
   onClose: () => void
   onActionDone: () => void
+}
+
+function kindDotClass(kind: string): string {
+  if (kind.includes('unban') || kind.includes('unmute')) return 'bg-emerald-500'
+  if (kind.includes('ban') || kind === 'tempban') return 'bg-danger'
+  if (kind.includes('kick')) return 'bg-orange-500'
+  if (kind.includes('mute')) return 'bg-yellow-400'
+  if (kind.startsWith('warn')) return 'bg-amber-500'
+  if (kind.startsWith('automod') || kind === 'spam_punish' || kind === 'antiraid_trigger') {
+    return 'bg-primary'
+  }
+  return 'bg-muted'
+}
+
+function kindLabel(kind: string, t: (key: string, params?: Record<string, string | number>) => string): string {
+  const key = `members.caseTimeline.kind.${kind}`
+  const translated = t(key)
+  return translated === key ? kind : translated
 }
 
 export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
@@ -39,12 +61,14 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
   const [pending, setPending] = useState<PendingAction>(null)
   const [reason, setReason] = useState('')
   const [deleteDays, setDeleteDays] = useState<0 | 1 | 7>(0)
+  const [timeoutDuration, setTimeoutDuration] = useState('1h')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const [warns, setWarns] = useState<Warn[]>([])
   const [activeWarnCount, setActiveWarnCount] = useState(0)
   const [warnBusy, setWarnBusy] = useState(false)
+  const [timeline, setTimeline] = useState<CaseTimeline | null>(null)
 
   const deleteMessageOptions = useMemo(
     () => [
@@ -72,6 +96,13 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
         setActiveWarnCount(data.active_count)
       })
       .catch(() => {})
+    reloadTimeline()
+  }
+
+  const reloadTimeline = () => {
+    fetchCaseTimeline(memberId)
+      .then(setTimeline)
+      .catch(() => setTimeline(null))
   }
 
   useEffect(reload, [memberId, t])
@@ -81,11 +112,19 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       setError(t('members.detail.reasonRequired'))
       return
     }
+    if (pending === 'timeout' && !timeoutDuration.trim()) {
+      setError(t('members.detail.durationRequired'))
+      return
+    }
     setBusy(true)
     setError('')
     try {
       if (pending === 'ban') await banMember(memberId, reason.trim(), deleteDays)
       if (pending === 'kick') await kickMember(memberId, reason.trim())
+      if (pending === 'timeout') {
+        await timeoutMember(memberId, reason.trim(), timeoutDuration.trim())
+        reloadTimeline()
+      }
       if (pending === 'warn') {
         await createMemberWarn(memberId, reason.trim())
         reloadWarns()
@@ -93,7 +132,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       setPending(null)
       setReason('')
       onActionDone()
-      if (pending !== 'warn') onClose()
+      if (pending !== 'warn' && pending !== 'timeout') onClose()
     } catch {
       setError(t('members.detail.discordRejected'))
     } finally {
@@ -142,7 +181,9 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       ? t('members.detail.banTitle', { name: detail.display_name })
       : pending === 'kick'
         ? t('members.detail.kickTitle', { name: detail.display_name })
-        : t('members.detail.warnTitle', { name: detail.display_name })
+        : pending === 'timeout'
+          ? t('members.detail.timeoutTitle', { name: detail.display_name })
+          : t('members.detail.warnTitle', { name: detail.display_name })
 
   return (
     <Card className="animate-fade-in-up flex flex-col gap-4">
@@ -246,15 +287,29 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
         </div>
       )}
 
+      {!detail.is_bot && (
+        <CaseTimelineSection
+          timeline={timeline}
+          dateLocale={dateLocale}
+          t={t}
+          onWarn={() => setPending('warn')}
+          onTimeout={() => setPending('timeout')}
+          busy={busy}
+        />
+      )}
+
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {!detail.is_bot && (
-        <div className="flex gap-2 border-t border-border pt-4">
+        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button variant="danger" onClick={() => setPending('ban')} disabled={busy}>
             {t('members.detail.ban')}
           </Button>
           <Button variant="secondary" onClick={() => setPending('kick')} disabled={busy}>
             {t('members.detail.kick')}
+          </Button>
+          <Button variant="secondary" onClick={() => setPending('timeout')} disabled={busy}>
+            {t('members.detail.timeout')}
           </Button>
           <Button variant="secondary" onClick={() => setPending('warn')} disabled={busy}>
             {t('members.detail.warn')}
@@ -287,17 +342,133 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
               />
             </>
           )}
+          {pending === 'timeout' && (
+            <>
+              <label className="text-sm text-muted" htmlFor="mod-timeout-duration">
+                {t('members.detail.timeoutDuration')}
+              </label>
+              <input
+                id="mod-timeout-duration"
+                value={timeoutDuration}
+                onChange={(e) => setTimeoutDuration(e.target.value)}
+                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                placeholder={t('members.detail.timeoutDurationPlaceholder')}
+              />
+              <p className="text-xs text-muted">{t('members.detail.timeoutDurationHint')}</p>
+            </>
+          )}
           {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setPending(null)} disabled={busy}>
               {t('common.cancel')}
             </Button>
-            <Button variant={pending === 'warn' ? 'primary' : 'danger'} onClick={confirmAction} disabled={busy}>
+            <Button
+              variant={pending === 'warn' || pending === 'timeout' ? 'primary' : 'danger'}
+              onClick={confirmAction}
+              disabled={busy}
+            >
               {busy ? t('common.confirming') : t('common.confirm')}
             </Button>
           </div>
         </div>
       </Modal>
     </Card>
+  )
+}
+
+function CaseTimelineSection({
+  timeline,
+  dateLocale,
+  t,
+  onWarn,
+  onTimeout,
+  busy,
+}: {
+  timeline: CaseTimeline | null
+  dateLocale: string
+  t: (key: string, params?: Record<string, string | number>) => string
+  onWarn: () => void
+  onTimeout: () => void
+  busy: boolean
+}) {
+  const headerUser = timeline?.user
+  const items: CaseTimelineItem[] = timeline?.items ?? []
+
+  return (
+    <div className="rounded-card border border-border bg-background/40 p-3">
+      <div className="mb-3 flex items-center gap-3">
+        {headerUser?.avatar ? (
+          <img src={headerUser.avatar} alt="" className="h-9 w-9 rounded-full" />
+        ) : (
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-muted">
+            <ClockCounterClockwise size={16} />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <ClockCounterClockwise size={14} className="text-primary" />
+            {t('members.caseTimeline.title')}
+          </h3>
+          {headerUser && (
+            <p className="truncate text-xs text-muted">
+              {headerUser.display_name} · {headerUser.id}
+              {timeline && !timeline.in_guild && (
+                <span className="ml-1.5 text-amber-500">({t('members.caseTimeline.notInGuild')})</span>
+              )}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 gap-1.5">
+          <Button variant="secondary" onClick={onWarn} disabled={busy}>
+            {t('members.detail.warn')}
+          </Button>
+          <Button variant="secondary" onClick={onTimeout} disabled={busy}>
+            {t('members.detail.timeout')}
+          </Button>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-sm text-muted">{t('members.caseTimeline.empty')}</p>
+      ) : (
+        <ol className="relative flex flex-col gap-0 border-l border-border pl-4">
+          {items.map((item) => {
+            const removed = Boolean(item.meta?.removed)
+            const modLabel = item.moderator_display
+              ? t('members.caseTimeline.byModerator', { name: item.moderator_display })
+              : item.moderator_id
+                ? t('members.caseTimeline.byModerator', { name: item.moderator_id })
+                : t('members.caseTimeline.automatic')
+            return (
+              <li key={item.id} className="relative pb-3 last:pb-0">
+                <span
+                  className={`absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-background ${kindDotClass(item.kind)}`}
+                />
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-xs font-medium text-foreground">{kindLabel(item.kind, t)}</span>
+                  {item.timestamp && (
+                    <time className="text-[11px] text-muted">
+                      {new Date(item.timestamp).toLocaleString(dateLocale)}
+                    </time>
+                  )}
+                  {removed && (
+                    <span className="text-[11px] text-muted">· {t('members.caseTimeline.removed')}</span>
+                  )}
+                </div>
+                {item.reason && (
+                  <p className={`mt-0.5 text-xs ${removed ? 'text-muted line-through' : 'text-foreground'}`}>
+                    {item.reason}
+                  </p>
+                )}
+                <p className="mt-0.5 text-[11px] text-muted">
+                  {modLabel}
+                  {item.extra ? ` · ${item.extra}` : ''}
+                </p>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+    </div>
   )
 }

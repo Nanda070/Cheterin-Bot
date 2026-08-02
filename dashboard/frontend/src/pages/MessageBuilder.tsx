@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 import { ReactionRolesPage } from './ReactionRoles'
@@ -6,9 +6,18 @@ import { EmbedBuilderPage } from './EmbedBuilder'
 
 type Tab = 'reaction-roles' | 'embeds' | 'settings'
 
+function parseTab(value: string | null): Tab {
+  return value === 'embeds' || value === 'settings' ? value : 'reaction-roles'
+}
+
 export function MessageBuilderPage() {
   const t = useT()
-  const [tab, setTab] = useState<Tab>('reaction-roles')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseTab(searchParams.get('tab'))
+  const setTab = (next: Tab) => {
+    if (next === 'reaction-roles') setSearchParams({}, { replace: true })
+    else setSearchParams({ tab: next }, { replace: true })
+  }
 
   return (
     <div>

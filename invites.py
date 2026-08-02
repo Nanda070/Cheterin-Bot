@@ -5,6 +5,7 @@ import logging
 import discord
 from discord.ext import commands
 
+import embed_style
 import i18n
 import invites_core
 import invites_db
@@ -111,7 +112,7 @@ class InvitesCog(commands.Cog):
                 code=used_code or "—",
                 invites=total,
             ),
-            color=discord.Color.blurple(),
+            color=embed_style.INFO,
             timestamp=discord.utils.utcnow(),
         )
         try:

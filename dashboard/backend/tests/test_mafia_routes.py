@@ -145,3 +145,167 @@ async def test_games_list_filters_by_guild(aiohttp_client):
     ids = {g["id"] for g in (await resp.json())["games"]}
     assert ours["id"] in ids
     assert foreign["id"] not in ids
+
+
+# ────────────────────────── Управление ведущего ──────────────────────────
+
+class _FakeMafiaCog:
+    def __init__(self):
+        self.advance_calls = []
+        self.end_calls = []
+        self.advance_returns = True
+        self.end_returns = True
+
+    async def force_advance_phase(self, game_id):
+        self.advance_calls.append(game_id)
+        return self.advance_returns
+
+    async def force_end_game(self, game_id):
+        self.end_calls.append(game_id)
+        return self.end_returns
+
+
+@pytest.mark.asyncio
+async def test_game_detail_includes_roster_and_events(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    player = FakeMember(20, name="player20")
+    guild.members.append(player)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    mafia_db.add_player(game["id"], 20)
+    mafia_db.assign_player_role(game["id"], 20, "citizen", "tok-20")
+    mafia_db.update_game(game["id"], status="active", phase="night", round_number=1)
+    mafia_db.add_round_event(game["id"], 1, "game_started", "started")
+
+    resp = await client.get(f"/api/mafia/games/{game['id']}")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["game"]["id"] == game["id"]
+    assert len(body["players"]) == 1
+    assert body["players"][0]["display_name"] == "player20"
+    assert body["players"][0]["role"] == "citizen"
+    assert body["players"][0]["action_submitted"] is False
+    assert len(body["events"]) == 1
+    assert body["events"][0]["event_type"] == "game_started"
+
+
+@pytest.mark.asyncio
+async def test_game_detail_marks_night_action_submitted(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    mafia_db.add_player(game["id"], 20)
+    mafia_db.assign_player_role(game["id"], 20, "mafia", "tok-20")
+    mafia_db.update_game(game["id"], status="active", phase="night", round_number=1)
+    mafia_db.upsert_night_action(game["id"], 1, 20, "mafia", None)
+
+    resp = await client.get(f"/api/mafia/games/{game['id']}")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["players"][0]["action_submitted"] is True
+
+
+@pytest.mark.asyncio
+async def test_game_detail_rejects_other_guild(aiohttp_client):
+    _, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = mafia_db.create_game(999, 600, 10, 5, 20, 60, 120, 60)
+    resp = await client.get(f"/api/mafia/games/{foreign['id']}")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_game_detail_not_found(aiohttp_client):
+    _, _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+    resp = await client.get("/api/mafia/games/999")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_calls_cog(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeMafiaCog()
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{game['id']}/advance-phase")
+    assert resp.status == 200
+    assert cog.advance_calls == [game["id"]]
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_rejects_other_guild(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeMafiaCog()
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = mafia_db.create_game(999, 600, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{foreign['id']}/advance-phase")
+    assert resp.status == 404
+    assert cog.advance_calls == []
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_returns_409_when_game_not_active(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeMafiaCog()
+    cog.advance_returns = False
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{game['id']}/advance-phase")
+    assert resp.status == 409
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_service_unavailable_without_cog(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{game['id']}/advance-phase")
+    assert resp.status == 503
+
+
+@pytest.mark.asyncio
+async def test_end_game_calls_cog(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeMafiaCog()
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = mafia_db.create_game(guild.id, 500, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{game['id']}/end")
+    assert resp.status == 200
+    assert cog.end_calls == [game["id"]]
+
+
+@pytest.mark.asyncio
+async def test_end_game_rejects_other_guild(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeMafiaCog()
+    bot.get_cog = lambda name: cog if name == "MafiaCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = mafia_db.create_game(999, 600, 10, 5, 20, 60, 120, 60)
+    resp = await client.post(f"/api/mafia/games/{foreign['id']}/end")
+    assert resp.status == 404
+    assert cog.end_calls == []

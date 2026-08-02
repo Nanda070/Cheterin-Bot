@@ -30,7 +30,7 @@ export function CommandPreviewPage({ embedded = false }: { embedded?: boolean })
       } = {}
       if (content.trim()) payload.content = content
       if (useEmbed) {
-        payload.embed = { title: embedTitle, description: embedDesc, color: '#5865F2' }
+        payload.embed = { title: embedTitle, description: embedDesc, color: '#D44556' }
       }
       setResult(await previewTemplate(payload))
     } catch (err) {

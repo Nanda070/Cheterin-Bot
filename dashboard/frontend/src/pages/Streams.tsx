@@ -190,6 +190,7 @@ export function StreamsPage() {
                     value={sub.ping_role_id}
                     onChange={(id) => patchSub(sub.id, { ping_role_id: id })}
                     options={roles}
+                    kind="role"
                     placeholder={t('streams.noPing')}
                   />
                 </div>

@@ -86,6 +86,7 @@ export function CtdPage() {
             value={config.CTD_ROLE_ID}
             onChange={(id) => setField('CTD_ROLE_ID', id)}
             options={roles}
+            kind="role"
             placeholder={t('common.notSet')}
           />
         </div>

@@ -1,4 +1,13 @@
-import { ArrowSquareOut, DiscordLogo, GithubLogo, Sparkle } from '@phosphor-icons/react'
+import {
+  ArrowSquareOut,
+  DiscordLogo,
+  EnvelopeSimple,
+  GithubLogo,
+  Globe,
+  Phone,
+  Sparkle,
+  TelegramLogo,
+} from '@phosphor-icons/react'
 import type { CSSProperties, ReactNode } from 'react'
 import { PublicLayout } from '../components/PublicLayout'
 import { useLanguage } from '../context/LanguageContext'
@@ -8,6 +17,9 @@ const GITHUB_PROFILE = 'https://github.com/nanda070'
 const GITHUB_ORG = 'https://github.com/orgs/ChetTeam'
 const TELEGRAM_NANDA = 'https://t.me/nanda070'
 const SERVER_BANNER = '/credits/404-banner.png'
+const NANDA_EMAIL = 'adnan.huseynli1@gmail.com'
+const NANDA_PHONE = '+41-77-259-9608'
+const NANDA_DISCORD = 'nandak070'
 
 const SERVER_OVERLAY: CSSProperties = {
   background:
@@ -25,7 +37,7 @@ const TEAM: TeamMember[] = [
   {
     nameKey: 'credits.team.nanda.name',
     roleKey: 'credits.team.nanda.role',
-    discord: 'nandak070',
+    discord: NANDA_DISCORD,
     telegram: TELEGRAM_NANDA,
   },
   {
@@ -44,6 +56,7 @@ type Project = {
   titleKey: string
   bodyKey: string
   href: string
+  kind: 'github' | 'web'
 }
 
 const ASTRA_PROJECTS: Project[] = [
@@ -51,16 +64,19 @@ const ASTRA_PROJECTS: Project[] = [
     titleKey: 'credits.projects.astrabuild.title',
     bodyKey: 'credits.projects.astrabuild.body',
     href: 'https://github.com/Nanda070/AstraBuild',
+    kind: 'github',
   },
   {
     titleKey: 'credits.projects.astraop.title',
     bodyKey: 'credits.projects.astraop.body',
     href: 'https://github.com/Nanda070/AstraOP',
+    kind: 'github',
   },
   {
     titleKey: 'credits.projects.astraip.title',
     bodyKey: 'credits.projects.astraip.body',
     href: 'https://github.com/Nanda070/AstraIP',
+    kind: 'github',
   },
 ]
 
@@ -69,11 +85,37 @@ const OTHER_PROJECTS: Project[] = [
     titleKey: 'credits.projects.rpstate.title',
     bodyKey: 'credits.projects.rpstate.body',
     href: 'https://github.com/Nanda070/RP-State',
+    kind: 'github',
   },
   {
     titleKey: 'credits.projects.idus.title',
     bodyKey: 'credits.projects.idus.body',
     href: 'https://github.com/Nanda070/IDUS',
+    kind: 'github',
+  },
+  {
+    titleKey: 'credits.projects.nandaSite.title',
+    bodyKey: 'credits.projects.nandaSite.body',
+    href: 'https://nanda070.github.io/nanda.com/',
+    kind: 'web',
+  },
+  {
+    titleKey: 'credits.projects.yanPro.title',
+    bodyKey: 'credits.projects.yanPro.body',
+    href: 'https://yan-pro.shop/',
+    kind: 'web',
+  },
+  {
+    titleKey: 'credits.projects.sorfa.title',
+    bodyKey: 'credits.projects.sorfa.body',
+    href: 'https://sorfa.vercel.app/',
+    kind: 'web',
+  },
+  {
+    titleKey: 'credits.projects.pepegaGo.title',
+    bodyKey: 'credits.projects.pepegaGo.body',
+    href: 'https://github.com/Nanda070/PepegaGo',
+    kind: 'github',
   },
 ]
 
@@ -108,29 +150,39 @@ function ExtLink(props: {
   )
 }
 
-function ProjectCard(props: { project: Project; t: (key: string) => string; delayMs: number }) {
+function ProjectRow(props: { project: Project; t: (key: string) => string; delayMs: number }) {
   const { project, t, delayMs } = props
+  const Icon = project.kind === 'web' ? Globe : GithubLogo
   return (
-    <ExtLink
-      href={project.href}
-      className="group animate-fade-in-up flex flex-col rounded-card border border-border bg-surface p-5 transition-colors hover:border-primary/40 hover:bg-surface-hover"
+    <li
+      className="animate-fade-in-up border-b border-border/70 last:border-b-0"
       style={{ animationDelay: `${delayMs}ms` }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-semibold text-foreground">{t(project.titleKey)}</h3>
-        <GithubLogo
-          size={18}
-          weight="fill"
-          className="mt-0.5 shrink-0 text-muted transition-colors group-hover:text-primary"
-          aria-hidden
-        />
-      </div>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{t(project.bodyKey)}</p>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary opacity-90 transition-opacity group-hover:opacity-100">
-        {t('credits.projects.openRepo')}
-        <ArrowSquareOut size={14} aria-hidden />
-      </span>
-    </ExtLink>
+      <ExtLink
+        href={project.href}
+        className="group flex items-start gap-4 py-4 transition-colors hover:bg-white/[0.02] sm:gap-5"
+      >
+        <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon size={18} weight="fill" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-base font-semibold text-foreground group-hover:text-primary">
+              {t(project.titleKey)}
+            </h3>
+            <ArrowSquareOut
+              size={16}
+              className="shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+              aria-hidden
+            />
+          </div>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t(project.bodyKey)}</p>
+          <span className="mt-2 inline-block text-xs font-medium text-primary/90">
+            {project.kind === 'web' ? t('credits.projects.openSite') : t('credits.projects.openRepo')}
+          </span>
+        </div>
+      </ExtLink>
+    </li>
   )
 }
 
@@ -140,7 +192,6 @@ export function CreditsPage() {
   return (
     <PublicLayout>
       <article key={`${lang}-credits`} className="mx-auto max-w-3xl">
-        {/* Hero — one composition, no cards */}
         <header className="landing-hero-in relative overflow-hidden rounded-card border border-border">
           <div
             className="pointer-events-none absolute inset-0 opacity-90"
@@ -180,7 +231,6 @@ export function CreditsPage() {
           </div>
         </header>
 
-        {/* History */}
         <section className="landing-section-in mt-14">
           <SectionHeading title={t('credits.history.title')} />
           <div className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted sm:text-base">
@@ -189,7 +239,6 @@ export function CreditsPage() {
           </div>
         </section>
 
-        {/* Home server — first-style card + Pepe banner BG */}
         <section className="landing-section-in mt-14">
           <div className="relative overflow-hidden rounded-card border border-border">
             <div
@@ -223,29 +272,37 @@ export function CreditsPage() {
           </div>
         </section>
 
-        {/* Team */}
+        {/* Team — stacked rows, no cards */}
         <section className="mt-14">
           <SectionHeading title={t('credits.team.title')} />
-          <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+          <ul className="mt-8 divide-y divide-border/80 border-y border-border/80">
             {TEAM.map((member, index) => (
               <li
                 key={member.nameKey}
-                className="animate-fade-in-up flex flex-col rounded-card border border-border bg-surface p-5"
+                className="animate-fade-in-up flex flex-col gap-3 py-6 sm:flex-row sm:items-end sm:justify-between"
                 style={{ animationDelay: `${index * 70}ms` }}
               >
-                <p className="text-xs font-medium uppercase tracking-[0.1em] text-primary">
-                  {t(member.roleKey)}
-                </p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{t(member.nameKey)}</p>
-                <div className="mt-3 flex flex-col gap-1.5 text-sm text-muted">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-primary/90">
+                    {t(member.roleKey)}
+                  </p>
+                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                    {t(member.nameKey)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
                   {member.discord && (
-                    <span>
-                      <span className="text-muted/80">{t('credits.team.discord')}: </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <DiscordLogo size={16} weight="fill" className="text-primary/80" aria-hidden />
                       <span className="text-foreground/90">{member.discord}</span>
                     </span>
                   )}
                   {member.telegram && (
-                    <ExtLink href={member.telegram} className="text-primary hover:text-primary-hover">
+                    <ExtLink
+                      href={member.telegram}
+                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary-hover"
+                    >
+                      <TelegramLogo size={16} weight="fill" aria-hidden />
                       {t('credits.team.telegram')}
                     </ExtLink>
                   )}
@@ -255,29 +312,84 @@ export function CreditsPage() {
           </ul>
         </section>
 
-        {/* Other projects */}
+        {/* Contact */}
+        <section className="landing-section-in mt-14">
+          <SectionHeading title={t('credits.contact.title')}>
+            <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">{t('credits.contact.intro')}</p>
+          </SectionHeading>
+          <div className="mt-6 border-l-2 border-primary pl-5">
+            <p className="text-lg font-semibold text-foreground">{t('credits.contact.name')}</p>
+            <ul className="mt-4 flex flex-col gap-3 text-sm">
+              <li>
+                <a
+                  href={`mailto:${NANDA_EMAIL}`}
+                  className="inline-flex items-center gap-2.5 text-muted transition-colors hover:text-primary"
+                >
+                  <EnvelopeSimple size={18} className="text-primary" aria-hidden />
+                  <span>
+                    <span className="text-muted/80">{t('credits.contact.email')}: </span>
+                    <span className="text-foreground">{NANDA_EMAIL}</span>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`tel:${NANDA_PHONE.replace(/-/g, '')}`}
+                  className="inline-flex items-center gap-2.5 text-muted transition-colors hover:text-primary"
+                >
+                  <Phone size={18} className="text-primary" aria-hidden />
+                  <span>
+                    <span className="text-muted/80">{t('credits.contact.phone')}: </span>
+                    <span className="text-foreground">{NANDA_PHONE}</span>
+                  </span>
+                </a>
+              </li>
+              <li className="inline-flex items-center gap-2.5 text-muted">
+                <DiscordLogo size={18} weight="fill" className="text-primary" aria-hidden />
+                <span>
+                  <span className="text-muted/80">{t('credits.contact.discord')}: </span>
+                  <span className="text-foreground">{NANDA_DISCORD}</span>
+                </span>
+              </li>
+              <li>
+                <ExtLink
+                  href={TELEGRAM_NANDA}
+                  className="inline-flex items-center gap-2.5 text-muted transition-colors hover:text-primary"
+                >
+                  <TelegramLogo size={18} weight="fill" className="text-primary" aria-hidden />
+                  <span>
+                    <span className="text-muted/80">{t('credits.contact.telegram')}: </span>
+                    <span className="text-foreground">nanda070</span>
+                  </span>
+                </ExtLink>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* Projects — list rows */}
         <section className="mt-16 pb-4">
           <SectionHeading eyebrow={t('credits.eyebrow')} title={t('credits.projects.title')}>
             <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">{t('credits.projects.intro')}</p>
           </SectionHeading>
 
-          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+          <p className="mt-10 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
             {t('credits.projects.series.astra')}
           </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-1">
             {ASTRA_PROJECTS.map((project, i) => (
-              <ProjectCard key={project.href} project={project} t={t} delayMs={i * 60} />
+              <ProjectRow key={project.href} project={project} t={t} delayMs={i * 50} />
             ))}
-          </div>
+          </ul>
 
           <p className="mt-10 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
             {t('credits.projects.series.bots')}
           </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-1">
             {OTHER_PROJECTS.map((project, i) => (
-              <ProjectCard key={project.href} project={project} t={t} delayMs={i * 60} />
+              <ProjectRow key={project.href} project={project} t={t} delayMs={i * 50} />
             ))}
-          </div>
+          </ul>
         </section>
       </article>
     </PublicLayout>

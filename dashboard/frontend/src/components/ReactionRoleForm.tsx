@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   createReactionRole,
   fetchChannels,
@@ -157,6 +157,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
                 value={pair.role_id}
                 onChange={(id) => updatePair(index, { role_id: id })}
                 options={roles}
+                kind="role"
                 placeholder="Роль…"
                 className="min-w-0 flex-1 basis-28"
               />

@@ -3,12 +3,11 @@ import logging
 import settings_db
 import discord
 from discord.ext import commands
-from discord import app_commands
 
+import embed_style
 import bot_config
 import i18n
 import invites_core
-import slash_registry
 import sticky_roles_core
 import welcome_core
 
@@ -139,7 +138,7 @@ class Welcome(commands.Cog):
                         code=used.code,
                         invites=stats[inviter_id]["invites"],
                     ),
-                    color=discord.Color.blurple(),
+                    color=embed_style.INFO,
                     timestamp=self.bot.utcnow(),
                 )
                 inv_ch_id = bot_config.get(guild.id, "INVITE_LOG_CHANNEL_ID")
@@ -162,7 +161,7 @@ class Welcome(commands.Cog):
 
         dm_log = discord.Embed(
             title=i18n.t("welcome.dm_log_title", lang),
-            color=discord.Color.green() if dm_sent else discord.Color.red(),
+            color=embed_style.SUCCESS if dm_sent else embed_style.DANGER,
             timestamp=self.bot.utcnow(),
         )
         dm_log.add_field(name=i18n.t("welcome.dm_log_user", lang), value=member.mention, inline=False)
@@ -211,61 +210,7 @@ class Welcome(commands.Cog):
                     except discord.HTTPException:
                         pass
 
-    @app_commands.command(name="userinfo", description="Показать сводку по участнику сервера")
-    @app_commands.describe(user="Пользователь")
-    @app_commands.default_permissions(manage_messages=True)
-    async def userinfo(self, interaction: discord.Interaction, user: discord.Member):
-        lang = i18n.lang_for(interaction.guild_id)
-        invites_data = settings_db.get(interaction.guild_id, "invites_stats", {})
-        stats_dict = invites_data.setdefault("stats", {})
-        stats = stats_dict.get(str(user.id), {"joins": 0, "leaves": 0, "invites": 0})
-
-        cases = settings_db.get(interaction.guild_id, "feedback_cases", {})
-        cases_count = sum(1 for c in cases.values() if c.get("submitter_id") == user.id)
-
-        embed = discord.Embed(
-            title=i18n.t("welcome.userinfo_title", lang, name=user.name),
-            color=user.color or discord.Color.blurple(),
-            timestamp=self.bot.utcnow(),
-        )
-        embed.set_thumbnail(url=user.display_avatar.url)
-        embed.add_field(
-            name=i18n.t("welcome.userinfo_joined", lang),
-            value=discord.utils.format_dt(user.joined_at, "D") if user.joined_at else i18n.t("welcome.userinfo_unknown", lang),
-            inline=True,
-        )
-        embed.add_field(
-            name=i18n.t("welcome.userinfo_registered", lang),
-            value=discord.utils.format_dt(user.created_at, "D"),
-            inline=True,
-        )
-
-        roles = [r.mention for r in user.roles if r.name != "@everyone"]
-        roles_text = " ".join(roles) if roles else i18n.t("welcome.userinfo_no_roles", lang)
-        if len(roles_text) > 1024:
-            roles_text = i18n.t("welcome.userinfo_roles_count", lang, count=len(roles))
-        embed.add_field(name=i18n.t("welcome.userinfo_roles", lang), value=roles_text, inline=False)
-
-        embed.add_field(
-            name=i18n.t("welcome.userinfo_invites", lang),
-            value=i18n.t(
-                "welcome.userinfo_invites_value",
-                lang,
-                invites=stats.get("invites", 0),
-                joins=stats.get("joins", 0),
-                leaves=stats.get("leaves", 0),
-            ),
-            inline=False,
-        )
-        embed.add_field(
-            name=i18n.t("welcome.userinfo_feedback", lang), value=str(cases_count), inline=False
-        )
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
 async def setup(bot):
     sticky_roles_core.init()
     cog = Welcome(bot)
-    slash_registry.register_welcome(cog)
     await bot.add_cog(cog)

@@ -278,6 +278,46 @@ async def bunker_apply_ability(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+@routes.post("/api/bunker/games/{id}/end")
+@require_dashboard_access
+async def bunker_game_end(request: web.Request) -> web.Response:
+    try:
+        game_id = int(request.match_info["id"])
+    except ValueError:
+        return web.json_response({"error": "invalid_id"}, status=400)
+    if _game_for_guild(game_id, request["guild_id"]) is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    cog = request.app["bot"].get_cog("BunkerCog")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    ok = await cog.force_end_game(game_id)
+    if not ok:
+        return web.json_response({"error": "game_not_active"}, status=409)
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/bunker/games/{id}/advance-phase")
+@require_dashboard_access
+async def bunker_game_advance_phase(request: web.Request) -> web.Response:
+    """Force-advance the current phase (discussion/vote) without waiting on the
+    timer or every player's vote — the dashboard host override missing until now."""
+    try:
+        game_id = int(request.match_info["id"])
+    except ValueError:
+        return web.json_response({"error": "invalid_id"}, status=400)
+    if _game_for_guild(game_id, request["guild_id"]) is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    cog = request.app["bot"].get_cog("BunkerCog")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    ok = await cog.force_advance_phase(game_id)
+    if not ok:
+        return web.json_response({"error": "game_not_active"}, status=409)
+    return web.json_response({"ok": True})
+
+
 # ────────────────────────── Публичная ссылка игрока ──────────────────────────
 
 @routes.get("/api/public/bunker/{token}")

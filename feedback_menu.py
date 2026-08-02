@@ -5,6 +5,7 @@ from discord import app_commands
 from typing import Optional
 import logging
 
+import embed_style
 import feedback_categories
 import feedback_core
 import feedback_panel_core
@@ -149,7 +150,7 @@ class FeedbackModal(discord.ui.Modal):
                     user_id=interaction.user.id,
                     error=exc,
                 ),
-                color=discord.Color.red(),
+                color=embed_style.DANGER,
                 timestamp=self.bot.utcnow(),
             )
             await self.bot.send_log(interaction.guild.id, embed)
@@ -264,7 +265,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
             case_title=config["case_title"],
             case_id=case_id,
         ),
-        color=discord.Color.blurple(),
+        color=embed_style.INFO,
         timestamp=bot.utcnow(),
     )
     mini_embed.add_field(
@@ -308,7 +309,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
 
     full_embed = discord.Embed(
         title=i18n.t("feedback.case_title_internal", lang, case_id=case_id),
-        color=discord.Color.orange(),
+        color=embed_style.WARN,
         timestamp=bot.utcnow(),
     )
     full_embed.add_field(
@@ -363,7 +364,7 @@ async def create_feedback_case(interaction: discord.Interaction, bot, category_k
             thread_id=thread.id,
             mentions=mentions,
         ),
-        color=discord.Color.blurple(),
+        color=embed_style.INFO,
         timestamp=bot.utcnow(),
     )
     await bot.send_log(interaction.guild.id, log_embed)

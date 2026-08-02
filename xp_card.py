@@ -1,74 +1,16 @@
-"""Генерация PNG-карточки ранга (аватар, уровень, прогресс-бар, место в топе).
+"""Rank card PNG — thin wrapper over the premium profile card renderer.
 
-Фон настраивается через дашборд (файл xp_card_bg.png); если фона нет —
-рисуется градиент в фирменных цветах.
+Kept for backward-compatible imports (`render_rank_card`, `_hex_to_rgb`).
 """
 
-import io
-import os
+from __future__ import annotations
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import profile_card
 
-import i18n
-import xp_core
+CARD_W, CARD_H = profile_card.CARD_W, profile_card.CARD_H
+DEFAULT_RING_COLOR = profile_card.DEFAULT_RING
 
-CARD_W, CARD_H = 900, 260
-DEFAULT_RING_COLOR = (88, 101, 242)
-
-
-def _hex_to_rgb(value: str) -> tuple[int, int, int]:
-    value = value.lstrip("#")
-    return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16)
-
-FONT_CANDIDATES_BOLD = [
-    "C:/Windows/Fonts/arialbd.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-]
-FONT_CANDIDATES_REGULAR = [
-    "C:/Windows/Fonts/arial.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-]
-
-
-def _font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    for path in candidates:
-        if os.path.exists(path):
-            return ImageFont.truetype(path, size)
-    return ImageFont.load_default()
-
-
-def _background(guild_id: int) -> Image.Image:
-    if os.path.exists(xp_core.get_card_bg_path(guild_id)):
-        try:
-            bg = Image.open(xp_core.get_card_bg_path(guild_id)).convert("RGB")
-            bg = bg.resize((CARD_W, CARD_H))
-            # Затемняем, чтобы текст читался на любом фоне
-            overlay = Image.new("RGB", (CARD_W, CARD_H), (11, 14, 20))
-            return Image.blend(bg, overlay, 0.45)
-        except OSError:
-            pass
-
-    # Градиентный дефолт в цветах дашборда
-    bg = Image.new("RGB", (CARD_W, CARD_H), (11, 14, 20))
-    draw = ImageDraw.Draw(bg)
-    for x in range(CARD_W):
-        t = x / CARD_W
-        r = int(19 + (88 - 19) * t * 0.35)
-        g = int(23 + (101 - 23) * t * 0.35)
-        b = int(34 + (242 - 34) * t * 0.35)
-        draw.line([(x, 0), (x, CARD_H)], fill=(r, g, b))
-    return bg
-
-
-def _circle_avatar(avatar_bytes: bytes, size: int) -> Image.Image:
-    avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGB").resize((size, size))
-    mask = Image.new("L", (size * 4, size * 4), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, size * 4, size * 4), fill=255)
-    mask = mask.resize((size, size), Image.LANCZOS)
-    avatar.putalpha(mask)
-    return avatar
+_hex_to_rgb = profile_card._hex_to_rgb
 
 
 def render_rank_card(
@@ -84,73 +26,25 @@ def render_rank_card(
     frame_color: str | None = None,
     title_text: str | None = None,
     lang: str = "ru",
+    *,
+    messages: int | None = None,
+    balance: int | None = None,
+    streak: int | None = None,
 ) -> bytes:
-    card = _background(guild_id).convert("RGBA")
-    draw = ImageDraw.Draw(card)
-
-    # Полупрозрачная плашка
-    panel = Image.new("RGBA", (CARD_W, CARD_H), (0, 0, 0, 0))
-    ImageDraw.Draw(panel).rounded_rectangle((16, 16, CARD_W - 16, CARD_H - 16), radius=22, fill=(13, 17, 26, 160))
-    card = Image.alpha_composite(card, panel)
-    draw = ImageDraw.Draw(card)
-
-    ring_color = _hex_to_rgb(frame_color) if frame_color else DEFAULT_RING_COLOR
-
-    # Аватар
-    avatar_size = 160
-    ax, ay = 46, (CARD_H - avatar_size) // 2
-    if avatar_bytes:
-        try:
-            avatar = _circle_avatar(avatar_bytes, avatar_size)
-            # Кольцо вокруг аватара (цвет — купленная в магазине рамка либо дефолтный)
-            ring = Image.new("RGBA", (avatar_size + 12, avatar_size + 12), (0, 0, 0, 0))
-            ImageDraw.Draw(ring).ellipse((0, 0, avatar_size + 12, avatar_size + 12), outline=(*ring_color, 255), width=4)
-            card.alpha_composite(ring, (ax - 6, ay - 6))
-            card.alpha_composite(avatar, (ax, ay))
-        except OSError:
-            pass
-
-    font_name = _font(FONT_CANDIDATES_BOLD, 38)
-    font_level = _font(FONT_CANDIDATES_BOLD, 30)
-    font_small = _font(FONT_CANDIDATES_REGULAR, 22)
-    font_title_tag = _font(FONT_CANDIDATES_REGULAR, 20)
-
-    text_x = ax + avatar_size + 36
-
-    # Имя (+ купленный титул рядом, если экипирован)
-    name = display_name if len(display_name) <= 22 else display_name[:21] + "…"
-    draw.text((text_x, 52), name, font=font_name, fill=(232, 234, 240))
-    if title_text:
-        name_w = draw.textlength(name, font=font_name)
-        draw.text((text_x + name_w + 14, 62), title_text, font=font_title_tag, fill=ring_color)
-
-    # Уровень и место
-    rank_text = f"#{rank}" if rank else "—"
-    level_label = i18n.t("xp.card.level", lang, level=level)
-    rank_label = i18n.t("xp.card.rank", lang, rank=rank_text, total=total_members)
-    voice_label = i18n.t("xp.card.voice", lang, time=voice_time_text)
-    draw.text((text_x, 104), level_label, font=font_level, fill=(88, 101, 242))
-    level_w = draw.textlength(level_label, font=font_level)
-    draw.text((text_x + level_w + 28, 110), rank_label, font=font_small, fill=(139, 147, 167))
-
-    # Войс-время
-    draw.text((text_x, 148), voice_label, font=font_small, fill=(139, 147, 167))
-
-    # Прогресс-бар
-    bar_x0, bar_y0 = text_x, 196
-    bar_x1, bar_y1 = CARD_W - 56, 220
-    draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, bar_y1), radius=12, fill=(35, 40, 56))
-    if xp_step > 0:
-        progress = max(0.0, min(1.0, xp_into_level / xp_step))
-        fill_x1 = bar_x0 + max(24, int((bar_x1 - bar_x0) * progress))
-        draw.rounded_rectangle((bar_x0, bar_y0, fill_x1, bar_y1), radius=12, fill=(88, 101, 242))
-        xp_text = f"{xp_into_level} / {xp_step} XP"
-    else:
-        draw.rounded_rectangle((bar_x0, bar_y0, bar_x1, bar_y1), radius=12, fill=(88, 101, 242))
-        xp_text = "MAX"
-    text_w = draw.textlength(xp_text, font=font_small)
-    draw.text((bar_x1 - text_w, bar_y0 - 30), xp_text, font=font_small, fill=(139, 147, 167))
-
-    out = io.BytesIO()
-    card.convert("RGB").save(out, format="PNG")
-    return out.getvalue()
+    return profile_card.render_profile_card(
+        guild_id,
+        avatar_bytes,
+        display_name,
+        level,
+        xp_into_level,
+        xp_step,
+        rank,
+        total_members,
+        voice_time_text,
+        frame_color=frame_color,
+        title_text=title_text,
+        messages=messages,
+        balance=balance,
+        streak=streak,
+        lang=lang,
+    )

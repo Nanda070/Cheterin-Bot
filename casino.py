@@ -12,6 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import casino_core
 import casino_db
 import economy_core
@@ -293,7 +294,7 @@ class CasinoLeaderboardView(discord.ui.View):
                 stat=i18n.t(stat_key, self.lang),
                 mode=self._mode_name(),
             ),
-            colour=discord.Colour.red() if self.stat_type == "losses" else discord.Colour.green(),
+            color=embed_style.DANGER if self.stat_type == "losses" else embed_style.SUCCESS,
         )
         if guild and guild.icon:
             embed.set_thumbnail(url=guild.icon.url)

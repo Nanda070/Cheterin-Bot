@@ -23,6 +23,7 @@ import ban_db
 import i18n
 import slash_registry
 import moderation_commands_core
+import moderation_embed_core
 import moderation_log
 
 logger = logging.getLogger("moderation-commands")
@@ -100,16 +101,17 @@ class ModerationCommandsCog(commands.Cog):
         target_mention: str | None = None,
     ):
         lang = lang or i18n.lang_for(guild_id)
-        embed = discord.Embed(title=title, color=discord.Color.red(), timestamp=discord.utils.utcnow())
-        for name, value in moderation_commands_core.action_log_fields(
+        embed = moderation_embed_core.build_user_action_embed(
             lang,
-            moderation_commands_core.format_user_ref(moderator.name, moderator.id, moderator.mention),
-            moderation_commands_core.format_user_ref(target_name, target_id, target_mention),
+            title=title,
+            actor=moderator,
+            target_name=target_name,
+            target_id=target_id,
+            target_mention=target_mention,
             reason=reason,
             extra=extra,
-        ):
-            embed.add_field(name=name, value=value, inline=False)
-        embed.set_footer(text=i18n.t("moderation.embed.footer", lang))
+            footer_key="moderation.embed.footer",
+        )
         await self.bot.send_log(guild_id, embed)
         if event_type:
             moderation_log.append_event(

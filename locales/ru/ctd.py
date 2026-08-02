@@ -12,6 +12,7 @@ MESSAGES: dict[str, str] = {
         "{mention} Пожалуйста, опишите ваше обращение и ожидайте ответа администрации."
     ),
     "ctd.ticket_created_user": "Тикет успешно создан.",
+    "ctd.ticket_create_failed": "Не удалось создать тикет. Попробуйте ещё раз или напишите администрации.",
     "ctd.ticket_created_log": "\U0001f3ab Создан новый тикет",
     "ctd.ticket_created_log_body": "Ветка: <#{thread_id}>\nПользователь: {mention}",
     "ctd.wrong_channel": "Команду нужно использовать в канале <#{channel_id}>",

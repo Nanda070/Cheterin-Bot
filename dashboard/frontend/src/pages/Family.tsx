@@ -277,6 +277,7 @@ export function FamilyPage() {
                       }))
                     }
                     options={roles}
+                    kind="role"
                     placeholder={t('family.roster.rolePlaceholder')}
                     className="min-w-40 flex-1"
                   />
@@ -351,6 +352,7 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, ticket_manager_role_id: id } }))
                   }
                   options={roles}
+                  kind="role"
                   placeholder={t('common.notSet')}
                 />
               </div>
@@ -363,6 +365,7 @@ export function FamilyPage() {
                   value={settings.applications.notify_role_id}
                   onChange={(id) => patch((p) => ({ ...p, applications: { ...p.applications, notify_role_id: id } }))}
                   options={roles}
+                  kind="role"
                   placeholder={t('common.notSet')}
                 />
               </div>
@@ -377,6 +380,7 @@ export function FamilyPage() {
                     patch((p) => ({ ...p, applications: { ...p.applications, ticket_active_role_id: id } }))
                   }
                   options={roles}
+                  kind="role"
                   placeholder={t('common.notSet')}
                 />
               </div>
@@ -425,12 +429,14 @@ export function FamilyPage() {
             </div>
             <ChipPicker
               label={t('family.applications.staffRoles')}
+              kind="role"
               options={roles}
               selected={settings.applications.staff_role_ids}
               onChange={(ids) => patch((p) => ({ ...p, applications: { ...p.applications, staff_role_ids: ids } }))}
             />
             <ChipPicker
               label={t('family.applications.approveRoles')}
+              kind="role"
               options={roles}
               selected={settings.applications.approve_role_ids}
               onChange={(ids) => patch((p) => ({ ...p, applications: { ...p.applications, approve_role_ids: ids } }))}

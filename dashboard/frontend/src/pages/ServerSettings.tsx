@@ -39,6 +39,8 @@ const defaultAlerts: OwnerAlertsSettings = {
   alert_missing_perms: true,
   alert_mass_ban: true,
   alert_module_errors: true,
+  weekly_digest_enabled: false,
+  weekly_digest_channel_id: '',
 }
 
 export function ServerSettingsPage() {
@@ -185,12 +187,28 @@ export function ServerSettingsPage() {
         )}
         {!healthError && health !== null && !health.ok && (
           <div className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-foreground">
-            <p className="font-medium text-warning">{t('setupHealth.missing')}</p>
-            <ul className="mt-1 list-inside list-disc text-muted">
-              {health.missing_permissions.map((perm) => (
-                <li key={perm}>{perm}</li>
-              ))}
-            </ul>
+            {health.missing_permissions.length > 0 && (
+              <>
+                <p className="font-medium text-warning">{t('setupHealth.missing')}</p>
+                <ul className="mt-1 list-inside list-disc text-muted">
+                  {health.missing_permissions.map((perm) => (
+                    <li key={perm}>{perm}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {health.module_issues.length > 0 && (
+              <>
+                <p className="mt-2 font-medium text-warning">{t('setupHealth.moduleIssues')}</p>
+                <ul className="mt-1 list-inside list-disc text-muted">
+                  {health.module_issues.map((issue, index) => (
+                    <li key={index}>
+                      {issue.module}: {issue.kind === 'missing_role' ? t('setupHealth.missingRole') : t('setupHealth.missingChannel')}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         )}
       </section>
@@ -288,6 +306,28 @@ export function ServerSettingsPage() {
             placeholder={t('common.selectChannel')}
             disabled={alertsBusy}
           />
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          <Toggle
+            checked={alerts.weekly_digest_enabled}
+            onChange={(v) => setAlerts((a) => ({ ...a, weekly_digest_enabled: v }))}
+            label={t('ownerAlerts.weeklyDigest.enable')}
+            disabled={alertsBusy}
+          />
+          <p className="text-xs text-muted">{t('ownerAlerts.weeklyDigest.hint')}</p>
+          {alerts.weekly_digest_enabled && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted">{t('ownerAlerts.weeklyDigest.channel')}</label>
+              <Select
+                value={alerts.weekly_digest_channel_id}
+                onChange={(id) => setAlerts((a) => ({ ...a, weekly_digest_channel_id: id }))}
+                options={channels}
+                placeholder={t('ownerAlerts.weeklyDigest.channelFallback')}
+                disabled={alertsBusy}
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">

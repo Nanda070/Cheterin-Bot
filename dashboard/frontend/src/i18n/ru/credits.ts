@@ -33,10 +33,18 @@ const credits: TranslationDict = {
   'credits.team.nanda.name': 'Nanda',
   'credits.team.cheterin.role': 'Основатель',
   'credits.team.cheterin.name': 'Cheterin',
-  'credits.team.mark.role': 'Генератор главных идей',
+  'credits.team.mark.role': 'Идейный вдохновитель',
   'credits.team.mark.name': 'Mark',
   'credits.team.discord': 'Discord',
   'credits.team.telegram': 'Telegram',
+
+  'credits.contact.title': 'Связь',
+  'credits.contact.intro': 'По вопросам бота, панели и проектов — пишите Nanda.',
+  'credits.contact.name': 'Nanda',
+  'credits.contact.email': 'Email',
+  'credits.contact.phone': 'Телефон',
+  'credits.contact.discord': 'Discord',
+  'credits.contact.telegram': 'Telegram',
 
   'credits.projects.title': 'Другие проекты Cheterin Group',
   'credits.projects.intro': 'Ещё немного из той же мастерской.',
@@ -50,14 +58,27 @@ const credits: TranslationDict = {
   'credits.projects.astraip.title': 'AstraIP',
   'credits.projects.astraip.body':
     'Высокопроизводительный паркур для Minecraft 1.21+ Paper — острова, сессии, меню, эффекты и интеграции.',
-  'credits.projects.series.bots': 'Discord и ассистенты',
+  'credits.projects.series.bots': 'Сайты, боты и игры',
   'credits.projects.rpstate.title': 'RP-State Bot',
   'credits.projects.rpstate.body':
     'Discord-бот для RP-проектов — кросс-серверные документы и доски розыска / поиска.',
   'credits.projects.idus.title': 'IDUS',
   'credits.projects.idus.body':
     'Локальный домашний голосовой ассистент на вашем железе — без облачных API и подписок. Голос + Telegram, память и напоминания; перед внешними действиями спрашивает.',
+  'credits.projects.nandaSite.title': 'nanda.com',
+  'credits.projects.nandaSite.body':
+    'Личный сайт Nanda: сайты, Discord-боты и сервисы для комьюнити — портфолио и избранные работы.',
+  'credits.projects.yanPro.title': 'YAN.PRO GRIND',
+  'credits.projects.yanPro.body':
+    'Мерч и дропы YAN.PR⭕️ GRIND — витрина, релизы и бренд на yan-pro.shop.',
+  'credits.projects.sorfa.title': 'Sorfa',
+  'credits.projects.sorfa.body':
+    'Веб-проект Sorfa — живой продукт на Vercel из линейки Cheterin Group / Nanda.',
+  'credits.projects.pepegaGo.title': 'PepegaGo',
+  'credits.projects.pepegaGo.body':
+    'Мобильная геолокационная игра в духе Pokémon GO — open-source на GitHub.',
   'credits.projects.openRepo': 'Открыть на GitHub',
+  'credits.projects.openSite': 'Открыть сайт',
 }
 
 export default credits

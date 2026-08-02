@@ -24,9 +24,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import i18n
-import slash_registry
+import moderation_embed_core
 import moderation_log
+import slash_registry
 import verification_core
 import verification_db
 
@@ -72,6 +74,15 @@ class VerificationView(discord.ui.View):
                 i18n.t("error.module_unavailable", lang), ephemeral=True
             )
         await cog.handle_verify(interaction)
+
+
+async def publish_verification_panel(bot: commands.Bot, channel: discord.TextChannel) -> discord.Message:
+    """Publish the verification panel to `channel`. Shared by /verify_setup and the dashboard."""
+    settings = verification_core.get_settings(channel.guild.id)
+    return await channel.send(
+        content=settings["welcome_text"],
+        view=VerificationView(bot, channel.guild.id),
+    )
 
 
 class VerificationCog(commands.Cog, name=COG_NAME):
@@ -157,13 +168,26 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             )
 
         verification_db.record_consent(interaction.guild_id, member.id)
+        reason = i18n.t("verification.log_reason", lang)
         moderation_log.append_event(
             interaction.guild_id,
             "verification_pass",
             member.id,
             member.name,
-            i18n.t("verification.log_reason", lang),
+            reason,
         )
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
+            title=i18n.t("verification.embed.pass_title", lang),
+            actor=self.bot.user,
+            target_name=member.name,
+            target_id=member.id,
+            target_mention=member.mention,
+            reason=reason,
+            color=embed_style.SUCCESS,
+            footer_key="moderation.embed.footer",
+        )
+        await self.bot.send_log(interaction.guild_id, embed)
         success_key = (
             "verification.rules_success"
             if settings["rules_consent_enabled"]
@@ -201,13 +225,26 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             return
 
         verification_db.clear_consent(guild.id, member.id)
+        reason = i18n.t("verification.log_reverify", lang)
         moderation_log.append_event(
             guild.id,
             "verification_expired",
             member.id,
             member.name,
-            i18n.t("verification.log_reverify", lang),
+            reason,
         )
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
+            title=i18n.t("verification.embed.expire_title", lang),
+            actor=self.bot.user,
+            target_name=member.name,
+            target_id=member.id,
+            target_mention=member.mention,
+            reason=reason,
+            color=embed_style.WARN,
+            footer_key="moderation.embed.footer",
+        )
+        await self.bot.send_log(guild.id, embed)
 
     @tasks.loop(hours=1)
     async def reverify_sweeper(self):
@@ -257,10 +294,7 @@ class VerificationCog(commands.Cog, name=COG_NAME):
             )
 
         await interaction.response.send_message(i18n.t("verification.panel_installed", lang), ephemeral=True)
-        await interaction.channel.send(
-            content=settings["welcome_text"],
-            view=VerificationView(self.bot, interaction.guild.id),
-        )
+        await publish_verification_panel(self.bot, interaction.channel)
 
 
 async def setup(bot: commands.Bot):

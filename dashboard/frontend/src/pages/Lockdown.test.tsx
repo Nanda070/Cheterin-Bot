@@ -115,10 +115,16 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
     vi.spyOn(client, 'fetchTempbanSettings').mockResolvedValue({
+      action: 'softban',
       dm_enabled: true,
       dm_message: '',
       log_enabled: true,
+      log_message: '',
       unban_reason: '',
+      warning_message: '',
+      warning_thumbnail_url: '',
+      warning_message_id: '',
+      ban_count: 0,
     })
     const { EMPTY_BOT_CONFIG } = await import('../config/botConfigDefaults')
     vi.spyOn(client, 'fetchConfig').mockResolvedValue(EMPTY_BOT_CONFIG)

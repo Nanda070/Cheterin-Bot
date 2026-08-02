@@ -120,6 +120,7 @@ export function BirthdaysCalendarPage() {
             value={pingRoleId}
             onChange={setPingRoleId}
             options={roles}
+            kind="role"
             placeholder={t('birthdays.noPing')}
           />
         </div>

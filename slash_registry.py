@@ -11,34 +11,24 @@ _g = si.localize_group
 
 # Keys used by tests to verify locale coverage.
 SLASH_KEYS: tuple[str, ...] = (
-    "userinfo",
+    "help",
     "rank",
+    "profile",
     "leaders",
-    "xp_group",
-    "xp_add",
-    "xp_set",
-    "xp_clear",
+    "xp",
     "wordle",
-    "wordle_training",
-    "wordle_stats",
-    "wordle_top",
     "russian_roulette",
-    "emoji_roulette",
     "verify_setup",
     "ctd_setup",
     "family_applications",
     "roster",
-    "birthday_add",
-    "birthday_set",
-    "birthday_remove",
+    "birthday",
     "supply_run",
     "antispam",
     "bunker_start",
     "bunker_stop",
-    "bunker_test",
     "mafia_start",
     "mafia_stop",
-    "mafia_test",
     "ban",
     "kick",
     "mute",
@@ -60,22 +50,20 @@ SLASH_KEYS: tuple[str, ...] = (
     "timed_role",
     "birthday_set_self",
     "poll_create",
-    "warn_group",
-    "warn_add",
-    "warn_list",
-    "warn_remove",
+    "warn",
     "feedback_panel_group",
     "feedback_panel_send",
     "button_group",
     "button_form",
     "button_role",
-    "giveaway_group",
-    "giveaway_start",
-    "giveaway_reroll",
-    "giveaway_end",
-    "event_group",
-    "event_setup",
-    "event_manage",
+    "giveaway",
+    "event",
+    "val_setup",
+    "val_profile",
+    "val_match",
+    "val_compare",
+    "val_lb",
+    "val_status",
 )
 
 
@@ -93,29 +81,23 @@ def _grp(group: Any, name: str) -> None:
     _g(group, desc_key=f"{base}.desc", name_key=base)
 
 
-def register_welcome(cog) -> None:
-    _cmd(cog.userinfo, "userinfo")
+def register_help(cog) -> None:
+    _cmd(cog.help_command, "help")
 
 
 def register_xp(cog) -> None:
-    _grp(cog.xp_group, "xp_group")
-    _cmd(cog.xp_add, "xp_add")
-    _cmd(cog.xp_set, "xp_set")
-    _cmd(cog.xp_clear, "xp_clear")
+    _cmd(cog.xp_command, "xp")
     _cmd(cog.rank_command, "rank")
+    _cmd(cog.profile_command, "profile")
     _cmd(cog.leaders_command, "leaders")
 
 
 def register_wordle(cog) -> None:
     _cmd(cog.wordle_command, "wordle")
-    _cmd(cog.training_command, "wordle_training")
-    _cmd(cog.stats_command, "wordle_stats")
-    _cmd(cog.top_command, "wordle_top")
 
 
 def register_fun(cog) -> None:
     _cmd(cog.russian_roulette, "russian_roulette")
-    _cmd(cog.emoji_roulette, "emoji_roulette")
 
 
 def register_verification(cog) -> None:
@@ -135,9 +117,7 @@ def register_family_roster(cog) -> None:
 
 
 def register_family_birthdays(cog) -> None:
-    _cmd(cog.add_birthday, "birthday_add")
-    _cmd(cog.set_birthday, "birthday_set")
-    _cmd(cog.delete_birthday, "birthday_remove")
+    _cmd(cog.birthday_command, "birthday")
 
 
 def register_supply(cog) -> None:
@@ -151,13 +131,11 @@ def register_lockdown(cog) -> None:
 def register_bunker(cog) -> None:
     _cmd(cog.start_lobby, "bunker_start")
     _cmd(cog.stop_game, "bunker_stop")
-    _cmd(cog.start_test_game, "bunker_test")
 
 
 def register_mafia(cog) -> None:
     _cmd(cog.start_lobby, "mafia_start")
     _cmd(cog.stop_game, "mafia_stop")
-    _cmd(cog.start_test_game, "mafia_test")
 
 
 def register_moderation(cog) -> None:
@@ -203,10 +181,7 @@ def register_polls(cog) -> None:
 
 
 def register_automod(cog) -> None:
-    _grp(cog.warn_group, "warn_group")
-    _cmd(cog.warn_add, "warn_add")
-    _cmd(cog.warn_list, "warn_list")
-    _cmd(cog.warn_remove, "warn_remove")
+    _cmd(cog.warn_command, "warn")
 
 
 def register_feedback(cog) -> None:
@@ -221,13 +196,17 @@ def register_button(cog) -> None:
 
 
 def register_giveaways(cog) -> None:
-    _grp(cog.giveaway_group, "giveaway_group")
-    _cmd(cog.giveaway_start, "giveaway_start")
-    _cmd(cog.giveaway_reroll, "giveaway_reroll")
-    _cmd(cog.giveaway_end, "giveaway_end")
+    _cmd(cog.giveaway_command, "giveaway")
 
 
 def register_events(cog) -> None:
-    _grp(cog.event_group, "event_group")
-    _cmd(cog.event_setup, "event_setup")
-    _cmd(cog.event_manage, "event_manage")
+    _cmd(cog.event_command, "event")
+
+
+def register_valchecker(cog) -> None:
+    _cmd(cog.val_setup, "val_setup")
+    _cmd(cog.val_profile, "val_profile")
+    _cmd(cog.val_match, "val_match")
+    _cmd(cog.val_compare, "val_compare")
+    _cmd(cog.val_lb, "val_lb")
+    _cmd(cog.val_status, "val_status")

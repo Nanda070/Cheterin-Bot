@@ -41,6 +41,7 @@ function defaultMocks() {
   vi.spyOn(client, 'fetchSetupHealth').mockResolvedValue({
     ok: true,
     missing_permissions: [],
+    module_issues: [],
     guild_id: '1',
     guild_name: 'Test',
   })
@@ -235,6 +236,7 @@ describe('HomePage', () => {
     vi.spyOn(client, 'fetchSetupHealth').mockResolvedValue({
       ok: true,
       missing_permissions: [],
+      module_issues: [],
       guild_id: '1',
       guild_name: 'Test',
     })

@@ -11,6 +11,7 @@ from typing import Optional
 import random
 import string
 
+import embed_style
 import events_core
 import i18n
 import slash_registry
@@ -209,7 +210,7 @@ class EventBuilderView(discord.ui.View):
     def build_embed(self) -> discord.Embed:
         d = self.draft
         lang = self.lang
-        emb = discord.Embed(title=i18n.t("events.builder.title", lang), color=discord.Color.gold())
+        emb = discord.Embed(title=i18n.t("events.builder.title", lang), color=embed_style.GOLD)
         type_val = i18n.t("events.builder.type_tournament", lang) if d.type == "tournament" else i18n.t("events.builder.type_poll", lang)
         emb.add_field(name=i18n.t("events.builder.type", lang), value=type_val, inline=False)
         emb.add_field(name=i18n.t("events.builder.name", lang), value=d.title or i18n.t("events.builder.not_set", lang), inline=True)
@@ -794,7 +795,7 @@ class EventManageSelect(discord.ui.Select):
             await interaction.response.send_message(i18n.t("events.manage.not_found", lang), ephemeral=True)
             return
 
-        emb = discord.Embed(title=i18n.t("events.manage.title", lang, title=ev["title"]), color=discord.Color.orange())
+        emb = discord.Embed(title=i18n.t("events.manage.title", lang, title=ev["title"]), color=embed_style.WARN)
         emb.add_field(name=i18n.t("events.manage.type", lang), value=ev["type"])
         status_val = i18n.t("events.manage.status_open", lang) if ev["status"] == "open" else i18n.t("events.manage.status_closed", lang)
         emb.add_field(name=i18n.t("events.manage.status", lang), value=status_val)
@@ -834,12 +835,6 @@ class EventManageSelect(discord.ui.Select):
 # ==========================================
 
 class Events(commands.Cog):
-    event_group = app_commands.Group(
-        name="event",
-        description="Система турниров и событий",
-        default_permissions=discord.Permissions(manage_guild=True),
-    )
-
     def __init__(self, bot):
         self.bot = bot
 
@@ -855,15 +850,22 @@ class Events(commands.Cog):
                     self.bot.add_view(create_participation_view(msg_id, ev_data, lang=lang), message_id=int(msg_id))
         self.bot._event_views_loaded = True
 
-    @event_group.command(name="setup", description="Запустить конструктор событий/опросов")
-    async def event_setup(self, interaction: discord.Interaction):
+    @app_commands.command(name="event", description="Система турниров и событий")
+    @app_commands.describe(action="Действие: setup / manage")
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="setup", value="setup"),
+            app_commands.Choice(name="manage", value="manage"),
+        ]
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def event_command(self, interaction: discord.Interaction, action: app_commands.Choice[str]):
         lang = i18n.lang_for(interaction.guild_id)
-        view = EventBuilderView(self.bot, interaction.user.id, lang)
-        await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
+        if action.value == "setup":
+            view = EventBuilderView(self.bot, interaction.user.id, lang)
+            await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
+            return
 
-    @event_group.command(name="manage", description="Управление активными событиями")
-    async def event_manage(self, interaction: discord.Interaction):
-        lang = i18n.lang_for(interaction.guild_id)
         data = load_events(interaction.guild_id)
         evs = data.get("events", {})
         opts = []

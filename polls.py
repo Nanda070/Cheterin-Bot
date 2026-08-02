@@ -7,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import i18n
 import polls_db
 import slash_registry
@@ -46,7 +47,7 @@ def build_poll_embed(poll: dict, lang: str, *, results: list[int] | None = None)
     embed = discord.Embed(
         title=i18n.t("polls.embed.title", lang),
         description=poll["question"],
-        color=discord.Color.blurple() if not poll.get("ended") else discord.Color.green(),
+        color=embed_style.INFO if not poll.get("ended") else embed_style.SUCCESS,
         timestamp=discord.utils.utcnow(),
     )
     lines = []

@@ -24,6 +24,7 @@ import casino_core
 import casino_db
 import economy_core
 import economy_db
+import embed_style
 import i18n
 import slash_registry
 from casino import CasinoCog, check_loss_roles
@@ -33,12 +34,12 @@ logger = logging.getLogger("blackjack")
 
 # ──────────────────────────── Embed-рендер ────────────────────────────
 
-def _result_colour(result: bj.GameResult) -> discord.Colour:
+def _result_color(result: bj.GameResult) -> discord.Color:
     return {
-        bj.GameResult.BLACKJACK: discord.Colour.gold(),
-        bj.GameResult.WIN:       discord.Colour.green(),
-        bj.GameResult.PUSH:      discord.Colour.light_grey(),
-        bj.GameResult.LOSE:      discord.Colour.red(),
+        bj.GameResult.BLACKJACK: embed_style.GOLD,
+        bj.GameResult.WIN:       embed_style.SUCCESS,
+        bj.GameResult.PUSH:      embed_style.NEUTRAL,
+        bj.GameResult.LOSE:      embed_style.DANGER,
     }[result]
 
 
@@ -65,12 +66,12 @@ def build_embed(
 ) -> discord.Embed:
     """Построить embed состояния партии."""
 
-    colour = discord.Colour.blurple() if result is None else _result_colour(result)
+    color = embed_style.INFO if result is None else _result_color(result)
     title = i18n.t("casino.bj.title", lang)
     if result is not None:
         title = i18n.t("casino.bj.title_result", lang, result=_result_label(result, lang))
 
-    embed = discord.Embed(title=title, colour=colour)
+    embed = discord.Embed(title=title, color=color)
     embed.set_author(name=player.display_name, icon_url=player.display_avatar.url)
 
     dealer_hand_str = bj.format_hand(game.dealer, hide_first=hide_dealer)
@@ -164,7 +165,7 @@ class BlackjackView(discord.ui.View):
         if self.message is not None:
             try:
                 embed = self.message.embeds[0] if self.message.embeds else discord.Embed()
-                embed.colour = discord.Colour.dark_grey()
+                embed.color = embed_style.NEUTRAL
                 embed.set_footer(text=i18n.t("casino.bj.timeout_footer", self.lang))
                 await self.message.edit(embed=embed, view=self)
             except discord.NotFound:

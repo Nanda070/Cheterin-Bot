@@ -5,6 +5,7 @@ import logging
 import time
 import aiohttp
 
+import embed_style
 import bot_config
 import i18n
 import slash_registry
@@ -70,7 +71,7 @@ class DynamicQuestionsModal(discord.ui.Modal):
 
         embed = discord.Embed(
             title=i18n.t("button.embed.title", lang, name=self.button_name),
-            color=discord.Color.blurple(),
+            color=embed_style.INFO,
             timestamp=self.bot.utcnow(),
         )
         embed.add_field(
@@ -119,7 +120,7 @@ class DynamicQuestionsModal(discord.ui.Modal):
                 mention=interaction.user.mention,
                 user_id=interaction.user.id,
             ),
-            color=discord.Color.blurple(),
+            color=embed_style.INFO,
             timestamp=self.bot.utcnow(),
         )
         log_embed.set_footer(text=i18n.t("button.log.form_footer", lang))
@@ -266,7 +267,7 @@ class ButtonCreate(commands.Cog):
                 mention_user=member.mention,
                 user_id=member.id,
             ),
-            color=discord.Color.green() if role_added else discord.Color.orange(),
+            color=embed_style.SUCCESS if role_added else embed_style.WARN,
             timestamp=self.bot.utcnow(),
         )
         log_embed.set_footer(text=i18n.t("button.log.role_footer", lang))
@@ -394,7 +395,7 @@ class ButtonCreate(commands.Cog):
                 mention=interaction.user.mention,
                 user_id=interaction.user.id,
             ),
-            color=discord.Color.blurple(),
+            color=embed_style.INFO,
             timestamp=self.bot.utcnow(),
         )
         if questions and questions != [default_q]:
@@ -438,7 +439,7 @@ class ButtonCreate(commands.Cog):
                 mention=interaction.user.mention,
                 user_id=interaction.user.id,
             ),
-            color=discord.Color.green(),
+            color=embed_style.SUCCESS,
             timestamp=self.bot.utcnow(),
         )
         log_embed.add_field(name=i18n.t("button.log.roles", lang), value=role_list, inline=False)

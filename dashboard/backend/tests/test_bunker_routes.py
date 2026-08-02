@@ -371,3 +371,102 @@ async def test_apply_ability_announcement_not_found(aiohttp_client):
     game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
     resp = await client.post(f"/api/bunker/games/{game['id']}/ability/999/apply")
     assert resp.status == 404
+
+
+# ────────────────────────── Управление ведущего ──────────────────────────
+
+class _FakeBunkerCog:
+    def __init__(self):
+        self.advance_calls = []
+        self.end_calls = []
+        self.advance_returns = True
+        self.end_returns = True
+
+    async def force_advance_phase(self, game_id):
+        self.advance_calls.append(game_id)
+        return self.advance_returns
+
+    async def force_end_game(self, game_id):
+        self.end_calls.append(game_id)
+        return self.end_returns
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_calls_cog(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeBunkerCog()
+    bot.get_cog = lambda name: cog if name == "BunkerCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{game['id']}/advance-phase")
+    assert resp.status == 200
+    assert cog.advance_calls == [game["id"]]
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_rejects_other_guild(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeBunkerCog()
+    bot.get_cog = lambda name: cog if name == "BunkerCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{foreign['id']}/advance-phase")
+    assert resp.status == 404
+    assert cog.advance_calls == []
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_returns_409_when_game_not_active(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeBunkerCog()
+    cog.advance_returns = False
+    bot.get_cog = lambda name: cog if name == "BunkerCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{game['id']}/advance-phase")
+    assert resp.status == 409
+
+
+@pytest.mark.asyncio
+async def test_advance_phase_service_unavailable_without_cog(aiohttp_client):
+    bot, guild, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{game['id']}/advance-phase")
+    assert resp.status == 503
+
+
+@pytest.mark.asyncio
+async def test_end_game_calls_cog(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeBunkerCog()
+    bot.get_cog = lambda name: cog if name == "BunkerCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    game = bunker_db.create_game(guild.id, 500, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{game['id']}/end")
+    assert resp.status == 200
+    assert cog.end_calls == [game["id"]]
+
+
+@pytest.mark.asyncio
+async def test_end_game_rejects_other_guild(aiohttp_client):
+    bot, guild, app = build()
+    cog = _FakeBunkerCog()
+    bot.get_cog = lambda name: cog if name == "BunkerCog" else None
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    foreign = bunker_db.create_game(999, 600, 10, 4, 12, 180, 90)
+    resp = await client.post(f"/api/bunker/games/{foreign['id']}/end")
+    assert resp.status == 404
+    assert cog.end_calls == []

@@ -18,6 +18,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+import embed_style
 import i18n
 import settings_db
 
@@ -219,7 +220,7 @@ class ServerLog(commands.Cog):
         lang = i18n.lang_for(before.guild.id)
         embed = self._embed(
             i18n.t("serverlog.event.message_edit", lang, author=before.author.mention, channel=before.channel.mention),
-            discord.Color.orange(), lang, before.author,
+            embed_style.WARN, lang, before.author,
         )
         embed.add_field(name=i18n.t("serverlog.field.before", lang), value=_clip(before.content, lang), inline=False)
         embed.add_field(name=i18n.t("serverlog.field.after", lang), value=_clip(after.content, lang), inline=False)
@@ -237,7 +238,7 @@ class ServerLog(commands.Cog):
         lang = i18n.lang_for(message.guild.id)
         embed = self._embed(
             i18n.t("serverlog.event.message_delete", lang, author=message.author.mention, channel=message.channel.mention),
-            discord.Color.red(), lang, message.author,
+            embed_style.DANGER, lang, message.author,
         )
         embed.add_field(name=i18n.t("serverlog.field.content", lang), value=_clip(message.content, lang), inline=False)
         if message.attachments:
@@ -255,7 +256,7 @@ class ServerLog(commands.Cog):
                 "serverlog.event.member_join", lang,
                 member=member.mention, display_name=member.display_name,
             ),
-            discord.Color.green(), lang, member,
+            embed_style.SUCCESS, lang, member,
         )
         ts = int(member.created_at.timestamp())
         embed.add_field(name=i18n.t("serverlog.field.registration_date", lang), value=f"<t:{ts}:D> (<t:{ts}:R>)", inline=False)
@@ -270,7 +271,7 @@ class ServerLog(commands.Cog):
                 "serverlog.event.member_leave", lang,
                 member=member.mention, display_name=member.display_name,
             ),
-            discord.Color.gold(), lang, member,
+            embed_style.GOLD, lang, member,
         )
         roles = [r.mention for r in member.roles if not r.is_default()]
         if roles:
@@ -287,13 +288,13 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.abc.User):
         lang = i18n.lang_for(guild.id)
-        embed = self._embed(i18n.t("serverlog.event.member_ban", lang, user=user.mention), discord.Color.dark_red(), lang, user)
+        embed = self._embed(i18n.t("serverlog.event.member_ban", lang, user=user.mention), embed_style.DANGER, lang, user)
         await self.emit(guild.id, "member_ban", embed)
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
         lang = i18n.lang_for(guild.id)
-        embed = self._embed(i18n.t("serverlog.event.member_unban", lang, user=user.mention), discord.Color.green(), lang, user)
+        embed = self._embed(i18n.t("serverlog.event.member_unban", lang, user=user.mention), embed_style.SUCCESS, lang, user)
         await self.emit(guild.id, "member_unban", embed)
 
     @commands.Cog.listener()
@@ -302,7 +303,7 @@ class ServerLog(commands.Cog):
         if before.nick != after.nick:
             embed = self._embed(
                 i18n.t("serverlog.event.nickname_change", lang, member=after.mention),
-                discord.Color.blurple(), lang, after,
+                embed_style.INFO, lang, after,
             )
             embed.add_field(name=i18n.t("serverlog.field.before", lang), value=_clip(before.nick or before.name, lang), inline=True)
             embed.add_field(name=i18n.t("serverlog.field.after", lang), value=_clip(after.nick or after.name, lang), inline=True)
@@ -317,7 +318,7 @@ class ServerLog(commands.Cog):
                         "serverlog.event.roles_change", lang,
                         member=after.mention, display_name=after.display_name,
                     ),
-                    discord.Color.blurple(), lang, after,
+                    embed_style.INFO, lang, after,
                 )
                 if added:
                     embed.add_field(
@@ -342,7 +343,7 @@ class ServerLog(commands.Cog):
             if is_active and not was_active:
                 embed = self._embed(
                     i18n.t("serverlog.event.timeout_given", lang, member=after.mention),
-                    discord.Color.red(), lang, after,
+                    embed_style.DANGER, lang, after,
                 )
                 embed.add_field(name=i18n.t("serverlog.field.after", lang), value=f"<t:{int(after.timed_out_until.timestamp())}:F>", inline=False)
                 entry = await _recent_audit_entry(after.guild, discord.AuditLogAction.member_update, target_id=after.id)
@@ -351,7 +352,7 @@ class ServerLog(commands.Cog):
             elif was_active and not is_active:
                 embed = self._embed(
                     i18n.t("serverlog.event.timeout_removed", lang, member=after.mention),
-                    discord.Color.green(), lang, after,
+                    embed_style.SUCCESS, lang, after,
                 )
                 await self.emit(after.guild.id, "member_timeout", embed)
 
@@ -366,7 +367,7 @@ class ServerLog(commands.Cog):
         if before.channel is None and after.channel is not None:
             embed = self._embed(
                 i18n.t("serverlog.event.voice_join", lang, member=member.mention, channel=after.channel.mention),
-                discord.Color.teal(), lang, member,
+                embed_style.TEAL, lang, member,
             )
             await self.emit(member.guild.id, "voice_join", embed)
 
@@ -380,7 +381,7 @@ class ServerLog(commands.Cog):
                         "serverlog.event.voice_disconnect_admin", lang,
                         member=member.mention, channel=before.channel.mention,
                     ),
-                    discord.Color.red(), lang, member,
+                    embed_style.DANGER, lang, member,
                 )
                 embed.add_field(
                     name=i18n.t("serverlog.field.by_whom", lang),
@@ -394,7 +395,7 @@ class ServerLog(commands.Cog):
                         "serverlog.event.voice_leave", lang,
                         member=member.mention, channel=before.channel.mention,
                     ),
-                    discord.Color.dark_grey(), lang, member,
+                    embed_style.NEUTRAL, lang, member,
                 )
                 await self.emit(member.guild.id, "voice_leave", embed)
 
@@ -405,7 +406,7 @@ class ServerLog(commands.Cog):
             if entry is not None and entry.user is not None:
                 embed = self._embed(
                     i18n.t("serverlog.event.voice_move_admin", lang, member=member.mention),
-                    discord.Color.red(), lang, member,
+                    embed_style.DANGER, lang, member,
                 )
                 embed.add_field(name=i18n.t("serverlog.field.from", lang), value=before.channel.mention, inline=True)
                 embed.add_field(name=i18n.t("serverlog.field.to", lang), value=after.channel.mention, inline=True)
@@ -418,7 +419,7 @@ class ServerLog(commands.Cog):
             else:
                 embed = self._embed(
                     i18n.t("serverlog.event.voice_move_self", lang, member=member.mention),
-                    discord.Color.teal(), lang, member,
+                    embed_style.TEAL, lang, member,
                 )
                 embed.add_field(name=i18n.t("serverlog.field.from", lang), value=before.channel.mention, inline=True)
                 embed.add_field(name=i18n.t("serverlog.field.to", lang), value=after.channel.mention, inline=True)
@@ -435,7 +436,7 @@ class ServerLog(commands.Cog):
             if changes and after.channel is not None:
                 embed = self._embed(
                     i18n.t("serverlog.event.voice_state", lang, member=member.mention),
-                    discord.Color.dark_grey(), lang, member,
+                    embed_style.NEUTRAL, lang, member,
                 )
                 embed.add_field(name=i18n.t("serverlog.field.channel", lang), value=after.channel.mention, inline=False)
                 embed.add_field(name=i18n.t("serverlog.field.changes", lang), value="\n".join(changes), inline=False)
@@ -446,14 +447,14 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: discord.Role):
         lang = i18n.lang_for(role.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.role_create", lang, role=role.mention), discord.Color.green(), lang)
+        embed = self._embed(i18n.t("serverlog.event.role_create", lang, role=role.mention), embed_style.SUCCESS, lang)
         embed.add_field(name=i18n.t("serverlog.field.role", lang), value=f"{role.mention} (`{role.id}`)", inline=False)
         await self.emit(role.guild.id, "role_create", embed)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
         lang = i18n.lang_for(role.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.role_delete", lang, name=role.name), discord.Color.red(), lang)
+        embed = self._embed(i18n.t("serverlog.event.role_delete", lang, name=role.name), embed_style.DANGER, lang)
         embed.add_field(name=i18n.t("serverlog.field.role", lang), value=f"{role.name} (`{role.id}`)", inline=False)
         await self.emit(role.guild.id, "role_delete", embed)
 
@@ -473,7 +474,7 @@ class ServerLog(commands.Cog):
             changes.append(i18n.t("serverlog.role.mentionable", lang, value=after.mentionable))
         if not changes:
             return
-        embed = self._embed(i18n.t("serverlog.event.role_update", lang, role=after.mention), discord.Color.orange(), lang)
+        embed = self._embed(i18n.t("serverlog.event.role_update", lang, role=after.mention), embed_style.WARN, lang)
         embed.add_field(name=i18n.t("serverlog.field.role", lang), value=f"{after.mention} (`{after.id}`)", inline=False)
         embed.add_field(name=i18n.t("serverlog.field.changes", lang), value=_clip("\n".join(changes), lang), inline=False)
         await self.emit(after.guild.id, "role_update", embed)
@@ -483,14 +484,14 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         lang = i18n.lang_for(channel.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.channel_create", lang, channel=channel.mention), discord.Color.green(), lang)
+        embed = self._embed(i18n.t("serverlog.event.channel_create", lang, channel=channel.mention), embed_style.SUCCESS, lang)
         embed.add_field(name=i18n.t("serverlog.field.channel", lang), value=f"{channel.mention} (`{channel.id}`)", inline=False)
         await self.emit(channel.guild.id, "channel_create", embed)
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         lang = i18n.lang_for(channel.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.channel_delete", lang, name=channel.name), discord.Color.red(), lang)
+        embed = self._embed(i18n.t("serverlog.event.channel_delete", lang, name=channel.name), embed_style.DANGER, lang)
         embed.add_field(name=i18n.t("serverlog.field.channel", lang), value=f"#{channel.name} (`{channel.id}`)", inline=False)
         await self.emit(channel.guild.id, "channel_delete", embed)
 
@@ -503,7 +504,7 @@ class ServerLog(commands.Cog):
         if getattr(before, "topic", None) != getattr(after, "topic", None):
             changes.append(i18n.t("serverlog.channel.topic_changed", lang))
         if changes:
-            embed = self._embed(i18n.t("serverlog.event.channel_update", lang, channel=after.mention), discord.Color.orange(), lang)
+            embed = self._embed(i18n.t("serverlog.event.channel_update", lang, channel=after.mention), embed_style.WARN, lang)
             embed.add_field(name=i18n.t("serverlog.field.channel", lang), value=f"{after.mention} (`{after.id}`)", inline=False)
             embed.add_field(name=i18n.t("serverlog.field.changes", lang), value=_clip("\n".join(changes), lang), inline=False)
             await self.emit(after.guild.id, "channel_update", embed)
@@ -511,7 +512,7 @@ class ServerLog(commands.Cog):
         if before.overwrites != after.overwrites:
             embed = self._embed(
                 i18n.t("serverlog.event.channel_permissions", lang, channel=after.mention),
-                discord.Color.orange(), lang,
+                embed_style.WARN, lang,
             )
             embed.add_field(name=i18n.t("serverlog.field.channel", lang), value=f"{after.mention} (`{after.id}`)", inline=False)
             await self.emit(after.guild.id, "channel_permissions_update", embed)
@@ -521,7 +522,7 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):
         lang = i18n.lang_for(thread.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.thread_create", lang, thread=thread.mention), discord.Color.green(), lang)
+        embed = self._embed(i18n.t("serverlog.event.thread_create", lang, thread=thread.mention), embed_style.SUCCESS, lang)
         embed.add_field(name=i18n.t("serverlog.field.thread", lang), value=f"{thread.mention} (`{thread.id}`)", inline=False)
         parent = thread.parent
         if parent is not None:
@@ -531,7 +532,7 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_thread_delete(self, thread: discord.Thread):
         lang = i18n.lang_for(thread.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.thread_delete", lang, name=thread.name), discord.Color.red(), lang)
+        embed = self._embed(i18n.t("serverlog.event.thread_delete", lang, name=thread.name), embed_style.DANGER, lang)
         embed.add_field(name=i18n.t("serverlog.field.thread", lang), value=f"{thread.name} (`{thread.id}`)", inline=False)
         await self.emit(thread.guild.id, "thread_delete", embed)
 
@@ -549,7 +550,7 @@ class ServerLog(commands.Cog):
             changes.append(i18n.t(key, lang))
         if not changes:
             return
-        embed = self._embed(i18n.t("serverlog.event.thread_update", lang, thread=after.mention), discord.Color.orange(), lang)
+        embed = self._embed(i18n.t("serverlog.event.thread_update", lang, thread=after.mention), embed_style.WARN, lang)
         embed.add_field(name=i18n.t("serverlog.field.thread", lang), value=f"{after.mention} (`{after.id}`)", inline=False)
         embed.add_field(name=i18n.t("serverlog.field.changes", lang), value=_clip("\n".join(changes), lang), inline=False)
         await self.emit(after.guild.id, "thread_update", embed)
@@ -575,7 +576,7 @@ class ServerLog(commands.Cog):
             changes.append(i18n.t("serverlog.guild.system_channel_changed", lang))
         if not changes:
             return
-        embed = self._embed(i18n.t("serverlog.event.guild_update", lang), discord.Color.orange(), lang)
+        embed = self._embed(i18n.t("serverlog.event.guild_update", lang), embed_style.WARN, lang)
         embed.add_field(name=i18n.t("serverlog.field.changes", lang), value=_clip("\n".join(changes), lang), inline=False)
         await self.emit(after.id, "guild_update", embed)
 
@@ -590,7 +591,7 @@ class ServerLog(commands.Cog):
         lang = i18n.lang_for(interaction.guild.id)
         embed = self._embed(
             i18n.t("serverlog.event.moderation_command", lang, user=interaction.user.mention),
-            discord.Color.blurple(), lang, interaction.user,
+            embed_style.INFO, lang, interaction.user,
         )
         embed.add_field(name=i18n.t("serverlog.field.command", lang), value=f"`/{command.qualified_name}`", inline=False)
         channel = interaction.channel
@@ -611,7 +612,7 @@ class ServerLog(commands.Cog):
         removed = [e for e in before if e not in after]
         if not added and not removed:
             return
-        embed = self._embed(i18n.t("serverlog.event.emoji_update", lang), discord.Color.blurple(), lang)
+        embed = self._embed(i18n.t("serverlog.event.emoji_update", lang), embed_style.INFO, lang)
         if added:
             embed.add_field(name=i18n.t("serverlog.field.added", lang), value=_clip(" ".join(str(e) for e in added[:20]), lang), inline=False)
         if removed:
@@ -625,7 +626,7 @@ class ServerLog(commands.Cog):
             desc = i18n.t("serverlog.event.invite_create", lang, inviter=invite.inviter.mention)
         else:
             desc = i18n.t("serverlog.event.invite_create_anon", lang)
-        embed = self._embed(desc, discord.Color.green(), lang, invite.inviter)
+        embed = self._embed(desc, embed_style.SUCCESS, lang, invite.inviter)
         embed.add_field(name=i18n.t("serverlog.field.code", lang), value=f"`{invite.code}`", inline=True)
         if invite.channel:
             embed.add_field(
@@ -640,7 +641,7 @@ class ServerLog(commands.Cog):
     @commands.Cog.listener()
     async def on_invite_delete(self, invite: discord.Invite):
         lang = i18n.lang_for(invite.guild.id)
-        embed = self._embed(i18n.t("serverlog.event.invite_delete", lang), discord.Color.red(), lang)
+        embed = self._embed(i18n.t("serverlog.event.invite_delete", lang), embed_style.DANGER, lang)
         embed.add_field(name=i18n.t("serverlog.field.code", lang), value=f"`{invite.code}`", inline=True)
         await self.emit(invite.guild.id, "invite_delete", embed)
 

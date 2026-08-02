@@ -4,10 +4,16 @@ import uuid
 import discord
 from aiohttp import web
 
+from datetime import timedelta
+
+import case_timeline_core
+import embed_style
 import i18n
 import moderation_commands_core
+import moderation_embed_core
 import moderation_log
 import settings_db
+import warns_core
 from ..access_middleware import require_dashboard_access
 from .. import mass_role_jobs
 
@@ -139,22 +145,22 @@ async def _send_action_log(
     reason: str,
     extra: str = "",
     event_type: str | None = None,
+    color=None,
 ):
     lang = i18n.lang_for(guild_id)
-    embed = discord.Embed(title=i18n.t(title_key, lang), color=discord.Color.red(), timestamp=bot.utcnow())
-    for name, value in moderation_commands_core.action_log_fields(
+    embed = moderation_embed_core.build_user_action_embed(
         lang,
-        moderation_commands_core.format_user_ref(
-            moderator.name, moderator.id, getattr(moderator, "mention", None),
-        ),
-        moderation_commands_core.format_user_ref(
-            target.name, target.id, getattr(target, "mention", None),
-        ),
+        title=i18n.t(title_key, lang),
+        actor=moderator,
+        target_name=target.name,
+        target_id=target.id,
+        target_mention=getattr(target, "mention", None),
         reason=reason,
         extra=extra,
-    ):
-        embed.add_field(name=name, value=value, inline=False)
-    embed.set_footer(text=i18n.t("moderation.dashboard.footer", lang))
+        color=color if color is not None else embed_style.DANGER,
+        footer_key="moderation.dashboard.footer",
+        timestamp=bot.utcnow(),
+    )
     await bot.send_log(guild_id, embed)
     if event_type:
         moderation_log.append_event(
@@ -179,6 +185,47 @@ async def get_moderation_log(request: web.Request) -> web.Response:
     limit = max(0, min(limit, moderation_log.MAX_ENTRIES))
     events = moderation_log.load_events(request["guild_id"])[:limit]
     return web.json_response({"events": events})
+
+
+@routes.get("/api/members/{member_id}/case-timeline")
+@require_dashboard_access
+async def member_case_timeline(request: web.Request) -> web.Response:
+    guild = _get_guild_or_none(request)
+    if guild is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+
+    member_id = _parse_member_id(request)
+    if member_id is None:
+        return web.json_response({"error": "invalid_member_id"}, status=400)
+
+    member = guild.get_member(member_id)
+    in_guild = member is not None
+    if member is not None:
+        user = member
+    else:
+        try:
+            user = await request.app["bot"].fetch_user(member_id)
+        except discord.NotFound:
+            return web.json_response({"error": "user_not_found"}, status=404)
+        except discord.HTTPException:
+            return web.json_response({"error": "discord_error"}, status=502)
+
+    guild_id = request["guild_id"]
+    warns = warns_core.get_warns(guild_id, member_id)
+    events = moderation_log.load_events(guild_id)
+    items = case_timeline_core.build_case_timeline(
+        warns,
+        events,
+        member_id,
+        limit=case_timeline_core.CASE_TIMELINE_LIMIT,
+    )
+    return web.json_response(
+        {
+            "user": case_timeline_core.serialize_timeline_user(user),
+            "in_guild": in_guild,
+            "items": items,
+        }
+    )
 
 
 def _get_target_or_response(request):
@@ -236,6 +283,88 @@ async def ban_member(request: web.Request) -> web.Response:
         reason,
         extra=i18n.t("moderation.dashboard.delete_messages_extra", lang, days=days),
         event_type="manual_ban",
+    )
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/members/{member_id}/timeout")
+@require_dashboard_access
+async def timeout_member(request: web.Request) -> web.Response:
+    target, error = _get_target_or_response(request)
+    if error:
+        return error
+
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    reason = (body.get("reason") or "").strip()
+    duration = (body.get("duration") or "").strip()
+    if not reason or not duration:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    lang = i18n.lang_for(request["guild_id"])
+    try:
+        duration_seconds = moderation_commands_core.parse_mute_duration(duration, lang)
+    except ValueError as exc:
+        return web.json_response({"error": "invalid_duration", "message": str(exc)}, status=400)
+
+    moderator = request["moderator"]
+    full_reason = dashboard_reason(reason, moderator)
+    try:
+        await target.timeout(
+            discord.utils.utcnow() + timedelta(seconds=duration_seconds),
+            reason=full_reason,
+        )
+    except discord.HTTPException as exc:
+        return _map_discord_error(exc)
+
+    duration_display = moderation_commands_core.format_duration(duration, lang)
+    await _send_action_log(
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.mute",
+        target,
+        moderator,
+        reason,
+        extra=i18n.t("moderation.embed.duration_extra", lang, duration=duration_display),
+        event_type="manual_mute",
+    )
+    return web.json_response({"ok": True})
+
+
+@routes.delete("/api/members/{member_id}/timeout")
+@require_dashboard_access
+async def untimeout_member(request: web.Request) -> web.Response:
+    target, error = _get_target_or_response(request)
+    if error:
+        return error
+
+    try:
+        body = await request.json()
+    except ValueError:
+        body = {}
+    reason = (body.get("reason") or "").strip() if isinstance(body, dict) else ""
+
+    if not target.is_timed_out():
+        return web.json_response({"error": "not_timed_out"}, status=400)
+
+    moderator = request["moderator"]
+    full_reason = dashboard_reason(reason or "unmute", moderator)
+    try:
+        await target.timeout(None, reason=full_reason)
+    except discord.HTTPException as exc:
+        return _map_discord_error(exc)
+
+    await _send_action_log(
+        request.app["bot"],
+        request["guild_id"],
+        "moderation.dashboard.unmute",
+        target,
+        moderator,
+        reason,
+        event_type="manual_unmute",
+        color=embed_style.SUCCESS,
     )
     return web.json_response({"ok": True})
 

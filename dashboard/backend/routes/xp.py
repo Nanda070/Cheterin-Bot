@@ -1,8 +1,12 @@
+import asyncio
 import os
 
 from aiohttp import web
 
+import economy_core
+import economy_db
 import i18n
+import profile_card
 import stats_db
 import xp_core
 
@@ -12,6 +16,8 @@ routes = web.RouteTableDef()
 
 MAX_BG_SIZE = 5 * 1024 * 1024
 PAGE_SIZE = 25
+# Совпадает с _PROFILE_GIF_MAX_BYTES в боте (xp.py): если GIF слишком тяжёлый — откатываемся на PNG.
+PROFILE_GIF_MAX_BYTES = 3 * 1024 * 1024
 
 
 def _is_id_list(value) -> bool:
@@ -22,9 +28,16 @@ def _int_in(value, lo, hi) -> bool:
     return isinstance(value, int) and lo <= value <= hi
 
 
+def _equipped_cosmetics(guild_id: int, user_id: int) -> tuple[str | None, str | None]:
+    frame = economy_db.get_equipped(guild_id, user_id, "frame_color")
+    title = economy_db.get_equipped(guild_id, user_id, "title")
+    return (frame["value"] if frame else None, title["value"] if title else None)
+
+
 def _serialize_row(row, guild, rank: int) -> dict:
     member = guild.get_member(row["user_id"]) if guild else None
     level, into, step = xp_core.level_progress(row["xp"])
+    frame_color, title_text = _equipped_cosmetics(guild.id, row["user_id"]) if guild else (None, None)
     return {
         "user_id": str(row["user_id"]),
         "display": member.display_name if member else str(row["user_id"]),
@@ -38,6 +51,8 @@ def _serialize_row(row, guild, rank: int) -> dict:
         "voice_seconds": row["voice_seconds"],
         "voice_time_text": xp_core.format_voice_time(row["voice_seconds"]),
         "rank": rank,
+        "frame_color": frame_color,
+        "title_text": title_text,
     }
 
 
@@ -307,6 +322,113 @@ async def xp_card_bg_delete(request: web.Request) -> web.Response:
     return web.json_response({"ok": True})
 
 
+async def _profile_card_args(request: web.Request) -> dict | web.Response:
+    """Собирает позиционные/именованные аргументы для profile_card.render_* по запросу
+    предпросмотра (member по умолчанию — залогиненный админ). Возвращает web.Response при ошибке."""
+    guild_id = request["guild_id"]
+    guild = request.app["bot"].get_guild(guild_id)
+    if guild is None:
+        return web.json_response({"error": "guild_unavailable"}, status=503)
+
+    raw_uid = request.query.get("user_id", "").strip()
+    if raw_uid:
+        if not raw_uid.isdigit():
+            return web.json_response({"error": "invalid_user_id"}, status=400)
+        user_id = int(raw_uid)
+    else:
+        user_id = int(request["moderator"].id)
+
+    member = guild.get_member(user_id)
+    display_name = member.display_name if member else str(user_id)
+
+    row = stats_db.xp_get_member(guild_id, user_id)
+    xp = row["xp"] if row else 0
+    voice_seconds = row["voice_seconds"] if row else 0
+    messages = int(row["messages"]) if row else 0
+    level, into, step = xp_core.level_progress(xp)
+    rank = stats_db.xp_rank_of(guild_id, user_id)
+    total = stats_db.xp_member_count(guild_id)
+    lang = i18n.lang_for(guild_id)
+
+    avatar_bytes = None
+    if member is not None and getattr(member, "display_avatar", None) is not None:
+        try:
+            avatar = member.display_avatar
+            if hasattr(avatar, "replace"):
+                avatar = avatar.replace(size=256)
+            if hasattr(avatar, "read"):
+                avatar_bytes = await avatar.read()
+        except Exception:
+            avatar_bytes = None
+
+    frame_color, title_text = _equipped_cosmetics(guild_id, user_id)
+    balance = None
+    streak = None
+    eco = economy_core.get_settings(guild_id)
+    if eco.get("enabled"):
+        balance = economy_db.get_balance(guild_id, user_id)
+        if eco.get("daily_bonus_enabled"):
+            streak = int(economy_db.get_daily_bonus(guild_id, user_id).get("streak") or 0)
+
+    return {
+        "guild_id": guild_id,
+        "avatar_bytes": avatar_bytes,
+        "display_name": display_name,
+        "level": level,
+        "xp_into_level": into,
+        "xp_step": step,
+        "rank": rank,
+        "total_members": total,
+        "voice_time_text": xp_core.format_voice_time(voice_seconds, lang),
+        "frame_color": frame_color,
+        "title_text": title_text,
+        "messages": messages,
+        "balance": balance,
+        "streak": streak,
+        "lang": lang,
+    }
+
+
+@routes.get("/api/xp/profile-card-preview")
+@require_dashboard_access
+async def xp_profile_card_preview(request: web.Request) -> web.Response:
+    """PNG preview of the premium profile card for a member (default: logged-in admin)."""
+    payload = await _profile_card_args(request)
+    if isinstance(payload, web.Response):
+        return payload
+
+    png = await asyncio.to_thread(profile_card.render_profile_card, **payload)
+    return web.Response(
+        body=png,
+        content_type="image/png",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@routes.get("/api/xp/profile-card-preview.gif")
+@require_dashboard_access
+async def xp_profile_card_preview_gif(request: web.Request) -> web.Response:
+    """Animated GIF preview, mirroring the bot's /профиль command (falls back to PNG if too large)."""
+    payload = await _profile_card_args(request)
+    if isinstance(payload, web.Response):
+        return payload
+
+    gif = await asyncio.to_thread(profile_card.render_profile_card_gif, **payload)
+    if len(gif) <= PROFILE_GIF_MAX_BYTES:
+        return web.Response(
+            body=gif,
+            content_type="image/gif",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    png = await asyncio.to_thread(profile_card.render_profile_card, **payload)
+    return web.Response(
+        body=png,
+        content_type="image/png",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 # ────────────────── Публичный лидерборд ──────────────────
 
 def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
@@ -322,13 +444,17 @@ def _public_leaderboard_payload(bot, guild_id: int) -> web.Response | dict:
     for i, row in enumerate(rows):
         member = guild.get_member(row["user_id"]) if guild else None
         level, into, step = xp_core.level_progress(row["xp"])
+        frame_color, title_text = _equipped_cosmetics(guild_id, row["user_id"])
         entries.append({
             "rank": i + 1,
             "display": member.display_name if member else left_label,
             "avatar": str(member.display_avatar.url) if member else None,
             "level": level,
             "xp": row["xp"],
+            "voice_seconds": row["voice_seconds"],
             "voice_time_text": xp_core.format_voice_time(row["voice_seconds"]),
+            "frame_color": frame_color,
+            "title_text": title_text,
         })
     return {
         "guild_id": str(guild_id),

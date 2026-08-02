@@ -2,9 +2,11 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
+import embed_style
 import i18n
-import slash_registry
 import lockdown_core
+import moderation_embed_core
+import slash_registry
 
 
 class Lockdown(commands.Cog):
@@ -43,20 +45,25 @@ class Lockdown(commands.Cog):
             lang,
         )
 
-        embed = discord.Embed(
+        extra_parts = [
+            f"{i18n.t('lockdown.activate.roles_modified', lang)}: {modified_count}",
+        ]
+        if errors:
+            extra_parts.append(
+                f"{i18n.t('lockdown.activate.errors', lang)}:\n" + "\n".join(errors[:10])
+            )
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
             title=i18n.t("lockdown.activate.title", lang),
-            color=discord.Color.red(),
+            actor=interaction.user,
+            target_name=guild.name,
+            target_id=guild.id,
+            reason="",
+            extra="\n".join(extra_parts),
+            color=embed_style.DANGER,
+            footer_key="lockdown.activate.footer",
             timestamp=self.bot.utcnow(),
         )
-        embed.add_field(
-            name=i18n.t("lockdown.activate.who", lang),
-            value=f"{interaction.user.mention} (`{interaction.user.id}`)",
-            inline=False,
-        )
-        embed.add_field(name=i18n.t("lockdown.activate.roles_modified", lang), value=str(modified_count), inline=True)
-        if errors:
-            embed.add_field(name=i18n.t("lockdown.activate.errors", lang), value="\n".join(errors[:10]), inline=False)
-        embed.set_footer(text=i18n.t("lockdown.activate.footer", lang))
         await self.bot.send_log(interaction.guild.id, embed)
 
         status = i18n.t("lockdown.activate.success", lang, count=modified_count)
@@ -71,20 +78,25 @@ class Lockdown(commands.Cog):
             return
         restored_count, errors = result
 
-        embed = discord.Embed(
+        extra_parts = [
+            f"{i18n.t('lockdown.deactivate.roles_restored', lang)}: {restored_count}",
+        ]
+        if errors:
+            extra_parts.append(
+                f"{i18n.t('lockdown.activate.errors', lang)}:\n" + "\n".join(errors[:10])
+            )
+        embed = moderation_embed_core.build_user_action_embed(
+            lang,
             title=i18n.t("lockdown.deactivate.title", lang),
-            color=discord.Color.green(),
+            actor=interaction.user,
+            target_name=guild.name,
+            target_id=guild.id,
+            reason="",
+            extra="\n".join(extra_parts),
+            color=embed_style.SUCCESS,
+            footer_key="lockdown.activate.footer",
             timestamp=self.bot.utcnow(),
         )
-        embed.add_field(
-            name=i18n.t("lockdown.deactivate.who", lang),
-            value=f"{interaction.user.mention} (`{interaction.user.id}`)",
-            inline=False,
-        )
-        embed.add_field(name=i18n.t("lockdown.deactivate.roles_restored", lang), value=str(restored_count), inline=True)
-        if errors:
-            embed.add_field(name=i18n.t("lockdown.activate.errors", lang), value="\n".join(errors[:10]), inline=False)
-        embed.set_footer(text=i18n.t("lockdown.activate.footer", lang))
         await self.bot.send_log(interaction.guild.id, embed)
 
         status = i18n.t("lockdown.deactivate.success", lang, count=restored_count)
@@ -99,14 +111,14 @@ class Lockdown(commands.Cog):
             embed = discord.Embed(
                 title=i18n.t("lockdown.status.active_title", lang),
                 description=i18n.t("lockdown.status.active_desc", lang, count=role_count),
-                color=discord.Color.red(),
+                color=embed_style.DANGER,
                 timestamp=self.bot.utcnow(),
             )
         else:
             embed = discord.Embed(
                 title=i18n.t("lockdown.status.inactive_title", lang),
                 description=i18n.t("lockdown.status.inactive_desc", lang),
-                color=discord.Color.green(),
+                color=embed_style.SUCCESS,
                 timestamp=self.bot.utcnow(),
             )
         embed.set_footer(text=i18n.t("lockdown.status.footer", lang))

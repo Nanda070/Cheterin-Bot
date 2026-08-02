@@ -1,11 +1,15 @@
 import { Gear, ListChecks, MaskHappy } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import {
+  advanceMafiaGamePhase,
+  endMafiaGame,
   fetchChannels,
+  fetchMafiaGameDetail,
   fetchMafiaGames,
   fetchMafiaSettings,
   updateMafiaSettings,
   type ChannelInfo,
+  type MafiaGameDetail,
   type MafiaGameSummary,
   type MafiaSettings,
 } from '../api/client'
@@ -30,6 +34,18 @@ export function MafiaPage() {
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
   const [games, setGames] = useState<MafiaGameSummary[] | null>(null)
+  const [detail, setDetail] = useState<MafiaGameDetail | null>(null)
+  const [hostBusy, setHostBusy] = useState(false)
+
+  const roleLabel = (role: string) => {
+    const map: Record<string, string> = {
+      mafia: t('mafia.role.mafia'),
+      citizen: t('mafia.role.citizen'),
+      doctor: t('mafia.role.doctor'),
+      sheriff: t('mafia.role.sheriff'),
+    }
+    return map[role] ?? role
+  }
 
   const tabs = useMemo(
     () =>
@@ -66,6 +82,55 @@ export function MafiaPage() {
       .then(setGames)
       .catch(() => setError(t('mafia.errorLoadGames')))
   }, [tab, t])
+
+  const openDetail = (id: number) => {
+    fetchMafiaGameDetail(id)
+      .then(setDetail)
+      .catch(() => setError(t('mafia.errorLoadGames')))
+  }
+
+  const closeDetail = () => setDetail(null)
+
+  const refreshDetail = () => {
+    if (detail) openDetail(detail.game.id)
+  }
+
+  const refreshGames = () => {
+    fetchMafiaGames()
+      .then(setGames)
+      .catch(() => setError(t('mafia.errorLoadGames')))
+  }
+
+  const advancePhase = async () => {
+    if (!detail) return
+    setHostBusy(true)
+    setError('')
+    try {
+      await advanceMafiaGamePhase(detail.game.id)
+      refreshDetail()
+      refreshGames()
+    } catch (err) {
+      setError(formatApiError(err, t, 'mafia.errorAdvance'))
+    } finally {
+      setHostBusy(false)
+    }
+  }
+
+  const endGame = async () => {
+    if (!detail) return
+    if (!window.confirm(t('mafia.confirmEndBody'))) return
+    setHostBusy(true)
+    setError('')
+    try {
+      await endMafiaGame(detail.game.id)
+      closeDetail()
+      refreshGames()
+    } catch (err) {
+      setError(formatApiError(err, t, 'mafia.errorEnd'))
+    } finally {
+      setHostBusy(false)
+    }
+  }
 
   if (!settings) {
     return <p className="text-sm text-muted">{error || t('common.loading')}</p>
@@ -237,20 +302,80 @@ export function MafiaPage() {
           {!games && <p className="text-sm text-muted">{t('common.loading')}</p>}
           {games && games.length === 0 && <p className="text-sm text-muted">{t('common.noActiveGames')}</p>}
           {games?.map((game) => (
-            <Card key={game.id} className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {t('mafia.game', { id: game.id, channel: game.channel_name })}
-                </p>
-                <p className="text-xs text-muted">
-                  {phaseLabel(game.phase)} ·{' '}
-                  {t('game.roundAlive', {
-                    round: game.round_number,
-                    alive: game.alive_count,
-                    total: game.player_count,
-                  })}
-                </p>
-              </div>
+            <Card key={game.id} className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => (detail?.game.id === game.id ? closeDetail() : openDetail(game.id))}
+                className="flex items-center justify-between gap-3 text-left"
+              >
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {t('mafia.game', { id: game.id, channel: game.channel_name })}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {phaseLabel(game.phase)} ·{' '}
+                    {t('game.roundAlive', {
+                      round: game.round_number,
+                      alive: game.alive_count,
+                      total: game.player_count,
+                    })}
+                  </p>
+                </div>
+              </button>
+
+              {detail && detail.game.id === game.id && (
+                <div className="flex flex-col gap-4 border-t border-border pt-3">
+                  {game.status === 'active' && (
+                    <div>
+                      <h3 className="mb-2 text-sm font-semibold text-foreground">{t('mafia.hostControls')}</h3>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" onClick={advancePhase} disabled={hostBusy}>
+                          {t('mafia.advancePhase')}
+                        </Button>
+                        <Button variant="danger" onClick={endGame} disabled={hostBusy}>
+                          {t('mafia.endGame')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">{t('mafia.roster')}</h3>
+                    <div className="flex flex-col gap-1.5">
+                      {detail.players.map((p) => (
+                        <div
+                          key={p.user_id}
+                          className={`flex items-center justify-between gap-3 rounded-control border border-border px-3 py-2 text-sm ${
+                            p.alive ? 'text-foreground' : 'text-muted line-through'
+                          }`}
+                        >
+                          <div>
+                            <span className="font-medium">{p.display_name}</span>
+                            <span className="ml-2 text-xs text-muted">{t('mafia.roleLabel', { role: roleLabel(p.role) })}</span>
+                          </div>
+                          {(game.phase === 'night' || game.phase === 'day_vote') && p.alive && (
+                            <span className={`text-xs ${p.action_submitted ? 'text-primary' : 'text-muted'}`}>
+                              {p.action_submitted ? t('mafia.actionSubmitted') : t('mafia.actionPending')}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">{t('mafia.events')}</h3>
+                    {detail.events.length === 0 && <p className="text-sm text-muted">{t('mafia.events.empty')}</p>}
+                    <div className="flex flex-col gap-1.5">
+                      {detail.events.map((e, idx) => (
+                        <div key={idx} className="rounded-control border border-border px-3 py-2 text-sm text-foreground">
+                          {e.payload || e.event_type}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
           ))}
         </div>

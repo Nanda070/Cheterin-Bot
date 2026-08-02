@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import {
   fetchChannels,
   fetchConfig,
+  fetchMembers,
   fetchWelcomeSettings,
   testWelcomeSettings,
   updateConfig,
@@ -11,6 +12,7 @@ import {
   type BotConfig,
   type ChannelInfo,
   type EmbedSpec,
+  type MemberSummary,
   type WelcomeMessageSettings,
   type WelcomeSettings,
 } from '../api/client'
@@ -105,6 +107,8 @@ export function ServerEntryPage() {
   const [settings, setSettings] = useState<WelcomeSettings | null>(null)
   const [config, setConfig] = useState<BotConfig>(EMPTY_BOT_CONFIG)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
+  const [sampleMembers, setSampleMembers] = useState<MemberSummary[]>([])
+  const [sampleMemberId, setSampleMemberId] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [savedMessage, setSavedMessage] = useState('')
@@ -151,13 +155,26 @@ export function ServerEntryPage() {
         setConfig(cfg)
       })
       .catch(() => setError(t('welcome.errorLoad')))
+    fetchMembers('', 1, 25)
+      .then((page) => setSampleMembers(page.members.filter((m) => !m.is_bot)))
+      .catch(() => {})
   }, [t])
+
+  const sampleMemberOptions = useMemo(
+    () => sampleMembers.map((m) => ({ id: m.id, name: `${m.display_name} (@${m.username})` })),
+    [sampleMembers],
+  )
+  const selectedSampleMember = useMemo(
+    () => sampleMembers.find((m) => m.id === sampleMemberId) ?? null,
+    [sampleMembers, sampleMemberId],
+  )
 
   const previewVars = useMemo(() => {
     const dash = '—'
+    const name = selectedSampleMember?.display_name || 'User'
     return {
-      mention: '@User',
-      name: 'User',
+      mention: selectedSampleMember ? `@${selectedSampleMember.username}` : '@User',
+      name,
       guild_name: 'Server 404: Server Not Found',
       member_count: '100',
       announcements_channel: channelLabel(channels, config.ANNOUNCEMENTS_CHANNEL_ID, dash),
@@ -166,9 +183,9 @@ export function ServerEntryPage() {
       search_channel: channelLabel(channels, config.SEARCH_PLAYERS_CHANNEL_ID, dash),
       guild: 'Server 404: Server Not Found',
       invite: 'https://discord.gg/example',
-      user_id: '123456789',
+      user_id: selectedSampleMember?.id || '123456789',
     }
-  }, [channels, config])
+  }, [channels, config, selectedSampleMember])
 
   const applyPreview = (text: string) => applyVars(text, previewVars)
 
@@ -326,6 +343,22 @@ export function ServerEntryPage() {
         <h1 className="text-lg font-semibold text-foreground">{t('serverEntry.title')}</h1>
         <p className="mt-1 text-sm text-muted">{t('serverEntry.intro')}</p>
       </div>
+
+      {(tab === 'welcome' || tab === 'greeting') && sampleMembers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-sm text-muted" htmlFor="sample-member">
+            {t('welcome.previewMemberLabel')}
+          </label>
+          <Select
+            id="sample-member"
+            value={sampleMemberId}
+            onChange={setSampleMemberId}
+            options={sampleMemberOptions}
+            placeholder={t('welcome.previewMemberPlaceholder')}
+            className="min-w-56"
+          />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1 border-b border-border pb-1">
         {tabs.map(({ key, label, icon: Icon }) => (

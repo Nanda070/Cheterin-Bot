@@ -4,6 +4,7 @@ from discord import app_commands
 import os
 import logging
 
+import embed_style
 import bot_config
 import i18n
 import slash_registry
@@ -59,7 +60,7 @@ class CTDCloseView(discord.ui.View):
                 thread_name=thread.name,
                 mention=interaction.user.mention,
             ),
-            color=discord.Color.red(),
+            color=embed_style.DANGER,
             timestamp=interaction.client.utcnow(),
         )
         await interaction.client.send_log(interaction.guild.id, embed)
@@ -77,71 +78,88 @@ class CTDView(discord.ui.View):
         button.callback = self.create_ticket
         self.add_item(button)
 
-    async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def create_ticket(self, interaction: discord.Interaction):
+        # Signature must be (interaction,) only — discord.py Button.callback does not
+        # pass the Button. An extra `button` arg caused TypeError before defer → Discord
+        # "application didn't respond in time".
         lang = i18n.lang_for(interaction.guild_id)
         if not _is_main_guild(interaction):
             await interaction.response.send_message(i18n.t("ctd.main_guild_only", lang), ephemeral=True)
             return
         await interaction.response.defer(ephemeral=True)
-        channel = interaction.channel
-        raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
-        if not raw_role_id:
-            await interaction.followup.send(i18n.t("ctd.role_id_missing", lang), ephemeral=True)
-            return
-        role_id = int(raw_role_id)
-
-        # Проверка на существующий открытый тикет
         try:
-            active_threads = await interaction.guild.active_threads()
-        except Exception as e:
-            logger.warning("Ошибка получения активных тредов: %s", e)
-            active_threads = []
-
-        for thread in active_threads:
-            if thread.parent_id == channel.id and thread.name.startswith("new-ticket-") and thread.name.endswith(f"-{interaction.user.id}"):
-                await interaction.followup.send(
-                    i18n.t("ctd.open_ticket_exists", lang, thread_id=thread.id),
-                    ephemeral=True,
-                )
+            channel = interaction.channel
+            raw_role_id = bot_config.get(interaction.guild.id, "CTD_ROLE_ID")
+            if not raw_role_id:
+                await interaction.followup.send(i18n.t("ctd.role_id_missing", lang), ephemeral=True)
                 return
+            role_id = int(raw_role_id)
 
-        thread_name = f"new-ticket-{interaction.user.name}-{interaction.user.id}"
-        thread = await channel.create_thread(
-            name=thread_name,
-            type=discord.ChannelType.private_thread,
-            invitable=False
-        )
+            # Проверка на существующий открытый тикет
+            try:
+                active_threads = await interaction.guild.active_threads()
+            except Exception as e:
+                logger.warning("Ошибка получения активных тредов: %s", e)
+                active_threads = []
 
-        await thread.add_user(interaction.user)
-        role = interaction.guild.get_role(role_id)
-        if role:
-            for member in role.members:
-                if not member.bot:
-                    try:
-                        await thread.add_user(member)
-                    except Exception:
-                        pass
+            for thread in active_threads:
+                if (
+                    thread.parent_id == channel.id
+                    and thread.name.startswith("new-ticket-")
+                    and thread.name.endswith(f"-{interaction.user.id}")
+                ):
+                    await interaction.followup.send(
+                        i18n.t("ctd.open_ticket_exists", lang, thread_id=thread.id),
+                        ephemeral=True,
+                    )
+                    return
 
-        msg = await thread.send(
-            content=i18n.t("ctd.ticket_prompt", lang, mention=interaction.user.mention),
-            view=CTDCloseView(lang),
-        )
-        await msg.pin()
+            thread_name = f"new-ticket-{interaction.user.name}-{interaction.user.id}"
+            thread = await channel.create_thread(
+                name=thread_name,
+                type=discord.ChannelType.private_thread,
+                invitable=False,
+            )
 
-        await interaction.followup.send(i18n.t("ctd.ticket_created_user", lang), ephemeral=True)
+            await thread.add_user(interaction.user)
+            role = interaction.guild.get_role(role_id)
+            if role:
+                for member in role.members:
+                    if not member.bot:
+                        try:
+                            await thread.add_user(member)
+                        except Exception:
+                            pass
 
-        embed = discord.Embed(
-            title=i18n.t("ctd.ticket_created_log", lang),
-            description=i18n.t(
-                "ctd.ticket_created_log_body",
-                lang,
-                thread_id=thread.id,
-                mention=interaction.user.mention,
-            ),
-            color=discord.Color.green(),
-            timestamp=interaction.client.utcnow(),
-        )
-        await interaction.client.send_log(interaction.guild.id, embed)
+            msg = await thread.send(
+                content=i18n.t("ctd.ticket_prompt", lang, mention=interaction.user.mention),
+                view=CTDCloseView(lang),
+            )
+            try:
+                await msg.pin()
+            except Exception as e:
+                logger.debug("Не удалось закрепить сообщение тикета: %s", e)
+
+            await interaction.followup.send(i18n.t("ctd.ticket_created_user", lang), ephemeral=True)
+
+            embed = discord.Embed(
+                title=i18n.t("ctd.ticket_created_log", lang),
+                description=i18n.t(
+                    "ctd.ticket_created_log_body",
+                    lang,
+                    thread_id=thread.id,
+                    mention=interaction.user.mention,
+                ),
+                color=embed_style.SUCCESS,
+                timestamp=interaction.client.utcnow(),
+            )
+            await interaction.client.send_log(interaction.guild.id, embed)
+        except Exception:
+            logger.exception("CTD create_ticket failed for user %s", interaction.user.id)
+            try:
+                await interaction.followup.send(i18n.t("ctd.ticket_create_failed", lang), ephemeral=True)
+            except Exception:
+                pass
 
 
 class CTD(commands.Cog):

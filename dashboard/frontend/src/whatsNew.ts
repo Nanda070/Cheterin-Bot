@@ -1,7 +1,7 @@
 /** Admin-facing dashboard changelog. Bump `version` when shipping user-visible panel updates. */
 
 export interface WhatsNewEntry {
-  /** Opaque id used for dismiss persistence (e.g. `2026.07`). */
+  /** Opaque id used for dismiss persistence (e.g. `2026.08`). */
   version: string
   /** Display date in `YYYY-MM` form — do not invent precise day stamps. */
   date: string
@@ -10,6 +10,22 @@ export interface WhatsNewEntry {
 }
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
+  {
+    version: '2026.08',
+    date: '2026-08',
+    itemKeys: [
+      'quote',
+      'spamTrapsModes',
+      'starboard',
+      'autoReactions',
+      'botProfile',
+      'caseTimeline',
+      'profileCard',
+      'commandPalette',
+      'weeklyDigest',
+      'gameHost',
+    ],
+  },
   {
     version: '2026.07',
     date: '2026-07',

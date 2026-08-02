@@ -33,6 +33,14 @@ const API_ERROR_KEYS: Record<string, string> = {
   upload_failed: 'apiError.upload_failed',
   invalid_size: 'apiError.invalid_size',
   invalid_format: 'apiError.invalid_format',
+  invalid_poll_interval: 'apiError.invalid_poll_interval',
+  invalid_enabled: 'apiError.invalid_enabled',
+  invalid_channel: 'apiError.invalid_channel',
+  module_disabled: 'apiError.module_disabled',
+  not_configured: 'apiError.not_configured',
+  channel_not_messageable: 'apiError.channel_not_messageable',
+  forbidden_by_discord: 'apiError.forbidden_by_discord',
+  publish_failed: 'apiError.publish_failed',
 }
 
 /**

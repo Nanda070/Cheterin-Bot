@@ -22,6 +22,7 @@ import { Modal } from '../components/ui/Modal'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
+import { formatDurationOrPermanent } from '../utils/formatDuration'
 
 const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
@@ -43,16 +44,6 @@ function minutesToParts(total: number) {
 
 function partsToMinutes(days: number, hours: number, minutes: number) {
   return days * 1440 + hours * 60 + minutes
-}
-
-function formatDuration(minutes: number, t: ReturnType<typeof useT>): string {
-  if (minutes <= 0) return t('automod.duration.permanent')
-  const { days, hours, minutes: mins } = minutesToParts(minutes)
-  return (
-    [days && t('automod.duration.days', { n: days }), hours && t('automod.duration.hours', { n: hours }), mins && t('automod.duration.minutes', { n: mins })]
-      .filter(Boolean)
-      .join(' ') || t('automod.duration.zero')
-  )
 }
 
 function DurationInputs({ minutes, onChange }: { minutes: number; onChange: (m: number) => void }) {
@@ -415,7 +406,7 @@ function EscalationSection({
                 count: rule.count,
                 suffix: rule.count === 1 ? t('automod.escalation.suffixOne') : t('automod.escalation.suffixMany'),
                 action: t(`automod.punishment.${rule.action}`),
-                duration: formatDuration(rule.duration_minutes, t),
+                duration: formatDurationOrPermanent(rule.duration_minutes, t),
               })}
             </p>
             <button

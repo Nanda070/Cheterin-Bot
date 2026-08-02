@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   deleteCardBg,
   fetchChannels,
+  fetchProfileCardPreview,
+  fetchProfileCardPreviewGif,
   fetchRoles,
   fetchXpLeaderboard,
   fetchXpOverview,
@@ -26,6 +28,7 @@ import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
+import { formatDuration, formatDurationMinutes } from '../utils/formatDuration'
 
 type Tab = 'settings' | 'level-rewards' | 'voice-rewards' | 'card' | 'members'
 
@@ -61,6 +64,12 @@ export function LevelsPage() {
   const [editXp, setEditXp] = useState('')
   const [confirmResetAll, setConfirmResetAll] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewBusy, setPreviewBusy] = useState(false)
+  const [previewError, setPreviewError] = useState('')
+  const [previewAnimated, setPreviewAnimated] = useState(false)
+  const previewUrlRef = useRef<string | null>(null)
+  const previewUserIdRef = useRef<string | undefined>(undefined)
 
   const tabs = useMemo(
     (): { key: Tab; label: string; icon: typeof Gear }[] => [
@@ -73,16 +82,15 @@ export function LevelsPage() {
     [t],
   )
 
-  const formatMinutes = (minutes: number): string => {
-    const { weeks, days, hours } = minutesToParts(minutes)
-    const parts: string[] = []
-    if (weeks) parts.push(t('levels.time.weeks', { n: weeks }))
-    if (days) parts.push(t('levels.time.days', { n: days }))
-    if (hours) parts.push(t('levels.time.hours', { n: hours }))
-    return parts.length ? parts.join(' ') : t('levels.time.minutes', { n: minutes })
-  }
+  const formatMinutes = (minutes: number): string => formatDurationMinutes(minutes, t)
 
   const roleOptions = roles.map((r) => ({ id: r.id, name: r.name }))
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -99,6 +107,21 @@ export function LevelsPage() {
       })
       .catch(() => setError(t('levels.errorLoadSettings')))
   }, [t])
+
+  const loadPreview = (userId?: string, animated = previewAnimated) => {
+    previewUserIdRef.current = userId
+    setPreviewBusy(true)
+    setPreviewError('')
+    const fetcher = animated ? fetchProfileCardPreviewGif : fetchProfileCardPreview
+    fetcher(userId)
+      .then((url) => {
+        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = url
+        setPreviewUrl(url)
+      })
+      .catch((err) => setPreviewError(formatApiError(err, t, 'levels.previewCardError')))
+      .finally(() => setPreviewBusy(false))
+  }
 
   useEffect(() => {
     if (tab !== 'members') return
@@ -237,6 +260,7 @@ export function LevelsPage() {
             <ChipPicker
               label={t('levels.ignoredRoles')}
               hint={t('levels.textIgnoredRolesHint')}
+              kind="role"
               options={roleOptions}
               selected={settings.text.ignored_roles}
               onChange={(ids) => patch((p) => ({ ...p, text: { ...p.text, ignored_roles: ids } }))}
@@ -282,6 +306,7 @@ export function LevelsPage() {
             <p className="text-xs text-muted">{t('levels.voiceXpHint')}</p>
             <ChipPicker
               label={t('levels.ignoredRoles')}
+              kind="role"
               options={roleOptions}
               selected={settings.voice.ignored_roles}
               onChange={(ids) => patch((p) => ({ ...p, voice: { ...p.voice, ignored_roles: ids } }))}
@@ -488,6 +513,7 @@ export function LevelsPage() {
                 <div className="min-w-60 flex-1">
                   <ChipPicker
                     label={t('levels.roles')}
+                    kind="role"
                     options={roleOptions}
                     selected={reward.role_ids}
                     onChange={(ids) =>
@@ -565,6 +591,7 @@ export function LevelsPage() {
                   <div className="min-w-60 flex-1">
                     <ChipPicker
                       label={t('levels.rolesThreshold', { threshold: formatMinutes(reward.minutes) })}
+                      kind="role"
                       options={roleOptions}
                       selected={reward.role_ids}
                       onChange={(ids) =>
@@ -605,52 +632,86 @@ export function LevelsPage() {
       )}
 
       {tab === 'card' && (
-        <Card className="flex flex-col gap-4">
-          <h2 className="font-semibold text-foreground">{t('levels.cardBgTitle')}</h2>
-          <p className="text-sm text-muted">
-            {t('levels.cardBgHint', {
-              status: hasCardBg ? t('levels.cardBgCustom') : t('levels.cardBgDefault'),
-            })}
-          </p>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/png,image/jpeg"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) {
-                act(async () => {
-                  await uploadCardBg(file)
-                  setHasCardBg(true)
-                  setSaved(t('levels.bgUploaded'))
-                })
-              }
-              e.target.value = ''
-            }}
-          />
-          <div className="flex gap-2">
-            <Button variant="primary" onClick={() => fileInput.current?.click()} disabled={busy}>
-              {t('levels.uploadBg')}
-            </Button>
-            {hasCardBg && (
-              <Button
-                variant="danger"
-                onClick={() =>
+        <div className="flex flex-col gap-4">
+          <Card className="flex flex-col gap-4">
+            <h2 className="font-semibold text-foreground">{t('levels.cardBgTitle')}</h2>
+            <p className="text-sm text-muted">
+              {t('levels.cardBgHint', {
+                status: hasCardBg ? t('levels.cardBgCustom') : t('levels.cardBgDefault'),
+              })}
+            </p>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
                   act(async () => {
-                    await deleteCardBg()
-                    setHasCardBg(false)
-                    setSaved(t('levels.bgDeleted'))
+                    await uploadCardBg(file)
+                    setHasCardBg(true)
+                    setSaved(t('levels.bgUploaded'))
+                    if (previewUrlRef.current) loadPreview(previewUserIdRef.current)
                   })
                 }
-                disabled={busy}
-              >
-                {t('levels.deleteBg')}
+                e.target.value = ''
+              }}
+            />
+            <div className="flex gap-2">
+              <Button variant="primary" onClick={() => fileInput.current?.click()} disabled={busy}>
+                {t('levels.uploadBg')}
               </Button>
+              {hasCardBg && (
+                <Button
+                  variant="danger"
+                  onClick={() =>
+                    act(async () => {
+                      await deleteCardBg()
+                      setHasCardBg(false)
+                      setSaved(t('levels.bgDeleted'))
+                      if (previewUrlRef.current) loadPreview(previewUserIdRef.current)
+                    })
+                  }
+                  disabled={busy}
+                >
+                  {t('levels.deleteBg')}
+                </Button>
+              )}
+            </div>
+            {saved && <p className="text-sm text-primary">{saved}</p>}
+          </Card>
+
+          <Card className="flex flex-col gap-4">
+            <h2 className="font-semibold text-foreground">{t('levels.previewCard')}</h2>
+            <p className="text-sm text-muted">{t('levels.previewCardHint')}</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={() => loadPreview(previewUserIdRef.current ?? user?.id)}
+                disabled={previewBusy}
+              >
+                {previewBusy ? t('levels.previewCardLoading') : t('levels.previewCard')}
+              </Button>
+              <Toggle
+                checked={previewAnimated}
+                onChange={(v) => {
+                  setPreviewAnimated(v)
+                  loadPreview(previewUserIdRef.current ?? user?.id, v)
+                }}
+                label={t('levels.previewAnimated')}
+              />
+            </div>
+            {previewError && <p className="text-sm text-danger">{previewError}</p>}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt=""
+                className="max-w-full rounded-card border border-border"
+              />
             )}
-          </div>
-          {saved && <p className="text-sm text-primary">{saved}</p>}
-        </Card>
+          </Card>
+        </div>
       )}
 
       {tab === 'members' && (
@@ -680,27 +741,55 @@ export function LevelsPage() {
               >
                 <span className="w-10 text-sm font-medium text-muted">#{entry.rank}</span>
                 {entry.avatar ? (
-                  <img src={entry.avatar} alt="" className="h-8 w-8 rounded-full" />
+                  <img
+                    src={entry.avatar}
+                    alt=""
+                    className="h-8 w-8 rounded-full border-2"
+                    style={{ borderColor: entry.frame_color || 'transparent' }}
+                  />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-muted text-xs font-semibold text-primary">
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 bg-primary-muted text-xs font-semibold text-primary"
+                    style={{ borderColor: entry.frame_color || 'transparent' }}
+                  >
                     {entry.display.slice(0, 1).toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-foreground">
-                    {entry.display}
-                    {!entry.on_server && <span className="ml-2 text-xs text-muted">{t('levels.leftServer')}</span>}
+                  <p className="flex items-center gap-2 truncate text-sm text-foreground">
+                    <span className="truncate">{entry.display}</span>
+                    {entry.title_text && (
+                      <span
+                        className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                        style={{
+                          borderColor: entry.frame_color || 'var(--color-primary)',
+                          color: entry.frame_color || 'var(--color-primary)',
+                        }}
+                      >
+                        {entry.title_text}
+                      </span>
+                    )}
+                    {!entry.on_server && <span className="text-xs text-muted">{t('levels.leftServer')}</span>}
                   </p>
                   <p className="text-xs text-muted">
                     {t('levels.memberStats', {
                       level: entry.level,
                       xp: entry.xp,
-                      voiceTime: entry.voice_time_text,
+                      voiceTime: formatDuration(entry.voice_seconds, t),
                       messages: entry.messages,
                     })}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setTab('card')
+                      loadPreview(entry.user_id)
+                    }}
+                  >
+                    {t('levels.previewMember')}
+                  </Button>
                   <Button
                     variant="secondary"
                     onClick={() => {

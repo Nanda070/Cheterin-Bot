@@ -11,6 +11,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+import embed_style
 import family_core
 import family_db
 import i18n
@@ -25,7 +26,7 @@ def build_birthday_embed(member: discord.abc.User, lang: str, guild_id: int) -> 
     embed = discord.Embed(
         title=i18n.t("family.birthdays.embed.title", lang),
         description=i18n.t("family.birthdays.embed.description", lang, mention=member.mention),
-        color=0xFEE75C,
+        color=embed_style.GOLD,
         timestamp=datetime.now(timezone.utc),
     )
     embed.set_footer(text=i18n.t("family.birthdays.embed.footer", lang, date=now_local.strftime('%d.%m.%Y')))
@@ -179,70 +180,79 @@ class BirthdayCog(commands.Cog):
     async def before_birthday_loop(self):
         await self.bot.wait_until_ready()
 
-    @app_commands.command(name="добавить-др", description="Добавить свой день рождения")
-    @app_commands.describe(дата="Дата рождения (дд.мм, дд.мм.гггг или «1 января»)")
-    async def add_birthday(self, interaction: discord.Interaction, дата: str):
-        lang = i18n.lang_for(interaction.guild_id)
-        if not interaction.guild:
-            return await interaction.response.send_message(i18n.t("family.guild_only", lang), ephemeral=True)
-        if not family_core.get_settings(interaction.guild.id)["enabled"]:
-            return await interaction.response.send_message(i18n.module_disabled(lang, "family"), ephemeral=True)
-
-        try:
-            day, month, display = family_core.parse_birthday_date(дата, lang)
-        except ValueError as exc:
-            return await interaction.response.send_message(str(exc), ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
-        family_db.save_birthday(interaction.user.id, interaction.guild.id, day, month, display)
-        await self.update_birthday_message(interaction.guild)
-        await send_birthday_log(
-            self.bot, interaction.guild.id,
-            i18n.t("family.birthdays.log.added", lang, mention=interaction.user.mention, date=display),
-        )
-        await interaction.followup.send(i18n.t("family.birthdays.added", lang))
-
-    @app_commands.command(name="установить-др", description="Установить день рождения участнику")
-    @app_commands.describe(участник="Участник", дата="Дата рождения")
-    async def set_birthday(self, interaction: discord.Interaction, участник: discord.Member, дата: str):
-        lang = i18n.lang_for(interaction.guild_id)
-        if not interaction.guild or not isinstance(interaction.user, discord.Member):
-            return await interaction.response.send_message(i18n.t("family.guild_only", lang), ephemeral=True)
-        if not family_core.get_settings(interaction.guild.id)["enabled"]:
-            return await interaction.response.send_message(i18n.module_disabled(lang, "family"), ephemeral=True)
-        if not family_core.has_staff_access(interaction.user):
-            return await interaction.response.send_message(i18n.t("family.no_access", lang), ephemeral=True)
-
-        try:
-            day, month, display = family_core.parse_birthday_date(дата, lang)
-        except ValueError as exc:
-            return await interaction.response.send_message(str(exc), ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
-        family_db.save_birthday(участник.id, interaction.guild.id, day, month, display)
-        await self.update_birthday_message(interaction.guild)
-        await send_birthday_log(
-            self.bot, interaction.guild.id,
-            i18n.t(
-                "family.birthdays.log.set", lang,
-                mention=interaction.user.mention, date=display, target=участник.mention,
-            ),
-        )
-        await interaction.followup.send(i18n.t("family.birthdays.set", lang))
-
-    @app_commands.command(name="удалить-др", description="Удалить день рождения")
-    @app_commands.describe(участник="Участник (по умолчанию — вы сами)")
-    async def delete_birthday(self, interaction: discord.Interaction, участник: discord.Member | None = None):
+    @app_commands.command(name="birthday", description="Family birthdays: add / set / remove")
+    @app_commands.describe(
+        action="Действие: add / set / remove",
+        date="Дата (дд.мм, дд.мм.гггг или «1 января») — для add и set",
+        member="Участник (обязателен для set; для remove по умолчанию — вы)",
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="add", value="add"),
+            app_commands.Choice(name="set", value="set"),
+            app_commands.Choice(name="remove", value="remove"),
+        ]
+    )
+    async def birthday_command(
+        self,
+        interaction: discord.Interaction,
+        action: app_commands.Choice[str],
+        date: str | None = None,
+        member: discord.Member | None = None,
+    ):
         lang = i18n.lang_for(interaction.guild_id)
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             return await interaction.response.send_message(i18n.t("family.guild_only", lang), ephemeral=True)
         if not family_core.get_settings(interaction.guild.id)["enabled"]:
             return await interaction.response.send_message(i18n.module_disabled(lang, "family"), ephemeral=True)
 
-        target = участник or interaction.user
+        act = action.value
+        if act == "add":
+            if not date:
+                return await interaction.response.send_message(
+                    i18n.t("family.birthdays.error.date_required", lang), ephemeral=True,
+                )
+            try:
+                day, month, display = family_core.parse_birthday_date(date, lang)
+            except ValueError as exc:
+                return await interaction.response.send_message(str(exc), ephemeral=True)
+            await interaction.response.defer(ephemeral=True)
+            family_db.save_birthday(interaction.user.id, interaction.guild.id, day, month, display)
+            await self.update_birthday_message(interaction.guild)
+            await send_birthday_log(
+                self.bot, interaction.guild.id,
+                i18n.t("family.birthdays.log.added", lang, mention=interaction.user.mention, date=display),
+            )
+            await interaction.followup.send(i18n.t("family.birthdays.added", lang))
+            return
+
+        if act == "set":
+            if member is None or not date:
+                return await interaction.response.send_message(
+                    i18n.t("family.birthdays.error.set_args", lang), ephemeral=True,
+                )
+            if not family_core.has_staff_access(interaction.user):
+                return await interaction.response.send_message(i18n.t("family.no_access", lang), ephemeral=True)
+            try:
+                day, month, display = family_core.parse_birthday_date(date, lang)
+            except ValueError as exc:
+                return await interaction.response.send_message(str(exc), ephemeral=True)
+            await interaction.response.defer(ephemeral=True)
+            family_db.save_birthday(member.id, interaction.guild.id, day, month, display)
+            await self.update_birthday_message(interaction.guild)
+            await send_birthday_log(
+                self.bot, interaction.guild.id,
+                i18n.t(
+                    "family.birthdays.log.set", lang,
+                    mention=interaction.user.mention, date=display, target=member.mention,
+                ),
+            )
+            await interaction.followup.send(i18n.t("family.birthdays.set", lang))
+            return
+
+        target = member or interaction.user
         if target.id != interaction.user.id and not family_core.has_staff_access(interaction.user):
             return await interaction.response.send_message(i18n.t("family.no_access", lang), ephemeral=True)
-
         await interaction.response.defer(ephemeral=True)
         deleted = family_db.delete_birthday(interaction.guild.id, target.id)
         await self.update_birthday_message(interaction.guild)

@@ -144,6 +144,99 @@ async def mafia_games_list(request: web.Request) -> web.Response:
     return web.json_response({"games": [_serialize_game_summary(g, bot) for g in games]})
 
 
+def _game_for_guild(game_id: int, guild_id: int) -> dict | None:
+    game = mafia_db.get_game(game_id)
+    if game is None or int(game["guild_id"]) != int(guild_id):
+        return None
+    return game
+
+
+@routes.get("/api/mafia/games/{id}")
+@require_dashboard_access
+async def mafia_game_detail(request: web.Request) -> web.Response:
+    """Host view for the dashboard: full roster with roles, per-phase submission
+    status, and round events — mirrors bunker_game_detail's shape."""
+    try:
+        game_id = int(request.match_info["id"])
+    except ValueError:
+        return web.json_response({"error": "invalid_id"}, status=400)
+    game = _game_for_guild(game_id, request["guild_id"])
+    if game is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    bot = request.app["bot"]
+    guild = bot.get_guild(game["guild_id"])
+    players = mafia_db.list_players(game_id)
+    round_number = game["round_number"]
+
+    submitted_ids: set[int] = set()
+    if game["phase"] == "night":
+        submitted_ids = {a["actor_user_id"] for a in mafia_db.get_night_actions(game_id, round_number)}
+    elif game["phase"] == "day_vote":
+        submitted_ids = {v["voter_user_id"] for v in mafia_db.get_day_votes(game_id, round_number)}
+
+    return web.json_response({
+        "game": _serialize_game_summary(game, bot),
+        "players": [
+            {
+                "user_id": str(p["user_id"]),
+                "display_name": _display_name(guild, p["user_id"], p.get("display_name")),
+                "alive": bool(p["alive"]),
+                "role": p["role"],
+                "action_submitted": p["user_id"] in submitted_ids,
+            }
+            for p in players
+        ],
+        "events": [
+            {
+                "round_number": e["round_number"],
+                "event_type": e["event_type"],
+                "payload": e["payload"],
+                "created_at": e["created_at"],
+            }
+            for e in mafia_db.list_round_events(game_id)
+        ],
+    })
+
+
+@routes.post("/api/mafia/games/{id}/end")
+@require_dashboard_access
+async def mafia_game_end(request: web.Request) -> web.Response:
+    try:
+        game_id = int(request.match_info["id"])
+    except ValueError:
+        return web.json_response({"error": "invalid_id"}, status=400)
+    if _game_for_guild(game_id, request["guild_id"]) is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    cog = request.app["bot"].get_cog("MafiaCog")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    ok = await cog.force_end_game(game_id)
+    if not ok:
+        return web.json_response({"error": "game_not_active"}, status=409)
+    return web.json_response({"ok": True})
+
+
+@routes.post("/api/mafia/games/{id}/advance-phase")
+@require_dashboard_access
+async def mafia_game_advance_phase(request: web.Request) -> web.Response:
+    try:
+        game_id = int(request.match_info["id"])
+    except ValueError:
+        return web.json_response({"error": "invalid_id"}, status=400)
+    if _game_for_guild(game_id, request["guild_id"]) is None:
+        return web.json_response({"error": "not_found"}, status=404)
+
+    cog = request.app["bot"].get_cog("MafiaCog")
+    if cog is None:
+        return web.json_response({"error": "service_unavailable"}, status=503)
+    ok = await cog.force_advance_phase(game_id)
+    if not ok:
+        return web.json_response({"error": "game_not_active"}, status=409)
+    return web.json_response({"ok": True})
+
+
 # ────────────────────────── Публичная ссылка игрока ──────────────────────────
 
 @routes.get("/api/public/mafia/{token}")

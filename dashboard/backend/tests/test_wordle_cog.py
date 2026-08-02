@@ -65,17 +65,10 @@ async def test_commands_disabled_module():
         await handler(interaction)
         assert "отключён" in interaction.response.messages[0]["content"]
 
-    interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.training_command.callback(cog, interaction)
-    assert "отключён" in interaction.response.messages[0]["content"]
-
-    interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.stats_command.callback(cog, interaction)
-    assert "отключён" in interaction.response.messages[0]["content"]
-
-    interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.top_command.callback(cog, interaction)
-    assert "отключён" in interaction.response.messages[0]["content"]
+    for action in ("training", "stats", "top"):
+        interaction = FakeInteraction(player, guild, channel)
+        await WordleCog.wordle_command.callback(cog, interaction, type("C", (), {"value": action})())
+        assert "отключён" in interaction.response.messages[0]["content"]
 
 
 # ────────────────────────── Доска дня ──────────────────────────
@@ -191,7 +184,7 @@ async def test_training_flow_win_without_stats(monkeypatch):
     monkeypatch.setattr(wordle_core, "training_word", lambda: "школа")
 
     interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.training_command.callback(cog, interaction)
+    await WordleCog.wordle_command.callback(cog, interaction, type("C", (), {"value": "training"})())
     assert interaction.response.messages[0]["ephemeral"] is True
 
     interaction = FakeInteraction(player, guild, channel)
@@ -217,13 +210,14 @@ async def test_training_guess_without_game():
 @pytest.mark.asyncio
 async def test_stats_command_empty_and_filled():
     cog, guild, player, channel = build()
+    choice = type("C", (), {"value": "stats"})()
     interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.stats_command.callback(cog, interaction)
+    await WordleCog.wordle_command.callback(cog, interaction, choice)
     assert "не играли" in interaction.response.messages[0]["content"]
 
     wordle_db.record_result(guild.id, player.id, DAY, won=True, attempts=4)
     interaction = FakeInteraction(player, guild, channel)
-    await WordleCog.stats_command.callback(cog, interaction)
+    await WordleCog.wordle_command.callback(cog, interaction, choice)
     embed = interaction.response.messages[0]["embed"]
     assert "статистика" in embed.title
 
@@ -234,7 +228,7 @@ async def test_top_command_lists_players():
     wordle_db.record_result(guild.id, player.id, DAY, won=True, attempts=4)
     interaction = FakeInteraction(player, guild, channel)
 
-    await WordleCog.top_command.callback(cog, interaction)
+    await WordleCog.wordle_command.callback(cog, interaction, type("C", (), {"value": "top"})())
 
     embed = interaction.response.messages[0]["embed"]
     assert "🥇" in embed.description

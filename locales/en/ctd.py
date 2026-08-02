@@ -12,6 +12,7 @@ MESSAGES: dict[str, str] = {
         "{mention} Please describe your issue and wait for a response from the staff."
     ),
     "ctd.ticket_created_user": "Ticket created successfully.",
+    "ctd.ticket_create_failed": "Could not create the ticket. Try again or contact staff.",
     "ctd.ticket_created_log": "\U0001f3ab New ticket created",
     "ctd.ticket_created_log_body": "Thread: <#{thread_id}>\nUser: {mention}",
     "ctd.wrong_channel": "Use this command in <#{channel_id}>",

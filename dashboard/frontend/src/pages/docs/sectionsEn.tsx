@@ -24,8 +24,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <P>
           Cheterin is a multi-purpose Discord bot with a web control panel. It covers what a gaming community needs:
           moderation and raid protection, levels, server logging, tickets and feedback, welcomes and roles, a message
-          builder, events, polls, brackets, economy and casino, custom commands, scheduled and sticky messages, GTA5RP
-          supply runs and family tools, private voice rooms, stream notifications, and more.
+          builder, events, polls, brackets, economy and casino, custom commands, scheduled and sticky messages, Games
+          tools (GTA5RP family/supply, ValChecker for Valorant), private voice rooms, stream notifications, and more.
         </P>
         <P>
           The idea is simple: <strong>few chat commands, most setup in the browser</strong>. Almost every feature has
@@ -79,7 +79,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Bunker', 'Role-playing game: lobby in Discord; character card and voting on a personal link', 'Bunker'],
             ['Giveaways', 'Prize draws with timer, reroll, and auto winner pick', 'Events → Giveaways'],
             ['Daily topic', 'Question/topic of the day on a schedule', 'Daily topic'],
-            ['Fun', 'Russian roulette, emoji roulette, Auto-Emoji, and Russian Wordle', 'Fun'],
+            ['Fun', 'Russian roulette, Auto-Emoji, and Russian Wordle', 'Fun'],
             ['Economy', 'Server currency: activity payouts, transfers, role shop, weekly report', 'Economy'],
             ['Casino', 'Slots, coinflip, blackjack, Russian roulette bets, leaderboard', 'Casino'],
             ['Custom commands', 'Trigger → reply rules (exact or contains match)', 'Custom commands'],
@@ -95,8 +95,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Automod', 'Message filters with punishments and warn escalation', 'Automod'],
             ['Anti-raid', 'Auto-lockdown on a surge of fresh-account joins — off by default', 'Moderation → Anti-raid'],
             ['Verification', '“I am not a bot” / accept-rules panel; optional re-verify — off by default', 'Moderation → Verification'],
-            ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Supply runs'],
-            ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Family'],
+            ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Games → Supply runs'],
+            ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Games → Family'],
+            ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Games → ValChecker'],
             ['Private voice rooms', 'Personal voice channels with a control panel', 'Private voice rooms'],
             ['News relay', 'Forward messages from a source server', 'News relay'],
             ['Bulk role assign', 'Background role assignment to many members', 'Members & roles'],
@@ -158,8 +159,9 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Casino', 'Slots / coinflip / blackjack, Russian roulette bets, leaderboard'],
             ['Voice statistics', 'Activity charts, top channels and members'],
             ['Private voice rooms', 'Active rooms, publish control panel'],
-            ['Family', 'Module toggle, role roster, ticket applications, birthdays'],
-            ['Supply runs', 'Active runs, history, top participants, create a run'],
+            ['Family', 'Module toggle, role roster, ticket applications, birthdays (Games)'],
+            ['Supply runs', 'Active runs, history, top participants, create a run (Games)'],
+            ['ValChecker', 'Module toggle, match/status channels, poll interval (Games)'],
             ['Feedback & tickets', 'Feedback cases, categories, ticket panel'],
             ['Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
             ['Messages', 'Tabs: scheduled posts and sticky messages'],
@@ -548,18 +550,28 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H>🛑 Spam traps</H>
         <P>
-          This is <strong>not</strong> a “timed ban for N minutes” — it is a trap for raiders and self-banning bots.
-          Any non-admin message in the spam trap channel instantly bans the author (purging recent message history) and
-          unbans them again a couple of seconds later. The report goes to the spam trap log channel (or spam log /
-          server log if unset).
+          Trap channel for raiders and self-banning bots (Lockdown → Spam traps). Action mode:
         </P>
-        <Note>
-          If the bot restarts in the narrow window between ban and unban, someone can stay banned briefly — on the next
-          startup the bot finds stuck spam-trap bans and unbans them automatically.
-        </Note>
+        <UL>
+          <li>
+            <strong>Softban</strong> — ban with message purge, then quick unban (classic honeypot). Softbans recover
+            after a bot restart if stuck mid-cycle.
+          </li>
+          <li>
+            <strong>Ban</strong> — permanent ban (separate reason marker; not auto-unbanned).
+          </li>
+          <li>
+            <strong>Disabled</strong> — trap channel is ignored.
+          </li>
+        </UL>
+        <P>
+          Customize warning / DM / log text with placeholders (<Code>{'{action}'}</Code>, <Code>{'{guild}'}</Code>,{' '}
+          <Code>{'{channel}'}</Code>, <Code>{'{ban_count}'}</Code>). Publish or update the warning embed in the trap
+          channel from the panel. The report goes to the spam trap log channel (or spam / server log if unset).
+        </P>
         <Warn>
-          Do not confuse this with a real timed ban: for that, use <Code>/ban</Code> with a duration — timed bans from
-          that command survive a bot restart (see “Moderation commands” below).
+          Softban is not the same as <Code>/ban</Code> with a duration — use moderation commands for real timed bans
+          that survive restarts.
         </Warn>
 
         <H>🔒 Lockdown (server isolation)</H>
@@ -811,11 +823,6 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           Bindings to deleted messages and channels are cleaned up automatically when the bot starts.
         </P>
 
-        <H>ℹ️ /userinfo command</H>
-        <P>
-          Member summary: account creation date, server join date, roles, invite stats. Available to moderators with
-          Manage Server.
-        </P>
       </>
     ),
   },
@@ -1241,10 +1248,10 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           the bot says the loser “got lucky”, without an error.
         </Note>
 
-        <H3>🎰 Emoji roulette — /emoji-roulette</H3>
+        <H3>💬 Make it a Quote</H3>
         <P>
-          Picks a random emoji from the server&apos;s custom emoji. If the server has none, the bot uses a built-in
-          fallback set. No settings or cooldown.
+          Under Fun → Make it a Quote: reply to a message and mention the bot — it posts a crimson quote PNG (avatar,
+          name, text, optional image). Optional toggle deletes the trigger message after posting.
         </P>
 
         <H3>✨ Auto-Emoji</H3>
@@ -1277,13 +1284,14 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         </P>
         <UL>
           <li>
-            <Code>/wordle-training</Code> — unlimited games with a random word; no stats and no public cards.
+            <Code>/wordle</Code> action <Code>training</Code> — unlimited games with a random word; no stats and no
+            public cards.
           </li>
           <li>
-            <Code>/wordle-stats</Code> — played, win %, current and best streak, guess distribution.
+            <Code>/wordle</Code> action <Code>stats</Code> — played, win %, current and best streak, guess distribution.
           </li>
           <li>
-            <Code>/wordle-top</Code> — server top 10 by wins (ties broken by best streak).
+            <Code>/wordle</Code> action <Code>top</Code> — server top 10 by wins (ties broken by best streak).
           </li>
           <li>
             <strong>Daily announcement</strong>: at a configured time (server timezone, HH:MM) the bot posts yesterday&apos;s
@@ -1669,9 +1677,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Birthdays</H3>
         <UL>
           <li>
-            <Code>/birthday-add</Code>, <Code>/birthday-set</Code>, <Code>/birthday-remove</Code> (
-            <Code>/добавить-др</Code>, <Code>/установить-др</Code>, <Code>/удалить-др</Code>) — a member sets a date
-            (day and month, no year).
+            <Code>/birthday</Code> with action <Code>add</Code> / <Code>set</Code> / <Code>remove</Code> (
+            Russian name <Code>/др</Code>) — a member sets a date (day and month, no year).
           </li>
           <li>A live upcoming-birthdays message updates on every change.</li>
           <li>Every day at midnight in the server timezone the bot congratulates birthday people in the configured channel.</li>
@@ -1680,7 +1687,36 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       </>
     ),
   },
-
+  {
+    id: 'valchecker',
+    title: 'ValChecker',
+    group: 'Modules',
+    content: (
+      <>
+        <H>ValChecker (Valorant)</H>
+        <P>
+          Link Riot accounts, view profiles and matches, compare players, server leaderboard, and Valorant status.
+          Off by default — enable under <strong>Games → ValChecker</strong>. Admin setup is dashboard-only (no Discord
+          admin slash command). Requires <Code>HENRIK_API_KEY</Code> on the bot host.
+        </P>
+        <Table
+          headers={['Command', 'Purpose']}
+          rows={[
+            ['/val-setup', 'Link, track matches, or unlink your Riot ID'],
+            ['/val-profile', 'Overview, stats, agents, maps'],
+            ['/val-match', 'Latest match or recent history'],
+            ['/val-compare', 'Compare two linked or Riot IDs'],
+            ['/val-lb', 'Server leaderboard (rank / WR / ACS)'],
+            ['/val-status', 'Incidents, queues, or both'],
+          ]}
+        />
+        <P>
+          Dashboard: match channel (auto-posts for tracked players), status alert channel, poll interval (min 30s).
+          Member overview: <Code>/help</Code>.
+        </P>
+      </>
+    ),
+  },
   {
     id: 'voice',
     title: 'Private voice rooms',
@@ -1897,7 +1933,30 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Owner alerts</H3>
         <P>
           On Server settings: optional DM and/or channel alerts when the bot lacks critical permissions, mass bans spike,
-          or a module errors repeatedly. Thresholds are configurable per server.
+          or a module errors repeatedly. Thresholds are configurable per server. Optional{' '}
+          <strong>weekly settings digest</strong> summarizes dashboard audit changes for the last 7 days (guild timezone).
+        </P>
+
+        <H3>Starboard</H3>
+        <P>
+          Community → Starboard: when a message reaches the reaction threshold, the bot posts a highlight in the starboard
+          channel. Configure emoji, threshold, and excluded channels.
+        </P>
+
+        <H3>Auto-reactions</H3>
+        <P>
+          Community → Auto-reactions: the bot adds configured emoji to new messages in selected channels (with exclusions).
+        </P>
+
+        <H3>Bot profile</H3>
+        <P>
+          Admin → Bot profile: per-guild nickname, avatar, and banner for the bot on this server.
+        </P>
+
+        <H3>Case timeline &amp; panel timeouts</H3>
+        <P>
+          On Members: open a member to see a merged case timeline (warns + moderation log). From the panel you can warn or
+          timeout (mute) with a duration like <Code>10m</Code> / <Code>2h</Code>.
         </P>
 
         <H3>Test sends</H3>
@@ -1934,11 +1993,6 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Manage Server',
             ],
             [
-              '/userinfo',
-              'Detailed member summary: registration and join dates, roles, invite stats.',
-              'Manage Server',
-            ],
-            [
               '/supply-run',
               'Create a supply run: target, participant limit, time HH:MM (server timezone). Join buttons, reserve, reminder.',
               'Everyone',
@@ -1949,8 +2003,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone',
             ],
             [
-              '/warn add | list | remove',
-              'Warn a member, list their warns, or remove by ID.',
+              '/warn',
+              'Warnings with action add / list / remove.',
               'Manage Server',
             ],
             [
@@ -1984,8 +2038,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Manage Messages',
             ],
             [
-              '/xp add | set | clear',
-              'Change a member’s XP: add/subtract, set exact value, or clear. Only when Member levels is enabled.',
+              '/xp',
+              'Change a member’s XP with action add / set / clear. Only when Member levels is enabled.',
               'Manage Server',
             ],
             [
@@ -2004,9 +2058,19 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone / Manage Server',
             ],
             [
-              '/giveaway start | end | reroll',
-              'Start a giveaway, end early, or reroll winners.',
+              '/giveaway',
+              'Prize giveaways with action start / end / reroll.',
               'Manage Server',
+            ],
+            [
+              '/event',
+              'Event builder and management with action setup / manage.',
+              'Manage Server',
+            ],
+            [
+              '/birthday',
+              'Family birthdays with action add / set / remove (Russian name /др).',
+              'Everyone / staff for set & others’ remove',
             ],
             [
               '/russian-roulette',
@@ -2014,23 +2078,18 @@ export const DOC_SECTIONS_EN: DocSection[] = [
               'Everyone',
             ],
             [
-              '/emoji-roulette',
-              'Random emoji from the server’s custom emoji.',
+              '/help',
+              'Paginated member help: levels, economy, casino, games, community, ValChecker, events.',
               'Everyone',
             ],
             [
               '/wordle',
-              'Russian Wordle: shared 5-letter word of the day, 6 guesses. Board is only visible to the player; the channel gets a color card without letters.',
+              'Wordle with action play / training / stats / top. Daily board is private; the channel gets a color card without letters.',
               'Everyone',
             ],
             [
-              '/wordle-training',
-              'Practice Wordle with a random word — unlimited and no stats.',
-              'Everyone',
-            ],
-            [
-              '/wordle-stats, /wordle-top',
-              'Personal stats (streaks, guess distribution) and server player top.',
+              '/val-setup, /val-profile, /val-match, /val-compare, /val-lb, /val-status',
+              'ValChecker (module must be on): link Riot account, stats, matches, compare, guild LB, Valorant status.',
               'Everyone',
             ],
             [

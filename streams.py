@@ -19,6 +19,7 @@ import aiohttp
 import discord
 from discord.ext import commands, tasks
 
+import embed_style
 import settings_db
 
 import i18n
@@ -333,7 +334,7 @@ class Streams(commands.Cog):
             embed = discord.Embed(
                 title=stream.get("title") or i18n.t("streams.embed.stream_title", lang),
                 url=url,
-                color=discord.Color.purple(),
+                color=embed_style.TWITCH,
                 timestamp=discord.utils.utcnow(),
             )
             embed.set_author(
@@ -384,7 +385,7 @@ class Streams(commands.Cog):
         channel_name = feed["channel_name"] or sub["display_name"]
         content = render_template(template, channel_name, latest["title"], "", url, lang)
 
-        embed = discord.Embed(title=latest["title"], url=url, color=discord.Color.red(), timestamp=discord.utils.utcnow())
+        embed = discord.Embed(title=latest["title"], url=url, color=embed_style.YOUTUBE, timestamp=discord.utils.utcnow())
         embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=channel_name))
         embed.set_image(url=f"https://i.ytimg.com/vi/{latest['video_id']}/hqdefault.jpg")
 
@@ -445,7 +446,7 @@ class Streams(commands.Cog):
             embed = discord.Embed(
                 title=title,
                 url=url,
-                color=discord.Color.red(),
+                color=embed_style.YOUTUBE,
                 timestamp=discord.utils.utcnow(),
             )
             embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=display))
@@ -459,7 +460,7 @@ class Streams(commands.Cog):
             embed = discord.Embed(
                 title=title,
                 url=url,
-                color=discord.Color.purple(),
+                color=embed_style.TWITCH,
                 timestamp=discord.utils.utcnow(),
             )
             embed.set_author(

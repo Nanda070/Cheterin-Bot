@@ -33,10 +33,18 @@ const credits: TranslationDict = {
   'credits.team.nanda.name': 'Nanda',
   'credits.team.cheterin.role': 'Founder',
   'credits.team.cheterin.name': 'Cheterin',
-  'credits.team.mark.role': 'Main idea generator',
+  'credits.team.mark.role': 'Creative vision',
   'credits.team.mark.name': 'Mark',
   'credits.team.discord': 'Discord',
   'credits.team.telegram': 'Telegram',
+
+  'credits.contact.title': 'Contact',
+  'credits.contact.intro': 'For the bot, dashboard, and related projects — reach Nanda.',
+  'credits.contact.name': 'Nanda',
+  'credits.contact.email': 'Email',
+  'credits.contact.phone': 'Phone',
+  'credits.contact.discord': 'Discord',
+  'credits.contact.telegram': 'Telegram',
 
   'credits.projects.title': 'Other Cheterin Group projects',
   'credits.projects.intro': 'A few more things from the same crew.',
@@ -50,14 +58,27 @@ const credits: TranslationDict = {
   'credits.projects.astraip.title': 'AstraIP',
   'credits.projects.astraip.body':
     'High-performance parkour for Minecraft 1.21+ Paper — islands, sessions, menus, effects, and integrations.',
-  'credits.projects.series.bots': 'Discord & assistants',
+  'credits.projects.series.bots': 'Sites, bots & games',
   'credits.projects.rpstate.title': 'RP-State Bot',
   'credits.projects.rpstate.body':
     'Discord bot for RP projects — cross-server documents and wanted / search boards.',
   'credits.projects.idus.title': 'IDUS',
   'credits.projects.idus.body':
     'Local home voice assistant on your hardware — no cloud APIs or subscriptions. Voice + Telegram, memory and reminders; asks before acting outside.',
+  'credits.projects.nandaSite.title': 'nanda.com',
+  'credits.projects.nandaSite.body':
+    'Nanda’s personal site — websites, Discord bots, and community tools; portfolio and selected work.',
+  'credits.projects.yanPro.title': 'YAN.PRO GRIND',
+  'credits.projects.yanPro.body':
+    'YAN.PR⭕️ GRIND merch and drops — storefront, releases, and brand at yan-pro.shop.',
+  'credits.projects.sorfa.title': 'Sorfa',
+  'credits.projects.sorfa.body':
+    'Sorfa web app on Vercel — another live product from the Cheterin Group / Nanda line.',
+  'credits.projects.pepegaGo.title': 'PepegaGo',
+  'credits.projects.pepegaGo.body':
+    'A mobile location-based game inspired by Pokémon GO — open source on GitHub.',
   'credits.projects.openRepo': 'Open on GitHub',
+  'credits.projects.openSite': 'Open site',
 }
 
 export default credits

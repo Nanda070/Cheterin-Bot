@@ -2,7 +2,9 @@ import { Gear, ListChecks, Vault } from '@phosphor-icons/react'
 import { useT } from '../context/LanguageContext'
 import { useEffect, useState } from 'react'
 import {
+  advanceBunkerGamePhase,
   applyBunkerAbility,
+  endBunkerGame,
   fetchBunkerCardPools,
   fetchBunkerGameDetail,
   fetchBunkerGames,
@@ -68,6 +70,7 @@ export function BunkerPage() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editBusy, setEditBusy] = useState(false)
   const [editError, setEditError] = useState('')
+  const [hostBusy, setHostBusy] = useState(false)
 
   useEffect(() => {
     Promise.all([fetchBunkerSettings(), fetchChannels()])
@@ -152,6 +155,43 @@ export function BunkerPage() {
       refreshDetail()
     } catch (err) {
       setError(formatApiError(err, t, 'bunker.errorApply'))
+    }
+  }
+
+  const refreshGames = () => {
+    fetchBunkerGames()
+      .then(setGames)
+      .catch(() => setError(t('bunker.errorLoadGames')))
+  }
+
+  const advancePhase = async () => {
+    if (!detail) return
+    setHostBusy(true)
+    setError('')
+    try {
+      await advanceBunkerGamePhase(detail.game.id)
+      refreshDetail()
+      refreshGames()
+    } catch (err) {
+      setError(formatApiError(err, t, 'bunker.errorAdvance'))
+    } finally {
+      setHostBusy(false)
+    }
+  }
+
+  const endGame = async () => {
+    if (!detail) return
+    if (!window.confirm(t('bunker.confirmEndBody'))) return
+    setHostBusy(true)
+    setError('')
+    try {
+      await endBunkerGame(detail.game.id)
+      closeDetail()
+      refreshGames()
+    } catch (err) {
+      setError(formatApiError(err, t, 'bunker.errorEnd'))
+    } finally {
+      setHostBusy(false)
     }
   }
 
@@ -328,6 +368,20 @@ export function BunkerPage() {
 
               {detail && detail.game.id === game.id && (
                 <div className="flex flex-col gap-4 border-t border-border pt-3">
+                  {game.status === 'active' && (
+                    <div>
+                      <h3 className="mb-2 text-sm font-semibold text-foreground">{t('bunker.hostControls')}</h3>
+                      <div className="flex gap-2">
+                        <Button variant="secondary" onClick={advancePhase} disabled={hostBusy}>
+                          {t('bunker.advancePhase')}
+                        </Button>
+                        <Button variant="danger" onClick={endGame} disabled={hostBusy}>
+                          {t('bunker.endGame')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="mb-2 text-sm font-semibold text-foreground">{t('bunker.players')}</h3>
                     <div className="flex flex-col gap-1.5">

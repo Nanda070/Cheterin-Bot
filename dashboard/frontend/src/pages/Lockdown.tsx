@@ -15,6 +15,7 @@ import {
   Warning,
 } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   activateLockdown,
   deactivateLockdown,
@@ -53,9 +54,17 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   verification_expired: UserCheck,
 }
 
+const VALID_TABS: Tab[] = ['moderation', 'settings', 'antiraid', 'antispam', 'tempban', 'verification']
+
+function tabFromSearch(raw: string | null): Tab {
+  if (raw && (VALID_TABS as string[]).includes(raw)) return raw as Tab
+  return 'moderation'
+}
+
 export function LockdownPage() {
   const t = useT()
-  const [tab, setTab] = useState<Tab>('moderation')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(() => tabFromSearch(searchParams.get('tab')))
   const [status, setStatus] = useState<LockdownStatus | null>(null)
   const [confirming, setConfirming] = useState<'activate' | 'deactivate' | null>(null)
   const [busy, setBusy] = useState(false)
@@ -88,10 +97,22 @@ export function LockdownPage() {
 
   useEffect(reload, [t])
   useEffect(() => {
+    setTab(tabFromSearch(searchParams.get('tab')))
+  }, [searchParams])
+  useEffect(() => {
     fetchModerationLog()
       .then(setActivity)
       .catch(() => setActivity([]))
   }, [])
+
+  const selectTab = (key: Tab) => {
+    setTab(key)
+    setError('')
+    const next = new URLSearchParams(searchParams)
+    if (key === 'moderation') next.delete('tab')
+    else next.set('tab', key)
+    setSearchParams(next, { replace: true })
+  }
 
   const confirm = async () => {
     setBusy(true)
@@ -115,10 +136,7 @@ export function LockdownPage() {
           <button
             key={key}
             type="button"
-            onClick={() => {
-              setTab(key)
-              setError('')
-            }}
+            onClick={() => selectTab(key)}
             className={`flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
               tab === key
                 ? 'border-primary text-foreground'

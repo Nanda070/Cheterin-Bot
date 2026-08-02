@@ -8,6 +8,9 @@ MESSAGES: dict[str, str] = {
     "automod.punishment_extra": "Punishment: {punishment}",
     "automod.escalation_extra": "Action: {action}",
     "automod.guild_only": "This command can only be used on a server.",
+    "automod.warn.error.add_args": "For add, provide member and reason.",
+    "automod.warn.error.list_args": "For list, provide a member.",
+    "automod.warn.error.remove_args": "For remove, provide warn_id from /warn list.",
     "automod.warn.add_success": "⚠️ {mention} received a warning. Active warnings: **{count}**.",
     "automod.warn.no_warns": "{mention} has no warnings.",
     "automod.warn.list_title": "Warnings: {name}",
@@ -18,4 +21,7 @@ MESSAGES: dict[str, str] = {
     "automod.warn.list_footer": "Active: {count}",
     "automod.warn.remove_not_found": "Warning not found or already removed.",
     "automod.warn.remove_success": "✅ Warning `#{id}` removed.",
+    "automod.embed.title": "Automod · {filter}",
+    "automod.embed.escalation_title": "Automod · Escalation",
+    "automod.embed.warn_title": "⚠️ Warning",
 }

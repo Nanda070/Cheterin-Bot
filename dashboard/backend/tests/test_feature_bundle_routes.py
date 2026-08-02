@@ -70,6 +70,63 @@ async def test_setup_health_reports_missing_and_ok(aiohttp_client):
     body = await resp.json()
     assert body["ok"] is True
     assert body["missing_permissions"] == []
+    assert body["module_issues"] == []
+
+
+@pytest.mark.asyncio
+async def test_setup_health_reports_module_issues(aiohttp_client):
+    import starboard_core
+
+    moderator = FakeMember(10, name="mod", role_ids=[111])
+    me = FakeMember(1, name="bot", bot=True)
+    me.guild_permissions = FakePermissions(administrator=True)
+    guild = FakeGuild(members=[moderator], me=me)
+    starboard_core.save_config(1, {"enabled": True, "channel_id": "999", "emoji": "⭐", "threshold": 3})
+    app = make_moderation_app(FakeBot(guild), [owner_alerts_routes])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/setup-health")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["ok"] is False
+    assert {"module": "starboard", "kind": "missing_channel", "detail": "999"} in body["module_issues"]
+
+
+@pytest.mark.asyncio
+async def test_owner_alerts_weekly_digest_settings_roundtrip(aiohttp_client):
+    moderator = FakeMember(10, name="mod", role_ids=[111])
+    channel = FakeChannel(55, name="alerts")
+    guild = FakeGuild(members=[moderator], channels=[channel])
+    app = make_moderation_app(FakeBot(guild), [owner_alerts_routes])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put(
+        "/api/owner-alerts",
+        json={"enabled": True, "weekly_digest_enabled": True, "weekly_digest_channel_id": "55"},
+    )
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["weekly_digest_enabled"] is True
+    assert body["weekly_digest_channel_id"] == "55"
+
+    resp = await client.get("/api/owner-alerts")
+    body = await resp.json()
+    assert body["weekly_digest_enabled"] is True
+    assert body["weekly_digest_channel_id"] == "55"
+
+
+@pytest.mark.asyncio
+async def test_owner_alerts_weekly_digest_invalid_channel(aiohttp_client):
+    moderator = FakeMember(10, name="mod", role_ids=[111])
+    guild = FakeGuild(members=[moderator])
+    app = make_moderation_app(FakeBot(guild), [owner_alerts_routes])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put("/api/owner-alerts", json={"weekly_digest_channel_id": "not-a-number"})
+    assert resp.status == 400
 
 
 @pytest.mark.asyncio

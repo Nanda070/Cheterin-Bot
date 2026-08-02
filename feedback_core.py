@@ -3,6 +3,7 @@ import logging
 
 import discord
 
+import embed_style
 import feedback_panel_core
 import i18n
 
@@ -47,7 +48,7 @@ async def decide_case(bot, guild, case_id: str, approved: bool, decided_by_id: i
     case_data["reviewed_at"] = bot.utcnow().isoformat()
     settings_db.put(guild.id, "feedback_cases", cases)
 
-    color = discord.Color.green() if approved else discord.Color.red()
+    color = embed_style.SUCCESS if approved else embed_style.DANGER
 
     public_channel = bot.get_channel(case_data.get("public_channel_id"))
     if public_channel is not None:
@@ -173,7 +174,7 @@ async def publish_feedback_panel(bot, channel, published_by_id: int, published_b
             channel_mention=channel.mention,
             jump_url=message.jump_url,
         ),
-        color=discord.Color.blurple(),
+        color=embed_style.INFO,
         timestamp=bot.utcnow(),
     )
     await bot.send_log(channel.guild.id, log_embed)

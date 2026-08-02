@@ -2,10 +2,13 @@ import { Confetti } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import {
   fetchFunSettings,
+  fetchQuoteSettings,
   fetchWordleSettings,
   updateFunSettings,
+  updateQuoteSettings,
   updateWordleSettings,
   type FunSettings,
+  type QuoteSettings,
   type WordleSettings,
 } from '../api/client'
 import { formatApiError } from '../api/errors'
@@ -21,12 +24,16 @@ export function FunPage() {
   const t = useT()
   const [settings, setSettings] = useState<FunSettings | null>(null)
   const [wordle, setWordle] = useState<WordleSettings | null>(null)
+  const [quote, setQuote] = useState<QuoteSettings | null>(null)
   const [wordleError, setWordleError] = useState('')
+  const [quoteError, setQuoteError] = useState('')
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [wordleSaved, setWordleSaved] = useState('')
+  const [quoteSaved, setQuoteSaved] = useState('')
   const [busy, setBusy] = useState(false)
   const [wordleBusy, setWordleBusy] = useState(false)
+  const [quoteBusy, setQuoteBusy] = useState(false)
 
   useEffect(() => {
     fetchFunSettings()
@@ -35,6 +42,9 @@ export function FunPage() {
     fetchWordleSettings()
       .then(setWordle)
       .catch((err) => setWordleError(formatApiError(err, t, 'fun.errorLoadWordle')))
+    fetchQuoteSettings()
+      .then(setQuote)
+      .catch((err) => setQuoteError(formatApiError(err, t, 'fun.errorLoadQuote')))
   }, [t])
 
   if (!settings) {
@@ -69,6 +79,22 @@ export function FunPage() {
       setWordleError(formatApiError(err, t, 'fun.errorSaveWordle'))
     } finally {
       setWordleBusy(false)
+    }
+  }
+
+  const saveQuote = async () => {
+    if (!quote) return
+    setQuoteBusy(true)
+    setQuoteError('')
+    setQuoteSaved('')
+    try {
+      const updated = await updateQuoteSettings(quote)
+      setQuote(updated)
+      setQuoteSaved(t('common.saved'))
+    } catch (err) {
+      setQuoteError(formatApiError(err, t, 'fun.errorSaveQuote'))
+    } finally {
+      setQuoteBusy(false)
     }
   }
 
@@ -124,11 +150,6 @@ export function FunPage() {
           </div>
         </div>
         <p className="text-xs text-muted">{t('fun.roulette.hint')}</p>
-      </Card>
-
-      <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">{t('fun.emojiRoulette.title')}</h2>
-        <p className="text-sm text-muted">{t('fun.emojiRoulette.desc')}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
@@ -243,6 +264,38 @@ export function FunPage() {
             <div>
               <Button variant="primary" onClick={saveWordle} disabled={wordleBusy}>
                 {wordleBusy ? t('common.saving') : t('fun.saveWordle')}
+              </Button>
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">{t('fun.quote.title')}</h2>
+          {quote && (
+            <Toggle
+              checked={quote.enabled}
+              onChange={(v) => setQuote({ ...quote, enabled: v })}
+              label={quote.enabled ? t('fun.quote.enabled') : t('fun.quote.disabled')}
+            />
+          )}
+        </div>
+        <p className="text-sm text-muted">{t('fun.quote.desc')}</p>
+        {quoteError && <p className="text-sm text-danger">{quoteError}</p>}
+        {quoteSaved && <p className="text-sm text-primary">{quoteSaved}</p>}
+        {!quote && !quoteError && <p className="text-sm text-muted">{t('common.loading')}</p>}
+        {quote && (
+          <>
+            <Toggle
+              checked={quote.delete_trigger}
+              onChange={(v) => setQuote({ ...quote, delete_trigger: v })}
+              label={t('fun.quote.deleteTrigger')}
+            />
+            <p className="text-xs text-muted">{t('fun.quote.hint')}</p>
+            <div>
+              <Button variant="primary" onClick={saveQuote} disabled={quoteBusy}>
+                {quoteBusy ? t('common.saving') : t('fun.saveQuote')}
               </Button>
             </div>
           </>

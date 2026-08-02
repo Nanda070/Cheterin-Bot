@@ -14,6 +14,7 @@ from locales.ru.family import MESSAGES as family_messages
 from locales.ru.feedback import MESSAGES as feedback_messages
 from locales.ru.fun import MESSAGES as fun_messages
 from locales.ru.giveaways import MESSAGES as giveaways_messages
+from locales.ru.help import MESSAGES as help_messages
 from locales.ru.lockdown import MESSAGES as lockdown_messages
 from locales.ru.mafia import MESSAGES as mafia_messages
 from locales.ru.moderation import MESSAGES as moderation_messages
@@ -25,6 +26,8 @@ from locales.ru.slash import MESSAGES as slash_messages
 from locales.ru.spam import MESSAGES as spam_messages
 from locales.ru.streams import MESSAGES as streams_messages
 from locales.ru.supply import MESSAGES as supply_messages
+from locales.ru.quote import MESSAGES as quote_messages
+from locales.ru.valchecker import MESSAGES as valchecker_messages
 from locales.ru.tempban import MESSAGES as tempban_messages
 from locales.ru.verification import MESSAGES as verification_messages
 from locales.ru.voice_rooms import MESSAGES as voice_rooms_messages
@@ -51,6 +54,8 @@ MESSAGES = merge_messages(
     antiraid_messages,
     spam_messages,
     tempban_messages,
+    quote_messages,
+    valchecker_messages,
     daily_topic_messages,
     streams_messages,
     feedback_messages,
@@ -63,6 +68,7 @@ MESSAGES = merge_messages(
     events_messages,
     supply_messages,
     giveaways_messages,
+    help_messages,
     voice_rooms_messages,
     family_messages,
     slash_messages,

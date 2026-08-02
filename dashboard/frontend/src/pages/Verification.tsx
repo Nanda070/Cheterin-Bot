@@ -1,9 +1,18 @@
 import { UserCheck } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
-import { fetchVerificationSettings, updateVerificationSettings, type VerificationSettings } from '../api/client'
+import {
+  fetchChannels,
+  fetchVerificationSettings,
+  publishVerificationPanel,
+  updateVerificationSettings,
+  type ChannelInfo,
+  type VerificationSettings,
+} from '../api/client'
 import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Modal } from '../components/ui/Modal'
+import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { useT } from '../context/LanguageContext'
 
@@ -13,14 +22,23 @@ const inputClass =
 export function VerificationPage() {
   const t = useT()
   const [settings, setSettings] = useState<VerificationSettings | null>(null)
+  const [channels, setChannels] = useState<ChannelInfo[]>([])
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
+
+  const [publishOpen, setPublishOpen] = useState(false)
+  const [publishChannelId, setPublishChannelId] = useState('')
+  const [publishBusy, setPublishBusy] = useState(false)
+  const [publishError, setPublishError] = useState('')
 
   useEffect(() => {
     fetchVerificationSettings()
       .then(setSettings)
       .catch(() => setError(t('verification.errorLoad')))
+    fetchChannels()
+      .then(setChannels)
+      .catch(() => setChannels([]))
   }, [t])
 
   if (!settings) {
@@ -39,6 +57,30 @@ export function VerificationPage() {
       setError(formatApiError(err, t, 'verification.errorSave'))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const openPublish = () => {
+    setPublishChannelId('')
+    setPublishError('')
+    setPublishOpen(true)
+  }
+
+  const publish = async () => {
+    if (!publishChannelId) {
+      setPublishError(t('verification.publishModal.errorChannel'))
+      return
+    }
+    setPublishBusy(true)
+    setPublishError('')
+    try {
+      await publishVerificationPanel(publishChannelId)
+      setPublishOpen(false)
+      setSaved(t('verification.publishModal.success'))
+    } catch (err) {
+      setPublishError(formatApiError(err, t, 'verification.publishModal.error'))
+    } finally {
+      setPublishBusy(false)
     }
   }
 
@@ -99,7 +141,12 @@ export function VerificationPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">{t('verification.panelTextTitle')}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-foreground">{t('verification.panelTextTitle')}</h2>
+          <Button variant="secondary" onClick={openPublish} disabled={!settings.enabled || !settings.verified_role_id}>
+            {t('verification.publishAction')}
+          </Button>
+        </div>
         <textarea
           rows={3}
           maxLength={1000}
@@ -107,6 +154,7 @@ export function VerificationPage() {
           onChange={(e) => setSettings({ ...settings, welcome_text: e.target.value })}
           className={inputClass}
         />
+        <p className="text-xs text-muted">{t('verification.publishHint')}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
@@ -169,6 +217,32 @@ export function VerificationPage() {
           {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
+
+      <Modal open={publishOpen} title={t('verification.publishModal.title')} onClose={() => setPublishOpen(false)}>
+        <div className="flex flex-col gap-3">
+          <label className="text-sm text-muted" htmlFor="verification-publish-channel">
+            {t('common.channel')}
+          </label>
+          <Select
+            id="verification-publish-channel"
+            value={publishChannelId}
+            onChange={(id) => setPublishChannelId(id)}
+            options={channels}
+            placeholder={t('common.selectChannel')}
+          />
+
+          {publishError && <p className="text-sm text-danger">{publishError}</p>}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setPublishOpen(false)} disabled={publishBusy}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="primary" onClick={publish} disabled={publishBusy}>
+              {publishBusy ? t('common.publishing') : t('common.publish')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
