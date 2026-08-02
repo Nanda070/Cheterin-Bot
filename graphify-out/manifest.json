@@ -2905,13 +2905,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/whatsNew.ts": {
-    "mtime": 1785706579.2887764,
-    "ast_hash": "2a03c2e0c083fda0e3619a7b6960f31b",
+    "mtime": 1785709591.4494798,
+    "ast_hash": "7e7a8ce19108d3c737a72d0ae3765d3d",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/whatsNew.ts": {
-    "mtime": 1785706579.2887764,
-    "ast_hash": "57d0246b66a81c7148652bd407f05de7",
+    "mtime": 1785709591.7518811,
+    "ast_hash": "0a93cf5281996f622d37d1ab090eef6f",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/whatsNew.test.tsx": {
@@ -2920,8 +2920,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/whatsNew.ts": {
-    "mtime": 1785637322.0280304,
-    "ast_hash": "8c5fd0f99fd9b497f69591b946d58ea4",
+    "mtime": 1785709616.9768176,
+    "ast_hash": "e76072a5162eafebf4215bf7f6c3f1e7",
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_voice_stats_routes.py": {
@@ -3270,8 +3270,8 @@
     "semantic_hash": ""
   },
   "valchecker_embeds.py": {
-    "mtime": 1785637636.4088774,
-    "ast_hash": "19d497388f7bbe19f44b170ca05672e9",
+    "mtime": 1785709603.7780445,
+    "ast_hash": "ce8f3fd6845e8e45d78ac07545fc8bac",
     "semantic_hash": ""
   },
   "valchecker_henrik.py": {
