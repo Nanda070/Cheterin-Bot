@@ -2960,8 +2960,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Credits.tsx": {
-    "mtime": 1785712787.1956506,
-    "ast_hash": "3352a9c1111cb43899cbc957132305ca",
+    "mtime": 1785713664.4482238,
+    "ast_hash": "3c26c1d38af5b5a8358328047dadd826",
     "semantic_hash": ""
   },
   "dashboard/frontend/public/credits/404-banner.png": {
@@ -3405,13 +3405,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/egg.ts": {
-    "mtime": 1785712698.9849062,
-    "ast_hash": "3a852ff85eab3439b1297ad6baad64c4",
+    "mtime": 1785713664.58783,
+    "ast_hash": "a5d72c4e26ce4b8fcf0da519ed1fab07",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/egg.ts": {
-    "mtime": 1785712705.4912035,
-    "ast_hash": "094328b4d9c89cef993ce744022a3223",
+    "mtime": 1785713664.5893495,
+    "ast_hash": "e5ee5b4e9ae82cfe73bc5b013fb57c4a",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/SecretRoom.tsx": {

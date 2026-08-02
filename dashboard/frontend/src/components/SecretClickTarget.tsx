@@ -8,43 +8,45 @@ type Props = {
   children: ReactNode
   className?: string
   title?: string
-  as?: 'button' | 'span'
+  as?: 'button' | 'div'
 }
 
-/** Invisible “mash me” hotspot that navigates after N rapid clicks. */
+/**
+ * Mash hotspot: after N rapid clicks, navigate to `to`.
+ * Must be a <div> (not <span>) so headings/block children stay inside the click target.
+ */
 export function SecretClickTarget({
   clicks,
   to,
   children,
   className,
   title,
-  as = 'span',
+  as = 'div',
 }: Props) {
   const navigate = useNavigate()
-  const onClick = useSecretClicks(clicks, () => navigate(to))
+  const onActivate = useSecretClicks(clicks, () => navigate(to))
 
   if (as === 'button') {
     return (
-      <button type="button" className={className} title={title} onClick={onClick}>
+      <button type="button" className={className} title={title} onClick={onActivate}>
         {children}
       </button>
     )
   }
 
   return (
-    <span
+    <div
       className={className}
       title={title}
-      onClick={onClick}
+      onClick={onActivate}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onClick()
+          onActivate()
         }
       }}
-      role="presentation"
     >
       {children}
-    </span>
+    </div>
   )
 }

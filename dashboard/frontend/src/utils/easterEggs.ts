@@ -9,9 +9,13 @@ export const SECRET_ROOMS = {
 
 export type SecretRoomId = keyof typeof SECRET_ROOMS
 
+const STREAK_GAP_MS = 1400
+
 /** Module memory (not sessionStorage) so F5 resets the logo egg. */
 let logoEggUnlocked = false
 let logoEggTagline = false
+let logoStreak = 0
+let logoStreakAt = 0
 
 // Drop legacy session keys from earlier builds.
 try {
@@ -32,6 +36,29 @@ export function logoShowsEggTagline(): boolean {
 export function unlockLogoEgg(): void {
   logoEggUnlocked = true
   logoEggTagline = true
+}
+
+export type LogoEggResult = 'none' | 'unlock' | 'snowdin'
+
+/**
+ * Count a logo click toward the easter egg (module-level streak survives route changes).
+ * Does not block normal navigation — caller should only preventDefault on unlock/snowdin.
+ */
+export function registerLogoEggClick(): LogoEggResult {
+  const now = Date.now()
+  if (now - logoStreakAt > STREAK_GAP_MS) logoStreak = 0
+  logoStreakAt = now
+  logoStreak += 1
+
+  const need = logoEggUnlocked ? 5 : 7
+  if (logoStreak < need) return 'none'
+
+  logoStreak = 0
+  if (!logoEggUnlocked) {
+    unlockLogoEgg()
+    return 'unlock'
+  }
+  return 'snowdin'
 }
 
 /** Brief crimson glitch on the document root. */
