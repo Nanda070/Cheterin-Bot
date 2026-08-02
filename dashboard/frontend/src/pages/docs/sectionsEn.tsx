@@ -1945,7 +1945,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
 
         <H3>Auto-reactions</H3>
         <P>
-          Community → Auto-reactions: the bot adds configured emoji to new messages in selected channels (with exclusions).
+          Fun → Auto-Emoji: the bot adds configured emoji to new messages in selected channels (with exclusions).
         </P>
 
         <H3>Bot profile</H3>

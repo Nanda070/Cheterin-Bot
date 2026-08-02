@@ -31,7 +31,7 @@ function newRule(): AutoReactionRule {
   }
 }
 
-export function AutoReactionsPage() {
+export function AutoReactionsPage({ embedded = false }: { embedded?: boolean }) {
   const t = useT()
   const [settings, setSettings] = useState<AutoReactionsSettings | null>(null)
   const [channels, setChannels] = useState<ChannelInfo[]>([])
@@ -81,19 +81,28 @@ export function AutoReactionsPage() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-5 pb-4">
+    <div className={`flex flex-col gap-5 pb-4 ${embedded ? '' : 'max-w-3xl'}`}>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Smiley size={22} className="text-primary" />
-          {t('autoReactions.title')}
-        </h1>
+        <div>
+          {!embedded ? (
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Smiley size={22} className="text-primary" />
+              {t('autoReactions.title')}
+            </h1>
+          ) : (
+            <h2 className="flex items-center gap-2 font-semibold text-foreground">
+              <Smiley size={20} className="text-primary" />
+              {t('autoReactions.title')}
+            </h2>
+          )}
+          <p className="mt-1 text-sm text-muted">{t('autoReactions.intro')}</p>
+        </div>
         <Toggle
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
           label={settings.enabled ? t('autoReactions.moduleOn') : t('autoReactions.moduleOff')}
         />
       </div>
-      <p className="text-sm text-muted">{t('autoReactions.intro')}</p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-primary">{saved}</p>}

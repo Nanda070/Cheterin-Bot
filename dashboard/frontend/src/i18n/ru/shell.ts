@@ -48,7 +48,6 @@ const shell: TranslationDict = {
   'nav.fun': 'Развлечения',
   'nav.voiceRooms': 'Приватные комнаты',
   'nav.reactionRoles': 'Кнопки и эмбеды',
-  'nav.embedStudio': 'Эмбед-студия',
   'nav.streams': 'Публикации и подписки',
   'nav.dailyTopic': 'Ежедневная рубрика',
   'nav.customCommands': 'Кастомные команды',

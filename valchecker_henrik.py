@@ -12,10 +12,10 @@ from urllib.parse import quote, urlencode
 import aiohttp
 
 HENRIK_BASE = "https://api.henrikdev.xyz"
-MAX_CONCURRENT = 2
-MIN_GAP_MS = 700
+MAX_CONCURRENT = 3
+MIN_GAP_MS = 250
 USER_AGENT = "Cheterin-ValChecker/1.0"
-REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=25, sock_connect=10, sock_read=20)
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=18, sock_connect=8, sock_read=15)
 
 
 class HenrikError(Exception):
@@ -77,6 +77,7 @@ class HenrikClient:
         path: str,
         *,
         query: dict[str, Any] | None = None,
+        throttle: bool = True,
     ) -> Any:
         key = self._api_key()
         if not key:
@@ -100,7 +101,8 @@ class HenrikClient:
 
         for attempt in range(4):
             # Gap first (does not hold the concurrency semaphore), then fetch.
-            await self._throttle()
+            if throttle:
+                await self._throttle()
             async with self._sem:
                 session = await self.ensure_session()
                 async with session.get(url, headers=headers) as res:
@@ -128,6 +130,21 @@ class HenrikClient:
 
         raise HenrikError(429, "Rate limited by Henrik API.")
 
+    async def request_many(self, specs: list[dict[str, Any]]) -> list[Any]:
+        """Run several GETs; throttle once, then fan out under the concurrency sem."""
+        if not specs:
+            return []
+        await self._throttle()
+
+        async def one(spec: dict[str, Any]):
+            return await self.request(
+                spec["path"],
+                query=spec.get("query"),
+                throttle=False,
+            )
+
+        return await asyncio.gather(*[one(s) for s in specs], return_exceptions=True)
+
 
 def _enc(s: str) -> str:
     return quote(str(s), safe="")
@@ -150,17 +167,22 @@ async def close_client() -> None:
         _client = None
 
 
-async def account(name: str, tag: str):
-    return await get_client().request(f"/valorant/v2/account/{_enc(name)}/{_enc(tag)}")
-
-
-async def account_by_puuid(puuid: str):
-    return await get_client().request(f"/valorant/v2/by-puuid/account/{_enc(puuid)}")
-
-
-async def mmr_by_puuid(region: str, platform: str, puuid: str):
+async def account(name: str, tag: str, *, throttle: bool = True):
     return await get_client().request(
-        f"/valorant/v3/by-puuid/mmr/{region}/{platform}/{_enc(puuid)}"
+        f"/valorant/v2/account/{_enc(name)}/{_enc(tag)}", throttle=throttle
+    )
+
+
+async def account_by_puuid(puuid: str, *, throttle: bool = True):
+    return await get_client().request(
+        f"/valorant/v2/by-puuid/account/{_enc(puuid)}", throttle=throttle
+    )
+
+
+async def mmr_by_puuid(region: str, platform: str, puuid: str, *, throttle: bool = True):
+    return await get_client().request(
+        f"/valorant/v3/by-puuid/mmr/{region}/{platform}/{_enc(puuid)}",
+        throttle=throttle,
     )
 
 
@@ -173,10 +195,25 @@ async def matches_by_puuid(
     mode: str | None = None,
     map: str | None = None,
     start: int | None = None,
+    throttle: bool = True,
 ):
     return await get_client().request(
         f"/valorant/v4/by-puuid/matches/{region}/{platform}/{_enc(puuid)}",
         query={"size": size, "mode": mode, "map": map, "start": start},
+        throttle=throttle,
+    )
+
+
+async def profile_bundle(region: str, platform: str, puuid: str, *, size: int = 5) -> list[Any]:
+    """MMR + matches in one throttle window (account/card loaded separately if needed)."""
+    return await get_client().request_many(
+        [
+            {"path": f"/valorant/v3/by-puuid/mmr/{region}/{platform}/{_enc(puuid)}"},
+            {
+                "path": f"/valorant/v4/by-puuid/matches/{region}/{platform}/{_enc(puuid)}",
+                "query": {"size": size},
+            },
+        ]
     )
 
 

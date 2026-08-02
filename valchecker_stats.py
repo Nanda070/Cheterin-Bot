@@ -521,6 +521,39 @@ def to_cache_row(summary: dict, region=None) -> dict | None:
     }
 
 
+def summaries_from_cache_rows(rows, name: str | None = None, tag: str | None = None) -> list[dict]:
+    """Rebuild lightweight summaries from match_cache rows (fast profile paint)."""
+    out: list[dict] = []
+    for r in rows or []:
+        won_raw = r.get("won")
+        if won_raw is None:
+            won = None
+        else:
+            won = bool(won_raw)
+        out.append(
+            {
+                "matchId": r.get("match_id"),
+                "map": r.get("map") or "Unknown",
+                "mode": r.get("mode"),
+                "startedAt": r.get("played_at"),
+                "region": r.get("region"),
+                "won": won,
+                "player": {
+                    "puuid": r.get("puuid"),
+                    "name": name,
+                    "tag": tag,
+                    "agent": r.get("agent") or "Unknown",
+                    "kills": r.get("kills") or 0,
+                    "deaths": r.get("deaths") or 0,
+                    "assists": r.get("assists") or 0,
+                    "acs": float(r.get("acs") or 0),
+                    "hsPct": float(r.get("hs_pct") or 0),
+                },
+            }
+        )
+    return sort_summaries_newest_first(out)
+
+
 # ── statusFormat ────────────────────────────────────────────────────────────
 
 def _riot_locales(bot_locale: str) -> list[str]:

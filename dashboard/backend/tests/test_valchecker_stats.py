@@ -124,6 +124,43 @@ def test_normalize_mmr():
     assert mmr["peak"]["name"] == "Platinum 1"
 
 
+def test_summaries_from_cache_rows():
+    rows = [
+        {
+            "match_id": "m1",
+            "puuid": "p",
+            "map": "Ascent",
+            "agent": "Jett",
+            "kills": 20,
+            "deaths": 10,
+            "assists": 5,
+            "acs": 250,
+            "hs_pct": 30,
+            "won": 1,
+            "played_at": "2026-01-02T00:00:00Z",
+        },
+        {
+            "match_id": "m0",
+            "puuid": "p",
+            "map": "Bind",
+            "agent": "Sage",
+            "kills": 8,
+            "deaths": 12,
+            "assists": 9,
+            "acs": 180,
+            "hs_pct": 15,
+            "won": 0,
+            "played_at": "2026-01-01T00:00:00Z",
+        },
+    ]
+    summaries = stats.summaries_from_cache_rows(rows, "Ada", "EU")
+    assert [s["matchId"] for s in summaries] == ["m1", "m0"]
+    agg = stats.aggregate_stats(summaries)
+    assert agg["games"] == 2
+    assert agg["wins"] == 1
+    assert agg["agents"]["Jett"]["games"] == 1
+
+
 def test_rank_change_info_promote():
     mmr = {"rank": "Gold 1", "rr": 10, "lastChange": 25}
     info = stats.rank_change_info("Silver 3", 90, mmr)

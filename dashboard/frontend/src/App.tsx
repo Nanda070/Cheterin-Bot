@@ -46,7 +46,6 @@ import { CtdPage } from './pages/Ctd'
 import { CustomCommandsPage } from './pages/CustomCommands'
 import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
-import { AutoReactionsPage } from './pages/AutoReactions'
 import { ValCheckerPage } from './pages/ValChecker'
 
 function App() {
@@ -111,7 +110,7 @@ function App() {
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
               <Route path="starboard" element={<Navigate to="/messages?tab=starboard" replace />} />
               <Route path="valchecker" element={<ValCheckerPage />} />
-              <Route path="auto-reactions" element={<AutoReactionsPage />} />
+              <Route path="auto-reactions" element={<Navigate to="/fun?tab=autoEmoji" replace />} />
               <Route path="bot-profile" element={<Navigate to="/settings?tab=botProfile" replace />} />
               <Route path="automod" element={<AutoModPage />} />
               <Route path="server-entry" element={<ServerEntryPage />} />

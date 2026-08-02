@@ -520,8 +520,8 @@
     "semantic_hash": "6b697d4051febe981499a774b73f72c8"
   },
   "dashboard/frontend/src/App.tsx": {
-    "mtime": 1785641608.9397895,
-    "ast_hash": "2db5165f5ab9a21b6fb51c2c9a0b9836",
+    "mtime": 1785642838.9768739,
+    "ast_hash": "ca519e606e7326e18b899b8906e7ce18",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/brackets.test.ts": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.tsx": {
-    "mtime": 1785641605.6171908,
-    "ast_hash": "14d0ea6f4ece101919e72eb682ec6fe4",
+    "mtime": 1785642804.872044,
+    "ast_hash": "0bcd3b60f559364e69e195afe4e96abb",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Docs.test.tsx": {
@@ -1520,8 +1520,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Fun.tsx": {
-    "mtime": 1785637321.4972916,
-    "ast_hash": "63bd5ab0350871f0f869c11492f56a85",
+    "mtime": 1785642785.560544,
+    "ast_hash": "9815fb0ee09919dbba5e686a244abf0f",
     "semantic_hash": ""
   },
   "fun.py": {
@@ -2005,8 +2005,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/community.ts": {
-    "mtime": 1785641579.752069,
-    "ast_hash": "2b95be88b5fb99074fd3c9beae3a259c",
+    "mtime": 1785642790.9720738,
+    "ast_hash": "6c317b0bf3c686fe40bea44801b0d9e0",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en/shell.ts": {
@@ -2035,8 +2035,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/community.ts": {
-    "mtime": 1785641579.7798982,
-    "ast_hash": "23fdfc9db9443eaa1b4543cd5c0e389f",
+    "mtime": 1785642791.977811,
+    "ast_hash": "009345622f24d91eac17c635d886f355",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru/shell.ts": {
@@ -2520,13 +2520,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsEn.tsx": {
-    "mtime": 1785640694.3387291,
-    "ast_hash": "4a1be7beafd0e17d7d8432d8bcf90861",
+    "mtime": 1785642849.2961037,
+    "ast_hash": "393804f20520ee799adc5d7f66ca6e36",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsRu.tsx": {
-    "mtime": 1785640695.3735654,
-    "ast_hash": "659e6b1d079cad0b375a676badc8d710",
+    "mtime": 1785642847.680863,
+    "ast_hash": "f5987bad051f43fbfb02d5e355de1789",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/config/bunkerMarkers.ts": {
@@ -3050,8 +3050,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/AutoReactions.tsx": {
-    "mtime": 1785641107.4516091,
-    "ast_hash": "1ece81a4d2ed4ccf1bfbf67fb175be7b",
+    "mtime": 1785642787.7465093,
+    "ast_hash": "3e6c04e144bd32c5725f4d099fd3e4d2",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/BotProfile.tsx": {
@@ -3235,8 +3235,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_valchecker_stats.py": {
-    "mtime": 1785638775.1793597,
-    "ast_hash": "55538ff06d39e20eb112196e74324627",
+    "mtime": 1785642688.900886,
+    "ast_hash": "9ac499beaf4ce4c0fb1905adf83fc092",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/ValChecker.tsx": {
@@ -3255,8 +3255,8 @@
     "semantic_hash": ""
   },
   "valchecker.py": {
-    "mtime": 1785639648.6723897,
-    "ast_hash": "47f2b40f3119dafa25aad6b021a03780",
+    "mtime": 1785642685.7986329,
+    "ast_hash": "6c22428a9a24ff4b6cc80dc277bf3032",
     "semantic_hash": ""
   },
   "valchecker_core.py": {
@@ -3275,13 +3275,13 @@
     "semantic_hash": ""
   },
   "valchecker_henrik.py": {
-    "mtime": 1785638859.728729,
-    "ast_hash": "9ef54641f3c5a7d0ca096b5345215ac8",
+    "mtime": 1785642628.5303502,
+    "ast_hash": "0311167fdcc556377303b0904a6ccbd4",
     "semantic_hash": ""
   },
   "valchecker_stats.py": {
-    "mtime": 1785638630.9623985,
-    "ast_hash": "99807500b7c681f337cc844f9bede4a5",
+    "mtime": 1785642608.7064683,
+    "ast_hash": "f51dc9b3ff664f24b9c040927c347a4b",
     "semantic_hash": ""
   },
   "valchecker_valorant_api.py": {
@@ -3300,8 +3300,8 @@
     "semantic_hash": ""
   },
   "dashboard/backend/tests/test_valchecker_henrik.py": {
-    "mtime": 1785638863.7018583,
-    "ast_hash": "ab84232ad04f2cecb846da88e0eb0d1e",
+    "mtime": 1785642733.4722276,
+    "ast_hash": "669419a36d6211afcb8ad1f891a87bf6",
     "semantic_hash": ""
   }
 }

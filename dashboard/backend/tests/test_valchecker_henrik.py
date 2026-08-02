@@ -85,3 +85,54 @@ def test_friendly_error_mapping():
     assert "API" in henrik.friendly_error(henrik.HenrikError(401, "x"), "en")
     assert "not found" in henrik.friendly_error(henrik.HenrikError(404, "x"), "en").lower()
     assert "rate" in henrik.friendly_error(henrik.HenrikError(429, "x"), "en").lower()
+
+
+@pytest.mark.asyncio
+async def test_request_many_throttles_once(monkeypatch):
+    client = henrik.HenrikClient()
+    calls = {"throttle": 0, "get": 0}
+
+    async def fake_throttle():
+        calls["throttle"] += 1
+
+    class FakeResp:
+        status = 200
+        reason = "OK"
+        headers = {}
+
+        async def text(self):
+            return '{"ok":true}'
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+    class FakeSession:
+        def get(self, url, headers=None):
+            calls["get"] += 1
+            return FakeResp()
+
+        @property
+        def closed(self):
+            return False
+
+        async def close(self):
+            return None
+
+    async def ensure():
+        return FakeSession()
+
+    monkeypatch.setattr(client, "_throttle", fake_throttle)
+    monkeypatch.setattr(client, "ensure_session", ensure)
+    monkeypatch.setattr(client, "_api_key", lambda: "test-key")
+    monkeypatch.setattr(henrik, "MIN_GAP_MS", 0)
+
+    out = await client.request_many(
+        [{"path": "/a"}, {"path": "/b"}, {"path": "/c"}]
+    )
+    assert calls["throttle"] == 1
+    assert calls["get"] == 3
+    assert all(isinstance(x, dict) for x in out)
+    await client.close()

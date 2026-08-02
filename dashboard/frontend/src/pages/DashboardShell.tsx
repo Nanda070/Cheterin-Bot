@@ -25,12 +25,10 @@ import {
   MagnifyingGlass,
   Megaphone,
   Package,
-  Palette,
   Shield,
   ShieldWarning,
   SignOut,
   Skull,
-  Smiley,
   Sparkle,
   Stack,
   Ticket,
@@ -104,9 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.events', icon: CalendarCheck, to: '/events' },
       { labelKey: 'nav.messages', icon: Chats, to: '/messages', moduleKey: 'messages' },
       { labelKey: 'nav.reactionRoles', icon: Stack, to: '/reaction-roles' },
-      { labelKey: 'nav.embedStudio', icon: Palette, to: '/reaction-roles?tab=embeds' },
       { labelKey: 'nav.birthdays', icon: Cake, to: '/birthdays', moduleKey: 'birthdays' },
-      { labelKey: 'nav.autoReactions', icon: Smiley, to: '/auto-reactions', moduleKey: 'autoReactions' },
     ],
   },
   {
@@ -149,8 +145,6 @@ function navItemActive(to: string, pathname: string, search: string): boolean {
   const [path, query = ''] = to.split('?')
   if (pathname !== path) return false
   if (query) return search.includes(query)
-  // Plain /reaction-roles should not stay active on Embed Studio tab.
-  if (path === '/reaction-roles' && search.includes('tab=embeds')) return false
   return true
 }
 

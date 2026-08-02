@@ -274,6 +274,10 @@ const community: TranslationDict = {
 
   // fun
   'fun.title': 'Fun',
+  'fun.tab.general': 'Games',
+  'fun.tab.autoEmoji': 'Auto-Emoji',
+  'fun.tab.wordle': 'Wordle',
+  'fun.tab.quote': 'Quote',
   'fun.intro':
     'Light fun commands for chat (Russian roulette, emoji roulette). Wordle is configured separately on this page. While the Fun module is disabled, roulette commands reply "Module disabled".',
   'fun.errorLoad': 'Failed to load Fun module settings.',

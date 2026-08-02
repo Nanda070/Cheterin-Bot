@@ -354,10 +354,18 @@ class ProfileNavView(discord.ui.View):
             return
         await interaction.response.defer()
         try:
-            payload = await load_profile_payload(session, view)
+            payload = await load_profile_payload(session, view, mode="fast")
             await interaction.edit_original_response(
                 embeds=payload["embeds"],
                 view=ProfileNavView(self.session_id, view, lang),
+            )
+            asyncio.create_task(
+                _background_profile_refresh(
+                    await interaction.original_response(),
+                    self.session_id,
+                    view,
+                    lang,
+                )
             )
         except Exception as e:
             await interaction.followup.send(
@@ -451,61 +459,38 @@ class MatchNavView(discord.ui.View):
             )
 
 
-PROFILE_FETCH_TIMEOUT = 20.0
+PROFILE_MMR_TIMEOUT = 8.0
+PROFILE_FULL_TIMEOUT = 14.0
 
 
-async def load_profile_payload(session: dict, view: str) -> dict:
-    lang = session.get("locale") or "en"
-    player = {
+def _session_player(session: dict) -> dict:
+    return {
         "puuid": session["puuid"],
         "name": session["name"],
         "tag": session["tag"],
         "region": session["region"],
         "platform": "pc",
     }
-    count = session.get("count") or 10
 
-    # Cap wait so Discord always gets a followup. Cancel the gather on timeout so
-    # in-flight Henrik calls release the shared semaphore (otherwise they linger).
-    fetch_task = asyncio.create_task(
-        asyncio.gather(
-            henrik.mmr_by_puuid(player["region"], "pc", player["puuid"]),
-            henrik.account_by_puuid(player["puuid"]),
-            henrik.matches_by_puuid(player["region"], "pc", player["puuid"], size=count),
-            return_exceptions=True,
-        )
-    )
-    try:
-        mmr_raw, acc_raw, matches_raw = await asyncio.wait_for(fetch_task, timeout=PROFILE_FETCH_TIMEOUT)
-    except asyncio.TimeoutError:
-        logger.warning("profile fetch timed out puuid=%s", player["puuid"])
-        if not fetch_task.done():
-            fetch_task.cancel()
-        try:
-            await fetch_task
-        except (asyncio.CancelledError, Exception):
-            pass
-        mmr_raw, acc_raw, matches_raw = {}, None, {}
 
-    mmr_body = mmr_raw if isinstance(mmr_raw, dict) else {}
-    acc_body = acc_raw if isinstance(acc_raw, dict) else None
-    matches_body = matches_raw if isinstance(matches_raw, dict) else {}
-
-    mmr = stats.normalize_mmr(mmr_body or {})
-    account = (acc_body or {}).get("data") if acc_body else None
+def _apply_mmr_names(session: dict, player: dict, mmr: dict) -> None:
     if mmr.get("account"):
         player["name"] = mmr["account"].get("name", player["name"])
         player["tag"] = mmr["account"].get("tag", player["tag"])
         session["name"] = player["name"]
         session["tag"] = player["tag"]
 
-    summaries = stats.summaries_from_matches(
-        matches_body.get("data"), player["puuid"], player["name"], player["tag"]
-    )
-    for s in summaries:
-        row = stats.to_cache_row(s, player["region"])
-        if row:
-            valchecker_db.upsert_match_cache(row)
+
+def _compose_profile_embeds(
+    session: dict,
+    view: str,
+    player: dict,
+    mmr: dict,
+    account,
+    summaries: list,
+) -> dict:
+    lang = session.get("locale") or "en"
+    count = session.get("count") or 5
     agg = stats.aggregate_stats(summaries)
 
     if view == "stats":
@@ -533,6 +518,111 @@ async def load_profile_payload(session: dict, view: str) -> dict:
             emb.set_thumbnail(url=m["listViewIcon"])
         return {"embeds": [emb]}
     return {"embeds": [embeds.profile_embed(player, mmr, account, agg, summaries, lang)]}
+
+
+def _cache_summaries(session: dict, player: dict) -> list:
+    rows = valchecker_db.get_cached_matches(player["puuid"], limit=session.get("count") or 5)
+    return stats.summaries_from_cache_rows(rows, player["name"], player["tag"])
+
+
+def _store_summaries(session: dict, summaries: list) -> None:
+    for s in summaries:
+        row = stats.to_cache_row(s, session.get("region"))
+        if row:
+            valchecker_db.upsert_match_cache(row)
+
+
+async def load_profile_payload(session: dict, view: str, *, mode: str = "full") -> dict:
+    """mode=fast → MMR + local cache (for first Discord reply). mode=full → live matches."""
+    player = _session_player(session)
+    count = min(15, session.get("count") or 5)
+    account = session.get("_account")
+
+    if mode == "fast":
+        try:
+            mmr_raw = await asyncio.wait_for(
+                henrik.mmr_by_puuid(player["region"], "pc", player["puuid"]),
+                timeout=PROFILE_MMR_TIMEOUT,
+            )
+        except Exception as e:
+            logger.warning("profile mmr fast-fail: %s", e)
+            mmr_raw = {}
+        mmr = stats.normalize_mmr(mmr_raw if isinstance(mmr_raw, dict) else {})
+        _apply_mmr_names(session, player, mmr)
+        summaries = _cache_summaries(session, player)
+        session["_mmr"] = mmr
+        return _compose_profile_embeds(session, view, player, mmr, account, summaries)
+
+    # Full refresh: one throttle window for mmr+matches; account is optional (card art).
+    fetch_task = asyncio.create_task(
+        henrik.profile_bundle(player["region"], "pc", player["puuid"], size=count)
+    )
+    try:
+        mmr_raw, matches_raw = await asyncio.wait_for(fetch_task, timeout=PROFILE_FULL_TIMEOUT)
+    except asyncio.TimeoutError:
+        logger.warning("profile full fetch timed out puuid=%s", player["puuid"])
+        if not fetch_task.done():
+            fetch_task.cancel()
+        try:
+            await fetch_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        mmr_raw, matches_raw = {}, {}
+    except Exception as e:
+        logger.warning("profile full fetch failed: %s", e)
+        mmr_raw, matches_raw = {}, {}
+
+    mmr_body = mmr_raw if isinstance(mmr_raw, dict) else {}
+    matches_body = matches_raw if isinstance(matches_raw, dict) else {}
+    if mmr_body:
+        mmr = stats.normalize_mmr(mmr_body)
+    elif isinstance(session.get("_mmr"), dict):
+        mmr = session["_mmr"]
+    else:
+        mmr = stats.normalize_mmr({})
+    _apply_mmr_names(session, player, mmr)
+    session["_mmr"] = mmr
+
+    summaries = stats.summaries_from_matches(
+        matches_body.get("data"), player["puuid"], player["name"], player["tag"]
+    )
+    if summaries:
+        _store_summaries(session, summaries)
+    else:
+        summaries = _cache_summaries(session, player)
+
+    if account is None and view == "overview":
+        try:
+            acc_raw = await asyncio.wait_for(
+                henrik.account_by_puuid(player["puuid"]),
+                timeout=6.0,
+            )
+            if isinstance(acc_raw, dict):
+                account = acc_raw.get("data")
+                session["_account"] = account
+        except Exception:
+            account = session.get("_account")
+
+    return _compose_profile_embeds(session, view, player, mmr, account, summaries)
+
+
+async def _background_profile_refresh(
+    message: discord.Message,
+    session_id: str,
+    view: str,
+    lang: str,
+) -> None:
+    try:
+        session = stats.get_session(session_id)
+        if not session:
+            return
+        payload = await load_profile_payload(session, view, mode="full")
+        await message.edit(
+            embeds=payload["embeds"],
+            view=ProfileNavView(session_id, view, lang),
+        )
+    except Exception:
+        logger.debug("profile background refresh failed", exc_info=True)
 
 
 async def load_match_payload(session: dict, view: str) -> dict:
@@ -570,7 +660,7 @@ async def load_match_payload(session: dict, view: str) -> dict:
     return {"embeds": [embeds.match_embed(summary, None, lang)]}
 
 
-async def build_profile_reply(owner_id: int, player: dict, view: str, *, count=10, filter=None, lang="en"):
+async def build_profile_reply(owner_id: int, player: dict, view: str, *, count=5, filter=None, lang="en"):
     sid = stats.create_session({
         "kind": "profile",
         "ownerId": owner_id,
@@ -583,8 +673,15 @@ async def build_profile_reply(owner_id: int, player: dict, view: str, *, count=1
         "locale": lang,
     })
     session = stats.get_session(sid)
-    payload = await load_profile_payload(session, view)
-    return {**payload, "view": ProfileNavView(sid, view, lang)}
+    # First reply uses MMR + SQLite cache so Discord leaves "thinking" quickly.
+    payload = await load_profile_payload(session, view, mode="fast")
+    return {
+        **payload,
+        "view": ProfileNavView(sid, view, lang),
+        "_session_id": sid,
+        "_active_view": view,
+        "_lang": lang,
+    }
 
 
 async def build_match_reply(owner_id: int, player: dict, view: str, *, count=5, lang="en"):
@@ -1061,7 +1158,7 @@ class ValCheckerCog(commands.Cog):
         user="Linked Discord user",
         region="Region",
         view="What to show",
-        count="Matches to analyze (default 10, max 15)",
+        count="Matches to analyze (default 5, max 15)",
         filter="Agent or map name (for Agents / Maps view)",
     )
     @app_commands.choices(
@@ -1100,11 +1197,16 @@ class ValCheckerCog(commands.Cog):
                 interaction.user.id,
                 player,
                 (view.value if view else "overview"),
-                count=count or 10,
+                count=count or 5,
                 filter=filter,
                 lang=lang,
             )
-            await interaction.followup.send(**reply)
+            sid = reply.pop("_session_id", None)
+            active = reply.pop("_active_view", view.value if view else "overview")
+            reply.pop("_lang", None)
+            msg = await interaction.followup.send(**reply)
+            if sid:
+                asyncio.create_task(_background_profile_refresh(msg, sid, active, lang))
         except Exception as e:
             await interaction.followup.send(
                 embed=embeds.error_embed(
