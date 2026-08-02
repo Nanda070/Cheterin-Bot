@@ -54,6 +54,8 @@ polls.db
 timed_roles.db
 sticky_roles.db
 starboard.db
+valchecker.db
+relations.db
 *.migrated.bak
 venv/
 .env 
