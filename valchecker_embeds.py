@@ -49,9 +49,10 @@ def base_embed(*, color: int | None = None, timestamp: bool = False, footer: str
 
 
 def error_embed(message: str, lang: str = "en") -> discord.Embed:
-    return base_embed(color=COLORS["soft"]).set_title(
-        i18n.t("valchecker.common.error_title", lang)
-    ).set_description(message)
+    embed = base_embed(color=COLORS["soft"])
+    embed.title = i18n.t("valchecker.common.error_title", lang)
+    embed.description = message
+    return embed
 
 
 def _rank_field_value(rank_info: dict | None) -> str:
@@ -357,9 +358,10 @@ def status_embed(region: str, fields: list[dict], lang: str = "en") -> discord.E
 
 
 def simple_embed(title: str, description: str, color: int | None = None) -> discord.Embed:
-    return base_embed(color=color if color is not None else COLORS["dark"]).set_title(title).set_description(
-        description
-    )
+    embed = base_embed(color=color if color is not None else COLORS["dark"])
+    embed.title = title
+    embed.description = description
+    return embed
 
 
 def leaderboard_embed(guild_name: str, lines: list[str], sort_label: str, lang: str = "en") -> discord.Embed:

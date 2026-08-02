@@ -520,8 +520,8 @@
     "semantic_hash": "6b697d4051febe981499a774b73f72c8"
   },
   "dashboard/frontend/src/App.tsx": {
-    "mtime": 1785707071.885949,
-    "ast_hash": "1a5e0245b35b32ca706f24b998ef2f3e",
+    "mtime": 1785707374.1885176,
+    "ast_hash": "b0891ce35c160e16a33072939f40aed4",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/api/brackets.test.ts": {
@@ -755,8 +755,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.test.tsx": {
-    "mtime": 1784902859.313839,
-    "ast_hash": "c155d2deb533bde3effe871d55c77cf6",
+    "mtime": 1785707557.1357365,
+    "ast_hash": "9544792d4a144eb51c76654ff52539c7",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/DashboardShell.tsx": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/EmbedBuilder.tsx": {
-    "mtime": 1785642937.2952895,
-    "ast_hash": "0d9aca02e55105b1ee2979694333a0b3",
+    "mtime": 1785707622.811765,
+    "ast_hash": "d680a5eb5044f4f8d9e37890b3698e1b",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/EventDetailPanel.test.tsx": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Home.test.tsx": {
-    "mtime": 1785630761.9319122,
-    "ast_hash": "49015d65fa07ecfa83b9a983a4011047",
+    "mtime": 1785707572.3878872,
+    "ast_hash": "1d057c72261e0ec85a3d7acdbbb32c15",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Home.tsx": {
@@ -1260,9 +1260,9 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/index.html": {
-    "mtime": 1783356778.0,
-    "ast_hash": "9e8987a240a2a5b977980599f00d9bdd",
-    "semantic_hash": "9e8987a240a2a5b977980599f00d9bdd"
+    "mtime": 1785707581.3797798,
+    "ast_hash": "f04dddf40713cd93aa116027b9277bf1",
+    "semantic_hash": ""
   },
   "requirements.txt": {
     "mtime": 1785640133.0943494,
@@ -1655,8 +1655,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/Economy.tsx": {
-    "mtime": 1785707001.6331415,
-    "ast_hash": "354511fc78d4ab300c5d4803dba707f2",
+    "mtime": 1785707564.8927705,
+    "ast_hash": "6d5f3fcb19806fcc6d026e59f0880f4a",
     "semantic_hash": ""
   },
   "economy.py": {
@@ -1940,8 +1940,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/en.ts": {
-    "mtime": 1784975437.0590062,
-    "ast_hash": "2ed2ba344860138eb4756b72799b15e1",
+    "mtime": 1785707974.4298172,
+    "ast_hash": "8a6be9770c9497fad468ca50b3cc38b6",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/index.test.ts": {
@@ -1955,8 +1955,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/ru.ts": {
-    "mtime": 1784975437.5045166,
-    "ast_hash": "1355f8a3f40a673ad656a74076c1b601",
+    "mtime": 1785707974.4298172,
+    "ast_hash": "972c06f5ec8592dae09fdb1511f94c69",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/i18n/types.ts": {
@@ -2525,8 +2525,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/pages/docs/sectionsRu.tsx": {
-    "mtime": 1785707232.7640455,
-    "ast_hash": "90fa372bc4edf64f48ed1432a0360ea1",
+    "mtime": 1785707622.4115527,
+    "ast_hash": "7b9447847e145cf7c636de834a8c22e7",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/config/bunkerMarkers.ts": {
@@ -3362,6 +3362,26 @@
   "slash_modules.py": {
     "mtime": 1785705667.0551083,
     "ast_hash": "af2b17db43ee84844dd5cdf05ab131eb",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/src/i18n/en/sans.ts": {
+    "mtime": 1785708332.657256,
+    "ast_hash": "a93ad6e5674be096461b05997252f087",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/src/i18n/ru/sans.ts": {
+    "mtime": 1785708334.0476632,
+    "ast_hash": "94b6386831ebafd81950181b83caa94e",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/src/pages/Sans.tsx": {
+    "mtime": 1785708361.07451,
+    "ast_hash": "cf65be96a6986a791a4d0db751ed7551",
+    "semantic_hash": ""
+  },
+  "dashboard/frontend/public/sans-music.README.md": {
+    "mtime": 1785708342.32771,
+    "ast_hash": "2aaed2e2ac9d97b861ecc4793c19b427",
     "semantic_hash": ""
   }
 }
