@@ -34,6 +34,8 @@ def command_sync_mode() -> str:
 
     - `per_guild` (Вариант A, ПО УМОЛЧАНИЮ): команды пушатся в каждую гильдию бота
       как guild-команды → появляются МГНОВЕННО, без задержки до 1 часа и без дублей.
+      По умолчанию синхронизируется полное дерево (/levels, /casino, …); скрытие
+      выключенных модулей — только с COMMAND_SYNC_HIDE_DISABLED=1.
       Компромисс: не масштабируется на тысячи серверов (rate limits + синк на каждый
       on_guild_join). Идеально для бота на небольшом числе серверов.
     - `global` (Вариант B, ЗАГОТОВКА): один глобальный `tree.sync()` (распространение
@@ -144,7 +146,8 @@ class ChetBot(commands.Bot):
                 logger.exception("Не удалось синхронизировать guild-команды мейн-сервера")
             return
 
-        # Вариант A: guild-sync с фильтром выключенных модулей (команды пропадают из /).
+        # Вариант A: guild-sync полного дерева (мгновенно). Опционально скрывать
+        # выключенные модули: COMMAND_SYNC_HIDE_DISABLED=1.
         for guild in self.guilds:
             try:
                 await slash_modules.sync_guild_commands(self, guild)

@@ -1,9 +1,10 @@
-"""Map slash root commands → modules; per-guild filtered sync when modules toggle."""
+"""Map slash root commands → modules; per-guild sync (optional hide when modules off)."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import TYPE_CHECKING
 
 import discord
@@ -13,7 +14,7 @@ logger = logging.getLogger("chetbot.slash_modules")
 if TYPE_CHECKING:
     from discord.ext import commands
 
-# settings_db module name → English root slash name(s) to include when enabled.
+# settings_db module name → English root slash name(s).
 # Roots not listed here are always synced (help, moderation, …).
 MODULE_ROOT_COMMANDS: dict[str, tuple[str, ...]] = {
     "xp": ("levels",),
@@ -40,7 +41,7 @@ MODULE_ROOT_COMMANDS: dict[str, tuple[str, ...]] = {
     "verification": ("verify_setup",),
 }
 
-# Modules whose settings.put should trigger a guild slash resync.
+# Modules whose settings.put should trigger a guild slash resync (only when hiding).
 SYNC_ON_MODULE_PUT: frozenset[str] = frozenset(MODULE_ROOT_COMMANDS.keys())
 
 _bot: commands.Bot | None = None
@@ -51,6 +52,16 @@ _RESYNC_DELAY_SEC = 1.5
 def bind_bot(bot: commands.Bot) -> None:
     global _bot
     _bot = bot
+
+
+def hide_disabled_module_commands() -> bool:
+    """When True, guild sync omits slash roots for disabled modules.
+
+    Default is False: always sync the full tree so commands like /levels stay
+    visible; runtime still refuses when the module is off. Opt in with
+    COMMAND_SYNC_HIDE_DISABLED=1.
+    """
+    return os.getenv("COMMAND_SYNC_HIDE_DISABLED", "").strip().lower() in ("1", "true", "yes")
 
 
 def _settings_enabled(module: str, guild_id: int) -> bool:
@@ -110,29 +121,38 @@ def disabled_root_names(guild_id: int) -> set[str]:
 
 
 async def sync_guild_commands(bot: commands.Bot, guild: discord.Guild | discord.Object) -> None:
-    """Copy global commands to guild, drop disabled-module roots, sync."""
+    """Copy global commands to guild and sync. Optionally drop disabled-module roots."""
     guild_id = guild.id if isinstance(guild, discord.Guild) else int(guild.id)
     target = discord.Object(id=guild_id)
 
     bot.tree.clear_commands(guild=target)
     bot.tree.copy_global_to(guild=target)
 
-    disabled = disabled_root_names(guild_id)
-    if disabled:
-        for cmd in list(bot.tree.get_commands(guild=target)):
-            if cmd.name in disabled:
-                bot.tree.remove_command(cmd.name, guild=target)
+    disabled: set[str] = set()
+    if hide_disabled_module_commands():
+        disabled = disabled_root_names(guild_id)
+        if disabled:
+            for cmd in list(bot.tree.get_commands(guild=target)):
+                if cmd.name in disabled:
+                    bot.tree.remove_command(cmd.name, guild=target)
 
-    await bot.tree.sync(guild=target)
+    synced = await bot.tree.sync(guild=target)
+    names = sorted(c.name for c in synced)
     logger.info(
-        "slash sync guild=%s removed=%s",
+        "slash sync guild=%s roots=%d names=%s removed=%s",
         guild_id,
+        len(names),
+        names,
         sorted(disabled) if disabled else [],
     )
+    if "levels" not in names:
+        logger.warning("slash sync guild=%s missing root /levels", guild_id)
 
 
 def on_settings_put(guild_id: int, module: str, data: dict) -> None:
-    """Called from settings_db.put — debounce resync when module enabled flag matters."""
+    """Called from settings_db.put — debounce resync when hide-disabled is on."""
+    if not hide_disabled_module_commands():
+        return
     if module not in SYNC_ON_MODULE_PUT:
         return
     if _bot is None:
