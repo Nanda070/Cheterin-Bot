@@ -126,6 +126,7 @@ MESSAGES: dict[str, str] = {
     "family.tickets.active_application": "Активная заявка уже есть.",
     "family.tickets.not_available": "Тикет недоступен.",
     "family.tickets.member_not_found": "Пользователь не найден.",
+    "family.tickets.left_server_note": "Участник `<@{id}>` покинул сервер — заявка закрыта без решения по ролям.",
     "family.tickets.role_error": "Ошибка ролей: {error}",
     "family.tickets.approved_dm": "{mention}, твоя заявка одобрена. Добро пожаловать.",
     "family.tickets.denied_dm": "{mention}, твоя заявка была отклонена.",

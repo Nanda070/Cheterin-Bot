@@ -126,6 +126,7 @@ MESSAGES: dict[str, str] = {
     "family.tickets.active_application": "An active application already exists.",
     "family.tickets.not_available": "Ticket unavailable.",
     "family.tickets.member_not_found": "User not found.",
+    "family.tickets.left_server_note": "Member `<@{id}>` left the server — application closed without role changes.",
     "family.tickets.role_error": "Role error: {error}",
     "family.tickets.approved_dm": "{mention}, your application was approved. Welcome.",
     "family.tickets.denied_dm": "{mention}, your application was denied.",

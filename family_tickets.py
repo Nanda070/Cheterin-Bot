@@ -22,7 +22,7 @@ import slash_registry
 logger = logging.getLogger("family.tickets")
 
 
-def build_mini_embed(member: discord.Member, ticket: dict, lang: str) -> discord.Embed:
+def build_mini_embed(member: discord.abc.User, ticket: dict, lang: str) -> discord.Embed:
     embed = discord.Embed(
         title=i18n.t("family.tickets.mini_title", lang),
         color=family_core.status_color(ticket["status"]),
@@ -32,8 +32,25 @@ def build_mini_embed(member: discord.Member, ticket: dict, lang: str) -> discord
     embed.add_field(name=i18n.t("family.tickets.field_real_name", lang), value=ticket["real_name"], inline=False)
     embed.add_field(name=i18n.t("family.tickets.field_age", lang), value=ticket["real_age"], inline=False)
     embed.add_field(name=i18n.t("family.tickets.field_status", lang), value=family_core.status_label(ticket["status"], lang), inline=False)
-    embed.set_thumbnail(url=member.display_avatar.url)
+    avatar = getattr(member, "display_avatar", None)
+    if avatar is not None:
+        embed.set_thumbnail(url=avatar.url)
     embed.set_footer(text=i18n.t("family.tickets.footer_member", lang, id=member.id))
+    return embed
+
+
+def build_mini_embed_by_id(user_id: int, ticket: dict, lang: str) -> discord.Embed:
+    """Mini-card when the applicant left and User fetch failed."""
+    embed = discord.Embed(
+        title=i18n.t("family.tickets.mini_title", lang),
+        color=family_core.status_color(ticket["status"]),
+        timestamp=datetime.now(timezone.utc),
+    )
+    embed.add_field(name=i18n.t("family.tickets.field_nickname", lang), value=ticket["nickname"], inline=False)
+    embed.add_field(name=i18n.t("family.tickets.field_real_name", lang), value=ticket["real_name"], inline=False)
+    embed.add_field(name=i18n.t("family.tickets.field_age", lang), value=ticket["real_age"], inline=False)
+    embed.add_field(name=i18n.t("family.tickets.field_status", lang), value=family_core.status_label(ticket["status"], lang), inline=False)
+    embed.set_footer(text=i18n.t("family.tickets.footer_member", lang, id=user_id))
     return embed
 
 
@@ -75,7 +92,7 @@ def build_ticket_status_embed(lang: str) -> discord.Embed:
 
 def build_ticket_result_embed(
     status: str,
-    applicant: discord.Member,
+    applicant: discord.abc.User,
     moderator: discord.Member,
     roles_added: list[discord.Role],
     removed_role: Optional[discord.Role],
@@ -129,7 +146,7 @@ def build_ticket_result_embed(
     return embed
 
 
-def member_log_value(member: discord.Member) -> str:
+def member_log_value(member: discord.abc.User) -> str:
     return f"{member.mention}\n`{member.id}`"
 
 
@@ -165,8 +182,18 @@ async def send_ticket_created_log(bot, applicant, ticket, active_role, thread, m
     ], lang=lang)
 
 
-async def send_ticket_result_log(bot, status, applicant, moderator, roles_added, removed_role, thread, lang: str):
-    guild_id = applicant.guild.id
+async def send_ticket_result_log(
+    bot,
+    status,
+    applicant: discord.abc.User,
+    moderator: discord.Member,
+    roles_added,
+    removed_role,
+    thread,
+    lang: str,
+    *,
+    guild_id: int,
+):
     if status == "approved":
         await send_log(bot, guild_id, i18n.t("family.tickets.log_approved_title", lang), i18n.t("family.tickets.log_approved_body", lang), embed_style.SUCCESS_INT, [
             (i18n.t("family.tickets.log_field_member", lang), member_log_value(applicant), True),
@@ -380,39 +407,54 @@ class TicketResolution:
 
 
 async def resolve_ticket(bot: commands.Bot, guild: discord.Guild, thread: discord.Thread, status: str, moderator: discord.Member) -> TicketResolution:
-    """Общая логика решения по тикету — используется и кнопками в Discord, и дашбордом."""
+    """Общая логика решения по тикету — используется и кнопками в Discord, и дашбордом.
+
+    Approve requires the applicant still in the guild. Close/deny work if they left
+    (roles are skipped; mini-card/thread/log still update).
+    """
     lang = i18n.lang_for(guild.id)
     ticket = family_db.get_ticket_by_thread(guild.id, thread.id)
     if not ticket or ticket["status"] != "open":
         return TicketResolution(False, error="not_open")
 
-    applicant = guild.get_member(ticket["user_id"])
+    applicant: discord.Member | None = guild.get_member(ticket["user_id"])
     if applicant is None:
         try:
             applicant = await guild.fetch_member(ticket["user_id"])
-        except discord.NotFound:
+        except (discord.NotFound, discord.HTTPException):
             applicant = None
-    if applicant is None:
+
+    if applicant is None and status == "approved":
         return TicketResolution(False, error="member_not_found")
+
+    display_user: discord.abc.User | None = applicant
+    if display_user is None:
+        try:
+            display_user = await bot.fetch_user(ticket["user_id"])
+        except discord.HTTPException:
+            display_user = None
 
     settings = family_core.get_settings(guild.id)["applications"]
     roles_added: list[discord.Role] = []
-    if status == "approved":
-        roles_added = [guild.get_role(int(rid)) for rid in settings["approve_role_ids"] if rid]
-        roles_added = [r for r in roles_added if r is not None]
-        try:
-            if roles_added:
-                await applicant.add_roles(*roles_added, reason=f"Approved by {moderator}")
-        except discord.HTTPException as exc:
-            return TicketResolution(False, error=f"role_error: {exc}")
+    removed_role: Optional[discord.Role] = None
 
-    active_role = guild.get_role(int(settings["ticket_active_role_id"])) if settings["ticket_active_role_id"] else None
-    removed_role = active_role if active_role and active_role in applicant.roles else None
-    if removed_role:
-        try:
-            await applicant.remove_roles(removed_role, reason="Ticket processing")
-        except discord.HTTPException:
-            pass
+    if applicant is not None:
+        if status == "approved":
+            roles_added = [guild.get_role(int(rid)) for rid in settings["approve_role_ids"] if rid]
+            roles_added = [r for r in roles_added if r is not None]
+            try:
+                if roles_added:
+                    await applicant.add_roles(*roles_added, reason=f"Approved by {moderator}")
+            except discord.HTTPException as exc:
+                return TicketResolution(False, error=f"role_error: {exc}")
+
+        active_role = guild.get_role(int(settings["ticket_active_role_id"])) if settings["ticket_active_role_id"] else None
+        removed_role = active_role if active_role and active_role in applicant.roles else None
+        if removed_role:
+            try:
+                await applicant.remove_roles(removed_role, reason="Ticket processing")
+            except discord.HTTPException:
+                pass
 
     family_db.update_ticket_status(guild.id, ticket["user_id"], status, moderator.id)
 
@@ -422,26 +464,54 @@ async def resolve_ticket(bot: commands.Bot, guild: discord.Guild, thread: discor
         try:
             msg = await app_channel.fetch_message(ticket["mini_message_id"])
             t_data = family_db.get_ticket_by_user(guild.id, ticket["user_id"])
-            await msg.edit(embed=build_mini_embed(applicant, t_data, lang))
+            if display_user is not None:
+                await msg.edit(embed=build_mini_embed(display_user, t_data, lang))
+            else:
+                await msg.edit(embed=build_mini_embed_by_id(ticket["user_id"], t_data, lang))
         except discord.HTTPException:
             pass
 
-    try:
-        if status == "approved":
-            await thread.send(content=i18n.t("family.tickets.approved_dm", lang, mention=applicant.mention))
-        elif status == "denied":
-            await thread.send(content=i18n.t("family.tickets.denied_dm", lang, mention=applicant.mention))
-    except discord.HTTPException:
-        pass
+    if applicant is not None:
+        try:
+            if status == "approved":
+                await thread.send(content=i18n.t("family.tickets.approved_dm", lang, mention=applicant.mention))
+            elif status == "denied":
+                await thread.send(content=i18n.t("family.tickets.denied_dm", lang, mention=applicant.mention))
+        except discord.HTTPException:
+            pass
+    elif status in ("closed", "denied"):
+        try:
+            await thread.send(content=i18n.t("family.tickets.left_server_note", lang, id=ticket["user_id"]))
+        except discord.HTTPException:
+            pass
 
-    await send_ticket_result_log(bot, status, applicant, moderator, roles_added, removed_role, thread, lang)
+    log_user = display_user
+    if log_user is None:
+        # Minimal stand-in for log fields when Discord user is unreachable.
+        class _IdUser:
+            def __init__(self, uid: int):
+                self.id = uid
+                self.mention = f"<@{uid}>"
 
+        log_user = _IdUser(ticket["user_id"])  # type: ignore[assignment]
+
+    await send_ticket_result_log(
+        bot, status, log_user, moderator, roles_added, removed_role, thread, lang, guild_id=guild.id
+    )
+
+    name_part = getattr(display_user, "name", None) or str(ticket["user_id"])
     try:
-        await thread.edit(name=f"{status}-family-{applicant.name}"[:100], locked=True, archived=True)
+        await thread.edit(name=f"{status}-family-{name_part}"[:100], locked=True, archived=True)
     except discord.HTTPException as exc:
         logger.warning("Не удалось заархивировать тред тикета: %s", exc)
 
-    return TicketResolution(True, applicant=applicant, roles_added=roles_added, removed_role=removed_role, thread=thread)
+    return TicketResolution(
+        True,
+        applicant=log_user,
+        roles_added=roles_added,
+        removed_role=removed_role,
+        thread=thread,
+    )
 
 
 class TicketControlView(discord.ui.View):
@@ -492,6 +562,34 @@ class TicketControlView(discord.ui.View):
 class FamilyTicketsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        """Auto-close open family applications when the applicant leaves."""
+        settings = family_core.get_settings(member.guild.id)
+        if not settings["enabled"]:
+            return
+        ticket = family_db.get_ticket_by_user(member.guild.id, member.id)
+        if not ticket or ticket["status"] != "open" or not ticket.get("thread_id"):
+            return
+        moderator = member.guild.me
+        if moderator is None:
+            return
+        try:
+            result = await self.resolve_ticket_by_user(member.guild, member.id, "closed", moderator)
+            if not result.ok:
+                logger.warning(
+                    "auto-close family ticket failed guild=%s user=%s err=%s",
+                    member.guild.id,
+                    member.id,
+                    result.error,
+                )
+        except Exception:
+            logger.exception(
+                "auto-close family ticket crashed guild=%s user=%s",
+                member.guild.id,
+                member.id,
+            )
 
     @app_commands.command(name="семья-заявки", description="Развернуть панель создания заявки в семью")
     @app_commands.default_permissions(manage_guild=True)

@@ -3390,13 +3390,13 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/components/BrandMark.tsx": {
-    "mtime": 1785713494.8427234,
-    "ast_hash": "54e21463cfe7fe56918ba0509cdc1aa5",
+    "mtime": 1785714040.984935,
+    "ast_hash": "aa424fd75d645f4a37f88edbe0e6756e",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/components/SecretClickTarget.tsx": {
-    "mtime": 1785712667.522874,
-    "ast_hash": "55eb6f9455a7f960737a178f08b97ac3",
+    "mtime": 1785713989.693398,
+    "ast_hash": "57aca8d23a86a9f2c8f7ade9dffae68d",
     "semantic_hash": ""
   },
   "dashboard/frontend/src/hooks/useSecretClicks.ts": {
@@ -3420,8 +3420,8 @@
     "semantic_hash": ""
   },
   "dashboard/frontend/src/utils/easterEggs.ts": {
-    "mtime": 1785713497.9528692,
-    "ast_hash": "f1490dc2726952aef7a7a7863b7f482d",
+    "mtime": 1785714033.7538216,
+    "ast_hash": "9fde683de056944ecdeaa499d7e8c549",
     "semantic_hash": ""
   }
 }
