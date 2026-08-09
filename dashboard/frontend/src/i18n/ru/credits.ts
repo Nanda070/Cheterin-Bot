@@ -59,6 +59,9 @@ const credits: TranslationDict = {
   'credits.projects.astraip.body':
     'Высокопроизводительный паркур для Minecraft 1.21+ Paper — острова, сессии, меню, эффекты и интеграции.',
   'credits.projects.series.bots': 'Сайты, боты и игры',
+  'credits.projects.chetmedia.title': 'ChetMedia',
+  'credits.projects.chetmedia.body':
+    'Аниме-сайт Cheterin Group — каталог, релизы и медиа на chetmedia.com.',
   'credits.projects.rpstate.title': 'RP-State Bot',
   'credits.projects.rpstate.body':
     'Discord-бот для RP-проектов — кросс-серверные документы и доски розыска / поиска.',

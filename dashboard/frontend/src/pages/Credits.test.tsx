@@ -51,6 +51,10 @@ describe('CreditsPage', () => {
       'href',
       'https://github.com/Nanda070/AstraBuild',
     )
+    expect(screen.getByRole('link', { name: /ChetMedia/i })).toHaveAttribute(
+      'href',
+      'https://chetmedia.com/',
+    )
     expect(screen.getByRole('link', { name: /IDUS/i })).toHaveAttribute(
       'href',
       'https://github.com/Nanda070/IDUS',

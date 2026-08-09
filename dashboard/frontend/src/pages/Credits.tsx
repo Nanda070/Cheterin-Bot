@@ -84,6 +84,12 @@ const ASTRA_PROJECTS: Project[] = [
 
 const OTHER_PROJECTS: Project[] = [
   {
+    titleKey: 'credits.projects.chetmedia.title',
+    bodyKey: 'credits.projects.chetmedia.body',
+    href: 'https://chetmedia.com/',
+    kind: 'web',
+  },
+  {
     titleKey: 'credits.projects.rpstate.title',
     bodyKey: 'credits.projects.rpstate.body',
     href: 'https://github.com/Nanda070/RP-State',

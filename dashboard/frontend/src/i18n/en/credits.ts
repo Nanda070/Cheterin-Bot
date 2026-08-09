@@ -59,6 +59,9 @@ const credits: TranslationDict = {
   'credits.projects.astraip.body':
     'High-performance parkour for Minecraft 1.21+ Paper — islands, sessions, menus, effects, and integrations.',
   'credits.projects.series.bots': 'Sites, bots & games',
+  'credits.projects.chetmedia.title': 'ChetMedia',
+  'credits.projects.chetmedia.body':
+    'Cheterin Group anime site — catalog, releases, and media at chetmedia.com.',
   'credits.projects.rpstate.title': 'RP-State Bot',
   'credits.projects.rpstate.body':
     'Discord bot for RP projects — cross-server documents and wanted / search boards.',
