@@ -47,6 +47,7 @@ import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
 import { RelationsPage } from './pages/Relations'
 import { ValCheckerPage } from './pages/ValChecker'
+import { HealthPage } from './pages/Health'
 
 function App() {
   return (
@@ -140,6 +141,7 @@ function App() {
               <Route path="settings" element={<ServerSettingsPage />} />
               <Route path="ctd" element={<CtdPage />} />
               <Route path="superadmin" element={<SuperAdminPage />} />
+              <Route path="health" element={<HealthPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

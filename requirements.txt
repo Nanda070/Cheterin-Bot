@@ -5,6 +5,7 @@ aiohttp>=3.9
 aiohttp-session>=2.12
 cryptography>=42.0
 Pillow>=10.0
+psutil>=5.9
 # IANA zones for zoneinfo. On Ubuntu usually covered by apt tzdata;
 # keep the pip package so slim/Docker images without /usr/share/zoneinfo still work.
 tzdata>=2024.1

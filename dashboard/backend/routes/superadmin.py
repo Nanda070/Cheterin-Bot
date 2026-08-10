@@ -1,6 +1,7 @@
 from aiohttp import web
 
 from ..access_middleware import require_super_admin
+from ..host_metrics import collect_host_metrics
 
 routes = web.RouteTableDef()
 
@@ -21,3 +22,9 @@ async def superadmin_guilds(request: web.Request) -> web.Response:
             for guild in bot.guilds
         ],
     })
+
+
+@routes.get("/api/superadmin/host-health")
+@require_super_admin
+async def superadmin_host_health(request: web.Request) -> web.Response:
+    return web.json_response(collect_host_metrics())

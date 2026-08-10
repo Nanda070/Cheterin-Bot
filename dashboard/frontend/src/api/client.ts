@@ -1500,6 +1500,35 @@ export async function fetchSuperAdminGuilds(): Promise<SuperAdminGuild[]> {
   return body.guilds
 }
 
+export interface HostHealth {
+  platform: string
+  hostname: string | null
+  python_version: string
+  cpu_percent: number | null
+  cpu_count: number | null
+  load_avg: [number, number, number] | null
+  ram: { used_bytes: number | null; total_bytes: number | null; percent: number | null }
+  disk: {
+    used_bytes: number | null
+    total_bytes: number | null
+    percent: number | null
+    path: string
+  }
+  uptime_seconds: number | null
+  boot_time: number | null
+  process: {
+    pid: number
+    name: string | null
+    rss_bytes: number | null
+    create_time: number | null
+  } | null
+  collected_at: number
+}
+
+export async function fetchHostHealth(): Promise<HostHealth> {
+  return apiFetch<HostHealth>('/api/superadmin/host-health')
+}
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ð Ð¾Ð·Ñ‹Ð³Ñ€Ñ‹ÑˆÐ¸ (Giveaways) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface GiveawayEntrant {

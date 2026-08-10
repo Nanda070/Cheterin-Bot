@@ -15,12 +15,25 @@ def _has_legacy_role_access(member, allowed_role_ids: frozenset) -> bool:
     return not member_role_ids.isdisjoint(allowed_role_ids)
 
 
+async def _main_guild_super_admin(bot, main_guild_id, user_id):
+    """Супер-админ на мейн-сервере (или None, если не удалось / не супер)."""
+    if main_guild_id is None:
+        return None
+    main_lookup = await resolve_guild_member(bot, int(main_guild_id), int(user_id))
+    if main_lookup.service_error:
+        return None
+    if main_lookup.member is None or not has_super_admin_access(main_lookup.member):
+        return None
+    return main_lookup.member
+
+
 def require_dashboard_access(handler):
     """Гейт доступа к серверу (Фаза 2.3): сессия → активный сервер → Manage Server.
 
     Активный сервер берётся только из `session["active_guild_id"]` (выбор в дашборде).
     Без выбора — 400 `no_guild_selected` (без фолбэка на мейн-сервер приложения).
-    Доступ = Manage Server/Administrator на этом сервере (плюс переходный грант по роли).
+    Доступ = Manage Server/Administrator на этом сервере (плюс переходный грант по роли),
+    либо супер-админ мейн-сервера (обход членства/Manage Server на чужих гильдиях бота).
     Резолвнутый участник кладётся в `request["moderator"]`, а активная гильдия —
     в `request["guild_id"]`.
     """
@@ -43,9 +56,21 @@ def require_dashboard_access(handler):
         lookup = await resolve_guild_member(bot, guild_id, int(user_id))
         if lookup.service_error:
             return web.json_response({"error": "service_unavailable"}, status=503)
+
+        super_member = await _main_guild_super_admin(bot, request.app.get("guild_id"), user_id)
+
         if lookup.not_found or lookup.member is None:
-            return web.json_response({"error": "forbidden"}, status=403)
-        if not (has_manage_server(lookup.member) or _has_legacy_role_access(lookup.member, config.access_role_ids)):
+            if super_member is None:
+                return web.json_response({"error": "forbidden"}, status=403)
+            request["guild_id"] = guild_id
+            request["moderator"] = super_member
+            return await handler(request)
+
+        if not (
+            has_manage_server(lookup.member)
+            or _has_legacy_role_access(lookup.member, config.access_role_ids)
+            or super_member is not None
+        ):
             return web.json_response({"error": "forbidden"}, status=403)
 
         request["guild_id"] = guild_id

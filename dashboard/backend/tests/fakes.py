@@ -503,7 +503,14 @@ class FakeBot:
         return asyncio.get_event_loop()
 
     def get_guild(self, guild_id):
-        return self._guild
+        gid = int(guild_id)
+        for guild in self.guilds:
+            if int(guild.id) == gid:
+                return guild
+        # Single-guild test fakes often ignore id mismatches.
+        if len(self.guilds) == 1:
+            return self._guild
+        return None
 
     def get_cog(self, name):
         # Тесты, которым нужен конкретный ког, переопределяют этот метод (bot.get_cog = ...).

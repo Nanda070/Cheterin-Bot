@@ -11,53 +11,9 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
   {
-    version: '2026.08.1',
+    version: '2026.08.2',
     date: '2026-08',
-    itemKeys: [
-      'navGroups',
-      'moduleMerges',
-      'homeSlim',
-      'relations',
-      'slashGroups',
-      'quote',
-      'spamTrapsModes',
-      'starboard',
-      'autoReactions',
-      'botProfile',
-      'caseTimeline',
-      'profileCard',
-      'commandPalette',
-      'weeklyDigest',
-      'gameHost',
-    ],
-  },
-  {
-    version: '2026.08',
-    date: '2026-08',
-    itemKeys: [
-      'quote',
-      'spamTrapsModes',
-      'starboard',
-      'autoReactions',
-      'botProfile',
-      'caseTimeline',
-      'profileCard',
-      'commandPalette',
-      'weeklyDigest',
-      'gameHost',
-    ],
-  },
-  {
-    version: '2026.07',
-    date: '2026-07',
-    itemKeys: [
-      'timezone',
-      'stickyRoles',
-      'landing',
-      'setupHealth',
-      'spamTraps',
-      'themeLogo',
-    ],
+    itemKeys: ['quoteFix', 'relations', 'valchecker'],
   },
 ]
 

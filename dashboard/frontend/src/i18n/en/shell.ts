@@ -77,6 +77,7 @@ const shell: TranslationDict = {
   'nav.ctd': 'CTD tickets',
   'nav.settings': 'Server settings',
   'nav.superadminServers': 'Bot servers',
+  'nav.health': 'Health',
   'nav.news': 'News relay',
 
   'servers.title': 'Select a server',

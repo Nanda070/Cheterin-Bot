@@ -23,6 +23,7 @@ import {
   Megaphone,
   Shield,
   ShieldWarning,
+  Pulse,
   SignOut,
   Skull,
   Stack,
@@ -122,6 +123,7 @@ const NAV_GROUPS: NavGroup[] = [
     superAdminOnly: true,
     items: [
       { labelKey: 'nav.superadminServers', icon: Crown, to: '/superadmin' },
+      { labelKey: 'nav.health', icon: Pulse, to: '/health' },
       { labelKey: 'nav.news', icon: Megaphone, to: '/news' },
       { labelKey: 'nav.ctd', icon: Ticket, to: '/ctd', mainGuildOnly: true },
     ],

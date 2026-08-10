@@ -104,6 +104,6 @@ describe('WhatsNewCard', () => {
     )
     expect(screen.getByText('Что нового')).toBeInTheDocument()
     expect(screen.getByText(LATEST_WHATS_NEW.date)).toBeInTheDocument()
-    expect(screen.getByText(/Make it a Quote/)).toBeInTheDocument()
+    expect(screen.getByText(/ответ \+ упоминание бота/)).toBeInTheDocument()
   })
 })

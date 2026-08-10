@@ -191,6 +191,7 @@ describe('DashboardShell', () => {
 
     expect(await screen.findByText('Супер-админ')).toBeInTheDocument()
     expect(screen.getByText('Серверы бота')).toBeInTheDocument()
+    expect(screen.getByText('Здоровье')).toBeInTheDocument()
   })
 
   it('exposes a mobile menu toggle', async () => {

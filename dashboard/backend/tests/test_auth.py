@@ -220,6 +220,50 @@ async def test_select_guild_forbidden_without_manage_server(aiohttp_client, monk
 
 
 @pytest.mark.asyncio
+async def test_select_guild_allows_super_admin_without_manage_server(aiohttp_client, monkeypatch):
+    """Супер-админ мейна может открыть любой сервер бота без Manage Server."""
+    super_role_id = int(next(iter(SUPER_ADMIN_ROLE_IDS)))
+    main_member = FakeMember(111, name="boss", role_ids=[super_role_id])
+    # Участник на целевом сервере без manage — раньше было 403.
+    target_member = FakeMember(111, name="boss")
+    main_guild = FakeGuild(members=[main_member], guild_id=1, name="Main")
+    target_guild = FakeGuild(members=[target_member], guild_id=2, name="Other")
+    bot = FakeBot(main_guild, guilds=[main_guild, target_guild])
+    app = make_app(bot)
+    client = await aiohttp_client(app)
+    await _login_and_callback(client, monkeypatch, "111", main_member)
+
+    resp = await client.post("/api/auth/select-guild", json={"guild_id": 2})
+    assert resp.status == 200
+    assert (await resp.json())["guild_id"] == "2"
+
+    body = await (await client.get("/api/auth/me")).json()
+    assert body["active_guild_id"] == "2"
+    assert body["is_super_admin"] is True
+
+
+@pytest.mark.asyncio
+async def test_select_guild_allows_super_admin_not_in_target_guild(aiohttp_client, monkeypatch):
+    super_role_id = int(next(iter(SUPER_ADMIN_ROLE_IDS)))
+    main_member = FakeMember(111, name="boss", role_ids=[super_role_id])
+    main_guild = FakeGuild(members=[main_member], guild_id=1, name="Main")
+    target_guild = FakeGuild(members=[], guild_id=2, name="Other")
+    bot = FakeBot(main_guild, guilds=[main_guild, target_guild])
+    app = make_app(bot)
+    client = await aiohttp_client(app)
+    await _login_and_callback(client, monkeypatch, "111", main_member)
+
+    resp = await client.post("/api/auth/select-guild", json={"guild_id": 2})
+    assert resp.status == 200
+
+    body = await (await client.get("/api/auth/me")).json()
+    assert body["active_guild_id"] == "2"
+    assert body["active_guild_name"] == "Other"
+    assert body["username"] == "boss"
+    assert body["is_super_admin"] is True
+
+
+@pytest.mark.asyncio
 async def test_select_guild_requires_login(aiohttp_client):
     app = make_app(FakeBot(FakeGuild()))
     client = await aiohttp_client(app)

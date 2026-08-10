@@ -21,6 +21,7 @@ from .discord_oauth import (
     refresh_access_token,
 )
 from .access import has_super_admin_access, has_manage_server, manageable_guilds
+from .access_middleware import _main_guild_super_admin
 from .member_lookup import resolve_guild_member
 from .session import cookie_secure_flag
 
@@ -191,11 +192,16 @@ async def select_guild(request: web.Request) -> web.Response:
         return web.json_response({"error": "bot_not_in_guild"}, status=404)
 
     # Не доверяем только OAuth-списку — проверяем реальные права участника на сервере.
+    # Супер-админ мейн-сервера может открыть любой сервер, где есть бот.
     lookup = await resolve_guild_member(bot, guild_id, int(user_id))
     if lookup.service_error:
         return web.json_response({"error": "service_unavailable"}, status=503)
-    if lookup.not_found or lookup.member is None or not has_manage_server(lookup.member):
-        return web.json_response({"error": "forbidden"}, status=403)
+
+    has_manage = lookup.member is not None and has_manage_server(lookup.member)
+    if not has_manage:
+        super_member = await _main_guild_super_admin(bot, request.app.get("guild_id"), user_id)
+        if super_member is None:
+            return web.json_response({"error": "forbidden"}, status=403)
 
     session["active_guild_id"] = str(guild_id)
     return web.json_response({"ok": True, "guild_id": str(guild_id)})
@@ -262,6 +268,7 @@ async def me(request: web.Request) -> web.Response:
     }
 
     # Данные активного сервера (имя/иконка) + участника на нём (имя/аватар/is_admin).
+    # Супер-админ без членства на чужой гильдии — имя/аватар с мейна.
     if active_guild_id is not None:
         guild = bot.get_guild(int(active_guild_id))
         if guild is not None:
@@ -270,10 +277,16 @@ async def me(request: web.Request) -> web.Response:
 
         lookup = await resolve_guild_member(bot, int(active_guild_id), int(user_id))
         member = lookup.member
+        if member is None and is_super_admin and main_guild_id is not None:
+            main_lookup = await resolve_guild_member(bot, int(main_guild_id), int(user_id))
+            member = main_lookup.member
         if member is not None:
             payload.update({
                 "username": member.name,
                 "avatar": str(member.display_avatar.url) if member.display_avatar else None,
-                "is_admin": member.guild_permissions.administrator,
+                "is_admin": bool(
+                    member.guild_permissions.administrator
+                    or (is_super_admin and lookup.member is None)
+                ),
             })
     return web.json_response(payload)
