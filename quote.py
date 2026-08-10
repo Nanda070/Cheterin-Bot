@@ -116,6 +116,54 @@ async def _resolve_referenced_message(bot: commands.Bot, message: discord.Messag
         return resolved if isinstance(resolved, discord.Message) else None
 
 
+def _format_referenced_text(guild: discord.Guild | None, message: discord.Message) -> str:
+    """Resolve mentions to @names and scrub emoji/dashes for PIL fonts."""
+    user_names: dict[int, str] = {}
+    for u in getattr(message, "mentions", None) or []:
+        uid = getattr(u, "id", None)
+        if uid is None:
+            continue
+        name = getattr(u, "display_name", None) or getattr(u, "name", None) or str(uid)
+        user_names[int(uid)] = str(name)
+        if guild is not None:
+            member = guild.get_member(int(uid))
+            if member is not None:
+                user_names[int(uid)] = member.display_name
+
+    # Mentions present in content but missing from message.mentions (rare).
+    for m in quote_core._USER_MENTION_RE.finditer(message.content or ""):
+        uid = int(m.group(1))
+        if uid in user_names:
+            continue
+        if guild is not None:
+            member = guild.get_member(uid)
+            if member is not None:
+                user_names[uid] = member.display_name
+                continue
+        user_names.setdefault(uid, "user")
+
+    role_names: dict[int, str] = {}
+    for r in getattr(message, "role_mentions", None) or []:
+        rid = getattr(r, "id", None)
+        name = getattr(r, "name", None)
+        if rid is not None and name:
+            role_names[int(rid)] = str(name)
+
+    channel_names: dict[int, str] = {}
+    for ch in getattr(message, "channel_mentions", None) or []:
+        cid = getattr(ch, "id", None)
+        name = getattr(ch, "name", None)
+        if cid is not None and name:
+            channel_names[int(cid)] = str(name)
+
+    return quote_core.format_quote_plaintext(
+        message.content or "",
+        user_names=user_names,
+        role_names=role_names,
+        channel_names=channel_names,
+    ) or "…"
+
+
 class QuoteCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -128,6 +176,13 @@ class QuoteCog(commands.Cog):
             return
 
         settings = quote_core.get_settings(message.guild.id)
+
+        referenced = await _resolve_referenced_message(self.bot, message)
+        if not isinstance(referenced, discord.Message):
+            return
+
+        # Fetch first, then gate — need referenced.author.bot so reply-to-bot
+        # (Discord auto-ping) and bot-authored targets never become quote cards.
         if not quote_core.should_quote(
             guild_id=message.guild.id,
             author_is_bot=bool(message.author.bot),
@@ -135,13 +190,10 @@ class QuoteCog(commands.Cog):
             mentions=list(message.mentions),
             content=message.content or "",
             has_reference=True,
-            referenced_text=None,
-            settings={**settings, "min_length": 0},
+            referenced_text=(referenced.content or ""),
+            referenced_author_is_bot=bool(getattr(referenced.author, "bot", False)),
+            settings=settings,
         ):
-            return
-
-        referenced = await _resolve_referenced_message(self.bot, message)
-        if not isinstance(referenced, discord.Message):
             return
 
         text = (referenced.content or "").strip()
@@ -156,7 +208,9 @@ class QuoteCog(commands.Cog):
         author = referenced.author
         display = getattr(author, "display_name", None) or getattr(author, "name", "Unknown")
         avatar = await _avatar_bytes(message.guild, author)
-        quote_body = text or ("📎" if attachment or referenced.attachments else "…")
+        quote_body = _format_referenced_text(message.guild, referenced) if text else (
+            ":paperclip:" if attachment or referenced.attachments else "…"
+        )
 
         try:
             png = await asyncio.to_thread(
