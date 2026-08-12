@@ -288,14 +288,7 @@ export function MemberDetailPanel({ memberId, onClose, onActionDone }: Props) {
       )}
 
       {!detail.is_bot && (
-        <CaseTimelineSection
-          timeline={timeline}
-          dateLocale={dateLocale}
-          t={t}
-          onWarn={() => setPending('warn')}
-          onTimeout={() => setPending('timeout')}
-          busy={busy}
-        />
+        <CaseTimelineSection timeline={timeline} dateLocale={dateLocale} t={t} />
       )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -380,16 +373,10 @@ function CaseTimelineSection({
   timeline,
   dateLocale,
   t,
-  onWarn,
-  onTimeout,
-  busy,
 }: {
   timeline: CaseTimeline | null
   dateLocale: string
   t: (key: string, params?: Record<string, string | number>) => string
-  onWarn: () => void
-  onTimeout: () => void
-  busy: boolean
 }) {
   const headerUser = timeline?.user
   const items: CaseTimelineItem[] = timeline?.items ?? []
@@ -417,14 +404,6 @@ function CaseTimelineSection({
               )}
             </p>
           )}
-        </div>
-        <div className="flex shrink-0 gap-1.5">
-          <Button variant="secondary" onClick={onWarn} disabled={busy}>
-            {t('members.detail.warn')}
-          </Button>
-          <Button variant="secondary" onClick={onTimeout} disabled={busy}>
-            {t('members.detail.timeout')}
-          </Button>
         </div>
       </div>
 

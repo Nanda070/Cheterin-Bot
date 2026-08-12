@@ -32,6 +32,8 @@ describe('MemberDetailPanel warns', () => {
 
     expect(await screen.findByText('Предупреждения (0)')).toBeInTheDocument()
     expect(screen.getByText('Предупреждений нет.')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Выдать предупреждение' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Таймаут' })).toHaveLength(1)
   })
 
   it('lists active and removed warns', async () => {
