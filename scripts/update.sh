@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 # One-command VPS update for Cheterin: git pull, venv deps, frontend build, tmux attach.
-# Usage (from repo root):  ./update.sh
-# Or:  ~/Cheterin_Bot_Dashboard/update.sh
+# Canonical (any cwd, no sudo):
+#   bash ~/Cheterin_Bot_Dashboard/update.sh
+# Do not use sudo — git/pip/npm/tmux must run as the deploying user;
+# sudo would break venv activation and tmux attach.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+REPO_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 cd "$REPO_ROOT"
 
 TMUX_SESSION="${TMUX_SESSION:-chetmain}"

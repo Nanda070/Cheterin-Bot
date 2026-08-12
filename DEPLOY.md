@@ -4,20 +4,17 @@
 
 ## Обновление на сервере
 
-Одна команда из корня репозитория (после `git pull` скрипт сам подтянет зависимости и соберёт фронт):
+Одна команда (из любой директории; `cd` не нужен):
 
 ```bash
-chmod +x update.sh scripts/update.sh   # один раз, если git не сохранил +x
-./update.sh
+bash ~/Cheterin_Bot_Dashboard/update.sh
 ```
 
-Или полный путь:
+**Не используйте `sudo`.** В отличие от Cheterin-Media (`sudo bash ~/Cheterin-Media/deploy/oracle/build-web.sh`), здесь `git` / `pip` / `npm` / `tmux` должны идти от пользователя деплоя. `sudo` сломает активацию `venv` и `tmux attach`.
 
-```bash
-~/Cheterin_Bot_Dashboard/update.sh
-```
+`chmod +x` не нужен — скрипт запускается через `bash`.
 
-Скрипт: `git pull` → `venv` + `pip install -r requirements.txt` → `npm ci` / `npm install` и `npm run build` в `dashboard/frontend` → `tmux attach -t chetmain`.
+Скрипт сам находит корень репозитория → `git pull` → `venv` + `pip install -r requirements.txt` → `npm ci` / `npm install` и `npm run build` в `dashboard/frontend` → `tmux attach -t chetmain`.
 
 Если сессии нет:
 
