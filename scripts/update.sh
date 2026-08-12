@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# One-command VPS update for Cheterin: git pull, venv deps, frontend build, tmux attach.
+# Usage (from repo root):  ./update.sh
+# Or:  ~/Cheterin_Bot_Dashboard/update.sh
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+TMUX_SESSION="${TMUX_SESSION:-chetmain}"
+
+echo "==> repo: $REPO_ROOT"
+
+if [[ ! -d .git ]]; then
+  echo "ERROR: $REPO_ROOT is not a git repo." >&2
+  exit 1
+fi
+
+echo "==> git pull"
+git pull
+
+VENV_ACTIVATE="$REPO_ROOT/venv/bin/activate"
+if [[ ! -f "$VENV_ACTIVATE" ]]; then
+  echo "ERROR: venv not found at $VENV_ACTIVATE" >&2
+  echo "Create it once:" >&2
+  echo "  python3 -m venv venv" >&2
+  echo "  source venv/bin/activate" >&2
+  echo "  pip install -r requirements.txt" >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1091
+source "$VENV_ACTIVATE"
+echo "==> pip install -r requirements.txt"
+python -m pip install -r requirements.txt
+
+FRONTEND="$REPO_ROOT/dashboard/frontend"
+if [[ ! -d "$FRONTEND" ]]; then
+  echo "ERROR: dashboard/frontend not found." >&2
+  exit 1
+fi
+
+cd "$FRONTEND"
+if [[ -f package-lock.json ]]; then
+  echo "==> npm ci"
+  npm ci
+else
+  echo "==> npm install"
+  npm install
+fi
+echo "==> npm run build"
+npm run build
+cd "$REPO_ROOT"
+
+echo "==> tmux attach -t $TMUX_SESSION"
+if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+  exec tmux attach -t "$TMUX_SESSION"
+fi
+
+echo "No tmux session named '$TMUX_SESSION'." >&2
+echo "Start one:  tmux new -s $TMUX_SESSION" >&2
+echo "Or list:    tmux ls" >&2
+exit 1
