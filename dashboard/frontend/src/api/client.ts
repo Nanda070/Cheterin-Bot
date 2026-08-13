@@ -1167,7 +1167,7 @@ export function fetchAudit(page: number, moderator?: string, q?: string): Promis
 
 export interface StreamSubscription {
   id: string
-  platform: 'twitch' | 'youtube'
+  platform: 'twitch' | 'youtube' | 'tiktok'
   identifier: string
   display_name: string
   avatar_url: string
@@ -1189,7 +1189,7 @@ export function fetchStreams(): Promise<{ twitch_configured: boolean; subscripti
 }
 
 export function createStreamSubscription(input: {
-  platform: 'twitch' | 'youtube'
+  platform: 'twitch' | 'youtube' | 'tiktok'
   query: string
   channel_id: string
 }): Promise<StreamSubscription> {

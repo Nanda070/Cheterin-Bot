@@ -4,7 +4,7 @@ Semantic palette (Discord UI colors) plus Cheterin brand accent.
 User-authored EmbedSpec (builder / welcome / feedback) keeps caller colors;
 empty-spec defaults use ACCENT_HEX on the frontend.
 
-Theme exceptions (Wordle green, Twitch/YouTube) stay module-specific.
+Theme exceptions (Wordle green, Twitch/YouTube/TikTok) stay module-specific.
 """
 
 from __future__ import annotations
@@ -43,6 +43,7 @@ WORDLE = discord.Color(0x538D4E)
 VALORANT = discord.Color(0xFF4655)
 TWITCH = discord.Color(0x9146FF)
 YOUTUBE = DANGER
+TIKTOK = discord.Color(0xFE2C55)
 
 
 def as_color(value: discord.Color | int | None, *, default: discord.Color = INFO) -> discord.Color:

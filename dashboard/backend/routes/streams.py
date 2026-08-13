@@ -44,7 +44,7 @@ async def streams_create(request: web.Request) -> web.Response:
     platform = body.get("platform")
     query = body.get("query", "")
     channel_id = body.get("channel_id", "")
-    if platform not in ("twitch", "youtube"):
+    if platform not in ("twitch", "youtube", "tiktok"):
         return web.json_response({"error": "invalid_platform"}, status=400)
     if not isinstance(query, str) or not query.strip():
         return web.json_response({"error": "invalid_query"}, status=400)
@@ -55,6 +55,12 @@ async def streams_create(request: web.Request) -> web.Response:
         if not cog.twitch_configured():
             return web.json_response({"error": "twitch_not_configured"}, status=409)
         resolved = await cog.resolve_twitch(query)
+    elif platform == "tiktok":
+        if streams.parse_tiktok_username(query) is None:
+            return web.json_response({"error": "invalid_tiktok_username"}, status=400)
+        resolved = await cog.resolve_tiktok(query)
+        if resolved is None:
+            return web.json_response({"error": "tiktok_not_found"}, status=404)
     else:
         resolved = await cog.resolve_youtube(query)
 
