@@ -105,7 +105,7 @@ def tiktok_use_embed(sub: dict, kind: str) -> bool:
 
 
 def tiktok_live_embed_title(sub: dict, title: str) -> str:
-    style = sub.get("live_title_style") or "live_dot"
+    style = sub.get("live_title_style") or "title_only"
     if style not in _LIVE_TITLE_STYLES:
         style = "live_dot"
     if style == "title_only":
@@ -265,6 +265,45 @@ def _tiktok_cover_url(cover_raw) -> str:
     return ""
 
 
+def _tiktok_avatar_url(user: dict) -> str:
+    if not isinstance(user, dict):
+        return ""
+    for key in ("avatarLarger", "avatarMedium", "avatarThumb", "avatarUri", "avatar"):
+        val = user.get(key)
+        if isinstance(val, str) and val.startswith("http"):
+            return val
+        url = _tiktok_cover_url(val)
+        if url:
+            return url
+    return ""
+
+
+def _tiktok_cover_looks_small(url: str) -> bool:
+    if not url:
+        return True
+    lowered = url.lower()
+    if "shrink" in lowered or "resize" in lowered:
+        return True
+    if "tplv-tiktok" in lowered and "origin" not in lowered:
+        return True
+    for token in (":100:", ":200:", ":300:", "~c5", "100x100", "200x200"):
+        if token in lowered:
+            return True
+    return False
+
+
+def _tiktok_live_not_live() -> dict:
+    return {
+        "is_live": False,
+        "room_id": "",
+        "title": "",
+        "cover": "",
+        "cover_url": "",
+        "avatar_url": "",
+        "viewer_count": None,
+    }
+
+
 def _extract_tiktok_live_json(html: str) -> dict | None:
     """Load SIGI_STATE (preferred) or nested live payload from universal rehydration data."""
     for script_id in ("SIGI_STATE", "__UNIVERSAL_DATA_FOR_REHYDRATION__"):
@@ -323,7 +362,7 @@ def _parse_tiktok_live_payload(obj: dict) -> dict:
         is_live = True
 
     if not is_live:
-        return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
+        return _tiktok_live_not_live()
 
     title = str(
         _tiktok_first(nested_live.get("title"), room_info.get("title"), user.get("title"))
@@ -333,10 +372,23 @@ def _parse_tiktok_live_payload(obj: dict) -> dict:
         _tiktok_first(
             nested_live.get("cover"),
             nested_live.get("cover_url"),
+            nested_live.get("streamCover"),
+            nested_live.get("stream_cover"),
             room_info.get("cover"),
             room_info.get("cover_url"),
+            room_info.get("streamCover"),
+            room_info.get("stream_cover"),
         )
     )
+    avatar_url = _tiktok_avatar_url(user)
+    if not avatar_url:
+        avatar_url = _tiktok_cover_url(
+            _tiktok_first(
+                nested_live.get("ownerAvatar"),
+                nested_live.get("owner_avatar"),
+                room_info.get("ownerAvatar"),
+            )
+        )
 
     room_stats = nested_live.get("liveRoomStats") or {}
     user_stats = live_user.get("stats") or {}
@@ -356,6 +408,8 @@ def _parse_tiktok_live_payload(obj: dict) -> dict:
         "room_id": room_id or f"live-{int(time.time())}",
         "title": title,
         "cover": cover,
+        "cover_url": cover,
+        "avatar_url": avatar_url,
         "viewer_count": viewers,
     }
 
@@ -403,7 +457,7 @@ def get_subscriptions(guild_id: int) -> list[dict]:
             "live_mention_everyone": bool(sub.get("live_mention_everyone", sub.get("mention_everyone", False))),
             "video_use_embed": bool(sub.get("video_use_embed", sub.get("use_embed", True))),
             "live_use_embed": bool(sub.get("live_use_embed", sub.get("use_embed", True))),
-            "live_title_style": str(sub.get("live_title_style") or "live_dot"),
+            "live_title_style": str(sub.get("live_title_style") or "title_only"),
             "last_notified_ts": int(sub.get("last_notified_ts", 0)),
             "last_stream_id": str(sub.get("last_stream_id") or ""),
             "last_live_room_id": str(sub.get("last_live_room_id") or ""),
@@ -788,7 +842,7 @@ class Streams(commands.Cog):
                 len(text),
                 has_sigi,
             )
-            return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
+            return _tiktok_live_not_live()
         if parsed.get("is_live"):
             logger.info(
                 "TikTok live detected @%s room=%s viewers=%s",
@@ -856,6 +910,26 @@ class Streams(commands.Cog):
         if not entries:
             return None
         return {"display_name": username, "avatar_url": "", "entries": entries}
+
+    async def _tiktok_video_cover(self, username: str, video_id: str, cover: str) -> str:
+        """Prefer full cover from embed videoList; oEmbed thumbnail is fallback only."""
+        if cover and not _tiktok_cover_looks_small(cover):
+            return cover
+        embed = await self._tiktok_embed_page(username)
+        if embed:
+            for entry in embed.get("entries") or []:
+                if str(entry.get("video_id") or "") != str(video_id):
+                    continue
+                full = str(entry.get("cover") or "")
+                if full and not _tiktok_cover_looks_small(full):
+                    return full
+                if full:
+                    cover = cover or full
+        if cover and not _tiktok_cover_looks_small(cover):
+            return cover
+        watch = f"https://www.tiktok.com/@{username}/video/{video_id}"
+        oembed = await self._tiktok_oembed(watch)
+        return str(oembed.get("thumbnail") or cover or "")
 
     async def _tiktok_oembed(self, video_url: str) -> dict:
         try:
@@ -1085,25 +1159,24 @@ class Streams(commands.Cog):
         template = tiktok_template(sub, "live", lang)
         content = render_template(template, channel_name, title, "", live_url, lang)
 
+        avatar = live.get("avatar_url") or sub.get("avatar_url") or None
+        cover = live.get("cover_url") or live.get("cover") or ""
+
         embed = discord.Embed(
             title=tiktok_live_embed_title(sub, title),
             url=live_url,
-            description=i18n.t("streams.embed.live_description", lang, name=channel_name),
             color=tiktok_embed_color(sub, "live"),
             timestamp=discord.utils.utcnow(),
         )
-        embed.set_author(
-            name=i18n.t("streams.embed.author_tiktok_live", lang, name=channel_name),
-            icon_url=sub.get("avatar_url") or None,
-        )
+        embed.set_author(name=channel_name, icon_url=avatar)
         if live.get("viewer_count") is not None:
             embed.add_field(
                 name=i18n.t("streams.embed.viewers", lang),
                 value=str(live["viewer_count"]),
                 inline=True,
             )
-        if live.get("cover"):
-            embed.set_image(url=live["cover"])
+        if cover:
+            embed.set_image(url=cover)
         return content, embed, _live_view(live_url, channel_url, lang)
 
     async def _build_tiktok_video_announce(
@@ -1117,11 +1190,10 @@ class Streams(commands.Cog):
         watch = latest.get("url") or f"https://www.tiktok.com/@{sub['identifier']}/video/{video_id}"
         channel_url = f"https://www.tiktok.com/@{sub['identifier']}"
         title = latest.get("title") or ""
-        cover = latest.get("cover") or ""
-        if not title or not cover:
+        cover = await self._tiktok_video_cover(sub["identifier"], video_id, latest.get("cover") or "")
+        if not title:
             oembed = await self._tiktok_oembed(watch)
-            title = title or oembed.get("title") or ""
-            cover = cover or oembed.get("thumbnail") or ""
+            title = oembed.get("title") or ""
 
         channel_name = feed.get("display_name") or sub.get("display_name") or sub["identifier"]
         template = tiktok_template(sub, "video", lang)

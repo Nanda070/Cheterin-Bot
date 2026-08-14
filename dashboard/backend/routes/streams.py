@@ -98,7 +98,7 @@ async def streams_create(request: web.Request) -> web.Response:
         "live_mention_everyone": False,
         "video_use_embed": True,
         "live_use_embed": True,
-        "live_title_style": "live_dot",
+        "live_title_style": "title_only",
         "last_notified_ts": 0,
         "last_stream_id": "",
         "last_live_room_id": "",

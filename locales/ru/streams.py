@@ -10,7 +10,7 @@ MESSAGES: dict[str, str] = {
         "\U0001f3b5 **{{channel}}** вышло новое видео в TikTok: **{{stream}}**\n{{channel.url}}"
     ),
     "streams.default_template_tiktok_live": (
-        "\U0001f534 **{{channel}}** начал(а) TikTok LIVE! **{{stream}}**\n{{channel.url}}"
+        "**{{channel}}** запустил стрим, залетай!"
     ),
     "streams.embed.stream_title": "Стрим",
     "streams.embed.game": "Игра",
@@ -21,7 +21,7 @@ MESSAGES: dict[str, str] = {
     "streams.embed.author_tiktok_live": "{name} — TikTok LIVE",
     "streams.embed.live_title": "В эфире",
     "streams.embed.live_description": "**{name}** сейчас в эфире на TikTok!",
-    "streams.btn.watch_live": "Смотреть LIVE",
+    "streams.btn.watch_live": "Смотреть стрим",
     "streams.btn.watch_video": "Смотреть видео",
     "streams.btn.tiktok": "TikTok",
     "streams.game_unknown": "—",
