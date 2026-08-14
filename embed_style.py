@@ -44,6 +44,7 @@ VALORANT = discord.Color(0xFF4655)
 TWITCH = discord.Color(0x9146FF)
 YOUTUBE = DANGER
 TIKTOK = discord.Color(0xFE2C55)
+TIKTOK_LIVE = discord.Color(0x9146FF)
 
 
 def as_color(value: discord.Color | int | None, *, default: discord.Color = INFO) -> discord.Color:

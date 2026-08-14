@@ -461,7 +461,7 @@ const community: TranslationDict = {
   'streams.section.videoNews': 'Новости о видео (YouTube)',
   'streams.section.videoNewsHint': 'Уведомления о новых роликах и Shorts с выбранных YouTube-каналов.',
   'streams.section.tiktokStreams': 'Стримы (TikTok)',
-  'streams.section.tiktokStreamsHint': 'Уведомления о новых видео TikTok (и стримах, если доступны через ленту аккаунта).',
+  'streams.section.tiktokStreamsHint': 'Уведомления о TikTok LIVE (каждые ~2 мин) и о новых видео (каждые ~5 мин). Разные embed для эфира и ролика.',
   'streams.section.twitch': 'Twitch',
   'streams.section.twitchHint': 'Уведомления, когда стример выходит в эфир.',
   'streams.platform.twitch': 'Канал Twitch.tv',

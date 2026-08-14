@@ -3,10 +3,7 @@
 - Twitch: опрос Helix API (нужны TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET в .env).
   Уведомление при переходе канала в эфир.
 - YouTube: опрос публичного RSS-фида канала. Уведомление о новом видео/премьере.
-- TikTok: опрос (по порядку):
-  1) tikwm.com JSON (часто за Cloudflare);
-  2) публичная страница ``tiktok.com/embed/@user``;
-  3) RSSHub ``TIKTOK_RSS_TEMPLATE``.
+- TikTok: видео — embed/@user (videoList), tikwm, RSSHub; LIVE — страница /@user/live (SIGI).
   Resolve: TikTok oEmbed профиля + embed + tikwm.
 
 Подписки настраиваются в дашборде: канал публикации, роль для пинга, свой
@@ -42,6 +39,14 @@ _HTTP_HEADERS = {
     "User-Agent": "Cheterin-Bot/1.0 (+https://github.com/Nanda070/Cheterin_Bot_Dashboard)",
     "Accept": "application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
 }
+_TIKTOK_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/json,application/xhtml+xml,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,ru;q=0.8",
+}
 
 _TIKTOK_USER_RE = re.compile(r"^[A-Za-z0-9._]{2,24}$")
 _TIKTOK_URL_USER_RE = re.compile(
@@ -54,6 +59,8 @@ _DEFAULT_TIKTOK_RSS = "https://rsshub.app/tiktok/user/{username}"
 def default_template(platform: str, lang: str) -> str:
     if platform == "youtube":
         return i18n.t("streams.default_template_youtube", lang)
+    if platform == "tiktok_live":
+        return i18n.t("streams.default_template_tiktok_live", lang)
     if platform == "tiktok":
         return i18n.t("streams.default_template_tiktok", lang)
     return i18n.t("streams.default_template_twitch", lang)
@@ -186,6 +193,72 @@ def parse_tiktok_embed_html(text: str, username: str) -> dict | None:
     }
 
 
+def _sort_tiktok_entries(entries: list[dict]) -> list[dict]:
+    return sorted(entries, key=lambda e: e.get("create_time") or 0, reverse=True)
+
+
+def parse_tiktok_live_sigi(html: str) -> dict | None:
+    """Parse ``/@user/live`` SIGI_STATE → live status (browser UA required)."""
+    if not html:
+        return None
+    match = re.search(r'<script id="SIGI_STATE"[^>]*>(.*?)</script>', html, flags=re.S)
+    if not match:
+        return None
+    try:
+        obj = json.loads(match.group(1))
+    except (TypeError, ValueError):
+        return None
+
+    live_room = obj.get("LiveRoom") or {}
+    current = obj.get("CurrentRoom") or {}
+    room_info = current.get("roomInfo") or {}
+    live_user = live_room.get("liveRoomUserInfo") or {}
+    nested_live = live_user.get("liveRoom") or {}
+
+    room_id = str(
+        current.get("roomId")
+        or room_info.get("id")
+        or nested_live.get("roomId")
+        or ""
+    ).strip()
+    status = live_room.get("liveRoomStatus")
+    if status is None:
+        status = room_info.get("status")
+    if status is None:
+        status = nested_live.get("status")
+
+    is_live = status in (2, 4, "2", "4")
+    if not is_live and room_id and status not in (0, "0", None, ""):
+        is_live = True
+
+    if not is_live:
+        return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
+
+    title = str(room_info.get("title") or nested_live.get("title") or "")
+    cover = ""
+    cover_raw = room_info.get("cover") or room_info.get("cover_url") or nested_live.get("cover")
+    if isinstance(cover_raw, dict):
+        urls = cover_raw.get("url_list") or cover_raw.get("urlList") or []
+        cover = str(urls[0] if urls else cover_raw.get("url") or "")
+    elif isinstance(cover_raw, str):
+        cover = cover_raw
+
+    stats = live_user.get("stats") or {}
+    viewer_count = stats.get("userCount") or stats.get("viewerCount") or room_info.get("user_count")
+    try:
+        viewers = int(viewer_count) if viewer_count is not None else None
+    except (TypeError, ValueError):
+        viewers = None
+
+    return {
+        "is_live": True,
+        "room_id": room_id or f"live-{int(time.time())}",
+        "title": title,
+        "cover": cover,
+        "viewer_count": viewers,
+    }
+
+
 def _normalized(data: dict) -> dict:
     data.setdefault("seq", 0)
     data.setdefault("subscriptions", [])
@@ -213,6 +286,7 @@ def get_subscriptions(guild_id: int) -> list[dict]:
             "embed_color": str(sub.get("embed_color") or ""),
             "last_notified_ts": int(sub.get("last_notified_ts", 0)),
             "last_stream_id": str(sub.get("last_stream_id") or ""),
+            "last_live_room_id": str(sub.get("last_live_room_id") or ""),
         })
     return result
 
@@ -265,6 +339,38 @@ def render_template(template: str, channel_name: str, stream_title: str, game: s
     for key, value in replacements.items():
         text = text.replace(key, value)
     return text.strip()
+
+
+def _video_view(watch_url: str, channel_url: str | None, lang: str) -> discord.ui.View:
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(
+        style=discord.ButtonStyle.link,
+        label=i18n.t("streams.btn.watch_video", lang),
+        url=watch_url,
+    ))
+    if channel_url:
+        view.add_item(discord.ui.Button(
+            style=discord.ButtonStyle.link,
+            label=i18n.t("streams.btn.tiktok", lang),
+            url=channel_url,
+        ))
+    return view
+
+
+def _live_view(live_url: str, channel_url: str | None, lang: str) -> discord.ui.View:
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(
+        style=discord.ButtonStyle.link,
+        label=i18n.t("streams.btn.watch_live", lang),
+        url=live_url,
+    ))
+    if channel_url:
+        view.add_item(discord.ui.Button(
+            style=discord.ButtonStyle.link,
+            label=i18n.t("streams.btn.tiktok", lang),
+            url=channel_url,
+        ))
+    return view
 
 
 class Streams(commands.Cog):
@@ -412,6 +518,27 @@ class Streams(commands.Cog):
 
     # ────────────────── TikTok ──────────────────
 
+    async def _tiktok_get(self, url: str, *, browser: bool = False) -> tuple[int, str]:
+        headers = _TIKTOK_BROWSER_HEADERS if browser else _HTTP_HEADERS
+        try:
+            async with self.http.get(url, headers=headers) as resp:
+                return resp.status, await resp.text()
+        except aiohttp.ClientError as exc:
+            logger.warning("TikTok GET %s error: %s", url, exc)
+            return 0, ""
+
+    async def seed_tiktok_subscription(self, guild_id: int, sub_id: str, username: str) -> None:
+        """Seed last video / live ids so only future events notify."""
+        fields: dict[str, str] = {}
+        feed = await self._tiktok_feed(username)
+        if feed and feed.get("entries"):
+            fields["last_stream_id"] = str(feed["entries"][0]["video_id"])
+        live = await self._tiktok_live_status(username)
+        if live and live.get("is_live") and live.get("room_id"):
+            fields["last_live_room_id"] = str(live["room_id"])
+        if fields:
+            update_subscription(guild_id, sub_id, **fields)
+
     async def resolve_tiktok(self, query: str) -> dict | None:
         username = parse_tiktok_username(query)
         if not username:
@@ -501,22 +628,16 @@ class Streams(commands.Cog):
         }
 
     async def _tiktok_embed_page(self, username: str) -> dict | None:
-        url = f"https://www.tiktok.com/embed/@{username}"
-        try:
-            async with self.http.get(url) as resp:
-                if resp.status != 200:
-                    logger.warning("TikTok embed page failed: %s", resp.status)
-                    return None
-                text = await resp.text()
-        except aiohttp.ClientError as exc:
-            logger.warning("TikTok embed page error: %s", exc)
+        status, text = await self._tiktok_get(f"https://www.tiktok.com/embed/@{username}")
+        if status != 200:
+            logger.warning("TikTok embed page failed: %s", status)
             return None
-        return parse_tiktok_embed_html(text, username)
+        parsed = parse_tiktok_embed_html(text, username)
+        if parsed and parsed.get("entries"):
+            parsed["entries"] = _sort_tiktok_entries(parsed["entries"])
+        return parsed
 
     async def _tiktok_feed(self, username: str) -> dict | None:
-        posts = await self._tiktok_tikwm_posts(username)
-        if posts is not None:
-            return posts
         embed = await self._tiktok_embed_page(username)
         if embed is not None and embed.get("entries"):
             return {
@@ -524,7 +645,20 @@ class Streams(commands.Cog):
                 "avatar_url": embed.get("avatar_url") or "",
                 "entries": embed["entries"],
             }
+        posts = await self._tiktok_tikwm_posts(username)
+        if posts is not None:
+            return posts
         return await self._tiktok_rsshub_feed(username)
+
+    async def _tiktok_live_status(self, username: str) -> dict | None:
+        status, text = await self._tiktok_get(f"https://www.tiktok.com/@{username}/live", browser=True)
+        if status != 200:
+            logger.debug("TikTok live page %s status=%s", username, status)
+            return None
+        parsed = parse_tiktok_live_sigi(text)
+        if parsed is not None:
+            return parsed
+        return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
 
     async def _tiktok_tikwm_posts(self, username: str) -> dict | None:
         url = f"https://www.tikwm.com/api/user/posts?unique_id={username}&count=10"
@@ -625,11 +759,14 @@ class Streams(commands.Cog):
 
                     if twitch_subs:
                         await self._poll_twitch(guild.id, twitch_subs)
+                    if tiktok_subs:
+                        for sub in tiktok_subs:
+                            await self._poll_tiktok_live_one(guild.id, sub)
                     if poll_videos:
                         for sub in youtube_subs:
                             await self._poll_youtube_one(guild.id, sub)
                         for sub in tiktok_subs:
-                            await self._poll_tiktok_one(guild.id, sub)
+                            await self._poll_tiktok_video_one(guild.id, sub)
                 except Exception as exc:
                     logger.exception("_poll guild=%s", guild.id)
                     cog = self.bot.get_cog("OwnerAlertsCog")
@@ -729,6 +866,7 @@ class Streams(commands.Cog):
         lang = i18n.lang_for(guild_id)
         feed = await self._youtube_feed(sub["identifier"])
         if feed is None or not feed["entries"]:
+            logger.debug("YouTube feed empty for %s", sub["identifier"])
             return
         latest = feed["entries"][0]
         if await self._should_skip_video(guild_id, sub, latest["video_id"], latest["title"]):
@@ -746,10 +884,47 @@ class Streams(commands.Cog):
         await self._announce(sub, content, embed)
         update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"], last_notified_ts=int(time.time()))
 
-    async def _poll_tiktok_one(self, guild_id: int, sub: dict):
+    async def _poll_tiktok_live_one(self, guild_id: int, sub: dict):
+        lang = i18n.lang_for(guild_id)
+        live = await self._tiktok_live_status(sub["identifier"])
+        if live is None:
+            return
+        if not live.get("is_live"):
+            return
+
+        room_id = str(live.get("room_id") or "")
+        if not room_id:
+            return
+        if room_id == sub.get("last_live_room_id"):
+            return
+
+        title = live.get("title") or i18n.t("streams.embed.live_title", lang)
+        if not sub.get("last_live_room_id"):
+            update_subscription(guild_id, sub["id"], last_live_room_id=room_id)
+            return
+        if not keywords_match(title, sub["keywords"], sub["keyword_mode"]):
+            update_subscription(guild_id, sub["id"], last_live_room_id=room_id)
+            return
+
+        now = int(time.time())
+        if sub["min_interval_minutes"] and now - sub["last_notified_ts"] < sub["min_interval_minutes"] * 60:
+            update_subscription(guild_id, sub["id"], last_live_room_id=room_id)
+            return
+
+        content, embed, view = self._build_tiktok_live_announce(sub, live, lang)
+        await self._announce(sub, content, embed, view=view)
+        update_subscription(
+            guild_id,
+            sub["id"],
+            last_live_room_id=room_id,
+            last_notified_ts=now,
+        )
+
+    async def _poll_tiktok_video_one(self, guild_id: int, sub: dict):
         lang = i18n.lang_for(guild_id)
         feed = await self._tiktok_feed(sub["identifier"])
         if feed is None or not feed.get("entries"):
+            logger.warning("TikTok video feed empty for @%s (sub %s)", sub["identifier"], sub["id"])
             return
         latest = feed["entries"][0]
         video_id = str(latest.get("video_id") or "")
@@ -758,7 +933,54 @@ class Streams(commands.Cog):
         if await self._should_skip_video(guild_id, sub, video_id, latest.get("title") or ""):
             return
 
+        content, embed, view = await self._build_tiktok_video_announce(sub, feed, latest, lang)
+        await self._announce(sub, content, embed, view=view)
+        update_subscription(guild_id, sub["id"], last_stream_id=video_id, last_notified_ts=int(time.time()))
+
+    def _build_tiktok_live_announce(
+        self,
+        sub: dict,
+        live: dict,
+        lang: str,
+    ) -> tuple[str, discord.Embed, discord.ui.View]:
+        channel_name = sub.get("display_name") or sub["identifier"]
+        live_url = f"https://www.tiktok.com/@{sub['identifier']}/live"
+        channel_url = f"https://www.tiktok.com/@{sub['identifier']}"
+        title = live.get("title") or i18n.t("streams.embed.live_title", lang)
+        template = sub.get("template") or default_template("tiktok_live", lang)
+        content = render_template(template, channel_name, title, "", live_url, lang)
+
+        embed = discord.Embed(
+            title=f"\U0001f534 LIVE · {title}"[:256],
+            url=live_url,
+            description=i18n.t("streams.embed.live_description", lang, name=channel_name),
+            color=embed_style.TIKTOK_LIVE,
+            timestamp=discord.utils.utcnow(),
+        )
+        embed.set_author(
+            name=i18n.t("streams.embed.author_tiktok_live", lang, name=channel_name),
+            icon_url=sub.get("avatar_url") or None,
+        )
+        if live.get("viewer_count") is not None:
+            embed.add_field(
+                name=i18n.t("streams.embed.viewers", lang),
+                value=str(live["viewer_count"]),
+                inline=True,
+            )
+        if live.get("cover"):
+            embed.set_image(url=live["cover"])
+        return content, embed, _live_view(live_url, channel_url, lang)
+
+    async def _build_tiktok_video_announce(
+        self,
+        sub: dict,
+        feed: dict,
+        latest: dict,
+        lang: str,
+    ) -> tuple[str, discord.Embed, discord.ui.View]:
+        video_id = str(latest.get("video_id") or "")
         watch = latest.get("url") or f"https://www.tiktok.com/@{sub['identifier']}/video/{video_id}"
+        channel_url = f"https://www.tiktok.com/@{sub['identifier']}"
         title = latest.get("title") or ""
         cover = latest.get("cover") or ""
         if not title or not cover:
@@ -766,12 +988,12 @@ class Streams(commands.Cog):
             title = title or oembed.get("title") or ""
             cover = cover or oembed.get("thumbnail") or ""
 
-        template = sub["template"] or default_template("tiktok", lang)
-        channel_name = feed.get("display_name") or sub["display_name"] or sub["identifier"]
+        channel_name = feed.get("display_name") or sub.get("display_name") or sub["identifier"]
+        template = sub.get("template") or default_template("tiktok", lang)
         content = render_template(template, channel_name, title, "", watch, lang)
 
         embed = discord.Embed(
-            title=title or channel_name,
+            description=title[:4096] if title else i18n.t("streams.default_template_tiktok", lang)[:256],
             url=watch,
             color=embed_style.TIKTOK,
             timestamp=discord.utils.utcnow(),
@@ -782,11 +1004,15 @@ class Streams(commands.Cog):
         )
         if cover:
             embed.set_image(url=cover)
+        return content, embed, _video_view(watch, channel_url, lang)
 
-        await self._announce(sub, content, embed)
-        update_subscription(guild_id, sub["id"], last_stream_id=video_id, last_notified_ts=int(time.time()))
-
-    async def _announce(self, sub: dict, content: str, embed: discord.Embed) -> bool:
+    async def _announce(
+        self,
+        sub: dict,
+        content: str,
+        embed: discord.Embed,
+        view: discord.ui.View | None = None,
+    ) -> bool:
         channel = self.bot.get_channel(int(sub["channel_id"]))
         if channel is None:
             return False
@@ -816,6 +1042,7 @@ class Streams(commands.Cog):
             await channel.send(
                 content=content or None,
                 embed=embed if use_embed else None,
+                view=view,
                 allowed_mentions=allowed,
             )
             return True
@@ -852,7 +1079,7 @@ class Streams(commands.Cog):
             title = i18n.t("streams.test.sample_title", lang)
             content = render_template(template, display, title, "", url, lang)
             embed = discord.Embed(
-                title=title,
+                description=title,
                 url=url,
                 color=embed_style.TIKTOK,
                 timestamp=discord.utils.utcnow(),
@@ -862,6 +1089,10 @@ class Streams(commands.Cog):
                 icon_url=sub.get("avatar_url") or None,
             )
             embed.set_footer(text=i18n.t("streams.test.footer", lang))
+            view = _video_view(url, url, lang)
+            if not await self._announce(sub, content, embed, view=view):
+                return "send_failed"
+            return None
         else:
             url = f"https://www.twitch.tv/{sub.get('identifier', '')}"
             template = sub.get("template") or default_template("twitch", lang)

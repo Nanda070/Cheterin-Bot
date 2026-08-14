@@ -89,8 +89,18 @@ async def streams_create(request: web.Request) -> web.Response:
         "embed_color": "",
         "last_notified_ts": 0,
         "last_stream_id": "",
+        "last_live_room_id": "",
     })
-    return web.json_response(_public_sub({**sub}), status=201)
+    if platform == "tiktok":
+        await cog.seed_tiktok_subscription(guild_id, sub["id"], resolved["identifier"])
+    elif platform == "youtube":
+        feed = await cog._youtube_feed(resolved["identifier"])
+        if feed and feed.get("entries"):
+            streams.update_subscription(
+                guild_id, sub["id"], last_stream_id=str(feed["entries"][0]["video_id"]),
+            )
+    refreshed = next((s for s in streams.get_subscriptions(guild_id) if s["id"] == sub["id"]), sub)
+    return web.json_response(_public_sub({**refreshed}), status=201)
 
 
 @routes.patch("/api/streams/{sub_id}")

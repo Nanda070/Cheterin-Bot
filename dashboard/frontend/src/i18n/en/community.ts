@@ -461,7 +461,7 @@ const community: TranslationDict = {
   'streams.section.videoNews': 'Video news (YouTube)',
   'streams.section.videoNewsHint': 'Alerts for new uploads and Shorts from selected YouTube channels.',
   'streams.section.tiktokStreams': 'Streams (TikTok)',
-  'streams.section.tiktokStreamsHint': 'Alerts for new TikTok videos (and lives when available via the account feed).',
+  'streams.section.tiktokStreamsHint': 'TikTok LIVE alerts (~2 min) and new video alerts (~5 min). Separate embed styles for live vs video.',
   'streams.section.twitch': 'Twitch',
   'streams.section.twitchHint': 'Alerts when a streamer goes live.',
   'streams.platform.twitch': 'Twitch.tv channel',

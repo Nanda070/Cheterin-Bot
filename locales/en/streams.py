@@ -7,7 +7,10 @@ MESSAGES: dict[str, str] = {
         "\u25b6\ufe0f New video from **{{channel}}**: **{{stream}}**\n{{channel.url}}"
     ),
     "streams.default_template_tiktok": (
-        "\U0001f3b5 **{{channel}}** posted a new TikTok: **{{stream}}**\n{{channel.url}}"
+        "\U0001f3b5 **{{channel}}** posted a new TikTok video: **{{stream}}**\n{{channel.url}}"
+    ),
+    "streams.default_template_tiktok_live": (
+        "\U0001f534 **{{channel}}** started a TikTok LIVE! **{{stream}}**\n{{channel.url}}"
     ),
     "streams.embed.stream_title": "Stream",
     "streams.embed.game": "Game",
@@ -15,6 +18,12 @@ MESSAGES: dict[str, str] = {
     "streams.embed.author_twitch": "{name} — Twitch",
     "streams.embed.author_youtube": "{name} — YouTube",
     "streams.embed.author_tiktok": "{name} — TikTok",
+    "streams.embed.author_tiktok_live": "{name} — TikTok LIVE",
+    "streams.embed.live_title": "Live now",
+    "streams.embed.live_description": "**{name}** is live on TikTok!",
+    "streams.btn.watch_live": "Watch LIVE",
+    "streams.btn.watch_video": "Watch Video",
+    "streams.btn.tiktok": "TikTok",
     "streams.game_unknown": "—",
     "streams.test.sample_title": "[TEST] Sample stream title",
     "streams.test.sample_game": "Test Game",
