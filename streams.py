@@ -1037,9 +1037,6 @@ class Streams(commands.Cog):
             return
 
         title = live.get("title") or i18n.t("streams.embed.live_title", lang)
-        if not sub.get("last_live_room_id"):
-            update_subscription(guild_id, sub["id"], last_live_room_id=room_id)
-            return
         if not keywords_match(title, sub["keywords"], sub["keyword_mode"]):
             update_subscription(guild_id, sub["id"], last_live_room_id=room_id)
             return
