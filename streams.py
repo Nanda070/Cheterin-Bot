@@ -246,54 +246,106 @@ def _sort_tiktok_entries(entries: list[dict]) -> list[dict]:
     return sorted(entries, key=lambda e: e.get("create_time") or 0, reverse=True)
 
 
-def parse_tiktok_live_sigi(html: str) -> dict | None:
-    """Parse ``/@user/live`` SIGI_STATE → live status (browser UA required)."""
-    if not html:
-        return None
-    match = re.search(r'<script id="SIGI_STATE"[^>]*>(.*?)</script>', html, flags=re.S)
-    if not match:
-        return None
-    try:
-        obj = json.loads(match.group(1))
-    except (TypeError, ValueError):
-        return None
+_TIKTOK_LIVE_ACTIVE = frozenset({2, 4, "2", "4"})
 
+
+def _tiktok_first(*values):
+    for value in values:
+        if value is not None and value != "":
+            return value
+    return None
+
+
+def _tiktok_cover_url(cover_raw) -> str:
+    if isinstance(cover_raw, dict):
+        urls = cover_raw.get("url_list") or cover_raw.get("urlList") or []
+        return str(urls[0] if urls else cover_raw.get("url") or "")
+    if isinstance(cover_raw, str):
+        return cover_raw
+    return ""
+
+
+def _extract_tiktok_live_json(html: str) -> dict | None:
+    """Load SIGI_STATE (preferred) or nested live payload from universal rehydration data."""
+    for script_id in ("SIGI_STATE", "__UNIVERSAL_DATA_FOR_REHYDRATION__"):
+        match = re.search(
+            rf'<script id="{re.escape(script_id)}"[^>]*>(.*?)</script>',
+            html,
+            flags=re.S,
+        )
+        if not match:
+            continue
+        try:
+            obj = json.loads(match.group(1))
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(obj, dict):
+            continue
+        if script_id == "SIGI_STATE" or obj.get("LiveRoom"):
+            return obj
+        scope = obj.get("__DEFAULT_SCOPE__") or {}
+        if isinstance(scope, dict):
+            for value in scope.values():
+                if isinstance(value, dict) and value.get("LiveRoom"):
+                    return value
+    return None
+
+
+def _parse_tiktok_live_payload(obj: dict) -> dict:
     live_room = obj.get("LiveRoom") or {}
     current = obj.get("CurrentRoom") or {}
     room_info = current.get("roomInfo") or {}
     live_user = live_room.get("liveRoomUserInfo") or {}
     nested_live = live_user.get("liveRoom") or {}
+    user = live_user.get("user") or {}
 
     room_id = str(
-        current.get("roomId")
-        or room_info.get("id")
-        or nested_live.get("roomId")
+        _tiktok_first(
+            current.get("roomId"),
+            room_info.get("id"),
+            nested_live.get("roomId"),
+            nested_live.get("id"),
+            user.get("roomId"),
+        )
         or ""
     ).strip()
-    status = live_room.get("liveRoomStatus")
-    if status is None:
-        status = room_info.get("status")
-    if status is None:
-        status = nested_live.get("status")
 
-    is_live = status in (2, 4, "2", "4")
+    # Nested liveRoom/user status is authoritative; envelope liveRoomStatus is often 0 on /live.
+    status = _tiktok_first(
+        nested_live.get("status"),
+        user.get("status"),
+        room_info.get("status"),
+        live_room.get("liveRoomStatus"),
+    )
+
+    is_live = status in _TIKTOK_LIVE_ACTIVE
     if not is_live and room_id and status not in (0, "0", None, ""):
         is_live = True
 
     if not is_live:
         return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
 
-    title = str(room_info.get("title") or nested_live.get("title") or "")
-    cover = ""
-    cover_raw = room_info.get("cover") or room_info.get("cover_url") or nested_live.get("cover")
-    if isinstance(cover_raw, dict):
-        urls = cover_raw.get("url_list") or cover_raw.get("urlList") or []
-        cover = str(urls[0] if urls else cover_raw.get("url") or "")
-    elif isinstance(cover_raw, str):
-        cover = cover_raw
+    title = str(
+        _tiktok_first(nested_live.get("title"), room_info.get("title"), user.get("title"))
+        or ""
+    )
+    cover = _tiktok_cover_url(
+        _tiktok_first(
+            nested_live.get("cover"),
+            nested_live.get("cover_url"),
+            room_info.get("cover"),
+            room_info.get("cover_url"),
+        )
+    )
 
-    stats = live_user.get("stats") or {}
-    viewer_count = stats.get("userCount") or stats.get("viewerCount") or room_info.get("user_count")
+    room_stats = nested_live.get("liveRoomStats") or {}
+    user_stats = live_user.get("stats") or {}
+    viewer_count = _tiktok_first(
+        room_stats.get("userCount"),
+        user_stats.get("userCount"),
+        user_stats.get("viewerCount"),
+        room_info.get("user_count"),
+    )
     try:
         viewers = int(viewer_count) if viewer_count is not None else None
     except (TypeError, ValueError):
@@ -306,6 +358,16 @@ def parse_tiktok_live_sigi(html: str) -> dict | None:
         "cover": cover,
         "viewer_count": viewers,
     }
+
+
+def parse_tiktok_live_sigi(html: str) -> dict | None:
+    """Parse ``/@user/live`` HTML (SIGI_STATE / universal JSON, browser UA required)."""
+    if not html:
+        return None
+    payload = _extract_tiktok_live_json(html)
+    if payload is None:
+        return None
+    return _parse_tiktok_live_payload(payload)
 
 
 def _normalized(data: dict) -> dict:
@@ -709,14 +771,32 @@ class Streams(commands.Cog):
         return await self._tiktok_rsshub_feed(username)
 
     async def _tiktok_live_status(self, username: str) -> dict | None:
-        status, text = await self._tiktok_get(f"https://www.tiktok.com/@{username}/live", browser=True)
+        url = f"https://www.tiktok.com/@{username}/live"
+        status, text = await self._tiktok_get(url, browser=True)
         if status != 200:
-            logger.debug("TikTok live page %s status=%s", username, status)
+            logger.warning("TikTok live page @%s HTTP %s", username, status)
+            return None
+        if not text:
+            logger.warning("TikTok live page @%s returned empty body", username)
             return None
         parsed = parse_tiktok_live_sigi(text)
-        if parsed is not None:
-            return parsed
-        return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
+        if parsed is None:
+            has_sigi = "SIGI_STATE" in text or "__UNIVERSAL_DATA_FOR_REHYDRATION__" in text
+            logger.warning(
+                "TikTok live parse failed @%s (html=%s bytes, json_script=%s)",
+                username,
+                len(text),
+                has_sigi,
+            )
+            return {"is_live": False, "room_id": "", "title": "", "cover": "", "viewer_count": None}
+        if parsed.get("is_live"):
+            logger.info(
+                "TikTok live detected @%s room=%s viewers=%s",
+                username,
+                parsed.get("room_id"),
+                parsed.get("viewer_count"),
+            )
+        return parsed
 
     async def _tiktok_tikwm_posts(self, username: str) -> dict | None:
         url = f"https://www.tikwm.com/api/user/posts?unique_id={username}&count=10"
