@@ -1181,6 +1181,15 @@ export interface StreamSubscription {
   mention_everyone: boolean
   use_embed: boolean
   embed_color: string
+  video_template: string
+  live_template: string
+  video_embed_color: string
+  live_embed_color: string
+  video_mention_everyone: boolean
+  live_mention_everyone: boolean
+  video_use_embed: boolean
+  live_use_embed: boolean
+  live_title_style: 'live_dot' | 'title_only' | 'live_badge'
   last_stream_id: string
 }
 
@@ -1211,6 +1220,15 @@ export function updateStreamSubscription(
       | 'mention_everyone'
       | 'use_embed'
       | 'embed_color'
+      | 'video_template'
+      | 'live_template'
+      | 'video_embed_color'
+      | 'live_embed_color'
+      | 'video_mention_everyone'
+      | 'live_mention_everyone'
+      | 'video_use_embed'
+      | 'live_use_embed'
+      | 'live_title_style'
     >
   >,
 ): Promise<StreamSubscription> {

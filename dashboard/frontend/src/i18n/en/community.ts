@@ -849,6 +849,13 @@ const community: TranslationDict = {
   'streams.field.mentionEveryone': '@everyone ping',
   'streams.field.useEmbed': 'Send embed',
   'streams.field.embedColor': 'Embed color (#RRGGBB)',
+  'streams.tiktok.section.video': 'New video embed',
+  'streams.tiktok.section.live': 'LIVE stream embed',
+  'streams.tiktok.sectionHint': 'Separate settings for video uploads and LIVE alerts. Empty template uses the default for that type.',
+  'streams.field.liveTitleStyle': 'Embed title style',
+  'streams.liveTitleStyle.live_dot': '🔴 LIVE · title',
+  'streams.liveTitleStyle.title_only': 'Stream title only',
+  'streams.liveTitleStyle.live_badge': 'LIVE · title',
 
   'starboard.title': 'Starboard',
   'starboard.intro': 'When a message reaches the reaction threshold, post (or update) an embed in the starboard channel.',

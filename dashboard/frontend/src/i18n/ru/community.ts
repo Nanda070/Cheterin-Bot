@@ -848,6 +848,13 @@ const community: TranslationDict = {
   'streams.field.mentionEveryone': 'Пинг @everyone',
   'streams.field.useEmbed': 'Отправлять эмбед',
   'streams.field.embedColor': 'Цвет эмбеда (#RRGGBB)',
+  'streams.tiktok.section.video': 'Эмбед нового видео',
+  'streams.tiktok.section.live': 'Эмбед LIVE-эфира',
+  'streams.tiktok.sectionHint': 'Отдельные настройки для новых роликов и LIVE. Пустой шаблон — стандартный для этого типа.',
+  'streams.field.liveTitleStyle': 'Стиль заголовка эмбеда',
+  'streams.liveTitleStyle.live_dot': '🔴 LIVE · заголовок',
+  'streams.liveTitleStyle.title_only': 'Только заголовок эфира',
+  'streams.liveTitleStyle.live_badge': 'LIVE · заголовок',
 
   'starboard.title': 'Старборд',
   'starboard.intro': 'Когда сообщение набирает порог реакций, бот публикует (или обновляет) эмбед в канале старборда.',

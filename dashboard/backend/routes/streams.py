@@ -9,6 +9,9 @@ routes = web.RouteTableDef()
 EDITABLE_FIELDS = {
     "enabled", "channel_id", "ping_role_id", "template", "keywords",
     "keyword_mode", "min_interval_minutes", "mention_everyone", "use_embed", "embed_color",
+    "video_template", "live_template", "video_embed_color", "live_embed_color",
+    "video_mention_everyone", "live_mention_everyone", "video_use_embed", "live_use_embed",
+    "live_title_style",
 }
 
 
@@ -87,6 +90,15 @@ async def streams_create(request: web.Request) -> web.Response:
         "mention_everyone": False,
         "use_embed": True,
         "embed_color": "",
+        "video_template": "",
+        "live_template": "",
+        "video_embed_color": "",
+        "live_embed_color": "",
+        "video_mention_everyone": False,
+        "live_mention_everyone": False,
+        "video_use_embed": True,
+        "live_use_embed": True,
+        "live_title_style": "live_dot",
         "last_notified_ts": 0,
         "last_stream_id": "",
         "last_live_room_id": "",
@@ -143,6 +155,18 @@ async def streams_update(request: web.Request) -> web.Response:
         elif key == "embed_color":
             if not isinstance(value, str) or (value and not (value.startswith("#") and len(value) == 7)):
                 return web.json_response({"error": "invalid_embed_color"}, status=400)
+        elif key in ("video_embed_color", "live_embed_color"):
+            if not isinstance(value, str) or (value and not (value.startswith("#") and len(value) == 7)):
+                return web.json_response({"error": "invalid_embed_color"}, status=400)
+        elif key in ("video_mention_everyone", "live_mention_everyone", "video_use_embed", "live_use_embed"):
+            if not isinstance(value, bool):
+                return web.json_response({"error": f"invalid_{key}"}, status=400)
+        elif key in ("video_template", "live_template"):
+            if not isinstance(value, str) or len(value) > 1500:
+                return web.json_response({"error": "invalid_template"}, status=400)
+        elif key == "live_title_style":
+            if value not in streams._LIVE_TITLE_STYLES:
+                return web.json_response({"error": "invalid_live_title_style"}, status=400)
         fields[key] = value
 
     updated = streams.update_subscription(request["guild_id"], sub_id, **fields)

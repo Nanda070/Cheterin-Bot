@@ -66,6 +66,55 @@ def default_template(platform: str, lang: str) -> str:
     return i18n.t("streams.default_template_twitch", lang)
 
 
+_LIVE_TITLE_STYLES = frozenset({"live_dot", "title_only", "live_badge"})
+
+
+def tiktok_template(sub: dict, kind: str, lang: str) -> str:
+    specific = str(sub.get(f"{kind}_template") or "").strip()
+    if specific:
+        return specific
+    general = str(sub.get("template") or "").strip()
+    if general:
+        return general
+    return default_template("tiktok_live" if kind == "live" else "tiktok", lang)
+
+
+def tiktok_embed_color(sub: dict, kind: str) -> discord.Color:
+    for key in (f"{kind}_embed_color", "embed_color"):
+        raw = str(sub.get(key) or "").strip()
+        if raw.startswith("#") and len(raw) == 7:
+            try:
+                return discord.Color(int(raw[1:], 16))
+            except ValueError:
+                pass
+    return embed_style.TIKTOK_LIVE if kind == "live" else embed_style.TIKTOK
+
+
+def tiktok_mention_everyone(sub: dict, kind: str) -> bool:
+    key = f"{kind}_mention_everyone"
+    if key in sub:
+        return bool(sub[key])
+    return bool(sub.get("mention_everyone", False))
+
+
+def tiktok_use_embed(sub: dict, kind: str) -> bool:
+    key = f"{kind}_use_embed"
+    if key in sub:
+        return bool(sub[key])
+    return bool(sub.get("use_embed", True))
+
+
+def tiktok_live_embed_title(sub: dict, title: str) -> str:
+    style = sub.get("live_title_style") or "live_dot"
+    if style not in _LIVE_TITLE_STYLES:
+        style = "live_dot"
+    if style == "title_only":
+        return title[:256]
+    if style == "live_badge":
+        return f"LIVE · {title}"[:256]
+    return f"\U0001f534 LIVE · {title}"[:256]
+
+
 def parse_tiktok_username(query: str) -> str | None:
     """@handle, unique id or profile URL → clean username, or None."""
     q = (query or "").strip()
@@ -284,6 +333,15 @@ def get_subscriptions(guild_id: int) -> list[dict]:
             "mention_everyone": bool(sub.get("mention_everyone", False)),
             "use_embed": bool(sub.get("use_embed", True)),
             "embed_color": str(sub.get("embed_color") or ""),
+            "video_template": str(sub.get("video_template") or ""),
+            "live_template": str(sub.get("live_template") or ""),
+            "video_embed_color": str(sub.get("video_embed_color") or ""),
+            "live_embed_color": str(sub.get("live_embed_color") or ""),
+            "video_mention_everyone": bool(sub.get("video_mention_everyone", sub.get("mention_everyone", False))),
+            "live_mention_everyone": bool(sub.get("live_mention_everyone", sub.get("mention_everyone", False))),
+            "video_use_embed": bool(sub.get("video_use_embed", sub.get("use_embed", True))),
+            "live_use_embed": bool(sub.get("live_use_embed", sub.get("use_embed", True))),
+            "live_title_style": str(sub.get("live_title_style") or "live_dot"),
             "last_notified_ts": int(sub.get("last_notified_ts", 0)),
             "last_stream_id": str(sub.get("last_stream_id") or ""),
             "last_live_room_id": str(sub.get("last_live_room_id") or ""),
@@ -912,7 +970,7 @@ class Streams(commands.Cog):
             return
 
         content, embed, view = self._build_tiktok_live_announce(sub, live, lang)
-        await self._announce(sub, content, embed, view=view)
+        await self._announce(sub, content, embed, view=view, tiktok_kind="live")
         update_subscription(
             guild_id,
             sub["id"],
@@ -934,7 +992,7 @@ class Streams(commands.Cog):
             return
 
         content, embed, view = await self._build_tiktok_video_announce(sub, feed, latest, lang)
-        await self._announce(sub, content, embed, view=view)
+        await self._announce(sub, content, embed, view=view, tiktok_kind="video")
         update_subscription(guild_id, sub["id"], last_stream_id=video_id, last_notified_ts=int(time.time()))
 
     def _build_tiktok_live_announce(
@@ -947,14 +1005,14 @@ class Streams(commands.Cog):
         live_url = f"https://www.tiktok.com/@{sub['identifier']}/live"
         channel_url = f"https://www.tiktok.com/@{sub['identifier']}"
         title = live.get("title") or i18n.t("streams.embed.live_title", lang)
-        template = sub.get("template") or default_template("tiktok_live", lang)
+        template = tiktok_template(sub, "live", lang)
         content = render_template(template, channel_name, title, "", live_url, lang)
 
         embed = discord.Embed(
-            title=f"\U0001f534 LIVE · {title}"[:256],
+            title=tiktok_live_embed_title(sub, title),
             url=live_url,
             description=i18n.t("streams.embed.live_description", lang, name=channel_name),
-            color=embed_style.TIKTOK_LIVE,
+            color=tiktok_embed_color(sub, "live"),
             timestamp=discord.utils.utcnow(),
         )
         embed.set_author(
@@ -989,13 +1047,13 @@ class Streams(commands.Cog):
             cover = cover or oembed.get("thumbnail") or ""
 
         channel_name = feed.get("display_name") or sub.get("display_name") or sub["identifier"]
-        template = sub.get("template") or default_template("tiktok", lang)
+        template = tiktok_template(sub, "video", lang)
         content = render_template(template, channel_name, title, "", watch, lang)
 
         embed = discord.Embed(
             description=title[:4096] if title else i18n.t("streams.default_template_tiktok", lang)[:256],
             url=watch,
-            color=embed_style.TIKTOK,
+            color=tiktok_embed_color(sub, "video"),
             timestamp=discord.utils.utcnow(),
         )
         embed.set_author(
@@ -1012,16 +1070,25 @@ class Streams(commands.Cog):
         content: str,
         embed: discord.Embed,
         view: discord.ui.View | None = None,
+        *,
+        tiktok_kind: str | None = None,
     ) -> bool:
         channel = self.bot.get_channel(int(sub["channel_id"]))
         if channel is None:
             return False
-        raw_color = (sub.get("embed_color") or "").strip()
-        if raw_color.startswith("#") and len(raw_color) == 7:
-            try:
-                embed.color = discord.Color(int(raw_color[1:], 16))
-            except ValueError:
-                pass
+        if sub.get("platform") == "tiktok" and tiktok_kind in ("live", "video"):
+            embed.color = tiktok_embed_color(sub, tiktok_kind)
+            mention_everyone = tiktok_mention_everyone(sub, tiktok_kind)
+            use_embed = tiktok_use_embed(sub, tiktok_kind)
+        else:
+            raw_color = (sub.get("embed_color") or "").strip()
+            if raw_color.startswith("#") and len(raw_color) == 7:
+                try:
+                    embed.color = discord.Color(int(raw_color[1:], 16))
+                except ValueError:
+                    pass
+            mention_everyone = bool(sub.get("mention_everyone", False))
+            use_embed = bool(sub.get("use_embed", True))
 
         mentions = []
         allowed_roles = []
@@ -1029,7 +1096,7 @@ class Streams(commands.Cog):
         if sub.get("ping_role_id"):
             mentions.append(f"<@&{sub['ping_role_id']}>")
             allowed_roles.append(discord.Object(id=int(sub["ping_role_id"])))
-        if sub.get("mention_everyone"):
+        if mention_everyone:
             mentions.append("@everyone")
             allowed_everyone = True
         if mentions:
@@ -1037,7 +1104,6 @@ class Streams(commands.Cog):
             allowed = discord.AllowedMentions(roles=allowed_roles, everyone=allowed_everyone)
         else:
             allowed = discord.AllowedMentions.none()
-        use_embed = bool(sub.get("use_embed", True))
         try:
             await channel.send(
                 content=content or None,
@@ -1075,13 +1141,13 @@ class Streams(commands.Cog):
         elif platform == "tiktok":
             ident = sub.get("identifier") or "tiktok"
             url = f"https://www.tiktok.com/@{ident}"
-            template = sub.get("template") or default_template("tiktok", lang)
+            template = tiktok_template(sub, "video", lang)
             title = i18n.t("streams.test.sample_title", lang)
             content = render_template(template, display, title, "", url, lang)
             embed = discord.Embed(
                 description=title,
                 url=url,
-                color=embed_style.TIKTOK,
+                color=tiktok_embed_color(sub, "video"),
                 timestamp=discord.utils.utcnow(),
             )
             embed.set_author(
@@ -1090,7 +1156,7 @@ class Streams(commands.Cog):
             )
             embed.set_footer(text=i18n.t("streams.test.footer", lang))
             view = _video_view(url, url, lang)
-            if not await self._announce(sub, content, embed, view=view):
+            if not await self._announce(sub, content, embed, view=view, tiktok_kind="video"):
                 return "send_failed"
             return None
         else:

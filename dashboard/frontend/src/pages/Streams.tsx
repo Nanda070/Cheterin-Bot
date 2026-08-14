@@ -22,6 +22,24 @@ const inputClass =
   'rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary'
 
 type StreamPlatform = 'twitch' | 'youtube' | 'tiktok'
+type TiktokKind = 'video' | 'live'
+
+const TIKTOK_KIND_FIELDS = {
+  video: {
+    template: 'video_template',
+    embedColor: 'video_embed_color',
+    mentionEveryone: 'video_mention_everyone',
+    useEmbed: 'video_use_embed',
+    defaultColor: '#FE2C55',
+  },
+  live: {
+    template: 'live_template',
+    embedColor: 'live_embed_color',
+    mentionEveryone: 'live_mention_everyone',
+    useEmbed: 'live_use_embed',
+    defaultColor: '#9146FF',
+  },
+} as const
 
 function PlatformIcon({ platform }: { platform: StreamPlatform }) {
   if (platform === 'twitch') {
@@ -104,6 +122,72 @@ export function StreamsPage() {
   const tiktokSubs = subs.filter((s) => s.platform === 'tiktok')
   const twitchSubs = subs.filter((s) => s.platform === 'twitch')
 
+  const renderTiktokKindSettings = (sub: StreamSubscription, kind: TiktokKind) => {
+    const fields = TIKTOK_KIND_FIELDS[kind]
+    const templateKey = fields.template
+    const colorKey = fields.embedColor
+    const mentionKey = fields.mentionEveryone
+    const useEmbedKey = fields.useEmbed
+    return (
+      <div className="flex flex-col gap-3 rounded-control border border-border bg-surface/40 p-3">
+        <p className="text-xs font-semibold text-foreground">
+          {t(kind === 'video' ? 'streams.tiktok.section.video' : 'streams.tiktok.section.live')}
+        </p>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted">{t('streams.field.template')}</label>
+          <textarea
+            rows={2}
+            defaultValue={sub[templateKey]}
+            onBlur={(e) =>
+              e.target.value !== sub[templateKey] && patchSub(sub.id, { [templateKey]: e.target.value })
+            }
+            className={inputClass}
+          />
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <Toggle
+              checked={Boolean(sub[mentionKey])}
+              onChange={(v) => patchSub(sub.id, { [mentionKey]: v })}
+            />
+            {t('streams.field.mentionEveryone')}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Toggle
+              checked={sub[useEmbedKey] !== false}
+              onChange={(v) => patchSub(sub.id, { [useEmbedKey]: v })}
+            />
+            {t('streams.field.useEmbed')}
+          </label>
+          <input
+            className={`${inputClass} w-32`}
+            defaultValue={sub[colorKey] || ''}
+            placeholder={fields.defaultColor}
+            aria-label={t('streams.field.embedColor')}
+            onBlur={(e) => {
+              const v = e.target.value.trim()
+              if (v !== (sub[colorKey] || '')) patchSub(sub.id, { [colorKey]: v })
+            }}
+          />
+        </div>
+        {kind === 'live' && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted">{t('streams.field.liveTitleStyle')}</label>
+            <Select
+              value={sub.live_title_style || 'live_dot'}
+              onChange={(id) => patchSub(sub.id, { live_title_style: id as StreamSubscription['live_title_style'] })}
+              options={[
+                { id: 'live_dot', name: t('streams.liveTitleStyle.live_dot') },
+                { id: 'title_only', name: t('streams.liveTitleStyle.title_only') },
+                { id: 'live_badge', name: t('streams.liveTitleStyle.live_badge') },
+              ]}
+            />
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const renderSubCard = (sub: StreamSubscription) => (
     <Card key={sub.id} className="flex flex-col gap-3">
       <div className="flex items-start gap-3">
@@ -184,7 +268,9 @@ export function StreamsPage() {
               onBlur={(e) => e.target.value !== sub.template && patchSub(sub.id, { template: e.target.value })}
               className={inputClass}
             />
-            <span className="text-[11px] text-muted">{t('streams.templateVars')}</span>
+            <span className="text-[11px] text-muted">
+              {sub.platform === 'tiktok' ? t('streams.tiktok.sectionHint') : t('streams.templateVars')}
+            </span>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted">{t('streams.field.keywords')}</label>
@@ -230,29 +316,36 @@ export function StreamsPage() {
               />
             </div>
           </div>
-          <div className="flex flex-wrap gap-4 pt-1">
-            <label className="flex items-center gap-2 text-sm">
-              <Toggle
-                checked={Boolean(sub.mention_everyone)}
-                onChange={(v) => patchSub(sub.id, { mention_everyone: v })}
+          {sub.platform === 'tiktok' ? (
+            <>
+              {renderTiktokKindSettings(sub, 'video')}
+              {renderTiktokKindSettings(sub, 'live')}
+            </>
+          ) : (
+            <div className="flex flex-wrap gap-4 pt-1">
+              <label className="flex items-center gap-2 text-sm">
+                <Toggle
+                  checked={Boolean(sub.mention_everyone)}
+                  onChange={(v) => patchSub(sub.id, { mention_everyone: v })}
+                />
+                {t('streams.field.mentionEveryone')}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Toggle checked={sub.use_embed !== false} onChange={(v) => patchSub(sub.id, { use_embed: v })} />
+                {t('streams.field.useEmbed')}
+              </label>
+              <input
+                className={`${inputClass} w-32`}
+                defaultValue={sub.embed_color || ''}
+                placeholder="#9146FF"
+                aria-label={t('streams.field.embedColor')}
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v !== (sub.embed_color || '')) patchSub(sub.id, { embed_color: v })
+                }}
               />
-              {t('streams.field.mentionEveryone')}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Toggle checked={sub.use_embed !== false} onChange={(v) => patchSub(sub.id, { use_embed: v })} />
-              {t('streams.field.useEmbed')}
-            </label>
-            <input
-              className={`${inputClass} w-32`}
-              defaultValue={sub.embed_color || ''}
-              placeholder="#9146FF"
-              aria-label={t('streams.field.embedColor')}
-              onBlur={(e) => {
-                const v = e.target.value.trim()
-                if (v !== (sub.embed_color || '')) patchSub(sub.id, { embed_color: v })
-              }}
-            />
-          </div>
+            </div>
+          )}
         </div>
       )}
     </Card>
