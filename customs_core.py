@@ -325,6 +325,10 @@ def _normalize_player(p: dict[str, Any]) -> dict[str, Any]:
     row = dict(p)
     code = str(row.get("team_code") or "").strip().upper()
     row["team_code"] = code
+    for key in ("nick", "username", "global_name", "display_name"):
+        row[key] = str(row.get(key) or "")
+    if not row["display_name"]:
+        row["display_name"] = row["nick"] or row["global_name"] or row["username"] or ""
     return row
 
 
@@ -837,17 +841,60 @@ def list_lobbies(guild_id: int, *, status: str | None = None) -> list[dict[str, 
     return lobbies
 
 
-def serialize_player(p: dict[str, Any]) -> dict[str, Any]:
+def identity_from_member(member: Any) -> dict[str, str]:
+    """Extract Discord name fields from a Member/User for roster storage."""
+    if member is None:
+        return {"nick": "", "username": "", "global_name": "", "display_name": ""}
+    nick = str(getattr(member, "nick", None) or "")
+    username = str(getattr(member, "name", None) or "")
+    global_name = str(getattr(member, "global_name", None) or "")
+    display_name = str(getattr(member, "display_name", None) or "") or (
+        nick or global_name or username
+    )
+    return {
+        "nick": nick,
+        "username": username,
+        "global_name": global_name,
+        "display_name": display_name,
+    }
+
+
+def _resolve_player_names(p: dict[str, Any], guild: Any | None) -> dict[str, str]:
+    """Prefer live guild cache, then stored join-time names."""
+    uid = str(p.get("user_id") or "")
+    stored = {
+        "nick": str(p.get("nick") or ""),
+        "username": str(p.get("username") or ""),
+        "global_name": str(p.get("global_name") or ""),
+        "display_name": str(p.get("display_name") or ""),
+    }
+    if guild is not None and uid.isdigit():
+        member = guild.get_member(int(uid))
+        if member is not None:
+            return identity_from_member(member)
+    if not stored["display_name"]:
+        stored["display_name"] = (
+            stored["nick"] or stored["global_name"] or stored["username"] or ""
+        )
+    return stored
+
+
+def serialize_player(p: dict[str, Any], *, guild: Any | None = None) -> dict[str, Any]:
+    names = _resolve_player_names(p, guild)
     return {
         "user_id": str(p.get("user_id") or ""),
         "rank": p.get("rank") or "",
         "rank_name": p.get("rank_name") or "",
         "team_code": p.get("team_code") or "",
         "team": p.get("team"),
+        "nick": names["nick"],
+        "username": names["username"],
+        "global_name": names["global_name"],
+        "display_name": names["display_name"],
     }
 
 
-def serialize_lobby_summary(lobby: dict[str, Any]) -> dict[str, Any]:
+def serialize_lobby_summary(lobby: dict[str, Any], *, guild: Any | None = None) -> dict[str, Any]:
     score = lobby.get("score") if isinstance(lobby.get("score"), dict) else {}
     return {
         "id": str(lobby.get("id")),
@@ -868,8 +915,12 @@ def serialize_lobby_summary(lobby: dict[str, Any]) -> dict[str, Any]:
         "signup_minutes": int(lobby.get("signup_minutes") or 0),
         "signup_ends_at": int(lobby.get("signup_ends_at") or 0),
         "score": {"a": int(score.get("a") or 0), "b": int(score.get("b") or 0)},
-        "players_list": [serialize_player(p) for p in lobby.get("players") or [] if isinstance(p, dict)],
-        "subs_list": [serialize_player(p) for p in lobby.get("subs") or [] if isinstance(p, dict)],
+        "players_list": [
+            serialize_player(p, guild=guild) for p in lobby.get("players") or [] if isinstance(p, dict)
+        ],
+        "subs_list": [
+            serialize_player(p, guild=guild) for p in lobby.get("subs") or [] if isinstance(p, dict)
+        ],
         "created_at": int(lobby.get("created_at") or 0),
     }
 
@@ -879,8 +930,16 @@ def _player_entry(
     rank: dict[str, Any] | None,
     *,
     team_code: str = "",
+    nick: str = "",
+    username: str = "",
+    global_name: str = "",
+    display_name: str = "",
 ) -> dict[str, Any]:
     rank = rank or {"id": LOWEST_RANK_ID, "name": RANK_BY_ID[LOWEST_RANK_ID]["name"], "weight": 1}
+    nick_s = str(nick or "")
+    username_s = str(username or "")
+    global_name_s = str(global_name or "")
+    display_s = str(display_name or "") or (nick_s or global_name_s or username_s)
     return {
         "user_id": str(user_id),
         "rank": rank["id"],
@@ -889,6 +948,10 @@ def _player_entry(
         "team_code": normalize_team_code(team_code),
         "team": None,
         "checked_in": False,
+        "nick": nick_s,
+        "username": username_s,
+        "global_name": global_name_s,
+        "display_name": display_s,
     }
 
 
@@ -910,6 +973,7 @@ def join_lobby(
     as_sub: bool = False,
     team_code: str = "",
     create_code: bool = False,
+    identity: dict[str, str] | None = None,
 ) -> tuple[str, dict[str, Any] | None]:
     """Returns (status, lobby_or_none). Status: joined | joined_sub | already | full | closed | not_found | no_rank | bad_code."""
     data = load_data(guild_id)
@@ -937,7 +1001,16 @@ def join_lobby(
                 return "bad_code", lobby
             # Joining an existing code is preferred; creating alone with typed code is allowed.
 
-    entry = _player_entry(user_id, rank, team_code=code)
+    ident = identity or {}
+    entry = _player_entry(
+        user_id,
+        rank,
+        team_code=code,
+        nick=str(ident.get("nick") or ""),
+        username=str(ident.get("username") or ""),
+        global_name=str(ident.get("global_name") or ""),
+        display_name=str(ident.get("display_name") or ""),
+    )
     if as_sub:
         if len(lobby["subs"]) >= int(lobby.get("max_subs") or MAX_SUBS):
             return "full", lobby

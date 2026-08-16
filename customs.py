@@ -577,6 +577,9 @@ class RankSelect(discord.ui.Select):
             await self.cog.refresh_lobby_message(interaction.guild, self.lobby_id)
             return
 
+        identity = None
+        if isinstance(interaction.user, discord.Member):
+            identity = customs_core.identity_from_member(interaction.user)
         status, lobby = customs_core.join_lobby(
             interaction.guild.id,
             self.lobby_id,
@@ -585,6 +588,7 @@ class RankSelect(discord.ui.Select):
             as_sub=False,
             team_code=self.team_code,
             create_code=self.create_code,
+            identity=identity,
         )
         err_map = {
             "no_rank": "customs.err.need_rank",

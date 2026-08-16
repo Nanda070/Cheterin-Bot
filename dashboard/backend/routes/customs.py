@@ -28,6 +28,14 @@ def _cog(request: web.Request):
     return request.app["bot"].get_cog("CustomsCog")
 
 
+def _guild(request: web.Request):
+    return request.app["bot"].get_guild(request["guild_id"])
+
+
+def _serialize_lobby(lobby: dict, request: web.Request) -> dict:
+    return customs_core.serialize_lobby_summary(lobby, guild=_guild(request))
+
+
 @routes.get("/api/customs")
 @require_dashboard_access
 async def customs_get(request: web.Request) -> web.Response:
@@ -104,8 +112,9 @@ async def customs_lobbies_list(request: web.Request) -> web.Response:
         lobbies = customs_core.list_lobbies(guild_id, status="active")
     else:
         lobbies = customs_core.list_lobbies(guild_id, status=status)
+    guild = _guild(request)
     return web.json_response(
-        {"lobbies": [customs_core.serialize_lobby_summary(lob) for lob in lobbies]}
+        {"lobbies": [customs_core.serialize_lobby_summary(lob, guild=guild) for lob in lobbies]}
     )
 
 
@@ -160,7 +169,7 @@ async def _publish_from_spec(request: web.Request, body: dict) -> web.Response:
     ping = str(body.get("ping") or customs_core.PING_NONE)
     message = await cog.publish_lobby(guild, lobby, channel, ping=ping)
     lobby = customs_core.get_lobby(request["guild_id"], lobby["id"]) or lobby
-    summary = customs_core.serialize_lobby_summary(lobby)
+    summary = customs_core.serialize_lobby_summary(lobby, guild=guild)
     summary["jump_url"] = message.jump_url
     return web.json_response(summary, status=201)
 
@@ -215,7 +224,7 @@ async def customs_lobby_kick(request: web.Request) -> web.Response:
     if result != "kicked":
         return web.json_response({"error": result}, status=400)
     lobby = customs_core.get_lobby(guild_id, lobby_id)
-    return web.json_response({"ok": True, "lobby": customs_core.serialize_lobby_summary(lobby or {})})
+    return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby or {}, request)})
 
 
 @routes.put("/api/customs/lobbies/{lobby_id}/bans")
@@ -235,7 +244,7 @@ async def customs_lobby_bans(request: web.Request) -> web.Response:
     lobby = customs_core.set_lobby_bans(request["guild_id"], request.match_info["lobby_id"], map_ids)
     if lobby is None:
         return web.json_response({"error": "not_found"}, status=404)
-    return web.json_response({"ok": True, "lobby": customs_core.serialize_lobby_summary(lobby)})
+    return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby, request)})
 
 
 @routes.post("/api/customs/lobbies/{lobby_id}/score")
@@ -272,7 +281,7 @@ async def customs_lobby_score(request: web.Request) -> web.Response:
     else:
         customs_core.set_result(guild_id, lobby_id, score_a, score_b)
     lobby = customs_core.get_lobby(guild_id, lobby_id)
-    return web.json_response({"ok": True, "lobby": customs_core.serialize_lobby_summary(lobby or {})})
+    return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby or {}, request)})
 
 
 @routes.post("/api/customs/lobbies/{lobby_id}/cancel")
@@ -291,7 +300,7 @@ async def customs_lobby_cancel(request: web.Request) -> web.Response:
             await cog.refresh_lobby_message(guild, lobby_id)
             await cog.finish_vote_message(guild, lobby_id, delete=True)
             await cog.finish_score_message(guild, lobby_id, delete=True)
-    return web.json_response({"ok": True, "lobby": customs_core.serialize_lobby_summary(lobby)})
+    return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby, request)})
 
 
 @routes.post("/api/customs/schedules")
@@ -305,7 +314,7 @@ async def customs_schedule_create(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_request"}, status=400)
     error = customs_core.validate_schedule_spec(body)
     if error:
-        return web.json_response({"error": error}, status=400)
+        return web.json_response({"error": "invalid_schedule"}, status=400)
     sch = customs_core.upsert_schedule(request["guild_id"], body)
     if sch is None:
         return web.json_response({"error": "invalid_schedule"}, status=400)

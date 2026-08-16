@@ -16,6 +16,7 @@ import {
   setCustomsLobbyScore,
   updateCustomsSettings,
   type ChannelInfo,
+  customsPlayerLabel,
   type CustomsLobbySummary,
   type CustomsPingMode,
   type CustomsSchedule,
@@ -140,7 +141,7 @@ function LobbyCard({
                   {(lob.players_list || []).map((p) => (
                     <li key={p.user_id} className="flex items-center justify-between gap-2 text-sm">
                       <span className="text-muted">
-                        {p.user_id} · {p.rank_name || p.rank}
+                        {customsPlayerLabel(p)} · {p.rank_name || p.rank}
                         {p.team_code ? ` · ${p.team_code}` : ''}
                       </span>
                       {onKick && (

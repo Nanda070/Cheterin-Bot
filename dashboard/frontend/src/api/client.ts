@@ -2828,6 +2828,21 @@ export interface CustomsPlayer {
   rank_name: string
   team_code: string
   team: string | null
+  nick?: string
+  username?: string
+  global_name?: string
+  display_name?: string
+}
+
+/** Prefer guild nick → display_name → global_name → username; fall back to id. */
+export function customsPlayerLabel(p: Pick<CustomsPlayer, 'user_id' | 'nick' | 'username' | 'global_name' | 'display_name'>): string {
+  return (
+    (p.nick || '').trim() ||
+    (p.display_name || '').trim() ||
+    (p.global_name || '').trim() ||
+    (p.username || '').trim() ||
+    p.user_id
+  )
 }
 
 export interface CustomsLobbySummary {
