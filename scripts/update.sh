@@ -49,6 +49,12 @@ if [[ ! -d "$FRONTEND" ]]; then
 fi
 
 cd "$FRONTEND"
+
+echo "==> cleaning node build caches"
+# Safe cache junk only — do not wipe node_modules or package-lock.json.
+rm -rf node_modules/.cache node_modules/.vite dist
+find . -depth -type d -name '_logs' -exec rm -rf {} \; 2>/dev/null || true
+
 if [[ -f package-lock.json ]]; then
   echo "==> npm ci"
   npm ci
