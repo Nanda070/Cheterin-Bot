@@ -634,6 +634,7 @@ class PanelManager(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._panel_published = False
+        self._missing_panel_logged: set[int] = set()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -647,10 +648,22 @@ class PanelManager(commands.Cog):
 
     async def publish_panel(self, guild_id: int) -> int | None:
         """Публикует (или обновляет) панель управления для guild_id. Возвращает id сообщения."""
-        channel = self.bot.get_channel(_config_channel_id(guild_id, "VOICE_PANEL_CHANNEL_ID"))
-        if not channel:
-            logger.warning("Voice panel text channel not found for guild %s", guild_id)
+        channel_id = _config_channel_id(guild_id, "VOICE_PANEL_CHANNEL_ID")
+        if not channel_id:
+            # Not configured — skip silently (do not spam logs each ready/publish).
             return None
+
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            if guild_id not in self._missing_panel_logged:
+                self._missing_panel_logged.add(guild_id)
+                logger.debug(
+                    "Voice panel text channel not found for guild %s (channel_id=%s)",
+                    guild_id,
+                    channel_id,
+                )
+            return None
+        self._missing_panel_logged.discard(guild_id)
 
         lang = i18n.lang_for(guild_id)
         embed = build_embed(lang, guild_id)

@@ -3,7 +3,8 @@
 - Twitch: опрос Helix API (нужны TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET в .env).
   Уведомление при переходе канала в эфир.
 - YouTube: опрос публичного RSS-фида канала. Уведомление о новом видео/премьере.
-- TikTok: видео — embed/@user (videoList), tikwm, RSSHub; LIVE — страница /@user/live (SIGI).
+- TikTok: видео — embed/@user (videoList), tikwm, RSSHub;
+  LIVE — /@user/live (SIGI) с fallback на api-live/user/room и webcast.
   Resolve: TikTok oEmbed профиля + embed + tikwm.
 
 Подписки настраиваются в дашборде: канал публикации, роль для пинга, свой
@@ -39,13 +40,39 @@ _HTTP_HEADERS = {
     "User-Agent": "Cheterin-Bot/1.0 (+https://github.com/Nanda070/Cheterin_Bot_Dashboard)",
     "Accept": "application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
 }
+_TIKTOK_CHROME_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+_TIKTOK_SEC_CH_UA = '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"'
 _TIKTOK_BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "User-Agent": _TIKTOK_CHROME_UA,
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,image/apng,*/*;q=0.8"
     ),
-    "Accept": "text/html,application/json,application/xhtml+xml,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9,ru;q=0.8",
+    "Referer": "https://www.tiktok.com/",
+    "sec-ch-ua": _TIKTOK_SEC_CH_UA,
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "Upgrade-Insecure-Requests": "1",
+}
+_TIKTOK_API_HEADERS = {
+    "User-Agent": _TIKTOK_CHROME_UA,
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9,ru;q=0.8",
+    "Referer": "https://www.tiktok.com/",
+    "Origin": "https://www.tiktok.com",
+    "sec-ch-ua": _TIKTOK_SEC_CH_UA,
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
 }
 
 _TIKTOK_USER_RE = re.compile(r"^[A-Za-z0-9._]{2,24}$")
@@ -54,6 +81,13 @@ _TIKTOK_URL_USER_RE = re.compile(
     re.I,
 )
 _DEFAULT_TIKTOK_RSS = "https://rsshub.app/tiktok/user/{username}"
+# EU / WAF often returns a ~1KB "status eu: Internal Error" page instead of SIGI.
+_TIKTOK_LIVE_HTML_MIN_OK = 8000
+_TIKTOK_LIVE_FAIL_LOG_COOLDOWN = 1800.0
+_TIKTOK_LIVE_HTML_HOSTS = (
+    "https://www.tiktok.com",
+    "https://m.tiktok.com",
+)
 
 
 def default_template(platform: str, lang: str) -> str:
@@ -424,6 +458,114 @@ def parse_tiktok_live_sigi(html: str) -> dict | None:
     return _parse_tiktok_live_payload(payload)
 
 
+def _tiktok_html_looks_blocked(html: str) -> bool:
+    """True when TikTok returned a tiny error/WAF page instead of a live rehydrate shell."""
+    if not html:
+        return True
+    lowered = html.lower()
+    if "status eu" in lowered or "internal error" in lowered:
+        return True
+    if len(html) < _TIKTOK_LIVE_HTML_MIN_OK:
+        has_json = "SIGI_STATE" in html or "__UNIVERSAL_DATA_FOR_REHYDRATION__" in html
+        return not has_json
+    return False
+
+
+def parse_tiktok_api_live_room(payload: dict) -> dict | None:
+    """Parse ``/api-live/user/room`` JSON into the same shape as ``parse_tiktok_live_sigi``."""
+    if not isinstance(payload, dict):
+        return None
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return None
+    user = data.get("user") if isinstance(data.get("user"), dict) else {}
+    live_room = data.get("liveRoom") if isinstance(data.get("liveRoom"), dict) else {}
+    if not user and not live_room:
+        return None
+
+    room_id = str(
+        _tiktok_first(user.get("roomId"), live_room.get("roomId"), live_room.get("roomID")) or ""
+    ).strip()
+    status = _tiktok_first(live_room.get("status"), user.get("status"))
+    is_live = status in _TIKTOK_LIVE_ACTIVE
+    if not is_live and room_id and live_room.get("streamData"):
+        is_live = True
+    if not is_live:
+        return _tiktok_live_not_live()
+
+    title = str(live_room.get("title") or user.get("title") or "")
+    cover = _tiktok_cover_url(
+        _tiktok_first(live_room.get("coverUrl"), live_room.get("squareCoverImg"), live_room.get("cover"))
+    )
+    avatar_url = _tiktok_avatar_url(user)
+    room_stats = live_room.get("liveRoomStats") if isinstance(live_room.get("liveRoomStats"), dict) else {}
+    viewer_count = _tiktok_first(room_stats.get("userCount"), room_stats.get("enterCount"))
+    try:
+        viewers = int(viewer_count) if viewer_count is not None else None
+    except (TypeError, ValueError):
+        viewers = None
+
+    return {
+        "is_live": True,
+        "room_id": room_id or f"live-{int(time.time())}",
+        "title": title,
+        "cover": cover,
+        "cover_url": cover,
+        "avatar_url": avatar_url,
+        "viewer_count": viewers,
+    }
+
+
+def parse_tiktok_webcast_by_user(payload: dict) -> dict | None:
+    """Parse webcast ``room/info_by_user`` — useful when HTML is blocked; 30003 = offline."""
+    if not isinstance(payload, dict):
+        return None
+    code = payload.get("status_code", payload.get("statusCode"))
+    if code in (30003, "30003"):
+        return _tiktok_live_not_live()
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return None
+    if data.get("message") in ("room has finished", "user is not living"):
+        return _tiktok_live_not_live()
+
+    room = data.get("room") if isinstance(data.get("room"), dict) else data
+    owner = room.get("owner") if isinstance(room.get("owner"), dict) else {}
+    room_id = str(_tiktok_first(room.get("id"), room.get("room_id"), room.get("roomId")) or "").strip()
+    status = _tiktok_first(room.get("status"), data.get("status"))
+    is_live = status in _TIKTOK_LIVE_ACTIVE
+    if not is_live and room_id and status not in (0, "0", None, ""):
+        is_live = True
+    if not is_live:
+        # Ambiguous payload without a clear live signal — let caller try other sources.
+        if code not in (0, "0", None):
+            return None
+        return _tiktok_live_not_live()
+
+    title = str(room.get("title") or "")
+    cover = _tiktok_cover_url(_tiktok_first(room.get("cover"), room.get("cover_url")))
+    avatar_url = _tiktok_avatar_url(owner)
+    viewer_count = _tiktok_first(
+        room.get("user_count"),
+        room.get("userCount"),
+        (room.get("stats") or {}).get("user_count") if isinstance(room.get("stats"), dict) else None,
+    )
+    try:
+        viewers = int(viewer_count) if viewer_count is not None else None
+    except (TypeError, ValueError):
+        viewers = None
+
+    return {
+        "is_live": True,
+        "room_id": room_id or f"live-{int(time.time())}",
+        "title": title,
+        "cover": cover,
+        "cover_url": cover,
+        "avatar_url": avatar_url,
+        "viewer_count": viewers,
+    }
+
+
 def _normalized(data: dict) -> dict:
     data.setdefault("seq", 0)
     data.setdefault("subscriptions", [])
@@ -553,6 +695,7 @@ class Streams(commands.Cog):
         self._twitch_token: str | None = None
         self._twitch_token_expires = 0
         self._last_video_poll = 0.0
+        self._tiktok_live_fail_log: dict[str, float] = {}
         self._poll.start()
 
     def cog_unload(self):
@@ -701,6 +844,32 @@ class Streams(commands.Cog):
             logger.warning("TikTok GET %s error: %s", url, exc)
             return 0, ""
 
+    async def _tiktok_get_json(self, url: str, *, headers: dict | None = None) -> tuple[int, dict | None]:
+        req_headers = headers or _TIKTOK_API_HEADERS
+        try:
+            async with self.http.get(url, headers=req_headers) as resp:
+                if resp.status != 200:
+                    return resp.status, None
+                body = await resp.json(content_type=None)
+                return resp.status, body if isinstance(body, dict) else None
+        except (aiohttp.ClientError, ValueError) as exc:
+            logger.debug("TikTok JSON GET %s error: %s", url, exc)
+            return 0, None
+
+    def _log_tiktok_live_fail(self, username: str, message: str, *args) -> None:
+        """Warn once per account, then debug until cooldown elapses (avoids poll spam)."""
+        key = username.lower()
+        now = time.time()
+        last = self._tiktok_live_fail_log.get(key, 0.0)
+        if now - last >= _TIKTOK_LIVE_FAIL_LOG_COOLDOWN:
+            self._tiktok_live_fail_log[key] = now
+            logger.warning(message, *args)
+        else:
+            logger.debug(message, *args)
+
+    def _clear_tiktok_live_fail(self, username: str) -> None:
+        self._tiktok_live_fail_log.pop(username.lower(), None)
+
     async def seed_tiktok_subscription(self, guild_id: int, sub_id: str, username: str) -> None:
         """Seed last video / live ids so only future events notify."""
         fields: dict[str, str] = {}
@@ -825,32 +994,85 @@ class Streams(commands.Cog):
         return await self._tiktok_rsshub_feed(username)
 
     async def _tiktok_live_status(self, username: str) -> dict | None:
-        url = f"https://www.tiktok.com/@{username}/live"
-        status, text = await self._tiktok_get(url, browser=True)
-        if status != 200:
-            logger.warning("TikTok live page @%s HTTP %s", username, status)
-            return None
-        if not text:
-            logger.warning("TikTok live page @%s returned empty body", username)
-            return None
-        parsed = parse_tiktok_live_sigi(text)
-        if parsed is None:
+        """LIVE status via /@user/live HTML, then api-live / webcast JSON fallbacks."""
+        html_errors: list[str] = []
+        for host in _TIKTOK_LIVE_HTML_HOSTS:
+            url = f"{host}/@{username}/live"
+            status, text = await self._tiktok_get(url, browser=True)
+            if status != 200:
+                html_errors.append(f"{host} HTTP {status}")
+                continue
+            if not text:
+                html_errors.append(f"{host} empty")
+                continue
+            if _tiktok_html_looks_blocked(text):
+                html_errors.append(f"{host} blocked/tiny html={len(text)}")
+                continue
+            parsed = parse_tiktok_live_sigi(text)
+            if parsed is not None:
+                self._clear_tiktok_live_fail(username)
+                if parsed.get("is_live"):
+                    logger.info(
+                        "TikTok live detected @%s room=%s viewers=%s via html",
+                        username,
+                        parsed.get("room_id"),
+                        parsed.get("viewer_count"),
+                    )
+                return parsed
             has_sigi = "SIGI_STATE" in text or "__UNIVERSAL_DATA_FOR_REHYDRATION__" in text
-            logger.warning(
-                "TikTok live parse failed @%s (html=%s bytes, json_script=%s)",
-                username,
-                len(text),
-                has_sigi,
-            )
-            return _tiktok_live_not_live()
-        if parsed.get("is_live"):
-            logger.info(
-                "TikTok live detected @%s room=%s viewers=%s",
-                username,
-                parsed.get("room_id"),
-                parsed.get("viewer_count"),
-            )
-        return parsed
+            html_errors.append(f"{host} parse fail html={len(text)} json_script={has_sigi}")
+
+        api_url = (
+            "https://www.tiktok.com/api-live/user/room/"
+            f"?aid=1988&sourceType=54&uniqueId={username}"
+        )
+        api_status, api_body = await self._tiktok_get_json(api_url)
+        if api_body is not None:
+            parsed = parse_tiktok_api_live_room(api_body)
+            if parsed is not None:
+                self._clear_tiktok_live_fail(username)
+                if parsed.get("is_live"):
+                    logger.info(
+                        "TikTok live detected @%s room=%s viewers=%s via api-live",
+                        username,
+                        parsed.get("room_id"),
+                        parsed.get("viewer_count"),
+                    )
+                return parsed
+        elif api_status:
+            html_errors.append(f"api-live HTTP {api_status}")
+
+        webcast_url = (
+            "https://webcast.tiktok.com/webcast/room/info_by_user/"
+            f"?aid=1988&unique_id={username}"
+        )
+        wc_status, wc_body = await self._tiktok_get_json(
+            webcast_url,
+            headers={**_TIKTOK_API_HEADERS, "sec-fetch-site": "same-site"},
+        )
+        if wc_body is not None:
+            parsed = parse_tiktok_webcast_by_user(wc_body)
+            if parsed is not None:
+                self._clear_tiktok_live_fail(username)
+                if parsed.get("is_live"):
+                    logger.info(
+                        "TikTok live detected @%s room=%s viewers=%s via webcast",
+                        username,
+                        parsed.get("room_id"),
+                        parsed.get("viewer_count"),
+                    )
+                return parsed
+        elif wc_status:
+            html_errors.append(f"webcast HTTP {wc_status}")
+
+        detail = "; ".join(html_errors) if html_errors else "all sources failed"
+        self._log_tiktok_live_fail(
+            username,
+            "TikTok live parse failed @%s (%s)",
+            username,
+            detail,
+        )
+        return _tiktok_live_not_live()
 
     async def _tiktok_tikwm_posts(self, username: str) -> dict | None:
         url = f"https://www.tikwm.com/api/user/posts?unique_id={username}&count=10"
