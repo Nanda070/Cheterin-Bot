@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 const bannerRotation: TranslationDict = {
   'bannerRotation.title': 'Смена баннера и иконки',
   'bannerRotation.intro':
-    'Автоматически меняет баннер и иконку сервера по расписанию. Для баннера можно выбрать плейлист изображений или динамический баннер (самый активный по войсу, число участников и кто сейчас в войсе). Требуется право «Управление сервером», а для баннеров — уровень буста, открывающий функцию баннера.',
+    'Автоматически меняет баннер и иконку сервера по расписанию. Для баннера — плейлист или динамический баннер. Нужно «Управление сервером». Ошибка Discord «internal_error» чаще значит неверная картинка, а не буст/права.',
   'bannerRotation.moduleOn': 'Модуль включён',
   'bannerRotation.moduleOff': 'Модуль выключен',
 
@@ -42,7 +42,11 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.errorSave': 'Не удалось сохранить настройки',
   'bannerRotation.errorUpload': 'Не удалось загрузить изображение',
   'bannerRotation.errorDelete': 'Не удалось удалить изображение',
-  'bannerRotation.errorRotate': 'Не удалось запустить смену',
+  'bannerRotation.errorRotate': 'Discord отклонил смену оформления.',
+  'bannerRotation.errorBoost': 'Discord отклонил баннер — нужен уровень буста сервера для кастомного баннера.',
+  'bannerRotation.errorInvalidImage': 'Discord отклонил картинку (часто 500/internal_error): используйте 960×540 JPEG/PNG без альфы.',
+  'bannerRotation.errorRateLimited': 'Discord ограничил частоту смены — подождите и попробуйте снова.',
+  'bannerRotation.errorEmpty': 'Нечего менять: включите режим баннера с контентом или загрузите иконки.',
 }
 
 export default bannerRotation

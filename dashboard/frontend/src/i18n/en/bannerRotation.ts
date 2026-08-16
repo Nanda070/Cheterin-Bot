@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 const bannerRotation: TranslationDict = {
   'bannerRotation.title': 'Banner & Icon Rotation',
   'bannerRotation.intro':
-    'Automatically rotate the server banner and server icon on a schedule. For the banner, choose a static playlist or a dynamic banner (most active by voice, member count, and who’s in voice now). Requires Manage Server and, for banners, a boost level that unlocks the banner feature.',
+    'Automatically rotate the server banner and server icon on a schedule. For the banner, choose a static playlist or a dynamic banner (most active by voice, member count, and who’s in voice now). Requires Manage Server. Discord “internal_error” usually means a bad image payload, not missing boost/permissions.',
   'bannerRotation.moduleOn': 'Module on',
   'bannerRotation.moduleOff': 'Module off',
 
@@ -42,7 +42,11 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.errorSave': 'Failed to save settings',
   'bannerRotation.errorUpload': 'Failed to upload image',
   'bannerRotation.errorDelete': 'Failed to delete image',
-  'bannerRotation.errorRotate': 'Failed to trigger rotation',
+  'bannerRotation.errorRotate': 'Discord rejected the rotation.',
+  'bannerRotation.errorBoost': 'Discord rejected the banner — the server needs a boost level that allows a custom banner.',
+  'bannerRotation.errorInvalidImage': 'Discord rejected the image (often 500/internal_error): use 960×540 JPEG/PNG without alpha.',
+  'bannerRotation.errorRateLimited': 'Discord rate-limited banner/icon changes — wait and try again.',
+  'bannerRotation.errorEmpty': 'Nothing to rotate: enable a banner mode with content, or upload icons.',
 }
 
 export default bannerRotation

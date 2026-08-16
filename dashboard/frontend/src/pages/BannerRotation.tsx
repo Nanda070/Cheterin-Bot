@@ -1,6 +1,7 @@
 import { Image, Trash } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import {
+  ApiError,
   deleteBannerRotationImage,
   fetchBannerRotationSettings,
   fetchChannels,
@@ -207,7 +208,30 @@ export function BannerRotationPage() {
       }
       setSaved(t('bannerRotation.rotatedOk'))
     } catch (err) {
-      setError(formatApiError(err, t, 'bannerRotation.errorRotate'))
+      const code = err instanceof ApiError ? err.message : ''
+      const fallback =
+        code === 'nothing_to_rotate'
+          ? 'bannerRotation.errorEmpty'
+          : code === 'boost_required'
+            ? 'bannerRotation.errorBoost'
+            : code === 'invalid_image'
+              ? 'bannerRotation.errorInvalidImage'
+              : code === 'rate_limited'
+                ? 'bannerRotation.errorRateLimited'
+                : 'bannerRotation.errorRotate'
+      let message = formatApiError(err, t, fallback)
+      if (err instanceof ApiError) {
+        const discordText = typeof err.body.discord_text === 'string' ? err.body.discord_text.trim() : ''
+        const discordStatus = err.body.discord_status
+        const discordCode = err.body.discord_code
+        if (discordText) {
+          const meta = [discordStatus != null ? `HTTP ${discordStatus}` : '', discordCode != null ? `code ${discordCode}` : '']
+            .filter(Boolean)
+            .join(', ')
+          message = meta ? `${message} — Discord: ${discordText} (${meta})` : `${message} — Discord: ${discordText}`
+        }
+      }
+      setError(message)
     } finally {
       setRotating(false)
     }

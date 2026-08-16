@@ -126,9 +126,28 @@ async def rotate_now(request: web.Request) -> web.Response:
     cog = bot.get_cog("BannerRotationCog")
     if cog is None:
         return web.json_response({"error": "cog_unavailable"}, status=503)
-    ok = await cog.rotate_now(guild_id)
+    result = await cog.rotate_now(guild_id)
+    if not isinstance(result, dict):
+        result = {"ok": bool(result), "error": None if result else "discord_rejected"}
     cfg = banner_rotation_core.get_settings(guild_id)
-    return web.json_response({"ok": ok, "settings": _enrich(cfg)})
+    if not result.get("ok"):
+        error = str(result.get("error") or "discord_rejected")
+        status = {
+            "nothing_to_rotate": 400,
+            "missing_permissions": 403,
+            "boost_required": 502,
+            "invalid_image": 502,
+            "rate_limited": 429,
+            "discord_rejected": 502,
+            "internal_error": 500,
+            "cog_unavailable": 503,
+        }.get(error, 502)
+        body: dict = {"ok": False, "error": error, "settings": _enrich(cfg)}
+        for key in ("discord_status", "discord_code", "discord_text", "kind"):
+            if result.get(key) is not None:
+                body[key] = result[key]
+        return web.json_response(body, status=status)
+    return web.json_response({"ok": True, "settings": _enrich(cfg)})
 
 
 # ──────────────────────── asset preview ────────────────────────

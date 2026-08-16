@@ -52,7 +52,7 @@ def test_invalid_stored_banner_mode_falls_back_to_playlist():
     assert banner_rotation_core.get_settings(9)["banner_mode"] == "playlist"
 
 
-def test_render_dynamic_banner_png_dimensions_and_signature():
+def test_render_dynamic_banner_jpeg_dimensions_and_signature():
     raw = dynamic_banner.render_dynamic_banner(
         display_name="Тестер",
         avatar_bytes=None,
@@ -61,9 +61,10 @@ def test_render_dynamic_banner_png_dimensions_and_signature():
         guild_name="Cheterin Test",
         lang="ru",
     )
-    assert raw.startswith(b"\x89PNG")
+    assert raw.startswith(b"\xff\xd8\xff")
     img = Image.open(io.BytesIO(raw))
     assert img.size == (dynamic_banner.BANNER_W, dynamic_banner.BANNER_H)
+    assert img.mode == "RGB"
 
 
 def test_render_dynamic_banner_handles_missing_active_user_en():

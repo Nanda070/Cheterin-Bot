@@ -76,10 +76,12 @@ export async function updateLanguage(code: ServerLanguage['code']): Promise<Serv
 
 export class ApiError extends Error {
   status: number
+  body: Record<string, unknown>
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, body: Record<string, unknown> = {}) {
     super(message)
     this.status = status
+    this.body = body
     this.name = 'ApiError'
   }
 }
@@ -87,13 +89,18 @@ export class ApiError extends Error {
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { credentials: 'include', ...init })
   if (!response.ok) {
+    let body: Record<string, unknown> = {}
     let detail = ''
     try {
-      detail = ((await response.json()) as { error?: string }).error ?? ''
+      const parsed = (await response.json()) as Record<string, unknown>
+      if (parsed && typeof parsed === 'object') {
+        body = parsed
+        detail = typeof parsed.error === 'string' ? parsed.error : ''
+      }
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(response.status, detail || `HTTP ${response.status}`)
+    throw new ApiError(response.status, detail || `HTTP ${response.status}`, body)
   }
   return response.json() as Promise<T>
 }
