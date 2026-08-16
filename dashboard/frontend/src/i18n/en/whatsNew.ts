@@ -12,6 +12,12 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.quoteFix': 'Quotes: reply + mention only; bot replies are never quoted',
   'whatsNew.item.relations': 'Relations — hugs, romance, levels, and /relations commands',
   'whatsNew.item.valchecker': 'ValChecker — Valorant stats, match tracking, and /val commands',
+  'whatsNew.item.dynamicBannerWindowBoth':
+    'Dynamic banner: activity window in days, plus “both” mode with icon playlist',
+  'whatsNew.item.customsManualTeams':
+    'Customs: manual Team A / B assignment from the dashboard',
+  'whatsNew.item.valorantPremierIdeas':
+    'VALORANT tab: Premier apps, role panels, and moderated ideas',
 }
 
 export default whatsNew

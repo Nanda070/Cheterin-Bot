@@ -11,6 +11,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
   {
+    version: '2026.08.5',
+    date: '2026-08',
+    itemKeys: ['dynamicBannerWindowBoth', 'customsManualTeams', 'valorantPremierIdeas'],
+  },
+  {
     version: '2026.08.4',
     date: '2026-08',
     itemKeys: ['dynamicBanner', 'customs', 'levelRoleRemove'],

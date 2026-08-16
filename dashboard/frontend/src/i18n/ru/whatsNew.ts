@@ -12,6 +12,12 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.quoteFix': 'Цитаты: только ответ + упоминание бота; ответы бота не цитируются',
   'whatsNew.item.relations': 'Relations — обнимашки, романтика, уровни и /отношения',
   'whatsNew.item.valchecker': 'ValChecker — статистика Valorant, трекинг матчей и команды /val',
+  'whatsNew.item.dynamicBannerWindowBoth':
+    'Динамический баннер: окно активности в днях и режим «оба» с плейлистом иконок',
+  'whatsNew.item.customsManualTeams':
+    'Кастомки: ручное назначение команд A / B в панели',
+  'whatsNew.item.valorantPremierIdeas':
+    'Вкладка VALORANT: Premier-заявки, панели ролей и модерируемые идеи',
 }
 
 export default whatsNew
