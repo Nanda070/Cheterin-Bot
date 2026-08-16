@@ -250,6 +250,11 @@ export function LevelsPage() {
               onChange={(v) => patch((p) => ({ ...p, reset_on_leave: v }))}
               label={t('levels.resetOnLeave')}
             />
+            <Toggle
+              checked={settings.remove_old_level_roles}
+              onChange={(v) => patch((p) => ({ ...p, remove_old_level_roles: v }))}
+              label={t('levels.removeOldLevelRoles')}
+            />
           </Card>
 
           <Card className="flex flex-col gap-3">

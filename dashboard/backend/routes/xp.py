@@ -78,7 +78,7 @@ async def xp_put(request: web.Request) -> web.Response:
     if not isinstance(body, dict):
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    for flag in ("enabled", "public_leaderboard", "reset_on_leave"):
+    for flag in ("enabled", "public_leaderboard", "reset_on_leave", "remove_old_level_roles"):
         if not isinstance(body.get(flag, False), bool):
             return web.json_response({"error": f"invalid_{flag}"}, status=400)
 
@@ -142,6 +142,7 @@ async def xp_put(request: web.Request) -> web.Response:
         "enabled": body.get("enabled", False),
         "public_leaderboard": body.get("public_leaderboard", False),
         "reset_on_leave": body.get("reset_on_leave", False),
+        "remove_old_level_roles": body.get("remove_old_level_roles", False),
         "text": {
             "enabled": body["text"].get("enabled", True),
             "ignored_roles": body["text"].get("ignored_roles", []),

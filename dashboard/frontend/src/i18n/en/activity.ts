@@ -60,6 +60,7 @@ const activity: Record<string, string> = {
   'levels.publicLeaderboard': 'Public web leaderboard',
   'levels.publicLeaderboardUrlHint': 'Link for this server only:',
   'levels.resetOnLeave': 'Reset levels when members leave the server',
+  'levels.removeOldLevelRoles': 'Remove previous level roles when leveling up',
   'levels.textXp': 'XP for text messages',
   'levels.textXpHint': '15–25 XP per message, at most once per minute.',
   'levels.ignoredRoles': 'Ignored roles',

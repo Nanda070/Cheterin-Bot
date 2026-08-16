@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 /** Privacy policy and terms of service (public pages). */
 const legal: TranslationDict = {
   'privacy.title': 'Privacy Policy',
-  'privacy.lastUpdated': 'Last updated: August 2, 2026',
+  'privacy.lastUpdated': 'Last updated: August 16, 2026',
 
   'privacy.s1.title': '1. General provisions',
   'privacy.s1.p1':
@@ -125,6 +125,16 @@ const legal: TranslationDict = {
     'Discord user ID linked to Riot ID (name#tag), region, PUUID, optional match-tracking flag and last match cursor; optional match cache (stats). Channel IDs for match posts and status alerts. Data is fetched from HenrikDev / valorant-api when you use the commands.',
   'privacy.table.valchecker.retention':
     'Link and track settings — until you unlink or admins delete; match cache — until cleared; module settings — until changed',
+  'privacy.table.customs.module': 'Customs (Valorant lobbies)',
+  'privacy.table.customs.data':
+    'Per-server lobby settings; participant Discord IDs, ranks, team codes, map bans, scores, win/loss stats; optional schedule and channel/role IDs; temporary voice channel IDs while a match is active',
+  'privacy.table.customs.retention':
+    'Active lobby data until the lobby finishes or is cancelled; stats and settings until cleared by admins',
+  'privacy.table.bannerRotation.module': 'Banner and icon rotation',
+  'privacy.table.bannerRotation.data':
+    'Uploaded banner and server-icon image files (per server), rotation interval, optional log channel ID, last-rotation timestamps',
+  'privacy.table.bannerRotation.retention':
+    'Images and settings until deleted or changed by admins; files are stored only for the selected server',
   'privacy.table.news.module': 'News relay (main server feature)',
   'privacy.table.news.data': 'Source server, bot, and channel IDs; forwarded message content is not stored',
   'privacy.table.news.retention': 'Settings — until changed',
@@ -145,7 +155,7 @@ const legal: TranslationDict = {
 
   'privacy.s4.title': '4. Why we process data',
   'privacy.s4.li1':
-    'To run features you use: tickets, supply runs, rooms, roles, verification, events, economy, polls, sticky and scheduled messages, custom commands, timed roles, birthdays, and games.',
+    'To run features you use: tickets, supply runs, rooms, roles, verification, events, economy, polls, sticky and scheduled messages, custom commands, timed roles, birthdays, Customs lobbies, banner/icon rotation, and games.',
   'privacy.s4.li2': 'To check who may use the dashboard.',
   'privacy.s4.li3': 'For moderation and safety (anti-spam, server logging, owner alerts).',
   'privacy.s4.li4': 'To show statistics (invites, supply attendance, economy tops) to admins and moderators.',
@@ -208,7 +218,7 @@ const legal: TranslationDict = {
     'Questions about data: contact your server\'s admins (or open a ticket on the main server). The Service is operated by Cheterin Group Ø. For bot and hosting questions — Nandak070.',
 
   'terms.title': 'Terms of Use',
-  'terms.lastUpdated': 'Last updated: August 2, 2026',
+  'terms.lastUpdated': 'Last updated: August 16, 2026',
 
   'terms.s1.title': '1. Terms and definitions',
   'terms.s1.li1.prefix': '"Service"',
@@ -250,7 +260,7 @@ const legal: TranslationDict = {
   'terms.s3.li1':
     'moderation: anti-spam, AutoMod filters, spam traps (softban/ban), lockdown, verification, unified action log, case timeline;',
   'terms.s3.li2':
-    'levels and ranking: XP for text and voice, reward roles, rank/profile cards, cosmetics, leaderboards;',
+    'levels and ranking: XP for text and voice, reward roles (optional remove previous level roles on level-up), rank/profile cards, cosmetics, leaderboards;',
   'terms.s3.li3': 'server logging and voice activity statistics;',
   'terms.s3.li4': 'tickets and feedback with categories and resolutions;',
   'terms.s3.li5':
@@ -272,6 +282,10 @@ const legal: TranslationDict = {
   'terms.s3.li16': 'Mafia and Bunker games with personal web action links and host controls;',
   'terms.s3.li16b':
     'ValChecker: Valorant account link, profiles, match history/tracking, compare, server leaderboard, and status alerts (uses HenrikDev / valorant-api);',
+  'terms.s3.li16b2':
+    'Customs: Valorant custom lobbies with solo/team-code join, rank roles, map pool/votes, team balance, voice move, scores, rematch, bans, and schedules;',
+  'terms.s3.li16b3':
+    'banner and server-icon rotation: scheduled per-server image rotation with dashboard uploads and optional log channel;',
   'terms.s3.li16c': 'member /help command with short paginated feature overview;',
   'terms.s3.li17':
     'a web dashboard to manage the above, with server selection, RU/EN UI and bot language, Ctrl+K navigation, and an audit of panel actions.',

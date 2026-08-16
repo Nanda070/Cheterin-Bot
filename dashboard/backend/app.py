@@ -75,7 +75,9 @@ from .routes.auto_reactions import routes as auto_reactions_routes
 from .routes.quote import routes as quote_routes
 from .routes.relations import routes as relations_routes
 from .routes.valchecker import routes as valchecker_routes
+from .routes.customs import routes as customs_routes
 from .routes.modules import routes as modules_routes
+from .routes.banner_rotation import routes as banner_rotation_routes
 from .audit_middleware import audit_middleware
 from .guild_context import guild_context_middleware
 from .session import setup_session
@@ -176,7 +178,9 @@ def create_app(
     app.add_routes(quote_routes)
     app.add_routes(relations_routes)
     app.add_routes(valchecker_routes)
+    app.add_routes(customs_routes)
     app.add_routes(modules_routes)
+    app.add_routes(banner_rotation_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

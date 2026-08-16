@@ -5,6 +5,8 @@ import admin from './en/admin'
 import community from './en/community'
 import type { TranslationDict } from './types'
 import activity from './en/activity'
+import customs from './en/customs'
+import bannerRotation from './en/bannerRotation'
 import docsShell from './en/docsShell'
 import legal from './en/legal'
 import landing from './en/landing'
@@ -19,6 +21,8 @@ const en: TranslationDict = {
   ...auth,
   ...admin,
   ...activity,
+  ...customs,
+  ...bannerRotation,
   ...community,
   ...docsShell,
   ...legal,

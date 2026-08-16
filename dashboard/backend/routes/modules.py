@@ -8,6 +8,8 @@ from aiohttp import web
 
 import auto_reactions_core
 import automod_core
+import banner_rotation_core
+import customs_core
 import birthdays_core
 import bunker_core
 import casino_core
@@ -46,6 +48,8 @@ MODULE_SETTINGS_GETTERS = {
     "automod": automod_core.get_settings,
     "customCommands": custom_commands_core.get_settings,
     "valchecker": valchecker_core.get_settings,
+    "customs": customs_core.get_settings,
+    "bannerRotation": banner_rotation_core.get_settings,
 }
 
 

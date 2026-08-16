@@ -11,6 +11,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
   {
+    version: '2026.08.3',
+    date: '2026-08',
+    itemKeys: ['bannerRotation', 'customs', 'levelRoleRemove'],
+  },
+  {
     version: '2026.08.2',
     date: '2026-08',
     itemKeys: ['quoteFix', 'relations', 'valchecker'],

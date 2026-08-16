@@ -62,6 +62,7 @@ def get_settings(guild_id: int) -> dict:
         "enabled": bool(data.get("enabled", False)),
         "public_leaderboard": bool(data.get("public_leaderboard", False)),
         "reset_on_leave": bool(data.get("reset_on_leave", False)),
+        "remove_old_level_roles": bool(data.get("remove_old_level_roles", False)),
         "text": {
             "enabled": bool(text.get("enabled", True)),
             "ignored_roles": [str(v) for v in text.get("ignored_roles", [])],
@@ -165,10 +166,19 @@ def voice_member_multiplier(scope: dict, user_id: int) -> int:
 # ────────────────────────── Награды ──────────────────────────
 
 def deserved_level_roles(settings: dict, level: int) -> set[str]:
-    result: set[str] = set()
-    for reward in settings["level_rewards"]:
-        if reward["level"] <= level:
-            result.update(reward["role_ids"])
+    eligible = [r for r in settings["level_rewards"] if r["level"] <= level]
+    if not eligible:
+        return set()
+    if settings.get("remove_old_level_roles"):
+        highest = max(r["level"] for r in eligible)
+        result: set[str] = set()
+        for reward in eligible:
+            if reward["level"] == highest:
+                result.update(reward["role_ids"])
+        return result
+    result = set()
+    for reward in eligible:
+        result.update(reward["role_ids"])
     return result
 
 

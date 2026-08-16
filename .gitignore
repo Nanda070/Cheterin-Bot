@@ -59,4 +59,6 @@ relations.db
 verification.db
 *.migrated.bak
 venv/
-.env 
+.env
+card_bgs/
+banner_rotation_assets/

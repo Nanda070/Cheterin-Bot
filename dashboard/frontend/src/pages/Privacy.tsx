@@ -67,6 +67,8 @@ const TABLE_ROW_KEYS = [
   'ownerAlerts',
   'games',
   'valchecker',
+  'customs',
+  'bannerRotation',
   'news',
   'config',
 ] as const

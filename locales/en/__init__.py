@@ -28,6 +28,8 @@ from locales.en.streams import MESSAGES as streams_messages
 from locales.en.supply import MESSAGES as supply_messages
 from locales.en.quote import MESSAGES as quote_messages
 from locales.en.relations import MESSAGES as relations_messages
+from locales.en.customs import MESSAGES as customs_messages
+from locales.en.banner_rotation import MESSAGES as banner_rotation_messages
 from locales.en.valchecker import MESSAGES as valchecker_messages
 from locales.en.tempban import MESSAGES as tempban_messages
 from locales.en.verification import MESSAGES as verification_messages
@@ -57,6 +59,8 @@ MESSAGES = merge_messages(
     tempban_messages,
     quote_messages,
     relations_messages,
+    customs_messages,
+    banner_rotation_messages,
     valchecker_messages,
     daily_topic_messages,
     streams_messages,

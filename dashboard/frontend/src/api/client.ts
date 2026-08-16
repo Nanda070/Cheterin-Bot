@@ -961,6 +961,7 @@ export interface XpSettings {
   enabled: boolean
   public_leaderboard: boolean
   reset_on_leave: boolean
+  remove_old_level_roles: boolean
   text: XpScopeSettings
   voice: XpVoiceSettings
   announce: {
@@ -2763,3 +2764,242 @@ export function fetchAutoReactions(): Promise<AutoReactionsSettings> {
 export function updateAutoReactions(settings: AutoReactionsSettings): Promise<AutoReactionsSettings> {
   return apiFetch('/api/auto-reactions', jsonInit('PUT', settings))
 }
+
+export interface CustomsRankInfo {
+  id: string
+  name: string
+  weight: number
+}
+
+export interface CustomsMapInfo {
+  id: string
+  name: string
+  enabled: boolean
+}
+
+export interface CustomsSettings {
+  enabled: boolean
+  channel_id: string
+  host_role_id: string
+  /** Optional Discord category for auto-created lobby/team voice channels. */
+  voice_category_id: string
+  /** Create a waiting voice lobby on publish (default on). */
+  auto_lobby_vc: boolean
+  /** Create team VCs and move players on Start (default on). */
+  auto_move_on_start: boolean
+  rank_roles: Record<string, string>
+  map_pool: Record<string, boolean>
+  require_rank_role: boolean
+  /** Legacy; check-in UI removed from lobby embed. */
+  checkin_enabled?: boolean
+  vote_seconds: number
+  xp_on_win: number
+  default_mode: 'solo' | 'team_code'
+  default_name: string
+  default_notes: string
+  default_ping: CustomsPingMode
+  ping_role_id: string
+  default_signup_minutes: number
+  avoid_last_map: boolean
+  results_channel_id: string
+  default_banned_maps: string[]
+  features: {
+    side_random: boolean
+    voting: boolean
+  }
+  last_map_id: string
+  schedules: CustomsSchedule[]
+  ranks: CustomsRankInfo[]
+  maps: CustomsMapInfo[]
+}
+
+export type CustomsPingMode = 'none' | 'participants' | 'role'
+
+export interface CustomsPlayer {
+  user_id: string
+  rank: string
+  rank_name: string
+  team_code: string
+  team: string | null
+}
+
+export interface CustomsLobbySummary {
+  id: string
+  name: string
+  notes: string
+  status: string
+  join_mode: 'solo' | 'team_code'
+  channel_id: string
+  message_id: string
+  host_id: string
+  players: number
+  max_players: number
+  map_id: string
+  map_name: string
+  side: string
+  ping: CustomsPingMode
+  banned_maps: string[]
+  signup_minutes: number
+  signup_ends_at: number
+  score: { a: number; b: number }
+  players_list: CustomsPlayer[]
+  subs_list: CustomsPlayer[]
+  created_at: number
+  jump_url?: string
+}
+
+export interface CreateCustomsLobbySpec {
+  name: string
+  notes?: string
+  join_mode: 'solo' | 'team_code'
+  channel_id: string
+  ping?: CustomsPingMode
+  signup_minutes?: number
+  banned_maps?: string[]
+}
+
+export interface CustomsSchedule {
+  id: string
+  enabled: boolean
+  weekday: number
+  hour: number
+  minute: number
+  name: string
+  notes: string
+  join_mode: 'solo' | 'team_code'
+  channel_id: string
+  ping: CustomsPingMode
+  signup_minutes: number
+  last_run?: string
+}
+
+export async function fetchCategories(): Promise<ChannelInfo[]> {
+  const body = await apiFetch<{ categories: { id: string; name: string }[] }>('/api/customs/categories')
+  return body.categories.map((c) => ({ id: c.id, name: c.name }))
+}
+
+export function fetchCustomsSettings(): Promise<CustomsSettings> {
+  return apiFetch('/api/customs')
+}
+
+export function updateCustomsSettings(settings: Partial<CustomsSettings>): Promise<CustomsSettings> {
+  return apiFetch('/api/customs', jsonInit('PUT', settings))
+}
+
+export function fetchCustomsLobbies(status: string = 'active'): Promise<CustomsLobbySummary[]> {
+  return apiFetch<{ lobbies: CustomsLobbySummary[] }>(`/api/customs/lobbies?status=${encodeURIComponent(status)}`).then(
+    (r) => r.lobbies,
+  )
+}
+
+export function createCustomsLobby(spec: CreateCustomsLobbySpec): Promise<CustomsLobbySummary> {
+  return apiFetch('/api/customs/lobbies', jsonInit('POST', spec))
+}
+
+export function rematchCustomsLobby(lobbyId: string): Promise<CustomsLobbySummary> {
+  return apiFetch(`/api/customs/lobbies/${encodeURIComponent(lobbyId)}/rematch`, jsonInit('POST', {}))
+}
+
+export function kickCustomsPlayer(lobbyId: string, userId: string): Promise<{ ok: boolean; lobby: CustomsLobbySummary }> {
+  return apiFetch(`/api/customs/lobbies/${encodeURIComponent(lobbyId)}/kick`, jsonInit('POST', { user_id: userId }))
+}
+
+export function setCustomsLobbyBans(
+  lobbyId: string,
+  mapIds: string[],
+): Promise<{ ok: boolean; lobby: CustomsLobbySummary }> {
+  return apiFetch(`/api/customs/lobbies/${encodeURIComponent(lobbyId)}/bans`, jsonInit('PUT', { map_ids: mapIds }))
+}
+
+export function setCustomsLobbyScore(
+  lobbyId: string,
+  scoreA: number,
+  scoreB: number,
+): Promise<{ ok: boolean; lobby: CustomsLobbySummary }> {
+  return apiFetch(
+    `/api/customs/lobbies/${encodeURIComponent(lobbyId)}/score`,
+    jsonInit('POST', { score_a: scoreA, score_b: scoreB }),
+  )
+}
+
+export function cancelCustomsLobby(lobbyId: string): Promise<{ ok: boolean; lobby: CustomsLobbySummary }> {
+  return apiFetch(`/api/customs/lobbies/${encodeURIComponent(lobbyId)}/cancel`, jsonInit('POST', {}))
+}
+
+export function createCustomsSchedule(spec: Omit<CustomsSchedule, 'id' | 'last_run'>): Promise<CustomsSchedule> {
+  return apiFetch('/api/customs/schedules', jsonInit('POST', spec))
+}
+
+export function deleteCustomsSchedule(scheduleId: string): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/customs/schedules/${encodeURIComponent(scheduleId)}`, jsonInit('DELETE'))
+}
+
+// ──────────────────────── Banner Rotation ────────────────────────
+
+export interface BannerRotationImage {
+  id: string
+  filename: string
+  original_name: string
+  uploaded_at: number
+  url: string
+}
+
+export interface BannerRotationSettings {
+  enabled: boolean
+  banner_enabled: boolean
+  icon_enabled: boolean
+  interval_minutes: number
+  log_channel_id: string
+  banners: BannerRotationImage[]
+  icons: BannerRotationImage[]
+  last_banner_id: string
+  last_icon_id: string
+  last_banner_at: number
+  last_icon_at: number
+  next_run_at: number
+}
+
+export function fetchBannerRotationSettings(): Promise<BannerRotationSettings> {
+  return apiFetch('/api/banner-rotation')
+}
+
+export function updateBannerRotationSettings(
+  settings: Partial<Pick<BannerRotationSettings, 'enabled' | 'banner_enabled' | 'icon_enabled' | 'interval_minutes' | 'log_channel_id'>>,
+): Promise<BannerRotationSettings> {
+  return apiFetch('/api/banner-rotation', jsonInit('PUT', settings))
+}
+
+export async function uploadBannerRotationImage(
+  kind: 'banner' | 'icon',
+  file: File,
+): Promise<{ ok: boolean; image: BannerRotationImage }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await fetch(`/api/banner-rotation/${kind}s`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+  if (!response.ok) {
+    let detail = ''
+    try {
+      detail = ((await response.json()) as { error?: string }).error ?? ''
+    } catch {
+      /* non-JSON */
+    }
+    throw new ApiError(response.status, detail || `HTTP ${response.status}`)
+  }
+  return response.json()
+}
+
+export function deleteBannerRotationImage(
+  kind: 'banner' | 'icon',
+  imageId: string,
+): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/banner-rotation/${kind}s/${encodeURIComponent(imageId)}`, jsonInit('DELETE'))
+}
+
+export function triggerBannerRotation(): Promise<{ ok: boolean; settings: BannerRotationSettings }> {
+  return apiFetch('/api/banner-rotation/rotate-now', jsonInit('POST', {}))
+}
+

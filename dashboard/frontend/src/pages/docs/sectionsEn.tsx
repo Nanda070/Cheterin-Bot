@@ -25,7 +25,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           Cheterin is a multi-purpose Discord bot with a web control panel. It covers what a gaming community needs:
           moderation and raid protection, levels, server logging, tickets and feedback, welcomes and roles, a message
           builder, events, polls, brackets, economy and casino, custom commands, scheduled and sticky messages, Games
-          tools (GTA5RP family/supply, ValChecker for Valorant), private voice rooms, stream notifications, and more.
+          tools (GTA5RP family/supply, ValChecker and Customs for Valorant), private voice rooms, stream notifications,
+          banner/icon rotation, and more.
         </P>
         <P>
           The idea is simple: <strong>few chat commands, most setup in the browser</strong>. Almost every feature has
@@ -57,7 +58,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <Table
           headers={['Module', 'What it does', 'Panel section']}
           rows={[
-            ['Member levels', 'XP for text and voice, reward roles, /levels rank, leaderboard', 'Engage → Member levels'],
+            ['Member levels', 'XP for text and voice, reward roles (optional remove previous on level-up), /levels rank, leaderboard', 'Engage → Member levels'],
             ['Voice statistics', 'Activity by hour/day, top channels and members', 'Engage → Voice statistics'],
             ['Logging', 'Server events to Discord channels, per event type', 'Server → Logging'],
             ['Dashboard audit', 'Which moderators changed what in the panel', 'Server → Settings → Dashboard audit'],
@@ -98,6 +99,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Play → Family → Supply'],
             ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Play → Family'],
             ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Play → ValChecker'],
+            ['Customs', 'Valorant custom lobbies: ranks, map pool/votes, balance, voice move, scores, schedules', 'Play → Customs'],
+            ['Banner & icon rotation', 'Scheduled server banner and icon rotation with dashboard uploads', 'Server → Banner & icon rotation'],
             ['Private voice rooms', 'Personal voice channels with a control panel', 'People → Private voice rooms'],
             ['Relations', 'Pair HP actions, romance, marriages', 'People → Relations'],
             ['News relay', 'Forward messages from a source server', 'Super admin → News relay'],
@@ -169,11 +172,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Play → Mafia', 'Module toggle, defaults, active games'],
             ['Play → Bunker', 'Module toggle, defaults, active games'],
             ['Play → ValChecker', 'Module toggle, match/status channels, poll interval'],
+            ['Play → Customs', 'Lobbies, ranks, map pool, voice, scores, rematch, schedules'],
             ['Play → Family', 'Roster, applications, birthdays; Supply tab for runs'],
             ['Play → Streams', 'Twitch / YouTube subscriptions'],
             ['Server → Moderation', 'Lockdown, anti-spam, spam traps, verification, anti-raid'],
             ['Server → Automod', 'Message filters, punishments, warn escalation'],
             ['Server → Logging', 'Toggle and channel for each server event type'],
+            ['Server → Banner & icon rotation', 'Enable rotation, interval, upload banners/icons, optional log channel'],
             ['Server → Server entry', 'Welcomes, auto-roles, sticky roles, invites'],
             ['Server → Members & roles', 'Member search, cards, bulk roles, timed roles'],
             ['Server → Settings', 'Language, timezone, setup health, owner alerts, custom commands, audit'],
@@ -318,7 +323,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <UL>
           <li>Level curve rises with level (higher levels cost more); cap is 999.</li>
           <li>
-            <strong>Level rewards:</strong> roles tied to each level - granted automatically on reach.
+            <strong>Level rewards:</strong> roles tied to each level — granted automatically on reach. Optional toggle
+            removes previous level-reward roles when a higher tier is earned (keeps only the highest matched tier).
           </li>
           <li>
             <strong>Voice-time rewards:</strong> a separate track - roles for total talked time (e.g. “2 weeks in
@@ -1706,6 +1712,45 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           Dashboard: match channel (auto-posts for tracked players), status alert channel, poll interval (min 30s).
           Member overview: <Code>/help</Code>.
         </P>
+      </>
+    ),
+  },
+  {
+    id: 'customs',
+    title: 'Customs',
+    group: 'Modules',
+    content: (
+      <>
+        <H>Customs (Valorant lobbies)</H>
+        <P>
+          Dashboard-published custom lobbies separate from Events: solo or team-code join, rank roles, map pool and
+          votes, fair team balance, voice lobby/team move, back-to-lobby, score embed, rematch, map bans, and weekly
+          schedules. Off by default — enable under <strong>Play → Customs</strong>. Events stay unchanged.
+        </P>
+        <UL>
+          <li>Hosts manage the match from lobby buttons; players have no required slash commands.</li>
+          <li>Optional XP on win hooks into Member levels when configured.</li>
+          <li>Requires Manage Channels / Move Members for auto voice features; graceful if permissions are missing.</li>
+        </UL>
+      </>
+    ),
+  },
+  {
+    id: 'banner-rotation',
+    title: 'Banner & icon rotation',
+    group: 'Modules',
+    content: (
+      <>
+        <H>Banner and server icon rotation</H>
+        <P>
+          Rotate the Discord server banner and/or server icon on a schedule (15–2880 minutes). Upload multiple images in
+          the panel, optionally log each change to a channel. Off by default —{' '}
+          <strong>Server → Banner & icon rotation</strong>.
+        </P>
+        <UL>
+          <li>Bot needs Manage Server. Banner rotation also needs a boost level that unlocks the banner feature.</li>
+          <li>Permission and boost errors are logged without crashing the loop.</li>
+        </UL>
       </>
     ),
   },

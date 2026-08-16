@@ -60,6 +60,7 @@ const activity: Record<string, string> = {
   'levels.publicLeaderboard': 'Публичная веб-страница рейтинга',
   'levels.publicLeaderboardUrlHint': 'Ссылка только для этого сервера:',
   'levels.resetOnLeave': 'Сбрасывать рейтинг выходящим с сервера участникам',
+  'levels.removeOldLevelRoles': 'Снимать старую роль при повышении уровня',
   'levels.textXp': 'Опыт за текстовые сообщения',
   'levels.textXpHint': '15–25 XP за сообщение, не чаще раза в минуту.',
   'levels.ignoredRoles': 'Игнорируемые роли',

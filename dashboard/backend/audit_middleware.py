@@ -98,9 +98,20 @@ ACTION_LABELS: list[tuple[str, str, str]] = [
     ("PUT", "/api/bot-profile", "audit.action.bot_profile"),
     ("PUT", "/api/starboard", "audit.action.starboard"),
     ("PUT", "/api/valchecker", "audit.action.valchecker"),
+    ("PUT", "/api/customs", "audit.action.customs"),
+    ("POST", "/api/customs/lobbies", "audit.action.customs_lobby"),
+    ("POST", "/api/customs/schedules", "audit.action.customs_schedule"),
+    ("DELETE", "/api/customs/schedules", "audit.action.customs_schedule_delete"),
+    ("POST", "/api/customs/lobbies/", "audit.action.customs_lobby"),
     ("PUT", "/api/auto-reactions", "audit.action.auto_reactions"),
     ("PUT", "/api/quote", "audit.action.quote"),
     ("POST", "/api/tempban-settings/publish-warning", "audit.action.tempban_publish"),
+    ("PUT", "/api/banner-rotation", "audit.action.banner_rotation"),
+    ("POST", "/api/banner-rotation/banners", "audit.action.banner_rotation"),
+    ("DELETE", "/api/banner-rotation/banners/", "audit.action.banner_rotation"),
+    ("POST", "/api/banner-rotation/icons", "audit.action.banner_rotation"),
+    ("DELETE", "/api/banner-rotation/icons/", "audit.action.banner_rotation"),
+    ("POST", "/api/banner-rotation/rotate-now", "audit.action.banner_rotation"),
 ]
 
 # Path-only fallbacks (any method) for older/unknown verb combinations.
@@ -140,8 +151,10 @@ PATH_LABELS: list[tuple[str, str]] = [
     ("/api/roles", "audit.action.mass_assign"),
     ("/api/lockdown", "audit.action.lockdown_on"),
     ("/api/bot-profile", "audit.action.bot_profile"),
+    ("/api/banner-rotation", "audit.action.banner_rotation"),
     ("/api/starboard", "audit.action.starboard"),
     ("/api/valchecker", "audit.action.valchecker"),
+    ("/api/customs", "audit.action.customs"),
     ("/api/auto-reactions", "audit.action.auto_reactions"),
 ]
 

@@ -125,6 +125,8 @@ class ChetBot(commands.Bot):
         await self.load_extension("relations")
         await self.load_extension("help_cog")
         await self.load_extension("valchecker")
+        await self.load_extension("banner_rotation")
+        await self.load_extension("customs")
 
         # Синхронизация команд вынесена в on_ready: для режима per_guild нужен уже
         # заполненный список self.guilds (в setup_hook он ещё пуст).

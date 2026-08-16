@@ -5,6 +5,8 @@ import admin from './ru/admin'
 import community from './ru/community'
 import type { TranslationDict } from './types'
 import activity from './ru/activity'
+import customs from './ru/customs'
+import bannerRotation from './ru/bannerRotation'
 import docsShell from './ru/docsShell'
 import legal from './ru/legal'
 import landing from './ru/landing'
@@ -19,6 +21,8 @@ const ru: TranslationDict = {
   ...auth,
   ...admin,
   ...activity,
+  ...customs,
+  ...bannerRotation,
   ...community,
   ...docsShell,
   ...legal,
