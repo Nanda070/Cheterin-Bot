@@ -2866,6 +2866,8 @@ export interface CustomsLobbySummary {
   score: { a: number; b: number }
   players_list: CustomsPlayer[]
   subs_list: CustomsPlayer[]
+  team_a: CustomsPlayer[]
+  team_b: CustomsPlayer[]
   created_at: number
   jump_url?: string
 }
@@ -2933,6 +2935,17 @@ export function setCustomsLobbyBans(
   return apiFetch(`/api/customs/lobbies/${encodeURIComponent(lobbyId)}/bans`, jsonInit('PUT', { map_ids: mapIds }))
 }
 
+export function setCustomsLobbyTeams(
+  lobbyId: string,
+  teamA: string[],
+  teamB: string[],
+): Promise<{ ok: boolean; lobby: CustomsLobbySummary }> {
+  return apiFetch(
+    `/api/customs/lobbies/${encodeURIComponent(lobbyId)}/teams`,
+    jsonInit('PUT', { team_a: teamA, team_b: teamB }),
+  )
+}
+
 export function setCustomsLobbyScore(
   lobbyId: string,
   scoreA: number,
@@ -2969,7 +2982,8 @@ export interface BannerRotationImage {
 export interface BannerRotationSettings {
   enabled: boolean
   banner_enabled: boolean
-  banner_mode: 'playlist' | 'dynamic'
+  banner_mode: 'playlist' | 'dynamic' | 'both'
+  dynamic_window_days: number
   icon_enabled: boolean
   interval_minutes: number
   log_channel_id: string
@@ -2990,7 +3004,7 @@ export function updateBannerRotationSettings(
   settings: Partial<
     Pick<
       BannerRotationSettings,
-      'enabled' | 'banner_enabled' | 'banner_mode' | 'icon_enabled' | 'interval_minutes' | 'log_channel_id'
+      'enabled' | 'banner_enabled' | 'banner_mode' | 'dynamic_window_days' | 'icon_enabled' | 'interval_minutes' | 'log_channel_id'
     >
   >,
 ): Promise<BannerRotationSettings> {

@@ -117,7 +117,7 @@ export function BannerRotationPage() {
       .then((cfg) =>
         setSettings({
           ...cfg,
-          banner_mode: cfg.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
+          banner_mode: cfg.banner_mode === 'both' ? 'both' : cfg.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
         }),
       )
       .catch(() => setError(t('bannerRotation.errorLoad')))
@@ -140,9 +140,10 @@ export function BannerRotationPage() {
   const bannerModeOptions = [
     { id: 'playlist', name: t('bannerRotation.bannerMode.playlist') },
     { id: 'dynamic', name: t('bannerRotation.bannerMode.dynamic') },
+    { id: 'both', name: t('bannerRotation.bannerMode.both') },
   ]
 
-  const dynamicMode = settings.banner_mode === 'dynamic'
+  const dynamicMode = settings.banner_mode === 'dynamic' || settings.banner_mode === 'both'
 
   const save = async () => {
     setBusy(true)
@@ -153,13 +154,14 @@ export function BannerRotationPage() {
         enabled: settings.enabled,
         banner_enabled: settings.banner_enabled,
         banner_mode: settings.banner_mode,
+        dynamic_window_days: settings.dynamic_window_days,
         icon_enabled: settings.icon_enabled,
         interval_minutes: settings.interval_minutes,
         log_channel_id: settings.log_channel_id,
       })
       setSettings({
         ...updated,
-        banner_mode: updated.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
+        banner_mode: updated.banner_mode === 'both' ? 'both' : updated.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
       })
       setSaved(t('common.saved'))
     } catch (err) {
@@ -278,13 +280,27 @@ export function BannerRotationPage() {
           <Select
             id="br-banner-mode"
             value={settings.banner_mode}
-            onChange={(id) => patch({ banner_mode: id === 'dynamic' ? 'dynamic' : 'playlist' })}
+          onChange={(id) => patch({ banner_mode: id === 'both' ? 'both' : id === 'dynamic' ? 'dynamic' : 'playlist' })}
             options={bannerModeOptions}
             placeholder={t('bannerRotation.bannerMode.playlist')}
             disabled={!settings.banner_enabled}
           />
           <span className="text-xs text-muted">{t('bannerRotation.bannerModeHint')}</span>
         </label>
+        {dynamicMode && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted">{t('bannerRotation.dynamicWindowDays')}</span>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={settings.dynamic_window_days}
+              onChange={(e) => patch({ dynamic_window_days: Math.min(365, Math.max(1, Number(e.target.value) || 30)) })}
+              className="w-40 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+            />
+            <span className="text-xs text-muted">{t('bannerRotation.dynamicWindowDaysHint')}</span>
+          </label>
+        )}
         <Toggle
           checked={settings.icon_enabled}
           onChange={(v) => patch({ icon_enabled: v })}

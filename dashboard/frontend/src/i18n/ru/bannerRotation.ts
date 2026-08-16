@@ -15,9 +15,12 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.bannerMode': 'Режим баннера',
   'bannerRotation.bannerMode.playlist': 'Плейлист',
   'bannerRotation.bannerMode.dynamic': 'Динамический',
+  'bannerRotation.bannerMode.both': 'Динамический баннер + плейлист иконок',
   'bannerRotation.bannerModeHint':
     'Динамический баннер генерируется по данным войс-трекера: самый активный (аватар и ник), число участников и сколько сейчас в войсе. Иконка по-прежнему из плейлиста.',
   'bannerRotation.iconEnabled': 'Менять иконку сервера',
+  'bannerRotation.dynamicWindowDays': 'Окно активности (дни)',
+  'bannerRotation.dynamicWindowDaysHint': 'Участник для динамического баннера выбирается только из голосовой активности этого сервера.',
   'bannerRotation.interval': 'Интервал смены (минуты)',
   'bannerRotation.intervalHint': 'От 15 до 2880 (48 ч). Баннеры и иконки используют один интервал.',
   'bannerRotation.logChannel': 'Канал для логов (необязательно)',

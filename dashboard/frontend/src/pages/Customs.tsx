@@ -13,6 +13,7 @@ import {
   kickCustomsPlayer,
   rematchCustomsLobby,
   setCustomsLobbyBans,
+  setCustomsLobbyTeams,
   setCustomsLobbyScore,
   updateCustomsSettings,
   type ChannelInfo,
@@ -87,6 +88,7 @@ function LobbyCard({
   onRematch,
   onKick,
   onBans,
+  onTeams,
   onScore,
   t,
 }: {
@@ -98,6 +100,7 @@ function LobbyCard({
   onRematch: () => void
   onKick?: (userId: string) => void
   onBans?: (ids: string[]) => void
+  onTeams?: (teamA: string[], teamB: string[]) => void
   onScore?: (a: number, b: number) => void
   t: (key: string) => string
 }) {
@@ -105,6 +108,7 @@ function LobbyCard({
   const [scoreB, setScoreB] = useState(String(lob.score?.b ?? 0))
   const active = ['open', 'checkin', 'ready', 'live'].includes(lob.status)
   const enabledMaps = maps.filter((m) => m.enabled !== false)
+  const [teamA, setTeamA] = useState<string[]>(lob.team_a?.map((p) => p.user_id) || [])
 
   const toggleBan = (mapId: string) => {
     if (!onBans) return
@@ -153,6 +157,37 @@ function LobbyCard({
                   ))}
                 </ul>
               )}
+            </div>
+          )}
+          {active && onTeams && (lob.players_list || []).length > 0 && (
+            <div className="flex flex-col gap-2">
+              <div>
+                <p className="text-sm text-foreground">{t('customs.manualTeamsTitle')}</p>
+                <p className="text-xs text-muted">{t('customs.manualTeamsHint')}</p>
+              </div>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {(lob.players_list || []).map((p) => {
+                  const inA = teamA.includes(p.user_id)
+                  return (
+                    <div key={`team-${p.user_id}`} className="flex items-center justify-between gap-2 rounded border border-border px-2 py-1">
+                      <span className="truncate text-xs text-muted">{customsPlayerLabel(p)}</span>
+                      <Button
+                        variant={inA ? 'primary' : 'ghost'}
+                        onClick={() => setTeamA((current) => (inA ? current.filter((id) => id !== p.user_id) : [...current, p.user_id]))}
+                      >
+                        A
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+              <Button
+                variant="secondary"
+                disabled={teamA.length > 5 || (lob.players_list || []).length - teamA.length > 5}
+                onClick={() => onTeams(teamA, (lob.players_list || []).map((p) => p.user_id).filter((id) => !teamA.includes(id)))}
+              >
+                {t('customs.manualTeamsSave')}
+              </Button>
             </div>
           )}
           {active && onBans && (
@@ -332,6 +367,15 @@ export function CustomsPage() {
     }
   }
 
+  const saveTeams = async (lobbyId: string, teamA: string[], teamB: string[]) => {
+    try {
+      await setCustomsLobbyTeams(lobbyId, teamA, teamB)
+      reload()
+    } catch (err) {
+      setError(formatApiError(err, t, 'customs.errorTeams'))
+    }
+  }
+
   const saveScore = async (lobbyId: string, a: number, b: number) => {
     try {
       await setCustomsLobbyScore(lobbyId, a, b)
@@ -411,6 +455,7 @@ export function CustomsPage() {
                 onRematch={() => rematch(lob.id)}
                 onKick={(uid) => kick(lob.id, uid)}
                 onBans={(ids) => saveBans(lob.id, ids)}
+                onTeams={(a, b) => saveTeams(lob.id, a, b)}
                 onScore={(a, b) => saveScore(lob.id, a, b)}
                 t={t}
               />

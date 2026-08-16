@@ -19,7 +19,11 @@ INTERVAL_DEFAULT = 60
 
 BANNER_MODE_PLAYLIST = "playlist"
 BANNER_MODE_DYNAMIC = "dynamic"
-BANNER_MODES = frozenset({BANNER_MODE_PLAYLIST, BANNER_MODE_DYNAMIC})
+BANNER_MODE_BOTH = "both"
+BANNER_MODES = frozenset({BANNER_MODE_PLAYLIST, BANNER_MODE_DYNAMIC, BANNER_MODE_BOTH})
+DYNAMIC_WINDOW_DAYS_DEFAULT = 30
+DYNAMIC_WINDOW_DAYS_MIN = 1
+DYNAMIC_WINDOW_DAYS_MAX = 365
 
 
 def _is_supported_image(raw: bytes) -> bool:
@@ -79,6 +83,14 @@ def normalize_banner_mode(value: object) -> str:
     return mode
 
 
+def normalize_dynamic_window_days(value: object) -> int:
+    try:
+        days = int(value)
+    except (TypeError, ValueError):
+        days = DYNAMIC_WINDOW_DAYS_DEFAULT
+    return max(DYNAMIC_WINDOW_DAYS_MIN, min(DYNAMIC_WINDOW_DAYS_MAX, days))
+
+
 # ──────────────────────── settings ────────────────────────
 
 
@@ -90,6 +102,7 @@ def get_settings(guild_id: int) -> dict:
         "enabled": bool(data.get("enabled", False)),
         "banner_enabled": bool(data.get("banner_enabled", True)),
         "banner_mode": banner_mode,
+        "dynamic_window_days": normalize_dynamic_window_days(data.get("dynamic_window_days")),
         "icon_enabled": bool(data.get("icon_enabled", True)),
         "interval_minutes": int(data.get("interval_minutes", INTERVAL_DEFAULT)),
         "log_channel_id": str(data.get("log_channel_id") or ""),
@@ -109,17 +122,20 @@ def save_settings(
     enabled: bool,
     banner_enabled: bool = True,
     banner_mode: str = BANNER_MODE_PLAYLIST,
+    dynamic_window_days: int = DYNAMIC_WINDOW_DAYS_DEFAULT,
     icon_enabled: bool = True,
     interval_minutes: int = INTERVAL_DEFAULT,
     log_channel_id: str = "",
 ) -> dict:
     interval_minutes = validate_interval(interval_minutes)
     banner_mode = normalize_banner_mode(banner_mode)
+    dynamic_window_days = normalize_dynamic_window_days(dynamic_window_days)
     data = settings_db.get(guild_id, MODULE_NAME)
     data.update({
         "enabled": bool(enabled),
         "banner_enabled": bool(banner_enabled),
         "banner_mode": banner_mode,
+        "dynamic_window_days": dynamic_window_days,
         "icon_enabled": bool(icon_enabled),
         "interval_minutes": interval_minutes,
         "log_channel_id": str(log_channel_id or ""),

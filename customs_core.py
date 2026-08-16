@@ -918,6 +918,8 @@ def serialize_lobby_summary(lobby: dict[str, Any], *, guild: Any | None = None) 
         "players_list": [
             serialize_player(p, guild=guild) for p in lobby.get("players") or [] if isinstance(p, dict)
         ],
+        "team_a": [serialize_player(p, guild=guild) for p in lobby.get("team_a") or [] if isinstance(p, dict)],
+        "team_b": [serialize_player(p, guild=guild) for p in lobby.get("team_b") or [] if isinstance(p, dict)],
         "subs_list": [
             serialize_player(p, guild=guild) for p in lobby.get("subs") or [] if isinstance(p, dict)
         ],
@@ -1123,6 +1125,35 @@ def apply_balance(guild_id: int, lobby_id: str, preset_index: int = 0) -> dict[s
             p["team"] = "B"
     save_data(guild_id, data)
     return lobby
+
+
+def assign_teams(guild_id: int, lobby_id: str, team_a_ids: list[str], team_b_ids: list[str]) -> str:
+    """Persist a host-selected A/B split for an active lobby in this guild."""
+    data = load_data(guild_id)
+    lobby = data["lobbies"].get(str(lobby_id))
+    if lobby is None:
+        return "not_found"
+    if lobby.get("status") not in (STATUS_OPEN, STATUS_CHECKIN, STATUS_READY):
+        return "closed"
+    if not isinstance(team_a_ids, list) or not isinstance(team_b_ids, list):
+        return "invalid_teams"
+    a = [str(uid) for uid in team_a_ids]
+    b = [str(uid) for uid in team_b_ids]
+    if len(a) > MAX_PLAYERS // 2 or len(b) > MAX_PLAYERS // 2 or len(set(a)) != len(a) or len(set(b)) != len(b):
+        return "invalid_teams"
+    if set(a) & set(b):
+        return "invalid_teams"
+    players_by_id = {str(p.get("user_id")): p for p in lobby.get("players") or [] if isinstance(p, dict)}
+    if set(a) | set(b) != set(players_by_id):
+        return "invalid_teams"
+    lobby["team_a"] = [{**players_by_id[uid], "team": "A"} for uid in a]
+    lobby["team_b"] = [{**players_by_id[uid], "team": "B"} for uid in b]
+    for player in lobby.get("players") or []:
+        player["team"] = "A" if str(player.get("user_id")) in set(a) else "B"
+    lobby["balance_presets"] = []
+    lobby["selected_preset"] = None
+    save_data(guild_id, data)
+    return "ok"
 
 
 def start_vote(

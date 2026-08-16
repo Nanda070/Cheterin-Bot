@@ -42,6 +42,19 @@ def test_save_settings_persists_dynamic_mode():
     assert banner_rotation_core.get_settings(7)["banner_mode"] == "dynamic"
 
 
+def test_both_mode_and_dynamic_window_are_guild_scoped():
+    first = banner_rotation_core.save_settings(
+        7, enabled=True, banner_mode="both", dynamic_window_days=14
+    )
+    second = banner_rotation_core.save_settings(
+        8, enabled=True, banner_mode="dynamic", dynamic_window_days=999
+    )
+    assert first["banner_mode"] == "both"
+    assert first["dynamic_window_days"] == 14
+    assert second["dynamic_window_days"] == banner_rotation_core.DYNAMIC_WINDOW_DAYS_MAX
+    assert banner_rotation_core.get_settings(7)["dynamic_window_days"] == 14
+
+
 def test_normalize_banner_mode_rejects_unknown():
     with pytest.raises(ValueError, match="invalid_banner_mode"):
         banner_rotation_core.normalize_banner_mode("rainbow")

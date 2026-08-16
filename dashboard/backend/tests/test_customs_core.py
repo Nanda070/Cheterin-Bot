@@ -101,6 +101,24 @@ def test_lobby_join_requires_rank(tmp_path, monkeypatch):
     assert lobby["players"][0]["rank"] == "gold"
 
 
+def test_manual_team_assignment_is_guild_scoped(tmp_path, monkeypatch):
+    _isolate(tmp_path, monkeypatch)
+    rank = {"id": "gold", "name": "Gold", "weight": 4}
+    first = customs_core.create_lobby(1, host_id=1, name="First")
+    second = customs_core.create_lobby(2, host_id=2, name="Second")
+    for user_id in (11, 12):
+        assert customs_core.join_lobby(1, first["id"], user_id, rank)[0] == "joined"
+    for user_id in (21, 22):
+        assert customs_core.join_lobby(2, second["id"], user_id, rank)[0] == "joined"
+
+    assert customs_core.assign_teams(1, first["id"], ["11"], ["12"]) == "ok"
+    one = customs_core.get_lobby(1, first["id"])
+    two = customs_core.get_lobby(2, second["id"])
+    assert [p["user_id"] for p in one["team_a"]] == ["11"]
+    assert two["team_a"] == []
+    assert customs_core.assign_teams(1, first["id"], ["11"], ["999"]) == "invalid_teams"
+
+
 def test_team_code_create_and_join(tmp_path, monkeypatch):
     _isolate(tmp_path, monkeypatch)
     guild_id = 9

@@ -68,6 +68,9 @@ async def banner_rotation_put(request: web.Request) -> web.Response:
         )
     except ValueError:
         return web.json_response({"error": "invalid_banner_mode"}, status=400)
+    dynamic_window_days = banner_rotation_core.normalize_dynamic_window_days(
+        body.get("dynamic_window_days", banner_rotation_core.DYNAMIC_WINDOW_DAYS_DEFAULT),
+    )
 
     try:
         cfg = banner_rotation_core.save_settings(
@@ -75,6 +78,7 @@ async def banner_rotation_put(request: web.Request) -> web.Response:
             enabled=bool(body.get("enabled", False)),
             banner_enabled=bool(body.get("banner_enabled", True)),
             banner_mode=banner_mode,
+            dynamic_window_days=dynamic_window_days,
             icon_enabled=bool(body.get("icon_enabled", True)),
             interval_minutes=interval,
             log_channel_id=str(body.get("log_channel_id") or ""),

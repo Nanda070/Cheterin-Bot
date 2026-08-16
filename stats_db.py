@@ -241,6 +241,22 @@ def voice_leaderboard(guild_id: int, limit: int = 1000, offset: int = 0):
         ).fetchall()
 
 
+def voice_leaderboard_since(guild_id: int, since_ts: int, limit: int = 5):
+    """Voice leaders for a guild within a bounded recent window."""
+    with closing(connect()) as conn:
+        return conn.execute(
+            """
+            SELECT user_id, SUM(active_seconds) AS voice_seconds
+            FROM voice_sessions
+            WHERE guild_id = ? AND left_ts >= ?
+            GROUP BY user_id
+            ORDER BY voice_seconds DESC
+            LIMIT ?
+            """,
+            (guild_id, since_ts, limit),
+        ).fetchall()
+
+
 def xp_all_members(guild_id: int):
     """Все строки xp_members без пагинации — для мёржа с полным ростером гильдии."""
     with closing(connect()) as conn:

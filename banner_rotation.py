@@ -64,9 +64,10 @@ class BannerRotationCog(commands.Cog):
         settings_db.put(guild_id, banner_rotation_core.MODULE_NAME, data)
 
     async def _resolve_most_active(
-        self, guild: discord.Guild
+        self, guild: discord.Guild, dynamic_window_days: int
     ) -> tuple[str | None, bytes | None]:
-        rows = stats_db.voice_leaderboard(guild.id, limit=5)
+        since_ts = int(time.time()) - dynamic_window_days * 86400
+        rows = stats_db.voice_leaderboard_since(guild.id, since_ts, limit=5)
         for row in rows:
             if int(row["voice_seconds"] or 0) <= 0:
                 continue
@@ -87,8 +88,8 @@ class BannerRotationCog(commands.Cog):
             return member.display_name, avatar_bytes
         return None, None
 
-    async def _build_dynamic_banner(self, guild: discord.Guild, lang: str) -> bytes:
-        display_name, avatar_bytes = await self._resolve_most_active(guild)
+    async def _build_dynamic_banner(self, guild: discord.Guild, lang: str, dynamic_window_days: int) -> bytes:
+        display_name, avatar_bytes = await self._resolve_most_active(guild, dynamic_window_days)
         return dynamic_banner.render_dynamic_banner(
             display_name=display_name,
             avatar_bytes=avatar_bytes,
@@ -261,7 +262,8 @@ class BannerRotationCog(commands.Cog):
 
         banner_mode = cfg["banner_mode"]
         dynamic_banner_on = (
-            bool(cfg["banner_enabled"]) and banner_mode == banner_rotation_core.BANNER_MODE_DYNAMIC
+            bool(cfg["banner_enabled"])
+            and banner_mode in (banner_rotation_core.BANNER_MODE_DYNAMIC, banner_rotation_core.BANNER_MODE_BOTH)
         )
         playlist_banner_on = (
             bool(cfg["banner_enabled"])
@@ -286,7 +288,7 @@ class BannerRotationCog(commands.Cog):
 
         if dynamic_banner_on:
             try:
-                raw = await self._build_dynamic_banner(guild, lang)
+                raw = await self._build_dynamic_banner(guild, lang, cfg["dynamic_window_days"])
             except Exception:
                 logger.exception("banner_rotation: dynamic banner render failed guild=%s", guild_id)
                 raw = None
@@ -302,7 +304,7 @@ class BannerRotationCog(commands.Cog):
                     image_id="dynamic",
                 )
                 did_rotate = did_rotate or ok
-        elif playlist_banner_on:
+        if playlist_banner_on:
             img = banner_rotation_core.pick_next_image(cfg["banners"], cfg["last_banner_id"])
             if img is not None:
                 path = banner_rotation_core.get_image_path(guild_id, "banner", img["id"])

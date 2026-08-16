@@ -247,6 +247,30 @@ async def customs_lobby_bans(request: web.Request) -> web.Response:
     return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby, request)})
 
 
+@routes.put("/api/customs/lobbies/{lobby_id}/teams")
+@require_dashboard_access
+async def customs_lobby_teams(request: web.Request) -> web.Response:
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+    team_a = body.get("team_a")
+    team_b = body.get("team_b")
+    if not isinstance(team_a, list) or not isinstance(team_b, list) or not all(
+        isinstance(uid, str) and uid.isdigit() for uid in [*team_a, *team_b]
+    ):
+        return web.json_response({"error": "invalid_teams"}, status=400)
+    guild_id = request["guild_id"]
+    lobby_id = request.match_info["lobby_id"]
+    result = customs_core.assign_teams(guild_id, lobby_id, team_a, team_b)
+    if result != "ok":
+        return web.json_response({"error": result}, status=404 if result == "not_found" else 400)
+    lobby = customs_core.get_lobby(guild_id, lobby_id)
+    return web.json_response({"ok": True, "lobby": _serialize_lobby(lobby or {}, request)})
+
+
 @routes.post("/api/customs/lobbies/{lobby_id}/score")
 @require_dashboard_access
 async def customs_lobby_score(request: web.Request) -> web.Response:

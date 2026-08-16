@@ -15,9 +15,12 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.bannerMode': 'Banner mode',
   'bannerRotation.bannerMode.playlist': 'Playlist',
   'bannerRotation.bannerMode.dynamic': 'Dynamic',
+  'bannerRotation.bannerMode.both': 'Dynamic banner + icon playlist',
   'bannerRotation.bannerModeHint':
     'Dynamic banners are generated from voice-tracker data: most active member (avatar + nickname), member count, and people currently in voice. Icons still use the playlist.',
   'bannerRotation.iconEnabled': 'Rotate server icon',
+  'bannerRotation.dynamicWindowDays': 'Dynamic activity window (days)',
+  'bannerRotation.dynamicWindowDaysHint': 'The featured member is selected from voice activity within this guild only.',
   'bannerRotation.interval': 'Rotation interval (minutes)',
   'bannerRotation.intervalHint': 'Min 15, max 2880 (48 h). Both banners and icons share this interval.',
   'bannerRotation.logChannel': 'Log channel (optional)',
