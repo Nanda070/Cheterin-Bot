@@ -2809,6 +2809,10 @@ export interface CustomsSettings {
   default_signup_minutes: number
   avoid_last_map: boolean
   results_channel_id: string
+  announcement_template: string
+  reminder_minutes: number
+  reminder_mode: 'lobby' | 'dm'
+  audit_channel_id: string
   default_banned_maps: string[]
   features: {
     side_random: boolean
@@ -2967,6 +2971,24 @@ export function createCustomsSchedule(spec: Omit<CustomsSchedule, 'id' | 'last_r
 
 export function deleteCustomsSchedule(scheduleId: string): Promise<{ ok: boolean }> {
   return apiFetch(`/api/customs/schedules/${encodeURIComponent(scheduleId)}`, jsonInit('DELETE'))
+}
+
+export interface CustomsBlacklistEntry {
+  user_id: string
+  remaining_games: number
+  reason: string
+}
+
+export function fetchCustomsBlacklist(): Promise<CustomsBlacklistEntry[]> {
+  return apiFetch<{ entries: CustomsBlacklistEntry[] }>('/api/customs/blacklist').then((body) => body.entries)
+}
+
+export function setCustomsBlacklist(userId: string, games: number, reason = ''): Promise<CustomsBlacklistEntry> {
+  return apiFetch(`/api/customs/blacklist/${encodeURIComponent(userId)}`, jsonInit('PUT', { games, reason }))
+}
+
+export async function removeCustomsBlacklist(userId: string): Promise<void> {
+  await apiFetch(`/api/customs/blacklist/${encodeURIComponent(userId)}`, { method: 'DELETE' })
 }
 
 // ──────────────────────── Banner Rotation ────────────────────────

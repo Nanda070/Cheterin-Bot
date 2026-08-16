@@ -6,6 +6,7 @@ const valorant: TranslationDict = {
   'valorant.tab.panels': 'Panels',
   'valorant.tab.commands': '/valorant',
   'valorant.tab.customs': 'Customs',
+  'valorant.tab.valchecker': 'ValChecker',
   'valorant.errorLoad': 'Failed to load VALORANT settings.',
   'valorant.premierEnabled': 'Enable Premier applications',
   'valorant.premierHint': 'Applications are kept inside the selected server only.',

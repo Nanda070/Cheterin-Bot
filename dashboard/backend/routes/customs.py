@@ -76,6 +76,10 @@ async def customs_put(request: web.Request) -> web.Response:
             results_channel_id and not results_channel_id.isdigit()
         ):
             return web.json_response({"error": "invalid_results_channel_id"}, status=400)
+    if "audit_channel_id" in body:
+        audit_channel_id = body.get("audit_channel_id") or ""
+        if not isinstance(audit_channel_id, str) or (audit_channel_id and not audit_channel_id.isdigit()):
+            return web.json_response({"error": "invalid_audit_channel_id"}, status=400)
     if "ping_role_id" in body:
         ping_role_id = body.get("ping_role_id") or ""
         if not isinstance(ping_role_id, str) or (ping_role_id and not ping_role_id.isdigit()):
@@ -359,3 +363,37 @@ async def customs_schedule_delete(request: web.Request) -> web.Response:
 async def customs_leaderboard(request: web.Request) -> web.Response:
     guild_id = request["guild_id"]
     return web.json_response({"leaderboard": customs_core.leaderboard(guild_id)})
+
+
+@routes.get("/api/customs/blacklist")
+@require_dashboard_access
+async def customs_blacklist_list(request: web.Request) -> web.Response:
+    return web.json_response({"entries": customs_core.list_blacklist(request["guild_id"])})
+
+
+@routes.put("/api/customs/blacklist/{user_id}")
+@require_dashboard_access
+async def customs_blacklist_put(request: web.Request) -> web.Response:
+    user_id = request.match_info["user_id"]
+    if not user_id.isdigit():
+        return web.json_response({"error": "invalid_user_id"}, status=400)
+    try:
+        body = await request.json()
+        games = int(body.get("games"))
+    except (ValueError, TypeError, AttributeError):
+        return web.json_response({"error": "invalid_games"}, status=400)
+    row = customs_core.set_blacklist(request["guild_id"], int(user_id), games, str(body.get("reason") or ""))
+    if row is None:
+        return web.json_response({"error": "invalid_games"}, status=400)
+    return web.json_response({"user_id": user_id, **row})
+
+
+@routes.delete("/api/customs/blacklist/{user_id}")
+@require_dashboard_access
+async def customs_blacklist_delete(request: web.Request) -> web.Response:
+    user_id = request.match_info["user_id"]
+    if not user_id.isdigit():
+        return web.json_response({"error": "invalid_user_id"}, status=400)
+    if not customs_core.remove_blacklist(request["guild_id"], int(user_id)):
+        return web.json_response({"error": "not_found"}, status=404)
+    return web.json_response({"ok": True})

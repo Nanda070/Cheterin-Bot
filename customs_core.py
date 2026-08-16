@@ -97,6 +97,10 @@ def _empty_blob() -> dict[str, Any]:
         "default_signup_minutes": DEFAULT_SIGNUP_MINUTES,
         "avoid_last_map": True,
         "results_channel_id": "",
+        "announcement_template": "🎮 {name}\nНабор открыт: {slots}\nСтарт: {time}",
+        "reminder_minutes": 15,
+        "reminder_mode": "lobby",
+        "audit_channel_id": "",
         "default_banned_maps": [],
         "features": {
             "side_random": True,
@@ -108,6 +112,7 @@ def _empty_blob() -> dict[str, Any]:
         "lobbies": {},
         "schedules": {},
         "stats": {},
+        "blacklist": {},
     }
 
 
@@ -197,6 +202,16 @@ def _normalized(data: dict | None) -> dict[str, Any]:
     if results_channel_id and not results_channel_id.isdigit():
         results_channel_id = ""
     base["results_channel_id"] = results_channel_id
+    base["announcement_template"] = str(data.get("announcement_template") or base["announcement_template"]).strip()[:500]
+    try:
+        reminder_minutes = int(data.get("reminder_minutes", 15))
+    except (TypeError, ValueError):
+        reminder_minutes = 15
+    base["reminder_minutes"] = max(0, min(240, reminder_minutes))
+    reminder_mode = str(data.get("reminder_mode") or "lobby")
+    base["reminder_mode"] = reminder_mode if reminder_mode in ("lobby", "dm") else "lobby"
+    audit_channel_id = str(data.get("audit_channel_id") or "")
+    base["audit_channel_id"] = audit_channel_id if audit_channel_id.isdigit() else ""
     base["default_banned_maps"] = _normalize_map_id_list(data.get("default_banned_maps"), limit=None)
 
     feats = data.get("features") if isinstance(data.get("features"), dict) else {}
@@ -227,6 +242,15 @@ def _normalized(data: dict | None) -> dict[str, Any]:
     base["schedules"] = normalized_schedules
     stats = data.get("stats") if isinstance(data.get("stats"), dict) else {}
     base["stats"] = {str(k): v for k, v in stats.items() if isinstance(v, dict)}
+    blacklist = data.get("blacklist") if isinstance(data.get("blacklist"), dict) else {}
+    base["blacklist"] = {
+        str(uid): {
+            "remaining_games": max(1, min(100, int(row.get("remaining_games") or 1))),
+            "reason": str(row.get("reason") or "")[:200],
+        }
+        for uid, row in blacklist.items()
+        if str(uid).isdigit() and isinstance(row, dict)
+    }
     return base
 
 
@@ -355,6 +379,10 @@ def get_settings(guild_id: int) -> dict[str, Any]:
         "default_signup_minutes": data["default_signup_minutes"],
         "avoid_last_map": data["avoid_last_map"],
         "results_channel_id": data["results_channel_id"],
+        "announcement_template": data["announcement_template"],
+        "reminder_minutes": data["reminder_minutes"],
+        "reminder_mode": data["reminder_mode"],
+        "audit_channel_id": data["audit_channel_id"],
         "default_banned_maps": list(data["default_banned_maps"]),
         "features": dict(data["features"]),
         "last_map_id": data["last_map_id"],
@@ -444,6 +472,20 @@ def save_settings(guild_id: int, payload: dict[str, Any]) -> dict[str, Any]:
         if results_channel_id and not results_channel_id.isdigit():
             results_channel_id = ""
         data["results_channel_id"] = results_channel_id
+    if "announcement_template" in payload:
+        data["announcement_template"] = str(payload.get("announcement_template") or "").strip()[:500]
+    if "reminder_minutes" in payload:
+        try:
+            data["reminder_minutes"] = max(0, min(240, int(payload.get("reminder_minutes") or 0)))
+        except (TypeError, ValueError):
+            pass
+    if "reminder_mode" in payload:
+        mode = str(payload.get("reminder_mode") or "")
+        if mode in ("lobby", "dm"):
+            data["reminder_mode"] = mode
+    if "audit_channel_id" in payload:
+        audit_channel_id = str(payload.get("audit_channel_id") or "")
+        data["audit_channel_id"] = audit_channel_id if audit_channel_id.isdigit() else ""
     if "default_banned_maps" in payload:
         data["default_banned_maps"] = _normalize_map_id_list(payload.get("default_banned_maps"), limit=None)
     if isinstance(payload.get("features"), dict):
@@ -988,6 +1030,8 @@ def join_lobby(
     uid = str(user_id)
     if any(p["user_id"] == uid for p in lobby["players"]) or any(p["user_id"] == uid for p in lobby["subs"]):
         return "already", lobby
+    if uid in data.get("blacklist", {}):
+        return "blacklisted", lobby
 
     if data.get("require_rank_role") and rank is None:
         return "no_rank", lobby
@@ -1464,6 +1508,30 @@ def leaderboard(guild_id: int, limit: int = 15) -> list[dict[str, Any]]:
         )
     rows.sort(key=lambda r: (-r["wins"], -r["played"], r["user_id"]))
     return rows[:limit]
+
+
+def set_blacklist(guild_id: int, user_id: int, games: int, reason: str = "") -> dict[str, Any] | None:
+    """Blacklist a member for a guild-scoped number of customs."""
+    if games < 1 or games > 100:
+        return None
+    data = load_data(guild_id)
+    row = {"remaining_games": games, "reason": str(reason or "")[:200]}
+    data["blacklist"][str(user_id)] = row
+    save_data(guild_id, data)
+    return row
+
+
+def remove_blacklist(guild_id: int, user_id: int) -> bool:
+    data = load_data(guild_id)
+    if str(user_id) not in data["blacklist"]:
+        return False
+    data["blacklist"].pop(str(user_id))
+    save_data(guild_id, data)
+    return True
+
+
+def list_blacklist(guild_id: int) -> list[dict[str, Any]]:
+    return [{"user_id": uid, **row} for uid, row in load_data(guild_id)["blacklist"].items()]
 
 
 def award_xp_winners(guild_id: int, lobby: dict[str, Any]) -> list[str]:

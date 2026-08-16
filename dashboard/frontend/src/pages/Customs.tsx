@@ -6,12 +6,15 @@ import {
   createCustomsSchedule,
   deleteCustomsSchedule,
   fetchCategories,
+  fetchCustomsBlacklist,
   fetchChannels,
   fetchCustomsLobbies,
   fetchCustomsSettings,
   fetchRoles,
   kickCustomsPlayer,
   rematchCustomsLobby,
+  removeCustomsBlacklist,
+  setCustomsBlacklist,
   setCustomsLobbyBans,
   setCustomsLobbyTeams,
   setCustomsLobbyScore,
@@ -19,6 +22,7 @@ import {
   type ChannelInfo,
   customsPlayerLabel,
   type CustomsLobbySummary,
+  type CustomsBlacklistEntry,
   type CustomsPingMode,
   type CustomsSchedule,
   type CustomsSettings,
@@ -271,6 +275,9 @@ export function CustomsPage() {
   const [createBusy, setCreateBusy] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [schedDraft, setSchedDraft] = useState<Omit<CustomsSchedule, 'id' | 'last_run'> | null>(null)
+  const [blacklist, setBlacklist] = useState<CustomsBlacklistEntry[]>([])
+  const [blacklistUser, setBlacklistUser] = useState('')
+  const [blacklistGames, setBlacklistGames] = useState(1)
 
   const reload = () => {
     fetchCustomsSettings()
@@ -291,6 +298,9 @@ export function CustomsPage() {
     fetchRoles()
       .then(setRoles)
       .catch(() => setRoles([]))
+    fetchCustomsBlacklist()
+      .then(setBlacklist)
+      .catch(() => setBlacklist([]))
   }
 
   useEffect(reload, [t])
@@ -499,6 +509,168 @@ export function CustomsPage() {
         )}
       </Card>
 
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">{t('customs.mapsTitle')}</h2>
+        <p className="text-sm text-muted">{t('customs.mapsHint')}</p>
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+          {settings.maps.map((map) => (
+            <Toggle
+              key={map.id}
+              checked={settings.map_pool[map.id] !== false}
+              onChange={(v) =>
+                setSettings({
+                  ...settings,
+                  map_pool: { ...settings.map_pool, [map.id]: v },
+                })
+              }
+              label={map.name}
+            />
+          ))}
+        </div>
+        <p className="text-sm text-muted">{t('customs.defaultBans')}</p>
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+          {settings.maps
+            .filter((map) => settings.map_pool[map.id] !== false)
+            .map((map) => (
+              <Toggle
+                key={`ban-${map.id}`}
+                checked={(settings.default_banned_maps || []).includes(map.id)}
+                onChange={() => toggleDefaultBan(map.id)}
+                label={map.name}
+              />
+            ))}
+        </div>
+        <Toggle
+          checked={settings.avoid_last_map !== false}
+          onChange={(v) => setSettings({ ...settings, avoid_last_map: v })}
+          label={t('customs.avoidLastMap')}
+        />
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">{t('customs.blacklistTitle')}</h2>
+        <div className="flex flex-wrap gap-2">
+          <input
+            value={blacklistUser}
+            onChange={(e) => setBlacklistUser(e.target.value)}
+            placeholder={t('customs.userId')}
+            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+          />
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={blacklistGames}
+            onChange={(e) => setBlacklistGames(Number(e.target.value) || 1)}
+            className="w-20 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+          />
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              try {
+                await setCustomsBlacklist(blacklistUser, blacklistGames)
+                setBlacklistUser('')
+                reload()
+              } catch (err) {
+                setError(formatApiError(err, t, 'customs.errorBlacklist'))
+              }
+            }}
+            disabled={!/^\d+$/.test(blacklistUser)}
+          >
+            {t('customs.blacklistAdd')}
+          </Button>
+        </div>
+        {blacklist.map((row) => (
+          <div key={row.user_id} className="flex items-center justify-between gap-2 text-sm text-muted">
+            <span>{row.user_id} · {row.remaining_games}</span>
+            <Button variant="ghost" onClick={async () => { await removeCustomsBlacklist(row.user_id); reload() }}>
+              {t('common.delete')}
+            </Button>
+          </div>
+        ))}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">{t('customs.scheduleTitle')}</h2>
+        <p className="text-sm text-muted">{t('customs.scheduleHint')}</p>
+        {schedules.length === 0 ? (
+          <p className="text-sm text-muted">{t('customs.scheduleEmpty')}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {schedules.map((sch) => (
+              <div key={sch.id} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border px-3 py-2">
+                <p className="text-sm text-foreground">
+                  {sch.name} · {t(`customs.weekday.${sch.weekday}`)} {String(sch.hour).padStart(2, '0')}:
+                  {String(sch.minute).padStart(2, '0')}
+                </p>
+                <Button variant="ghost" onClick={() => removeSchedule(sch.id)}>
+                  {t('common.delete')}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted">{t('customs.scheduleName')}</span>
+            <input
+              value={draft.name}
+              onChange={(e) => setSchedDraft({ ...draft, name: e.target.value })}
+              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+          <Select
+            id="customs-sched-day"
+            value={String(draft.weekday)}
+            onChange={(id) => setSchedDraft({ ...draft, weekday: Number(id) })}
+            options={weekdayOptions(t)}
+          />
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted">{t('customs.scheduleTime')}</span>
+            <input
+              type="time"
+              value={`${String(draft.hour).padStart(2, '0')}:${String(draft.minute).padStart(2, '0')}`}
+              onChange={(e) => {
+                const [h, m] = e.target.value.split(':').map(Number)
+                setSchedDraft({ ...draft, hour: h || 0, minute: m || 0 })
+              }}
+              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+          <Select
+            id="customs-sched-mode"
+            value={draft.join_mode}
+            onChange={(id) => setSchedDraft({ ...draft, join_mode: id as 'solo' | 'team_code' })}
+            options={[
+              { id: 'solo', name: t('customs.mode.solo') },
+              { id: 'team_code', name: t('customs.mode.teamCode') },
+            ]}
+          />
+          <Select
+            id="customs-sched-channel"
+            value={draft.channel_id}
+            onChange={(id) => setSchedDraft({ ...draft, channel_id: id })}
+            options={channels}
+            placeholder={t('common.selectChannel')}
+          />
+          <Select
+            id="customs-sched-ping"
+            value={draft.ping}
+            onChange={(id) => setSchedDraft({ ...draft, ping: id as CustomsPingMode })}
+            options={pingOptions(t)}
+          />
+        </div>
+        <Button variant="secondary" onClick={addSchedule} className="self-start">
+          {t('customs.scheduleAdd')}
+        </Button>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button variant="primary" onClick={save} disabled={busy}>
+          {busy ? t('common.saving') : t('common.save')}
+        </Button>
+      </div>
+
         </>
       )}
 
@@ -509,6 +681,40 @@ export function CustomsPage() {
           checked={settings.enabled}
           onChange={(v) => setSettings({ ...settings, enabled: v })}
           label={settings.enabled ? t('customs.moduleOn') : t('customs.moduleOff')}
+        />
+      </Card>
+      <Card className="flex flex-col gap-3">
+        <h2 className="font-semibold text-foreground">{t('customs.announceTitle')}</h2>
+        <textarea
+          value={settings.announcement_template}
+          onChange={(e) => setSettings({ ...settings, announcement_template: e.target.value })}
+          rows={3}
+          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+        />
+        <p className="text-xs text-muted">{t('customs.announceHint')}</p>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>{t('customs.reminderMinutes')}</span>
+          <input
+            type="number"
+            min={0}
+            max={240}
+            value={settings.reminder_minutes}
+            onChange={(e) => setSettings({ ...settings, reminder_minutes: Number(e.target.value) || 0 })}
+            className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
+          />
+        </label>
+        <Select
+          id="customs-reminder-mode"
+          value={settings.reminder_mode}
+          onChange={(id) => setSettings({ ...settings, reminder_mode: id as CustomsSettings['reminder_mode'] })}
+          options={[{ id: 'lobby', name: t('customs.reminderLobby') }, { id: 'dm', name: t('customs.reminderDm') }]}
+        />
+        <Select
+          id="customs-audit-channel"
+          value={settings.audit_channel_id}
+          onChange={(id) => setSettings({ ...settings, audit_channel_id: id })}
+          options={resultsOptions}
+          placeholder={t('customs.auditChannel')}
         />
       </Card>
       <Card className="flex flex-col gap-3">
@@ -657,44 +863,6 @@ export function CustomsPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">{t('customs.mapsTitle')}</h2>
-        <p className="text-sm text-muted">{t('customs.mapsHint')}</p>
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-          {settings.maps.map((map) => (
-            <Toggle
-              key={map.id}
-              checked={settings.map_pool[map.id] !== false}
-              onChange={(v) =>
-                setSettings({
-                  ...settings,
-                  map_pool: { ...settings.map_pool, [map.id]: v },
-                })
-              }
-              label={map.name}
-            />
-          ))}
-        </div>
-        <p className="text-sm text-muted">{t('customs.defaultBans')}</p>
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-          {settings.maps
-            .filter((map) => settings.map_pool[map.id] !== false)
-            .map((map) => (
-              <Toggle
-                key={`ban-${map.id}`}
-                checked={(settings.default_banned_maps || []).includes(map.id)}
-                onChange={() => toggleDefaultBan(map.id)}
-                label={map.name}
-              />
-            ))}
-        </div>
-        <Toggle
-          checked={settings.avoid_last_map !== false}
-          onChange={(v) => setSettings({ ...settings, avoid_last_map: v })}
-          label={t('customs.avoidLastMap')}
-        />
-      </Card>
-
-      <Card className="flex flex-col gap-3">
         <h2 className="font-semibold text-foreground">{t('customs.featuresTitle')}</h2>
         <Toggle
           checked={settings.features.voting}
@@ -730,81 +898,6 @@ export function CustomsPage() {
             onChange={(e) => setSettings({ ...settings, xp_on_win: Number(e.target.value) || 0 })}
           />
         </label>
-      </Card>
-
-      <Card className="flex flex-col gap-3">
-        <h2 className="font-semibold text-foreground">{t('customs.scheduleTitle')}</h2>
-        <p className="text-sm text-muted">{t('customs.scheduleHint')}</p>
-        {schedules.length === 0 ? (
-          <p className="text-sm text-muted">{t('customs.scheduleEmpty')}</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {schedules.map((sch) => (
-              <div key={sch.id} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-border px-3 py-2">
-                <p className="text-sm text-foreground">
-                  {sch.name} · {t(`customs.weekday.${sch.weekday}`)} {String(sch.hour).padStart(2, '0')}:
-                  {String(sch.minute).padStart(2, '0')}
-                </p>
-                <Button variant="ghost" onClick={() => removeSchedule(sch.id)}>
-                  {t('common.delete')}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-muted">{t('customs.scheduleName')}</span>
-            <input
-              value={draft.name}
-              onChange={(e) => setSchedDraft({ ...draft, name: e.target.value })}
-              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-            />
-          </label>
-          <Select
-            id="customs-sched-day"
-            value={String(draft.weekday)}
-            onChange={(id) => setSchedDraft({ ...draft, weekday: Number(id) })}
-            options={weekdayOptions(t)}
-          />
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-muted">{t('customs.scheduleTime')}</span>
-            <input
-              type="time"
-              value={`${String(draft.hour).padStart(2, '0')}:${String(draft.minute).padStart(2, '0')}`}
-              onChange={(e) => {
-                const [h, m] = e.target.value.split(':').map(Number)
-                setSchedDraft({ ...draft, hour: h || 0, minute: m || 0 })
-              }}
-              className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground"
-            />
-          </label>
-          <Select
-            id="customs-sched-mode"
-            value={draft.join_mode}
-            onChange={(id) => setSchedDraft({ ...draft, join_mode: id as 'solo' | 'team_code' })}
-            options={[
-              { id: 'solo', name: t('customs.mode.solo') },
-              { id: 'team_code', name: t('customs.mode.teamCode') },
-            ]}
-          />
-          <Select
-            id="customs-sched-channel"
-            value={draft.channel_id}
-            onChange={(id) => setSchedDraft({ ...draft, channel_id: id })}
-            options={channels}
-            placeholder={t('common.selectChannel')}
-          />
-          <Select
-            id="customs-sched-ping"
-            value={draft.ping}
-            onChange={(id) => setSchedDraft({ ...draft, ping: id as CustomsPingMode })}
-            options={pingOptions(t)}
-          />
-        </div>
-        <Button variant="secondary" onClick={addSchedule} className="self-start">
-          {t('customs.scheduleAdd')}
-        </Button>
       </Card>
 
       <div className="flex justify-end">

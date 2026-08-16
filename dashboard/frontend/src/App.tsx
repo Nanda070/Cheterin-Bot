@@ -46,8 +46,6 @@ import { RedirectCustomCommands } from './pages/CustomCommands'
 import { MessagesPage } from './pages/Messages'
 import { BirthdaysCalendarPage } from './pages/BirthdaysCalendar'
 import { RelationsPage } from './pages/Relations'
-import { ValCheckerPage } from './pages/ValChecker'
-import { CustomsPage } from './pages/Customs'
 import { HealthPage } from './pages/Health'
 import { BannerRotationPage } from './pages/BannerRotation'
 import { ValorantPage } from './pages/Valorant'
@@ -122,9 +120,9 @@ function App() {
               <Route path="birthdays" element={<BirthdaysCalendarPage />} />
               <Route path="relations" element={<RelationsPage />} />
               <Route path="starboard" element={<Navigate to="/messages?tab=starboard" replace />} />
-              <Route path="valchecker" element={<ValCheckerPage />} />
+              <Route path="valchecker" element={<Navigate to="/valorant?tab=valchecker" replace />} />
               <Route path="valorant" element={<ValorantPage />} />
-              <Route path="customs" element={<CustomsPage />} />
+              <Route path="customs" element={<Navigate to="/valorant?tab=customs" replace />} />
               <Route path="auto-reactions" element={<Navigate to="/fun?tab=autoEmoji" replace />} />
               <Route path="bot-profile" element={<Navigate to="/settings?tab=botProfile" replace />} />
               <Route path="automod" element={<AutoModPage />} />

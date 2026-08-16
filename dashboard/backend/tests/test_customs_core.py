@@ -119,6 +119,30 @@ def test_manual_team_assignment_is_guild_scoped(tmp_path, monkeypatch):
     assert customs_core.assign_teams(1, first["id"], ["11"], ["999"]) == "invalid_teams"
 
 
+def test_blacklist_and_announcement_settings_are_guild_scoped(tmp_path, monkeypatch):
+    _isolate(tmp_path, monkeypatch)
+    customs_core.save_settings(
+        1,
+        {
+            "announcement_template": "Guild one {name}",
+            "reminder_minutes": 20,
+            "reminder_mode": "dm",
+            "audit_channel_id": "101",
+        },
+    )
+    customs_core.set_blacklist(1, 42, 3, "no-show")
+
+    first = customs_core.get_settings(1)
+    second = customs_core.get_settings(2)
+    assert first["announcement_template"] == "Guild one {name}"
+    assert first["reminder_minutes"] == 20
+    assert first["reminder_mode"] == "dm"
+    assert first["audit_channel_id"] == "101"
+    assert second["audit_channel_id"] == ""
+    assert customs_core.list_blacklist(1) == [{"user_id": "42", "remaining_games": 3, "reason": "no-show"}]
+    assert customs_core.list_blacklist(2) == []
+
+
 def test_team_code_create_and_join(tmp_path, monkeypatch):
     _isolate(tmp_path, monkeypatch)
     guild_id = 9

@@ -6,6 +6,7 @@ const valorant: TranslationDict = {
   'valorant.tab.panels': 'Панели',
   'valorant.tab.commands': '/valorant',
   'valorant.tab.customs': 'Кастомки',
+  'valorant.tab.valchecker': 'ValChecker',
   'valorant.errorLoad': 'Не удалось загрузить настройки VALORANT.',
   'valorant.premierEnabled': 'Включить заявки Premier',
   'valorant.premierHint': 'Заявки сохраняются и публикуются только на выбранном сервере.',
