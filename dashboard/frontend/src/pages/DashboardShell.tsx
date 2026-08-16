@@ -102,6 +102,7 @@ const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.mafia', icon: Skull, to: '/mafia', moduleKey: 'mafia' },
       { labelKey: 'nav.bunker', icon: Vault, to: '/bunker', moduleKey: 'bunker' },
       { labelKey: 'nav.valchecker', icon: Crosshair, to: '/valchecker', moduleKey: 'valchecker' },
+      { labelKey: 'nav.valorant', icon: Crosshair, to: '/valorant' },
       { labelKey: 'nav.customs', icon: UsersThree, to: '/customs', moduleKey: 'customs' },
       { labelKey: 'nav.family', icon: House, to: '/family', moduleKey: 'family' },
       { labelKey: 'nav.streams', icon: Broadcast, to: '/streams' },

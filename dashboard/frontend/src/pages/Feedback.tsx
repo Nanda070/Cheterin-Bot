@@ -3,8 +3,9 @@ import { useT } from '../context/LanguageContext'
 import { FeedbackCasesPage } from './FeedbackCases'
 import { FeedbackCategoriesPage } from './FeedbackCategories'
 import { FeedbackPanelPage } from './FeedbackPanel'
+import { IdeasPage } from './Ideas'
 
-type Tab = 'cases' | 'categories' | 'panel'
+type Tab = 'cases' | 'categories' | 'panel' | 'ideas'
 
 export function FeedbackPage() {
   const t = useT()
@@ -40,8 +41,11 @@ export function FeedbackPage() {
         >
           {t('feedback.tab.panel')}
         </button>
+        <button type="button" onClick={() => setTab('ideas')} className={`cursor-pointer px-3 py-2 text-sm font-medium ${tab === 'ideas' ? 'border-b-2 border-primary text-foreground' : 'text-muted hover:text-foreground'}`}>
+          {t('ideas.title')}
+        </button>
       </div>
-      {tab === 'cases' ? <FeedbackCasesPage /> : tab === 'categories' ? <FeedbackCategoriesPage /> : <FeedbackPanelPage />}
+      {tab === 'cases' ? <FeedbackCasesPage /> : tab === 'categories' ? <FeedbackCategoriesPage /> : tab === 'panel' ? <FeedbackPanelPage /> : <IdeasPage />}
     </div>
   )
 }

@@ -50,6 +50,7 @@ import { ValCheckerPage } from './pages/ValChecker'
 import { CustomsPage } from './pages/Customs'
 import { HealthPage } from './pages/Health'
 import { BannerRotationPage } from './pages/BannerRotation'
+import { ValorantPage } from './pages/Valorant'
 
 function App() {
   return (
@@ -122,6 +123,7 @@ function App() {
               <Route path="relations" element={<RelationsPage />} />
               <Route path="starboard" element={<Navigate to="/messages?tab=starboard" replace />} />
               <Route path="valchecker" element={<ValCheckerPage />} />
+              <Route path="valorant" element={<ValorantPage />} />
               <Route path="customs" element={<CustomsPage />} />
               <Route path="auto-reactions" element={<Navigate to="/fun?tab=autoEmoji" replace />} />
               <Route path="bot-profile" element={<Navigate to="/settings?tab=botProfile" replace />} />

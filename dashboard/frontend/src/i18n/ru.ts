@@ -14,6 +14,7 @@ import whatsNew from './ru/whatsNew'
 import credits from './ru/credits'
 import sans from './ru/sans'
 import egg from './ru/egg'
+import valorant from './ru/valorant'
 
 const ru: TranslationDict = {
   ...shell,
@@ -31,6 +32,7 @@ const ru: TranslationDict = {
   ...credits,
   ...sans,
   ...egg,
+  ...valorant,
 }
 
 export default ru

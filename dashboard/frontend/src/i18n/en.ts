@@ -14,6 +14,7 @@ import whatsNew from './en/whatsNew'
 import credits from './en/credits'
 import sans from './en/sans'
 import egg from './en/egg'
+import valorant from './en/valorant'
 
 const en: TranslationDict = {
   ...shell,
@@ -31,6 +32,7 @@ const en: TranslationDict = {
   ...credits,
   ...sans,
   ...egg,
+  ...valorant,
 }
 
 export default en

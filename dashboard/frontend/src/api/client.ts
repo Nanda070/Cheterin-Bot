@@ -3045,3 +3045,32 @@ export function triggerBannerRotation(): Promise<{ ok: boolean; settings: Banner
   return apiFetch('/api/banner-rotation/rotate-now', jsonInit('POST', {}))
 }
 
+export interface PremierSettings { enabled: boolean; channel_id: string; faq_url: string }
+export interface ValorantPanelSettings {
+  enabled: boolean; button_role_id: string; button_label: string
+  agent_roles: Record<string, string>; playstyle_roles: Record<string, string>
+  notification_roles: Record<string, string>; server_roles: Record<string, string>
+  notification_channels: Record<string, string>
+}
+export interface ValorantPanelCatalog {
+  agent_classes: Record<string, { key: string; name: string }[]>
+  playstyles: { key: string; name: string }[]
+  notifications: { key: string; name: string }[]
+  servers: { key: string; name: string }[]
+}
+export interface IdeasSettings {
+  enabled: boolean; intake_channel_id: string; review_channel_id: string; channel_id: string
+  prompt: string; vote_emojis: string[]
+}
+export interface IdeaCase { case_id: string; submitter_id: string; submitter_display: string; text: string; status: string; created_at: string }
+export const fetchPremierSettings = () => apiFetch<PremierSettings>('/api/valorant/premier')
+export const updatePremierSettings = (data: Partial<PremierSettings>) => apiFetch<PremierSettings>('/api/valorant/premier', jsonInit('PUT', data))
+export const fetchValorantPanels = () => apiFetch<{ settings: ValorantPanelSettings; catalog: ValorantPanelCatalog }>('/api/valorant/panels')
+export const updateValorantPanels = (data: Partial<ValorantPanelSettings>) => apiFetch<{ settings: ValorantPanelSettings; catalog: ValorantPanelCatalog }>('/api/valorant/panels', jsonInit('PUT', data))
+export const fetchValorantCommands = () => apiFetch<{ enabled: boolean }>('/api/valorant/commands')
+export const updateValorantCommands = (enabled: boolean) => apiFetch<{ enabled: boolean }>('/api/valorant/commands', jsonInit('PUT', { enabled }))
+export const fetchIdeasSettings = () => apiFetch<IdeasSettings>('/api/ideas/settings')
+export const updateIdeasSettings = (data: Partial<IdeasSettings>) => apiFetch<IdeasSettings>('/api/ideas/settings', jsonInit('PUT', data))
+export const fetchIdeaCases = (status?: string) => apiFetch<{ cases: IdeaCase[] }>(`/api/ideas/cases${status ? `?status=${encodeURIComponent(status)}` : ''}`).then((body) => body.cases)
+export const decideIdeaCase = (caseId: string, approved: boolean) => apiFetch<{ ok: boolean }>(`/api/ideas/cases/${encodeURIComponent(caseId)}/decide`, jsonInit('POST', { approved }))
+

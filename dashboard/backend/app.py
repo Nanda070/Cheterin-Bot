@@ -78,6 +78,8 @@ from .routes.valchecker import routes as valchecker_routes
 from .routes.customs import routes as customs_routes
 from .routes.modules import routes as modules_routes
 from .routes.banner_rotation import routes as banner_rotation_routes
+from .routes.valorant import routes as valorant_routes
+from .routes.ideas import routes as ideas_routes
 from .audit_middleware import audit_middleware
 from .guild_context import guild_context_middleware
 from .session import setup_session
@@ -181,6 +183,8 @@ def create_app(
     app.add_routes(customs_routes)
     app.add_routes(modules_routes)
     app.add_routes(banner_rotation_routes)
+    app.add_routes(valorant_routes)
+    app.add_routes(ideas_routes)
 
     async def health(request: web.Request) -> web.Response:
         return web.json_response({"status": "ok"})

@@ -125,6 +125,10 @@ class ChetBot(commands.Bot):
         await self.load_extension("relations")
         await self.load_extension("help_cog")
         await self.load_extension("valchecker")
+        await self.load_extension("valorant_random")
+        await self.load_extension("premier")
+        await self.load_extension("valorant_panels")
+        await self.load_extension("ideas")
         await self.load_extension("banner_rotation")
         await self.load_extension("customs")
 
