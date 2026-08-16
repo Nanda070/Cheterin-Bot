@@ -2947,6 +2947,7 @@ export interface BannerRotationImage {
 export interface BannerRotationSettings {
   enabled: boolean
   banner_enabled: boolean
+  banner_mode: 'playlist' | 'dynamic'
   icon_enabled: boolean
   interval_minutes: number
   log_channel_id: string
@@ -2964,7 +2965,12 @@ export function fetchBannerRotationSettings(): Promise<BannerRotationSettings> {
 }
 
 export function updateBannerRotationSettings(
-  settings: Partial<Pick<BannerRotationSettings, 'enabled' | 'banner_enabled' | 'icon_enabled' | 'interval_minutes' | 'log_channel_id'>>,
+  settings: Partial<
+    Pick<
+      BannerRotationSettings,
+      'enabled' | 'banner_enabled' | 'banner_mode' | 'icon_enabled' | 'interval_minutes' | 'log_channel_id'
+    >
+  >,
 ): Promise<BannerRotationSettings> {
   return apiFetch('/api/banner-rotation', jsonInit('PUT', settings))
 }

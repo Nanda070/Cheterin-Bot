@@ -1743,12 +1743,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       <>
         <H>Banner and server icon rotation</H>
         <P>
-          Rotate the Discord server banner and/or server icon on a schedule (15–2880 minutes). Upload multiple images in
-          the panel, optionally log each change to a channel. Off by default —{' '}
+          Rotate the Discord server banner and/or server icon on a schedule (15–2880 minutes). For the banner, use a
+          static playlist or a <strong>dynamic banner</strong> (most active by voice — avatar + nickname, member count,
+          and who’s in voice now). Icons still use the playlist. Off by default —{' '}
           <strong>Server → Banner & icon rotation</strong>.
         </P>
         <UL>
-          <li>Bot needs Manage Server. Banner rotation also needs a boost level that unlocks the banner feature.</li>
+          <li>Bot needs Manage Server. Banner updates also need a boost level that unlocks the banner feature.</li>
           <li>Permission and boost errors are logged without crashing the loop.</li>
         </UL>
       </>

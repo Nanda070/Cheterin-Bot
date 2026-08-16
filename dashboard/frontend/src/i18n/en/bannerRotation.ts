@@ -3,15 +3,20 @@ import type { TranslationDict } from '../types'
 const bannerRotation: TranslationDict = {
   'bannerRotation.title': 'Banner & Icon Rotation',
   'bannerRotation.intro':
-    'Automatically rotate the server banner and server icon on a schedule. Requires Manage Server permission and, for banners, a boost level that unlocks the banner feature.',
+    'Automatically rotate the server banner and server icon on a schedule. For the banner, choose a static playlist or a dynamic banner (most active by voice, member count, and who’s in voice now). Requires Manage Server and, for banners, a boost level that unlocks the banner feature.',
   'bannerRotation.moduleOn': 'Module on',
   'bannerRotation.moduleOff': 'Module off',
 
   'bannerRotation.section.settings': 'Settings',
-  'bannerRotation.section.banners': 'Banner images',
+  'bannerRotation.section.banners': 'Banner playlist',
   'bannerRotation.section.icons': 'Icon images',
 
   'bannerRotation.bannerEnabled': 'Rotate server banner',
+  'bannerRotation.bannerMode': 'Banner mode',
+  'bannerRotation.bannerMode.playlist': 'Playlist',
+  'bannerRotation.bannerMode.dynamic': 'Dynamic',
+  'bannerRotation.bannerModeHint':
+    'Dynamic banners are generated from voice-tracker data: most active member (avatar + nickname), member count, and people currently in voice. Icons still use the playlist.',
   'bannerRotation.iconEnabled': 'Rotate server icon',
   'bannerRotation.interval': 'Rotation interval (minutes)',
   'bannerRotation.intervalHint': 'Min 15, max 2880 (48 h). Both banners and icons share this interval.',
@@ -22,6 +27,7 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.uploadHint': 'PNG, JPEG, GIF or WEBP, max 8 MB each.',
   'bannerRotation.uploading': 'Uploading…',
   'bannerRotation.noImages': 'No images yet — upload some to start rotating.',
+  'bannerRotation.playlistDisabledHint': 'Banner playlist is unused while dynamic mode is on.',
   'bannerRotation.delete': 'Delete',
 
   'bannerRotation.lastRotated': 'Last rotated: {date}',

@@ -63,10 +63,18 @@ async def banner_rotation_put(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_interval"}, status=400)
 
     try:
+        banner_mode = banner_rotation_core.normalize_banner_mode(
+            body.get("banner_mode", banner_rotation_core.BANNER_MODE_PLAYLIST),
+        )
+    except ValueError:
+        return web.json_response({"error": "invalid_banner_mode"}, status=400)
+
+    try:
         cfg = banner_rotation_core.save_settings(
             guild_id,
             enabled=bool(body.get("enabled", False)),
             banner_enabled=bool(body.get("banner_enabled", True)),
+            banner_mode=banner_mode,
             icon_enabled=bool(body.get("icon_enabled", True)),
             interval_minutes=interval,
             log_channel_id=str(body.get("log_channel_id") or ""),

@@ -66,15 +66,19 @@ function UploadZone({
   onFiles,
   uploading,
   t,
+  disabled,
 }: {
   onFiles: (files: File[]) => void
   uploading: boolean
   t: (k: string) => string
+  disabled?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <div>
-      <label className="cursor-pointer text-xs text-primary hover:underline">
+      <label
+        className={`text-xs ${disabled ? 'cursor-not-allowed text-muted' : 'cursor-pointer text-primary hover:underline'}`}
+      >
         {uploading ? t('bannerRotation.uploading') : t('bannerRotation.upload')}
         <input
           ref={inputRef}
@@ -82,7 +86,7 @@ function UploadZone({
           multiple
           accept="image/png,image/jpeg,image/gif,image/webp"
           className="hidden"
-          disabled={uploading}
+          disabled={uploading || disabled}
           onChange={(e) => {
             const files = Array.from(e.target.files || [])
             if (files.length) onFiles(files)
@@ -109,7 +113,12 @@ export function BannerRotationPage() {
 
   const reload = () => {
     fetchBannerRotationSettings()
-      .then(setSettings)
+      .then((cfg) =>
+        setSettings({
+          ...cfg,
+          banner_mode: cfg.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
+        }),
+      )
       .catch(() => setError(t('bannerRotation.errorLoad')))
     fetchChannels()
       .then(setChannels)
@@ -127,6 +136,13 @@ export function BannerRotationPage() {
     ...channels,
   ]
 
+  const bannerModeOptions = [
+    { id: 'playlist', name: t('bannerRotation.bannerMode.playlist') },
+    { id: 'dynamic', name: t('bannerRotation.bannerMode.dynamic') },
+  ]
+
+  const dynamicMode = settings.banner_mode === 'dynamic'
+
   const save = async () => {
     setBusy(true)
     setError('')
@@ -135,11 +151,15 @@ export function BannerRotationPage() {
       const updated = await updateBannerRotationSettings({
         enabled: settings.enabled,
         banner_enabled: settings.banner_enabled,
+        banner_mode: settings.banner_mode,
         icon_enabled: settings.icon_enabled,
         interval_minutes: settings.interval_minutes,
         log_channel_id: settings.log_channel_id,
       })
-      setSettings(updated)
+      setSettings({
+        ...updated,
+        banner_mode: updated.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
+      })
       setSaved(t('common.saved'))
     } catch (err) {
       setError(formatApiError(err, t, 'bannerRotation.errorSave'))
@@ -179,7 +199,12 @@ export function BannerRotationPage() {
     setSaved('')
     try {
       const result = await triggerBannerRotation()
-      if (result.settings) setSettings(result.settings)
+      if (result.settings) {
+        setSettings({
+          ...result.settings,
+          banner_mode: result.settings.banner_mode === 'dynamic' ? 'dynamic' : 'playlist',
+        })
+      }
       setSaved(t('bannerRotation.rotatedOk'))
     } catch (err) {
       setError(formatApiError(err, t, 'bannerRotation.errorRotate'))
@@ -189,7 +214,7 @@ export function BannerRotationPage() {
   }
 
   const patch = (partial: Partial<BannerRotationSettings>) =>
-    setSettings((prev) => prev ? { ...prev, ...partial } : prev)
+    setSettings((prev) => (prev ? { ...prev, ...partial } : prev))
 
   return (
     <div className="flex max-w-4xl flex-col gap-5 pb-4">
@@ -224,6 +249,18 @@ export function BannerRotationPage() {
           onChange={(v) => patch({ banner_enabled: v })}
           label={t('bannerRotation.bannerEnabled')}
         />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted">{t('bannerRotation.bannerMode')}</span>
+          <Select
+            id="br-banner-mode"
+            value={settings.banner_mode}
+            onChange={(id) => patch({ banner_mode: id === 'dynamic' ? 'dynamic' : 'playlist' })}
+            options={bannerModeOptions}
+            placeholder={t('bannerRotation.bannerMode.playlist')}
+            disabled={!settings.banner_enabled}
+          />
+          <span className="text-xs text-muted">{t('bannerRotation.bannerModeHint')}</span>
+        </label>
         <Toggle
           checked={settings.icon_enabled}
           onChange={(v) => patch({ icon_enabled: v })}
@@ -267,8 +304,11 @@ export function BannerRotationPage() {
 
       {uploadError && <p className="text-sm text-danger">{uploadError}</p>}
 
-      <Card className="flex flex-col gap-4">
+      <Card className={`flex flex-col gap-4 ${dynamicMode ? 'opacity-70' : ''}`}>
         <h2 className="font-semibold text-foreground">{t('bannerRotation.section.banners')}</h2>
+        {dynamicMode && (
+          <p className="text-sm text-muted">{t('bannerRotation.playlistDisabledHint')}</p>
+        )}
         <ImageGrid
           images={settings.banners}
           onDelete={(id) => deleteImage('banner', id)}
@@ -278,6 +318,7 @@ export function BannerRotationPage() {
           onFiles={(files) => uploadImages('banner', files)}
           uploading={uploadingBanners}
           t={t}
+          disabled={dynamicMode}
         />
       </Card>
 

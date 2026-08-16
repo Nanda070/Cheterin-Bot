@@ -1,4 +1,4 @@
-"""Banner + server icon rotation cog."""
+"""Banner + server icon rotation cog (playlist + optional dynamic banner)."""
 
 from __future__ import annotations
 
@@ -9,10 +9,21 @@ import discord
 from discord.ext import commands, tasks
 
 import banner_rotation_core
+import dynamic_banner
 import i18n
 import settings_db
+import stats_db
 
 logger = logging.getLogger("cheterin.banner_rotation")
+
+
+def _count_in_voice(guild: discord.Guild) -> int:
+    total = 0
+    for channel in guild.voice_channels:
+        total += sum(1 for m in channel.members if not m.bot)
+    for channel in getattr(guild, "stage_channels", ()) or ():
+        total += sum(1 for m in channel.members if not m.bot)
+    return total
 
 
 class BannerRotationCog(commands.Cog):
@@ -43,6 +54,86 @@ class BannerRotationCog(commands.Cog):
         data["next_run_at"] = ts + max(1, int(interval_minutes)) * 60
         settings_db.put(guild_id, banner_rotation_core.MODULE_NAME, data)
 
+    async def _resolve_most_active(
+        self, guild: discord.Guild
+    ) -> tuple[str | None, bytes | None]:
+        rows = stats_db.voice_leaderboard(guild.id, limit=5)
+        for row in rows:
+            if int(row["voice_seconds"] or 0) <= 0:
+                continue
+            user_id = int(row["user_id"])
+            member = guild.get_member(user_id)
+            if member is None:
+                try:
+                    member = await guild.fetch_member(user_id)
+                except (discord.NotFound, discord.HTTPException):
+                    continue
+            if member.bot:
+                continue
+            avatar_bytes: bytes | None = None
+            try:
+                avatar_bytes = await member.display_avatar.replace(size=256).read()
+            except (discord.HTTPException, OSError):
+                avatar_bytes = None
+            return member.display_name, avatar_bytes
+        return None, None
+
+    async def _build_dynamic_banner(self, guild: discord.Guild, lang: str) -> bytes:
+        display_name, avatar_bytes = await self._resolve_most_active(guild)
+        return dynamic_banner.render_dynamic_banner(
+            display_name=display_name,
+            avatar_bytes=avatar_bytes,
+            member_count=guild.member_count or len(guild.members),
+            voice_count=_count_in_voice(guild),
+            guild_name=guild.name,
+            lang=lang,
+        )
+
+    async def _apply_banner(
+        self,
+        guild: discord.Guild,
+        raw: bytes,
+        *,
+        reason: str,
+        log_name: str,
+        lang: str,
+        log_channel: discord.TextChannel | None,
+        interval: int,
+        image_id: str,
+    ) -> bool:
+        try:
+            await guild.edit(banner=raw, reason=reason)
+            banner_rotation_core.mark_rotated(guild.id, "banner", image_id, interval)
+            logger.info(
+                i18n.t("banner_rotation.rotated_banner", lang, name=log_name),
+            )
+            if log_channel:
+                await self._try_log(
+                    log_channel,
+                    i18n.t("banner_rotation.log_banner", lang, name=log_name),
+                )
+            return True
+        except discord.Forbidden:
+            logger.warning(
+                i18n.t("banner_rotation.forbidden_banner", lang, guild=guild.name),
+            )
+            if log_channel:
+                await self._try_log(
+                    log_channel,
+                    i18n.t("banner_rotation.log_forbidden_banner", lang),
+                )
+        except discord.HTTPException as exc:
+            # Boost / BANNER feature / size / format issues land here.
+            logger.warning(
+                i18n.t("banner_rotation.http_error", lang, error=str(exc)),
+            )
+            if log_channel:
+                await self._try_log(
+                    log_channel,
+                    i18n.t("banner_rotation.log_http_banner", lang, error=str(exc)),
+                )
+        return False
+
     async def _maybe_rotate(self, guild_id: int, now: int) -> None:
         cfg = banner_rotation_core.get_settings(guild_id)
         if not cfg["enabled"]:
@@ -62,8 +153,16 @@ class BannerRotationCog(commands.Cog):
             self._advance_next_run(guild_id, interval, now)
             return
 
-        # Nothing queued — still advance so we do not busy-loop.
-        want_banner = bool(cfg["banner_enabled"] and cfg["banners"])
+        banner_mode = cfg["banner_mode"]
+        dynamic_banner_on = (
+            bool(cfg["banner_enabled"]) and banner_mode == banner_rotation_core.BANNER_MODE_DYNAMIC
+        )
+        playlist_banner_on = (
+            bool(cfg["banner_enabled"])
+            and banner_mode == banner_rotation_core.BANNER_MODE_PLAYLIST
+            and bool(cfg["banners"])
+        )
+        want_banner = dynamic_banner_on or playlist_banner_on
         want_icon = bool(cfg["icon_enabled"] and cfg["icons"])
         if not want_banner and not want_icon:
             self._advance_next_run(guild_id, interval, now)
@@ -79,45 +178,41 @@ class BannerRotationCog(commands.Cog):
 
         did_rotate = False
 
-        if want_banner:
+        if dynamic_banner_on:
+            try:
+                raw = await self._build_dynamic_banner(guild, lang)
+            except Exception:
+                logger.exception("banner_rotation: dynamic banner render failed guild=%s", guild_id)
+                raw = None
+            if raw:
+                ok = await self._apply_banner(
+                    guild,
+                    raw,
+                    reason="Dynamic banner",
+                    log_name=i18n.t("banner_rotation.dynamic_name", lang),
+                    lang=lang,
+                    log_channel=log_channel,
+                    interval=interval,
+                    image_id="dynamic",
+                )
+                did_rotate = did_rotate or ok
+        elif playlist_banner_on:
             img = banner_rotation_core.pick_next_image(cfg["banners"], cfg["last_banner_id"])
             if img is not None:
                 path = banner_rotation_core.get_image_path(guild_id, "banner", img["id"])
                 if path is not None:
                     raw = path.read_bytes()
-                    try:
-                        await guild.edit(banner=raw, reason="Banner rotation")
-                        banner_rotation_core.mark_rotated(guild_id, "banner", img["id"], interval)
-                        did_rotate = True
-                        logger.info(
-                            i18n.t(
-                                "banner_rotation.rotated_banner",
-                                lang,
-                                name=img.get("original_name", ""),
-                            ),
-                        )
-                        if log_channel:
-                            await self._try_log(
-                                log_channel,
-                                i18n.t(
-                                    "banner_rotation.log_banner",
-                                    lang,
-                                    name=img.get("original_name", ""),
-                                ),
-                            )
-                    except discord.Forbidden:
-                        logger.warning(
-                            i18n.t("banner_rotation.forbidden_banner", lang, guild=guild.name),
-                        )
-                        if log_channel:
-                            await self._try_log(
-                                log_channel,
-                                i18n.t("banner_rotation.log_forbidden_banner", lang),
-                            )
-                    except discord.HTTPException as exc:
-                        logger.warning(
-                            i18n.t("banner_rotation.http_error", lang, error=str(exc)),
-                        )
+                    ok = await self._apply_banner(
+                        guild,
+                        raw,
+                        reason="Banner rotation",
+                        log_name=img.get("original_name", ""),
+                        lang=lang,
+                        log_channel=log_channel,
+                        interval=interval,
+                        image_id=img["id"],
+                    )
+                    did_rotate = did_rotate or ok
 
         if want_icon:
             cfg2 = banner_rotation_core.get_settings(guild_id)

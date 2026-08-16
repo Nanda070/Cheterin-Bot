@@ -7,5 +7,7 @@ MESSAGES = {
     "banner_rotation.forbidden_icon": "Cannot set icon on {guild} — missing Manage Server.",
     "banner_rotation.log_forbidden_banner": "⚠️ Failed to set banner — check boost level and bot permissions.",
     "banner_rotation.log_forbidden_icon": "⚠️ Failed to set icon — check bot permissions.",
+    "banner_rotation.log_http_banner": "⚠️ Discord rejected the banner: {error}",
     "banner_rotation.http_error": "Discord HTTP error during rotation: {error}",
+    "banner_rotation.dynamic_name": "Dynamic banner",
 }

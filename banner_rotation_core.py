@@ -17,6 +17,10 @@ INTERVAL_MIN = 15
 INTERVAL_MAX = 2880
 INTERVAL_DEFAULT = 60
 
+BANNER_MODE_PLAYLIST = "playlist"
+BANNER_MODE_DYNAMIC = "dynamic"
+BANNER_MODES = frozenset({BANNER_MODE_PLAYLIST, BANNER_MODE_DYNAMIC})
+
 
 def _is_supported_image(raw: bytes) -> bool:
     if raw.startswith(b"\x89PNG") or raw.startswith(b"\xff\xd8\xff") or raw.startswith(b"GIF8"):
@@ -68,14 +72,24 @@ def validate_interval(minutes: int) -> int:
     return minutes
 
 
+def normalize_banner_mode(value: object) -> str:
+    mode = str(value or BANNER_MODE_PLAYLIST).strip().lower()
+    if mode not in BANNER_MODES:
+        raise ValueError("invalid_banner_mode")
+    return mode
+
+
 # ──────────────────────── settings ────────────────────────
 
 
 def get_settings(guild_id: int) -> dict:
     data = settings_db.get(guild_id, MODULE_NAME)
+    raw_mode = str(data.get("banner_mode") or BANNER_MODE_PLAYLIST).strip().lower()
+    banner_mode = raw_mode if raw_mode in BANNER_MODES else BANNER_MODE_PLAYLIST
     return {
         "enabled": bool(data.get("enabled", False)),
         "banner_enabled": bool(data.get("banner_enabled", True)),
+        "banner_mode": banner_mode,
         "icon_enabled": bool(data.get("icon_enabled", True)),
         "interval_minutes": int(data.get("interval_minutes", INTERVAL_DEFAULT)),
         "log_channel_id": str(data.get("log_channel_id") or ""),
@@ -94,15 +108,18 @@ def save_settings(
     *,
     enabled: bool,
     banner_enabled: bool = True,
+    banner_mode: str = BANNER_MODE_PLAYLIST,
     icon_enabled: bool = True,
     interval_minutes: int = INTERVAL_DEFAULT,
     log_channel_id: str = "",
 ) -> dict:
     interval_minutes = validate_interval(interval_minutes)
+    banner_mode = normalize_banner_mode(banner_mode)
     data = settings_db.get(guild_id, MODULE_NAME)
     data.update({
         "enabled": bool(enabled),
         "banner_enabled": bool(banner_enabled),
+        "banner_mode": banner_mode,
         "icon_enabled": bool(icon_enabled),
         "interval_minutes": interval_minutes,
         "log_channel_id": str(log_channel_id or ""),

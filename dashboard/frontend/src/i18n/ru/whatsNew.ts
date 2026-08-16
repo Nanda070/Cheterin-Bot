@@ -4,6 +4,8 @@ const whatsNew: TranslationDict = {
   'whatsNew.title': 'Что нового',
   'whatsNew.subtitle': '{date}',
   'whatsNew.gotIt': 'Понятно',
+  'whatsNew.item.dynamicBanner':
+    'Динамический баннер сервера — самый активный по войсу, участники и кто в войсе',
   'whatsNew.item.bannerRotation': 'Баннер и аватар сервера по расписанию — загрузка и ротация в панели',
   'whatsNew.item.customs': 'Модуль Кастомки — лобби Valorant как в VALORANT (ранги, карты, войсы, счёт)',
   'whatsNew.item.levelRoleRemove': 'Уровни: снятие старых ролей при повышении уровня',

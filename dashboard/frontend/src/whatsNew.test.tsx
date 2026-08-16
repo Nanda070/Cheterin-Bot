@@ -104,7 +104,7 @@ describe('WhatsNewCard', () => {
     )
     expect(screen.getByText('Что нового')).toBeInTheDocument()
     expect(screen.getByText(LATEST_WHATS_NEW.date)).toBeInTheDocument()
-    expect(screen.getByText(/Баннер и аватар сервера/)).toBeInTheDocument()
+    expect(screen.getByText(/Динамический баннер сервера/)).toBeInTheDocument()
     expect(screen.getByText(/Модуль Кастомки/)).toBeInTheDocument()
     expect(screen.getByText(/снятие старых ролей/i)).toBeInTheDocument()
   })

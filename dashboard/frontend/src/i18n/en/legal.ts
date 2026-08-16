@@ -132,7 +132,7 @@ const legal: TranslationDict = {
     'Active lobby data until the lobby finishes or is cancelled; stats and settings until cleared by admins',
   'privacy.table.bannerRotation.module': 'Banner and icon rotation',
   'privacy.table.bannerRotation.data':
-    'Uploaded banner and server-icon image files (per server), rotation interval, optional log channel ID, last-rotation timestamps',
+    'Uploaded banner and server-icon image files (per server), banner mode (playlist or dynamic), rotation interval, optional log channel ID, last-rotation timestamps; dynamic banners use already-collected voice stats and are not stored as separate files',
   'privacy.table.bannerRotation.retention':
     'Images and settings until deleted or changed by admins; files are stored only for the selected server',
   'privacy.table.news.module': 'News relay (main server feature)',

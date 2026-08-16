@@ -3,15 +3,20 @@ import type { TranslationDict } from '../types'
 const bannerRotation: TranslationDict = {
   'bannerRotation.title': 'Смена баннера и иконки',
   'bannerRotation.intro':
-    'Автоматически меняет баннер и иконку сервера по расписанию. Требуется право «Управление сервером», а для баннеров — уровень буста, открывающий функцию баннера.',
+    'Автоматически меняет баннер и иконку сервера по расписанию. Для баннера можно выбрать плейлист изображений или динамический баннер (самый активный по войсу, число участников и кто сейчас в войсе). Требуется право «Управление сервером», а для баннеров — уровень буста, открывающий функцию баннера.',
   'bannerRotation.moduleOn': 'Модуль включён',
   'bannerRotation.moduleOff': 'Модуль выключен',
 
   'bannerRotation.section.settings': 'Настройки',
-  'bannerRotation.section.banners': 'Баннеры',
+  'bannerRotation.section.banners': 'Баннеры (плейлист)',
   'bannerRotation.section.icons': 'Иконки',
 
   'bannerRotation.bannerEnabled': 'Менять баннер сервера',
+  'bannerRotation.bannerMode': 'Режим баннера',
+  'bannerRotation.bannerMode.playlist': 'Плейлист',
+  'bannerRotation.bannerMode.dynamic': 'Динамический',
+  'bannerRotation.bannerModeHint':
+    'Динамический баннер генерируется по данным войс-трекера: самый активный (аватар и ник), число участников и сколько сейчас в войсе. Иконка по-прежнему из плейлиста.',
   'bannerRotation.iconEnabled': 'Менять иконку сервера',
   'bannerRotation.interval': 'Интервал смены (минуты)',
   'bannerRotation.intervalHint': 'От 15 до 2880 (48 ч). Баннеры и иконки используют один интервал.',
@@ -22,6 +27,7 @@ const bannerRotation: TranslationDict = {
   'bannerRotation.uploadHint': 'PNG, JPEG, GIF или WEBP, до 8 МБ каждый.',
   'bannerRotation.uploading': 'Загрузка…',
   'bannerRotation.noImages': 'Нет изображений — загрузите, чтобы начать смену.',
+  'bannerRotation.playlistDisabledHint': 'Плейлист баннеров не используется, пока включён динамический режим.',
   'bannerRotation.delete': 'Удалить',
 
   'bannerRotation.lastRotated': 'Последняя смена: {date}',
