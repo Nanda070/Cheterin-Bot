@@ -2,6 +2,7 @@ import {
   CalendarCheck,
   ChartBar,
   Coins,
+  Crosshair,
   DiscordLogo,
   Gift,
   Headset,
@@ -110,6 +111,17 @@ const FEATURES: FeatureDef[] = [
     ],
     icons: [Megaphone, Headset, Sparkle],
     reverse: true,
+  },
+  {
+    id: 'valorant',
+    titleKey: 'landing.feature.valorant.title',
+    bodyKey: 'landing.feature.valorant.body',
+    points: [
+      'landing.feature.valorant.point1',
+      'landing.feature.valorant.point2',
+      'landing.feature.valorant.point3',
+    ],
+    icons: [Crosshair, UsersThree, Trophy],
   },
   {
     id: 'gta',

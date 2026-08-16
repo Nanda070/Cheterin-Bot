@@ -53,6 +53,13 @@ const landing: TranslationDict = {
   'landing.feature.events.point2': 'Сетки Single/Double Elimination',
   'landing.feature.events.point3': 'Гивы с автовыбором победителя',
 
+  'landing.feature.valorant.title': 'Инструменты VALORANT для вашего сервера',
+  'landing.feature.valorant.body':
+    'Настраивайте Premier-заявки и ролевые панели отдельно для каждого сервера, следите за аккаунтами через ValChecker и проводите кастомки из дашборда.',
+  'landing.feature.valorant.point1': 'Premier-заявки и настраиваемые ролевые панели',
+  'landing.feature.valorant.point2': 'Профили ValChecker, трекинг матчей и алерты статуса',
+  'landing.feature.valorant.point3': 'Кастомки с картами, командами, войсами, счётом и расписаниями',
+
   'landing.feature.gta.title': 'Для сообществ GTA5RP',
   'landing.feature.gta.body':
     'Состав семьи и заявки через тикеты, календарь дней рождения, сборы на поставку с резервом и напоминаниями.',

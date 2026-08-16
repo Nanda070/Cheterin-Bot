@@ -25,8 +25,8 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           Cheterin is a multi-purpose Discord bot with a web control panel. It covers what a gaming community needs:
           moderation and raid protection, levels, server logging, tickets and feedback, welcomes and roles, a message
           builder, events, polls, brackets, economy and casino, custom commands, scheduled and sticky messages, Games
-          tools (GTA5RP family/supply, ValChecker and Customs for Valorant), private voice rooms, stream notifications,
-          banner/icon rotation, and more.
+          tools (GTA5RP family/supply, VALORANT Premier applications and role panels, ValChecker and Customs), private
+          voice rooms, stream notifications, banner/icon rotation, and more.
         </P>
         <P>
           The idea is simple: <strong>few chat commands, most setup in the browser</strong>. Almost every feature has
@@ -68,6 +68,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Lockdown', 'Emergency server isolation during a raid', 'Server → Moderation'],
             ['CTD tickets', 'Private support threads with auto-close', 'People → Feedback & tickets'],
             ['Feedback', 'Category-based submissions with moderator decisions', 'People → Feedback & tickets'],
+            ['Ideas', 'Moderated idea intake, review queue, and publish channel', 'People → Feedback & tickets → Ideas'],
             ['Welcomes', 'Channel message + DM guide for newcomers', 'Server → Server entry'],
             ['Invite tracker', 'Who invited whom, joins and leaves', 'Server → Server entry → Invites'],
             ['Auto-roles', 'Roles for new members on join', 'Server → Server entry → Auto-roles'],
@@ -99,6 +100,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Play → Family → Supply'],
             ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Play → Family'],
             ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Play → ValChecker'],
+            ['VALORANT', 'Premier applications, role panels, and random-item commands', 'Play → VALORANT'],
             ['Customs', 'Valorant custom lobbies: ranks, map pool/votes, balance, voice move, scores, schedules', 'Play → Customs'],
             ['Banner & icon rotation', 'Scheduled server banner and icon rotation with dashboard uploads', 'Server → Banner & icon rotation'],
             ['Private voice rooms', 'Personal voice channels with a control panel', 'People → Private voice rooms'],
@@ -165,13 +167,14 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['People → Birthdays', 'Member birthday calendar and announce channel'],
             ['People → Private voice rooms', 'Active rooms, publish control panel'],
             ['People → Events & polls', 'Tabs: events, giveaways, polls, tournament brackets'],
-            ['People → Feedback & tickets', 'Feedback cases, categories, ticket panel'],
+            ['People → Feedback & tickets', 'Feedback cases, categories, ticket panel, moderated ideas'],
             ['People → Messages', 'Tabs: scheduled, sticky, starboard'],
             ['People → Roles & embeds', 'Embed Builder, templates, form buttons, reaction roles'],
             ['Play → Fun', 'Roulette, Auto-Emoji, Wordle, Quote, Daily topic'],
             ['Play → Mafia', 'Module toggle, defaults, active games'],
             ['Play → Bunker', 'Module toggle, defaults, active games'],
             ['Play → ValChecker', 'Module toggle, match/status channels, poll interval'],
+            ['Play → VALORANT', 'Premier application panel, role panels, and /valorant command toggle'],
             ['Play → Customs', 'Lobbies, ranks, map pool, voice, scores, rematch, schedules'],
             ['Play → Family', 'Roster, applications, birthdays; Supply tab for runs'],
             ['Play → Streams', 'Twitch / YouTube subscriptions'],
@@ -762,6 +765,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>The decision is recorded: who reviewed and when; status is published on the public case message.</li>
           <li>Full case history is under Feedback & tickets, including the member card.</li>
         </OL>
+
+        <H3>Ideas</H3>
+        <P>
+          The <strong>Ideas</strong> tab is a separate, moderated intake. Turn it on per server, choose intake,
+          review, and publish channels, then set the prompt shown to submitters. Moderators approve and publish or
+          reject pending ideas from the same tab; ideas never leave the selected server.
+        </P>
       </>
     ),
   },
@@ -1681,6 +1691,37 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>A live upcoming-birthdays message updates on every change.</li>
           <li>Every day at midnight in the server timezone the bot congratulates birthday people in the configured channel.</li>
           <li>Dashboard Birthdays tab: search a member, add or remove a date for any player.</li>
+        </UL>
+      </>
+    ),
+  },
+  {
+    id: 'valorant',
+    title: 'VALORANT',
+    group: 'Modules',
+    content: (
+      <>
+        <H>VALORANT: Premier, role panels, and commands</H>
+        <P>
+          The <strong>Play → VALORANT</strong> page is configured independently for the selected server. It is not a
+          separate or private bot: its settings, applications, and role panels belong only to that Cheterin server.
+        </P>
+        <UL>
+          <li>
+            <strong>Premier:</strong> enable applications and select the channel where they are received. Each
+            application creates a thread in that server; the page also links the official Premier FAQ.
+          </li>
+          <li>
+            <strong>Panels:</strong> enable server-specific role panels for agents, playstyles, notifications, and
+            cities/servers.
+          </li>
+          <li>
+            <strong>/valorant:</strong> turn random agent, buddy, map, skin, and weapon commands on or off.
+          </li>
+          <li>
+            <strong>Customs:</strong> this tab links to the separate Customs page for manual Team A/B assignments and
+            lobby management.
+          </li>
         </UL>
       </>
     ),
