@@ -15,9 +15,11 @@ import settings_db
 import stats_db
 from discord_banner_bytes import (
     classify_discord_asset_error,
+    describe_image_bytes,
     ensure_discord_banner_bytes,
     ensure_discord_icon_bytes,
     format_discord_http_error,
+    guild_has_banner_feature,
 )
 
 logger = logging.getLogger("cheterin.banner_rotation")
@@ -108,12 +110,19 @@ class BannerRotationCog(commands.Cog):
         interval: int,
         image_id: str,
     ) -> bool:
-        try:
-            payload = ensure_discord_banner_bytes(raw)
-        except Exception as exc:
-            detail = {"status": None, "code": None, "text": f"image_encode_failed: {exc}"}
-            self._last_error = {**detail, "reason": "invalid_image", "kind": "banner"}
-            logger.warning("banner_rotation: banner encode failed guild=%s: %s", guild.id, exc, exc_info=True)
+        if not guild_has_banner_feature(guild):
+            detail = {
+                "status": None,
+                "code": None,
+                "text": "guild missing BANNER feature (boost level 2+ required)",
+            }
+            self._last_error = {**detail, "reason": "boost_required", "kind": "banner"}
+            logger.warning(
+                "banner_rotation: banner skipped guild=%s: BANNER feature missing (features=%s premium_tier=%s)",
+                guild.id,
+                list(getattr(guild, "features", []) or []),
+                getattr(guild, "premium_tier", None),
+            )
             if log_channel:
                 await self._try_log(
                     log_channel,
@@ -121,63 +130,113 @@ class BannerRotationCog(commands.Cog):
                 )
             return False
 
-        try:
-            await guild.edit(banner=payload, reason=reason)
-            banner_rotation_core.mark_rotated(guild.id, "banner", image_id, interval)
+        payloads: list[tuple[str, bytes]] = []
+        last_encode: Exception | None = None
+        for prefer in ("png", "jpeg"):
+            try:
+                payloads.append((prefer, ensure_discord_banner_bytes(raw, prefer=prefer)))  # type: ignore[arg-type]
+            except Exception as exc:
+                last_encode = exc
+                logger.warning(
+                    "banner_rotation: banner encode (%s) failed guild=%s: %s",
+                    prefer,
+                    guild.id,
+                    exc,
+                    exc_info=True,
+                )
+        if not payloads:
+            detail = {"status": None, "code": None, "text": f"image_encode_failed: {last_encode}"}
+            self._last_error = {**detail, "reason": "invalid_image", "kind": "banner"}
+            if log_channel:
+                await self._try_log(
+                    log_channel,
+                    i18n.t("banner_rotation.log_http_banner", lang, error=detail["text"]),
+                )
+            return False
+
+        for prefer, payload in payloads:
+            meta = describe_image_bytes(payload)
             logger.info(
-                i18n.t("banner_rotation.rotated_banner", lang, name=log_name),
-            )
-            if log_channel:
-                await self._try_log(
-                    log_channel,
-                    i18n.t("banner_rotation.log_banner", lang, name=log_name),
-                )
-            return True
-        except discord.Forbidden as exc:
-            detail = format_discord_http_error(exc)
-            reason_code = classify_discord_asset_error(detail)
-            self._last_error = {**detail, "reason": reason_code, "kind": "banner"}
-            logger.warning(
-                "banner_rotation: banner forbidden guild=%s status=%s code=%s text=%s",
+                "banner_rotation: uploading banner guild=%s format=%s bytes=%s size=%sx%s",
                 guild.id,
-                detail.get("status"),
-                detail.get("code"),
-                detail.get("text"),
+                prefer,
+                meta.get("bytes"),
+                meta.get("width"),
+                meta.get("height"),
             )
-            if log_channel:
-                await self._try_log(
-                    log_channel,
-                    i18n.t(
-                        "banner_rotation.log_http_banner",
-                        lang,
-                        error=f"{detail.get('text')} (HTTP {detail.get('status')}, code {detail.get('code')})",
-                    ),
+            try:
+                await guild.edit(banner=payload, reason=reason)
+                banner_rotation_core.mark_rotated(guild.id, "banner", image_id, interval)
+                logger.info(
+                    i18n.t("banner_rotation.rotated_banner", lang, name=log_name),
                 )
-        except discord.HTTPException as exc:
-            detail = format_discord_http_error(exc)
-            reason_code = classify_discord_asset_error(detail)
-            self._last_error = {**detail, "reason": reason_code, "kind": "banner"}
-            logger.warning(
-                "banner_rotation: banner rejected guild=%s status=%s code=%s text=%s reason=%s",
-                guild.id,
-                detail.get("status"),
-                detail.get("code"),
-                detail.get("text"),
-                reason_code,
-            )
-            if log_channel:
-                await self._try_log(
-                    log_channel,
-                    i18n.t(
-                        "banner_rotation.log_http_banner",
-                        lang,
-                        error=f"{detail.get('text')} (HTTP {detail.get('status')}, code {detail.get('code')})",
-                    ),
+                if log_channel:
+                    await self._try_log(
+                        log_channel,
+                        i18n.t("banner_rotation.log_banner", lang, name=log_name),
+                    )
+                return True
+            except discord.Forbidden as exc:
+                detail = format_discord_http_error(exc)
+                reason_code = classify_discord_asset_error(detail)
+                self._last_error = {**detail, "reason": reason_code, "kind": "banner", "format": prefer}
+                logger.warning(
+                    "banner_rotation: banner forbidden guild=%s format=%s status=%s code=%s text=%s",
+                    guild.id,
+                    prefer,
+                    detail.get("status"),
+                    detail.get("code"),
+                    detail.get("text"),
                 )
-        except Exception as exc:
-            detail = {"status": None, "code": None, "text": str(exc)[:500]}
-            self._last_error = {**detail, "reason": "discord_rejected", "kind": "banner"}
-            logger.warning("banner_rotation: banner unexpected error guild=%s: %s", guild.id, exc, exc_info=True)
+                if log_channel:
+                    await self._try_log(
+                        log_channel,
+                        i18n.t(
+                            "banner_rotation.log_http_banner",
+                            lang,
+                            error=f"{detail.get('text')} (HTTP {detail.get('status')}, code {detail.get('code')})",
+                        ),
+                    )
+                return False
+            except discord.HTTPException as exc:
+                detail = format_discord_http_error(exc)
+                reason_code = classify_discord_asset_error(detail)
+                self._last_error = {**detail, "reason": reason_code, "kind": "banner", "format": prefer}
+                logger.warning(
+                    "banner_rotation: banner rejected guild=%s format=%s status=%s code=%s text=%s "
+                    "reason=%s response_reason=%s errors=%s",
+                    guild.id,
+                    prefer,
+                    detail.get("status"),
+                    detail.get("code"),
+                    detail.get("text"),
+                    reason_code,
+                    detail.get("response_reason"),
+                    detail.get("errors"),
+                )
+                if log_channel:
+                    await self._try_log(
+                        log_channel,
+                        i18n.t(
+                            "banner_rotation.log_http_banner",
+                            lang,
+                            error=f"{detail.get('text')} (HTTP {detail.get('status')}, code {detail.get('code')})",
+                        ),
+                    )
+                if reason_code != "invalid_image":
+                    return False
+                continue
+            except Exception as exc:
+                detail = {"status": None, "code": None, "text": str(exc)[:500]}
+                self._last_error = {**detail, "reason": "discord_rejected", "kind": "banner", "format": prefer}
+                logger.warning(
+                    "banner_rotation: banner unexpected error guild=%s format=%s: %s",
+                    guild.id,
+                    prefer,
+                    exc,
+                    exc_info=True,
+                )
+                return False
         return False
 
     async def _maybe_rotate(self, guild_id: int, now: int) -> None:
@@ -269,7 +328,7 @@ class BannerRotationCog(commands.Cog):
                 if path is not None:
                     raw = path.read_bytes()
                     try:
-                        payload = ensure_discord_icon_bytes(raw)
+                        payload = ensure_discord_icon_bytes(raw, prefer="png")
                         await guild.edit(icon=payload, reason="Icon rotation")
                         banner_rotation_core.mark_rotated(guild_id, "icon", img["id"], interval)
                         did_rotate = True
@@ -352,9 +411,13 @@ class BannerRotationCog(commands.Cog):
                     "kind": err.get("kind"),
                 }
             return {"ok": False, "error": "nothing_to_rotate"}
-        except Exception:
+        except Exception as exc:
             logger.exception("banner_rotation: rotate_now failed for guild=%s", guild_id)
-            return {"ok": False, "error": "internal_error"}
+            return {
+                "ok": False,
+                "error": "invalid_image",
+                "discord_text": f"rotate_now_exception: {exc}"[:500],
+            }
 
 
 async def setup(bot: commands.Bot) -> None:

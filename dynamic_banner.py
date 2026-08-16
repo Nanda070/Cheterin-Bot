@@ -1,8 +1,8 @@
 """Pillow renderer for Cheterin dynamic Discord server banners.
 
 Discord recommended banner size: 960×540. Cheterin crimson/dark aesthetic
-(matches profile_card / dashboard --color-primary). Output is RGB JPEG —
-Discord often returns 500/internal_error for awkward PNGs, not Missing Permissions.
+(matches profile_card / dashboard --color-primary). Output is RGB PNG —
+Discord often returns 500/internal_error for awkward encodings, not Missing Permissions.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import os
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-from discord_banner_bytes import BANNER_H, BANNER_W, image_to_discord_jpeg
+from discord_banner_bytes import BANNER_H, BANNER_W, image_to_discord_png
 
 ACCENT = (212, 69, 86)
 ACCENT_DIM = (140, 40, 55)
@@ -147,7 +147,7 @@ def render_dynamic_banner(
     guild_name: str = "",
     lang: str = "ru",
 ) -> bytes:
-    """Return Discord-safe JPEG bytes for ``guild.edit(banner=...)``."""
+    """Return Discord-safe PNG bytes for ``guild.edit(banner=...)``."""
     labels = LABELS.get(lang) or LABELS["ru"]
     card = _background().convert("RGBA")
 
@@ -218,4 +218,4 @@ def render_dynamic_banner(
         block_w,
     )
 
-    return image_to_discord_jpeg(card, size=(BANNER_W, BANNER_H))
+    return image_to_discord_png(card, size=(BANNER_W, BANNER_H))
