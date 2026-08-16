@@ -2,6 +2,8 @@ import type { TranslationDict } from '../types'
 
 const customs: TranslationDict = {
   'customs.title': 'Customs',
+  'customs.tab.customs': 'Customs',
+  'customs.tab.settings': 'Settings',
   'customs.intro':
     'Lobbies are published from the dashboard. Kick, rematch, and map bans live here; Discord keeps join, balance, map, start, and score.',
   'customs.moduleOn': 'Module on',

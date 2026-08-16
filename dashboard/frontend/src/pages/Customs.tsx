@@ -41,6 +41,8 @@ type CreateSpec = {
   signup_minutes: number
 }
 
+type Tab = 'customs' | 'settings'
+
 function emptyCreate(settings: CustomsSettings | null): CreateSpec {
   return {
     name: settings?.default_name || '',
@@ -253,6 +255,7 @@ function LobbyCard({
 
 export function CustomsPage() {
   const t = useT()
+  const [tab, setTab] = useState<Tab>('customs')
   const [settings, setSettings] = useState<CustomsSettings | null>(null)
   const [lobbies, setLobbies] = useState<CustomsLobbySummary[]>([])
   const [recent, setRecent] = useState<CustomsLobbySummary[]>([])
@@ -424,20 +427,31 @@ export function CustomsPage() {
           <Crosshair size={22} className="text-primary" />
           {t('customs.title')}
         </h1>
-        <Toggle
-          checked={settings.enabled}
-          onChange={(v) => setSettings({ ...settings, enabled: v })}
-          label={settings.enabled ? t('customs.moduleOn') : t('customs.moduleOff')}
-        />
-        <Button variant="primary" onClick={openCreate} className="ml-auto" disabled={!settings.enabled}>
-          {t('customs.create')}
-        </Button>
+        {tab === 'customs' && (
+          <Button variant="primary" onClick={openCreate} className="ml-auto" disabled={!settings.enabled}>
+            {t('customs.create')}
+          </Button>
+        )}
       </div>
       <p className="text-sm text-muted">{t('customs.intro')}</p>
+      <div className="flex gap-2 border-b border-border">
+        {(['customs', 'settings'] as Tab[]).map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setTab(item)}
+            className={`px-3 py-2 text-sm ${tab === item ? 'border-b-2 border-primary text-foreground' : 'text-muted'}`}
+          >
+            {t(`customs.tab.${item}`)}
+          </button>
+        ))}
+      </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
       {saved && <p className="text-sm text-success">{saved}</p>}
 
+      {tab === 'customs' && (
+        <>
       <Card className="flex flex-col gap-3">
         <h2 className="font-semibold text-foreground">{t('customs.lobbiesTitle')}</h2>
         {lobbies.length === 0 ? (
@@ -485,6 +499,18 @@ export function CustomsPage() {
         )}
       </Card>
 
+        </>
+      )}
+
+      {tab === 'settings' && (
+        <>
+      <Card className="flex flex-col gap-3">
+        <Toggle
+          checked={settings.enabled}
+          onChange={(v) => setSettings({ ...settings, enabled: v })}
+          label={settings.enabled ? t('customs.moduleOn') : t('customs.moduleOff')}
+        />
+      </Card>
       <Card className="flex flex-col gap-3">
         <h2 className="font-semibold text-foreground">{t('customs.defaultsTitle')}</h2>
         <label className="text-sm text-muted" htmlFor="customs-default-name">
@@ -786,6 +812,8 @@ export function CustomsPage() {
           {busy ? t('common.saving') : t('common.save')}
         </Button>
       </div>
+        </>
+      )}
 
       <Modal open={createOpen} title={t('customs.modal.create')} onClose={() => setCreateOpen(false)}>
         <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto">

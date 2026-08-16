@@ -11,6 +11,7 @@ import family_db
 import invites_db
 import mafia_db
 import polls_db
+import settings_db
 import starboard_db
 import relations_db
 import valchecker_db
@@ -105,6 +106,7 @@ def create_app(
     guild_id: int,
     frontend_dist: Path | None = None,
 ) -> web.Application:
+    settings_db.init()
     stats_db.init()
     casino_db.init()
     family_db.init()

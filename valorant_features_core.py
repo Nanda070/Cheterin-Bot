@@ -60,7 +60,7 @@ def save_panel_settings(guild_id: int, data: dict) -> dict:
 def panel_catalog() -> dict:
     return {
         "agent_classes": {key: [{"key": agent, "name": name} for agent, name in rows] for key, rows in AGENT_CLASSES.items()},
-        "playstyles": [{"key": key, "name": name.title()} for key, name in AGENT_CLASSES.items()],
+        "playstyles": [{"key": key, "name": key.title()} for key in AGENT_CLASSES],
         "notifications": [{"key": key, "name": name} for key, name in NOTIFICATIONS],
         "servers": [{"key": key, "name": name} for key, name in SERVERS],
     }

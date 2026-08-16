@@ -2,6 +2,8 @@ import type { TranslationDict } from '../types'
 
 const customs: TranslationDict = {
   'customs.title': 'Кастомки',
+  'customs.tab.customs': 'Кастомки',
+  'customs.tab.settings': 'Настройки',
   'customs.intro':
     'Лобби публикуются из панели. Кик, реванш и баны карт — здесь; в Discord остаются набор, баланс, карта, старт и счёт.',
   'customs.moduleOn': 'Модуль включён',
