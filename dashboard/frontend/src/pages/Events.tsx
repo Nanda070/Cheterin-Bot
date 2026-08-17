@@ -407,8 +407,8 @@ export function EventsPage() {
                 id="event-options"
                 value={optionsText}
                 onChange={(e) => setOptionsText(e.target.value)}
-                rows={4}
-                className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                rows={6}
+                className="min-h-[9rem] rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
 
               <Toggle

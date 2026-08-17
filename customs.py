@@ -18,6 +18,7 @@ from discord.ext import commands, tasks
 
 import embed_style
 import i18n
+from customs_winner_card import build_winner_gif
 import customs_core
 import valorant_maps
 
@@ -1688,9 +1689,22 @@ class CustomsCog(commands.Cog):
         embed = build_result_embed(lobby, lang)
         files = apply_map_image(embed, lobby)
         try:
+            result_files = list(files)
+            winner = customs_core.score_winner(lobby)
+            if winner is not None:
+                score = lobby.get("score") or {}
+                result_files.append(discord.File(
+                    build_winner_gif(
+                        i18n.t("customs.embed.result_title", lang),
+                        str(embed.description or ""),
+                        int(score.get("a") or 0),
+                        int(score.get("b") or 0),
+                    ),
+                    filename="customs-winner.gif",
+                ))
             kwargs: dict[str, Any] = {"embed": embed}
-            if files:
-                kwargs["files"] = files
+            if result_files:
+                kwargs["files"] = result_files
             await channel.send(**kwargs)
         except discord.HTTPException:
             logger.debug("customs: could not post result lobby=%s", lobby_id)
