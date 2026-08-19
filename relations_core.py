@@ -12,16 +12,16 @@ MODULE_NAME = "relations"
 # Level 1..11 — cumulative HP required to be at that level (index 0 = level 1).
 DEFAULT_LEVEL_THRESHOLDS: list[int] = [
     0,
-    50,
-    120,
-    220,
-    350,
-    520,
-    750,
-    1050,
-    1400,
-    1850,
-    2400,
+    1150,
+    2120,
+    2220,
+    2350,
+    2520,
+    2750,
+    3050,
+    3400,
+    3850,
+    5400,
 ]
 
 DEFAULT_ACTIONS: list[dict[str, Any]] = [

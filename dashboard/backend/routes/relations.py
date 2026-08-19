@@ -46,13 +46,20 @@ async def relations_put(request: web.Request) -> web.Response:
         return web.json_response({"error": "invalid_max_actions_per_day"}, status=400)
 
     actions = relations_core._normalize_actions(body.get("actions"))
-    thresholds = relations_core._normalize_thresholds(body.get("level_thresholds"))
-    if thresholds == list(relations_core.DEFAULT_LEVEL_THRESHOLDS) and isinstance(
-        body.get("level_thresholds"), list
-    ):
-        raw = body.get("level_thresholds")
-        if len(raw) != relations_core.LEVEL_COUNT:
+    raw_thresholds = body.get("level_thresholds")
+    if raw_thresholds is not None:
+        if not isinstance(raw_thresholds, list) or len(raw_thresholds) != relations_core.LEVEL_COUNT:
             return web.json_response({"error": "invalid_level_thresholds"}, status=400)
+        thresholds = relations_core._normalize_thresholds(raw_thresholds)
+        try:
+            coerced = [int(v) for v in raw_thresholds]
+        except (TypeError, ValueError):
+            return web.json_response({"error": "invalid_level_thresholds"}, status=400)
+        if thresholds != coerced:
+            # _normalize_thresholds fell back to defaults — the values were invalid
+            return web.json_response({"error": "invalid_level_thresholds"}, status=400)
+    else:
+        thresholds = relations_core._normalize_thresholds(None)
 
     reward_roles = relations_core._normalize_reward_roles(body.get("reward_roles"))
 
