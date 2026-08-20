@@ -72,3 +72,21 @@ async def test_well_known_discord_not_spa_fallback(aiohttp_client, dist_dir):
     text = await resp.text()
     assert text == "dh=cf90ba633c23069048cee5676d56aa69e395e188"
     assert "SPA" not in text
+
+
+@pytest.mark.asyncio
+async def test_riot_txt_not_spa_fallback(aiohttp_client, dist_dir):
+    (dist_dir / "riot.txt").write_bytes(
+        b"aed65606-0fad-4950-af04-1695d5cc8421\n"
+    )
+
+    app = web.Application()
+    setup_static_routes(app, dist_dir)
+    client = await aiohttp_client(app)
+
+    resp = await client.get("/riot.txt")
+
+    assert resp.status == 200
+    text = await resp.text()
+    assert text == "aed65606-0fad-4950-af04-1695d5cc8421\n"
+    assert "SPA" not in text

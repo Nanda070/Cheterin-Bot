@@ -13,6 +13,14 @@ def setup_static_routes(app: web.Application, dist_dir: Path) -> None:
     if well_known_dir.is_dir():
         app.router.add_static("/.well-known", well_known_dir, show_index=False)
 
+    riot_path = dist_dir / "riot.txt"
+    if riot_path.is_file():
+
+        async def serve_riot(_request: web.Request) -> web.Response:
+            return web.FileResponse(riot_path)
+
+        app.router.add_get("/riot.txt", serve_riot)
+
     index_path = dist_dir / "index.html"
 
     async def spa_fallback(request: web.Request) -> web.Response:
