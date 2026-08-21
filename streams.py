@@ -658,6 +658,26 @@ def render_template(template: str, channel_name: str, stream_title: str, game: s
     return text.strip()
 
 
+def resolve_template(sub: dict, lang: str, platform: str, *, tiktok_kind: str | None = None) -> str:
+    if platform == "tiktok":
+        return tiktok_template(sub, tiktok_kind or "video", lang)
+    raw = str(sub.get("template") or "").strip()
+    return raw or default_template(platform, lang)
+
+
+def card_title(platform: str, name: str, lang: str, *, tiktok_kind: str | None = None) -> str:
+    clean = components_v2.v2_plain_text(name)
+    if platform == "youtube":
+        key = "streams.card.title_youtube"
+    elif platform == "tiktok" and tiktok_kind == "live":
+        key = "streams.card.title_tiktok_live"
+    elif platform == "tiktok":
+        key = "streams.card.title_tiktok"
+    else:
+        key = "streams.card.title_twitch"
+    return i18n.t(key, lang, name=clean)
+
+
 def _video_view(watch_url: str, channel_url: str | None, lang: str) -> discord.ui.View:
     view = discord.ui.View()
     view.add_item(discord.ui.Button(
@@ -687,6 +707,16 @@ def _live_view(live_url: str, channel_url: str | None, lang: str) -> discord.ui.
             label=i18n.t("streams.btn.tiktok", lang),
             url=channel_url,
         ))
+    return view
+
+
+def _watch_view(url: str, lang: str, *, live: bool) -> discord.ui.View:
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(
+        style=discord.ButtonStyle.link,
+        label=i18n.t("streams.btn.watch_live" if live else "streams.btn.watch_video", lang),
+        url=url,
+    ))
     return view
 
 
@@ -1243,43 +1273,31 @@ class Streams(commands.Cog):
                 continue
 
             url = f"https://www.twitch.tv/{sub['identifier']}"
-            template = sub["template"] or default_template("twitch", lang)
-            content = render_template(
-                template,
-                stream.get("user_name") or sub["display_name"],
-                stream.get("title", ""),
-                stream.get("game_name", ""),
-                url,
-                lang,
-            )
+            name = stream.get("user_name") or sub["display_name"]
+            title = components_v2.v2_plain_text(stream.get("title") or i18n.t("streams.embed.stream_title", lang))
+            game = components_v2.v2_plain_text(stream.get("game_name") or "")
+            template = resolve_template(sub, lang, "twitch")
+            content = render_template(template, name, title, game, url, lang)
 
             embed = discord.Embed(
-                title=stream.get("title") or i18n.t("streams.embed.stream_title", lang),
-                url=url,
+                title=card_title("twitch", name, lang),
+                description=title,
                 color=embed_style.TWITCH,
                 timestamp=discord.utils.utcnow(),
             )
-            embed.set_author(
-                name=i18n.t(
-                    "streams.embed.author_twitch",
-                    lang,
-                    name=stream.get("user_name", sub["display_name"]),
-                ),
-                icon_url=sub["avatar_url"] or None,
-            )
-            if stream.get("game_name"):
-                embed.add_field(name=i18n.t("streams.embed.game", lang), value=stream["game_name"], inline=True)
             if stream.get("viewer_count") is not None:
                 embed.add_field(
                     name=i18n.t("streams.embed.viewers", lang),
                     value=str(stream["viewer_count"]),
                     inline=True,
                 )
+            if game:
+                embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
             thumb = (stream.get("thumbnail_url") or "").replace("{width}", "640").replace("{height}", "360")
             if thumb:
                 embed.set_image(url=f"{thumb}?t={int(time.time())}")
 
-            await self._announce(sub, content, embed)
+            await self._announce(sub, content, embed, view=_watch_view(url, lang, live=True))
             update_subscription(guild_id, sub["id"], last_stream_id=stream_id, last_notified_ts=now)
 
     async def _should_skip_video(self, guild_id: int, sub: dict, video_id: str, title: str) -> bool:
@@ -1308,15 +1326,20 @@ class Streams(commands.Cog):
             return
 
         url = f"https://www.youtube.com/watch?v={latest['video_id']}"
-        template = sub["template"] or default_template("youtube", lang)
         channel_name = feed["channel_name"] or sub["display_name"]
-        content = render_template(template, channel_name, latest["title"], "", url, lang)
+        title = components_v2.v2_plain_text(latest["title"])
+        template = resolve_template(sub, lang, "youtube")
+        content = render_template(template, channel_name, title, "", url, lang)
 
-        embed = discord.Embed(title=latest["title"], url=url, color=embed_style.YOUTUBE, timestamp=discord.utils.utcnow())
-        embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=channel_name))
+        embed = discord.Embed(
+            title=card_title("youtube", channel_name, lang),
+            description=title,
+            color=embed_style.YOUTUBE,
+            timestamp=discord.utils.utcnow(),
+        )
         embed.set_image(url=f"https://i.ytimg.com/vi/{latest['video_id']}/hqdefault.jpg")
 
-        await self._announce(sub, content, embed)
+        await self._announce(sub, content, embed, view=_watch_view(url, lang, live=False))
         update_subscription(guild_id, sub["id"], last_stream_id=latest["video_id"], last_notified_ts=int(time.time()))
 
     async def _poll_tiktok_live_one(self, guild_id: int, sub: dict):
@@ -1378,20 +1401,18 @@ class Streams(commands.Cog):
         channel_name = sub.get("display_name") or sub["identifier"]
         live_url = f"https://www.tiktok.com/@{sub['identifier']}/live"
         channel_url = f"https://www.tiktok.com/@{sub['identifier']}"
-        title = live.get("title") or i18n.t("streams.embed.live_title", lang)
+        title = components_v2.v2_plain_text(live.get("title") or i18n.t("streams.embed.live_title", lang))
         template = tiktok_template(sub, "live", lang)
         content = render_template(template, channel_name, title, "", live_url, lang)
 
-        avatar = live.get("avatar_url") or sub.get("avatar_url") or None
         cover = live.get("cover_url") or live.get("cover") or ""
 
         embed = discord.Embed(
-            title=tiktok_live_embed_title(sub, title),
-            url=live_url,
+            title=card_title("tiktok", channel_name, lang, tiktok_kind="live"),
+            description=title,
             color=tiktok_embed_color(sub, "live"),
             timestamp=discord.utils.utcnow(),
         )
-        embed.set_author(name=channel_name, icon_url=avatar)
         if live.get("viewer_count") is not None:
             embed.add_field(
                 name=i18n.t("streams.embed.viewers", lang),
@@ -1417,20 +1438,17 @@ class Streams(commands.Cog):
         if not title:
             oembed = await self._tiktok_oembed(watch)
             title = oembed.get("title") or ""
+        title = components_v2.v2_plain_text(title)
 
         channel_name = feed.get("display_name") or sub.get("display_name") or sub["identifier"]
         template = tiktok_template(sub, "video", lang)
         content = render_template(template, channel_name, title, "", watch, lang)
 
         embed = discord.Embed(
-            description=title[:4096] if title else i18n.t("streams.default_template_tiktok", lang)[:256],
-            url=watch,
+            title=card_title("tiktok", channel_name, lang, tiktok_kind="video"),
+            description=title[:4096] if title else i18n.t("streams.embed.stream_title", lang),
             color=tiktok_embed_color(sub, "video"),
             timestamp=discord.utils.utcnow(),
-        )
-        embed.set_author(
-            name=i18n.t("streams.embed.author_tiktok", lang, name=channel_name),
-            icon_url=sub.get("avatar_url") or feed.get("avatar_url") or None,
         )
         if cover:
             embed.set_image(url=cover)
@@ -1485,6 +1503,7 @@ class Streams(commands.Cog):
                 view=view,
                 allowed_mentions=allowed,
                 detach_layout=True,
+                stream_card=True,
             )
             return True
         except discord.HTTPException as exc:
@@ -1500,60 +1519,54 @@ class Streams(commands.Cog):
         lang = i18n.lang_for(guild_id)
         display = sub.get("display_name") or sub.get("identifier") or "stream"
         platform = sub.get("platform") or "twitch"
+        title = i18n.t("streams.test.sample_title", lang)
         if platform == "youtube":
             url = f"https://www.youtube.com/channel/{sub.get('identifier', '')}"
-            template = sub.get("template") or default_template("youtube", lang)
-            title = i18n.t("streams.test.sample_title", lang)
+            template = resolve_template(sub, lang, "youtube")
             content = render_template(template, display, title, "", url, lang)
             embed = discord.Embed(
-                title=title,
-                url=url,
+                title=card_title("youtube", display, lang),
+                description=title,
                 color=embed_style.YOUTUBE,
                 timestamp=discord.utils.utcnow(),
             )
-            embed.set_author(name=i18n.t("streams.embed.author_youtube", lang, name=display))
             embed.set_footer(text=i18n.t("streams.test.footer", lang))
-        elif platform == "tiktok":
+            view = _watch_view(url, lang, live=False)
+            if not await self._announce(sub, content, embed, view=view):
+                return "send_failed"
+            return None
+        if platform == "tiktok":
             ident = sub.get("identifier") or "tiktok"
             url = f"https://www.tiktok.com/@{ident}"
-            template = tiktok_template(sub, "video", lang)
-            title = i18n.t("streams.test.sample_title", lang)
+            template = resolve_template(sub, lang, "tiktok", tiktok_kind="video")
             content = render_template(template, display, title, "", url, lang)
             embed = discord.Embed(
+                title=card_title("tiktok", display, lang, tiktok_kind="video"),
                 description=title,
-                url=url,
                 color=tiktok_embed_color(sub, "video"),
                 timestamp=discord.utils.utcnow(),
-            )
-            embed.set_author(
-                name=i18n.t("streams.embed.author_tiktok", lang, name=display),
-                icon_url=sub.get("avatar_url") or None,
             )
             embed.set_footer(text=i18n.t("streams.test.footer", lang))
             view = _video_view(url, url, lang)
             if not await self._announce(sub, content, embed, view=view, tiktok_kind="video"):
                 return "send_failed"
             return None
-        else:
-            url = f"https://www.twitch.tv/{sub.get('identifier', '')}"
-            template = sub.get("template") or default_template("twitch", lang)
-            title = i18n.t("streams.test.sample_title", lang)
-            game = i18n.t("streams.test.sample_game", lang)
-            content = render_template(template, display, title, game, url, lang)
-            embed = discord.Embed(
-                title=title,
-                url=url,
-                color=embed_style.TWITCH,
-                timestamp=discord.utils.utcnow(),
-            )
-            embed.set_author(
-                name=i18n.t("streams.embed.author_twitch", lang, name=display),
-                icon_url=sub.get("avatar_url") or None,
-            )
-            embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
-            embed.set_footer(text=i18n.t("streams.test.footer", lang))
 
-        if not await self._announce(sub, content, embed):
+        url = f"https://www.twitch.tv/{sub.get('identifier', '')}"
+        game = i18n.t("streams.test.sample_game", lang)
+        template = resolve_template(sub, lang, "twitch")
+        content = render_template(template, display, title, game, url, lang)
+        embed = discord.Embed(
+            title=card_title("twitch", display, lang),
+            description=title,
+            color=embed_style.TWITCH,
+            timestamp=discord.utils.utcnow(),
+        )
+        embed.add_field(name=i18n.t("streams.embed.viewers", lang), value="42", inline=True)
+        embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
+        embed.set_footer(text=i18n.t("streams.test.footer", lang))
+        view = _watch_view(url, lang, live=True)
+        if not await self._announce(sub, content, embed, view=view):
             return "send_failed"
         return None
 

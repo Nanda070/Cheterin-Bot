@@ -10,10 +10,23 @@ Container (or as top-level ActionRows on the LayoutView).
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import discord
 from discord import MediaGalleryItem
+
+_MASKED_LINK_RE = re.compile(r"^\[([^\]\n]+)\]\(https?://[^)]+\)$")
+_OVER_ESCAPED = (
+    ("\\_", "_"),
+    ("\\*", "*"),
+    ("\\[", "["),
+    ("\\]", "]"),
+    ("\\(", "("),
+    ("\\)", ")"),
+    ("\\~", "~"),
+    ("\\`", "`"),
+)
 
 VERSION_V1 = "v1"
 VERSION_V2 = "v2"
@@ -107,6 +120,54 @@ def embed_to_text_blocks(embed: discord.Embed | None, *, content: str | None = N
         blocks.extend(_chunk_text(f"-# {footer.text}"))
 
     return blocks
+
+
+def v2_plain_text(text: str | None) -> str:
+    """Keep V2 titles readable: unwrap `[text](url)` and undo over-escaped markdown."""
+    if not text:
+        return ""
+    s = str(text)
+    match = _MASKED_LINK_RE.fullmatch(s.strip())
+    if match:
+        s = match.group(1)
+    for escaped, raw in _OVER_ESCAPED:
+        s = s.replace(escaped, raw)
+    return s
+
+
+def stream_card_text_blocks(embed: discord.Embed | None) -> list[str]:
+    """Juniper-style card body: heading, stream title, compact stats. No author, no markdown link title."""
+    if embed is None:
+        return []
+    blocks: list[str] = []
+    if embed.title:
+        blocks.extend(_chunk_text(f"## {v2_plain_text(embed.title)}"))
+    if embed.description:
+        blocks.extend(_chunk_text(v2_plain_text(embed.description)))
+    stats = _format_stream_fields(embed)
+    if stats:
+        blocks.extend(_chunk_text(stats))
+    footer = embed.footer
+    if footer and footer.text:
+        blocks.extend(_chunk_text(f"-# {v2_plain_text(footer.text)}"))
+    return blocks
+
+
+def _format_stream_fields(embed: discord.Embed) -> str:
+    fields = [
+        (v2_plain_text(field.name) or "\u200b", v2_plain_text(field.value) or "\u200b")
+        for field in embed.fields
+    ]
+    if not fields:
+        return ""
+    if len(fields) >= 2:
+        left, right = fields[0], fields[1]
+        text = f"**{left[0]}** | **{right[0]}**\n{left[1]} | {right[1]}"
+        for name, value in fields[2:]:
+            text += f"\n**{name}**\n{value}"
+        return text
+    name, value = fields[0]
+    return f"**{name}**\n{value}"
 
 
 def _clone_button(src: discord.ui.Button) -> discord.ui.Button:
@@ -221,6 +282,63 @@ def build_layout_view(
     return layout
 
 
+def build_stream_layout_view(
+    *,
+    embed: discord.Embed | None = None,
+    content: str | None = None,
+    source_view: discord.ui.View | None = None,
+    keep_callbacks: bool = False,
+    timeout: float | None = None,
+    image_files: list[discord.File] | None = None,
+) -> discord.ui.LayoutView:
+    """Classic Juniper layout: greeting above the card, card without thumbnail or `[title](url)`."""
+    layout = discord.ui.LayoutView(timeout=timeout)
+    rows = interactive_rows_from_view(source_view, keep_callbacks=keep_callbacks)
+
+    for block in _chunk_text(content or ""):
+        if len(block) > _BLOCK_SOFT_MAX:
+            for chunk in _chunk_text(block):
+                layout.add_item(discord.ui.TextDisplay(chunk))
+        else:
+            layout.add_item(discord.ui.TextDisplay(block))
+
+    if embed is not None:
+        accent = _colour_value(embed)
+        container = discord.ui.Container(accent_colour=accent)
+        for block in stream_card_text_blocks(embed):
+            if len(block) > _BLOCK_SOFT_MAX:
+                for chunk in _chunk_text(block):
+                    container.add_item(discord.ui.TextDisplay(chunk))
+            else:
+                container.add_item(discord.ui.TextDisplay(block))
+
+        gallery_items: list[MediaGalleryItem] = []
+        if embed.image and embed.image.url:
+            gallery_items.append(MediaGalleryItem(embed.image.url))
+        elif image_files:
+            for f in image_files[:10]:
+                gallery_items.append(MediaGalleryItem(f))
+        # Intentionally ignore embed.thumbnail — Juniper card has no top-right avatar.
+
+        if gallery_items:
+            container.add_item(discord.ui.Separator(visible=True, spacing=discord.SeparatorSpacing.small))
+            container.add_item(discord.ui.MediaGallery(*gallery_items))
+
+        for action_row in rows:
+            container.add_item(action_row)
+
+        if not container.children:
+            container.add_item(discord.ui.TextDisplay("\u200b"))
+        layout.add_item(container)
+    else:
+        for action_row in rows:
+            layout.add_item(action_row)
+
+    if not layout.children:
+        layout.add_item(discord.ui.TextDisplay("\u200b"))
+    return layout
+
+
 def detach_layout_after_send(view: discord.ui.LayoutView | None) -> None:
     """Stop listening on a just-sent LayoutView so persistent classic Views handle clicks.
 
@@ -247,6 +365,7 @@ async def send_message(
     allowed_mentions: discord.AllowedMentions | None = None,
     keep_callbacks: bool = False,
     detach_layout: bool = True,
+    stream_card: bool = False,
 ) -> discord.Message:
     """Send a classic (V1) or Components V2 message."""
     if not is_v2(version):
@@ -261,7 +380,8 @@ async def send_message(
             kwargs["allowed_mentions"] = allowed_mentions
         return await destination.send(**kwargs)
 
-    layout = build_layout_view(
+    builder = build_stream_layout_view if stream_card else build_layout_view
+    layout = builder(
         embed=embed,
         content=content,
         source_view=view,

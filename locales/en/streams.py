@@ -1,17 +1,20 @@
 MESSAGES: dict[str, str] = {
     "streams.default_template_twitch": (
-        "\U0001f534 **{{channel}}** went live: **{{stream}}**\n"
-        "Playing {{game}} — join us! {{channel.url}}"
+        "Hey! **{{channel}}** started streaming on the channel. Come join! {{channel.url}}"
     ),
     "streams.default_template_youtube": (
-        "\u25b6\ufe0f New video from **{{channel}}**: **{{stream}}**\n{{channel.url}}"
+        "Hey! **{{channel}}** posted a new video. Come join! {{channel.url}}"
     ),
     "streams.default_template_tiktok": (
-        "\U0001f3b5 **{{channel}}** posted a new TikTok video: **{{stream}}**\n{{channel.url}}"
+        "Hey! **{{channel}}** posted a new video. Come join! {{channel.url}}"
     ),
     "streams.default_template_tiktok_live": (
-        "**{{channel}}** went live — hop in!"
+        "Hey! **{{channel}}** started streaming on the channel. Come join! {{channel.url}}"
     ),
+    "streams.card.title_twitch": "{name} started streaming on Twitch!",
+    "streams.card.title_youtube": "{name} posted a video on YouTube!",
+    "streams.card.title_tiktok": "{name} posted a video on TikTok!",
+    "streams.card.title_tiktok_live": "{name} started streaming on TikTok!",
     "streams.embed.stream_title": "Stream",
     "streams.embed.game": "Game",
     "streams.embed.viewers": "Viewers",

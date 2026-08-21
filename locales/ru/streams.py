@@ -1,17 +1,20 @@
 MESSAGES: dict[str, str] = {
     "streams.default_template_twitch": (
-        "\U0001f534 **{{channel}}** запустил трансляцию: **{{stream}}**\n"
-        "Играем в {{game}} — заходите! {{channel.url}}"
+        "Хей! **{{channel}}** запустил вещание на канале. Присоединяйся! {{channel.url}}"
     ),
     "streams.default_template_youtube": (
-        "\u25b6\ufe0f Новое видео от **{{channel}}**: **{{stream}}**\n{{channel.url}}"
+        "Хей! **{{channel}}** выпустил новое видео. Присоединяйся! {{channel.url}}"
     ),
     "streams.default_template_tiktok": (
-        "\U0001f3b5 **{{channel}}** вышло новое видео в TikTok: **{{stream}}**\n{{channel.url}}"
+        "Хей! **{{channel}}** выложил новое видео. Присоединяйся! {{channel.url}}"
     ),
     "streams.default_template_tiktok_live": (
-        "**{{channel}}** запустил стрим, залетай!"
+        "Хей! **{{channel}}** запустил вещание на канале. Присоединяйся! {{channel.url}}"
     ),
+    "streams.card.title_twitch": "{name} запустил вещание на Twitch!",
+    "streams.card.title_youtube": "{name} выпустил видео на YouTube!",
+    "streams.card.title_tiktok": "{name} выложил видео в TikTok!",
+    "streams.card.title_tiktok_live": "{name} запустил вещание на TikTok!",
     "streams.embed.stream_title": "Стрим",
     "streams.embed.game": "Игра",
     "streams.embed.viewers": "Зрителей",
