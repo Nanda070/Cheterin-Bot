@@ -38,7 +38,7 @@ async def test_create_embed_message_success(aiohttp_client):
     )
     assert resp.status == 201
     body = await resp.json()
-    assert body == {"message_id": "999", "channel_id": "500"}
+    assert body == {"message_id": "999", "channel_id": "500", "components_version": "v1"}
     assert channel.send_calls[0]["content"] == "Hello"
     assert channel.send_calls[0]["embed"].title == "Title"
     assert channel.send_calls[0]["view"].children[0].custom_id == "btn_role_7"
@@ -262,3 +262,55 @@ async def test_update_embed_message_allows_content_only(aiohttp_client):
     assert resp.status == 200
     assert message.edit_calls[0]["content"] == "Just text"
     assert message.edit_calls[0]["embed"] is None
+
+
+@pytest.mark.asyncio
+async def test_list_templates_includes_components_version(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/embed-templates")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["templates"] == []
+    assert body["components_version"] == "v1"
+
+
+@pytest.mark.asyncio
+async def test_put_embed_components_version(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put("/api/embed-templates/components-version", json={"components_version": "v2"})
+    assert resp.status == 200
+    assert (await resp.json())["components_version"] == "v2"
+
+    listed = await client.get("/api/embed-templates")
+    assert (await listed.json())["components_version"] == "v2"
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_v2_uses_layout_view(aiohttp_client):
+    channel = FakeChannel(500, next_message_id=999)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages",
+        json={
+            "channel_id": "500",
+            "content": "Hello",
+            "embed": {"title": "Title"},
+            "role_ids": [],
+            "components_version": "v2",
+        },
+    )
+    assert resp.status == 201
+    body = await resp.json()
+    assert body["components_version"] == "v2"
+    assert channel.send_calls[0].get("embed") is None
+    assert channel.send_calls[0].get("content") is None
+    assert channel.send_calls[0]["view"].has_components_v2()

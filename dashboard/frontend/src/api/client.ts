@@ -351,11 +351,13 @@ export interface EmbedMessagePayload {
   content: string
   embed: EmbedSpec
   role_ids: string[]
+  components_version?: 'v1' | 'v2'
 }
 
 export interface EmbedMessageResult {
   message_id: string
   channel_id: string
+  components_version?: 'v1' | 'v2'
 }
 
 export function createEmbedMessage(channelId: string, payload: EmbedMessagePayload): Promise<EmbedMessageResult> {
@@ -1248,9 +1250,21 @@ export interface EmbedTemplate {
   role_ids: string[]
 }
 
-export async function fetchEmbedTemplates(): Promise<EmbedTemplate[]> {
-  const body = await apiFetch<{ templates: EmbedTemplate[] }>('/api/embed-templates')
-  return body.templates
+export async function fetchEmbedTemplates(): Promise<{
+  templates: EmbedTemplate[]
+  components_version: 'v1' | 'v2'
+}> {
+  const body = await apiFetch<{ templates: EmbedTemplate[]; components_version?: 'v1' | 'v2' }>(
+    '/api/embed-templates',
+  )
+  return {
+    templates: body.templates,
+    components_version: body.components_version === 'v2' ? 'v2' : 'v1',
+  }
+}
+
+export function setEmbedComponentsVersion(version: 'v1' | 'v2'): Promise<{ components_version: 'v1' | 'v2' }> {
+  return apiFetch('/api/embed-templates/components-version', jsonInit('PUT', { components_version: version }))
 }
 
 export function saveEmbedTemplate(input: {

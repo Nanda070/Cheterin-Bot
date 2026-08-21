@@ -157,11 +157,25 @@ def _load_templates_data(guild_id: int) -> dict:
     data = settings_db.get(guild_id, MODULE_NAME)
     data.setdefault("seq", 0)
     data.setdefault("templates", [])
+    raw_cv = str(data.get("components_version") or "v1").strip().lower()
+    data["components_version"] = "v2" if raw_cv in ("v2", "2", "components_v2") else "v1"
     return data
 
 
 def _save_templates_data(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, MODULE_NAME, data)
+
+
+def get_components_version(guild_id: int) -> str:
+    return _load_templates_data(guild_id)["components_version"]
+
+
+def set_components_version(guild_id: int, version: str) -> str:
+    data = _load_templates_data(guild_id)
+    raw = str(version or "v1").strip().lower()
+    data["components_version"] = "v2" if raw in ("v2", "2", "components_v2") else "v1"
+    _save_templates_data(guild_id, data)
+    return data["components_version"]
 
 
 def list_templates(guild_id: int) -> list[dict]:

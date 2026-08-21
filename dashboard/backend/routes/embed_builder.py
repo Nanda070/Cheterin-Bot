@@ -87,20 +87,57 @@ async def create_embed_message(request: web.Request) -> web.Response:
 
     embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
+    components_version = body.get("components_version")
+    if components_version is None:
+        components_version = embed_builder.get_components_version(request["guild_id"])
+    else:
+        components_version = embed_builder.set_components_version(request["guild_id"], str(components_version))
+
+    import components_v2
 
     try:
-        message = await channel.send(content=content or None, embed=embed, view=view)
+        message = await components_v2.send_message(
+            channel,
+            version=components_version,
+            content=content or None,
+            embed=embed,
+            view=view,
+            detach_layout=True,
+        )
     except discord.HTTPException as exc:
         logger.warning("Failed to send embed message to channel %s: %s", channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
 
-    return web.json_response({"message_id": str(message.id), "channel_id": str(channel_id)}, status=201)
+    return web.json_response(
+        {
+            "message_id": str(message.id),
+            "channel_id": str(channel_id),
+            "components_version": components_v2.normalize_version(components_version),
+        },
+        status=201,
+    )
 
 
 @routes.get("/api/embed-templates")
 @require_dashboard_access
 async def list_embed_templates(request: web.Request) -> web.Response:
-    return web.json_response({"templates": embed_builder.list_templates(request["guild_id"])})
+    guild_id = request["guild_id"]
+    return web.json_response(
+        {
+            "templates": embed_builder.list_templates(guild_id),
+            "components_version": embed_builder.get_components_version(guild_id),
+        }
+    )
+
+
+@routes.put("/api/embed-templates/components-version")
+@require_dashboard_access
+async def put_embed_components_version(request: web.Request) -> web.Response:
+    body, error = await _parse_body(request)
+    if error:
+        return error
+    version = embed_builder.set_components_version(request["guild_id"], str(body.get("components_version") or "v1"))
+    return web.json_response({"components_version": version})
 
 
 @routes.post("/api/embed-templates")
@@ -215,11 +252,35 @@ async def update_embed_message(request: web.Request) -> web.Response:
 
     embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
+    components_version = body.get("components_version")
+    if components_version is None:
+        # Prefer flag already on the message; else guild default.
+        if getattr(getattr(message, "flags", None), "components_v2", False):
+            components_version = "v2"
+        else:
+            components_version = embed_builder.get_components_version(request["guild_id"])
+    else:
+        components_version = embed_builder.set_components_version(request["guild_id"], str(components_version))
+
+    import components_v2
 
     try:
-        await message.edit(content=content or None, embed=embed, view=view)
+        await components_v2.edit_message(
+            message,
+            version=components_version,
+            content=content or None,
+            embed=embed,
+            view=view,
+            detach_layout=True,
+        )
     except discord.HTTPException as exc:
         logger.warning("Failed to edit embed message %s in channel %s: %s", message_id, channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
 
-    return web.json_response({"message_id": str(message_id), "channel_id": str(channel_id)})
+    return web.json_response(
+        {
+            "message_id": str(message_id),
+            "channel_id": str(channel_id),
+            "components_version": components_v2.normalize_version(components_version),
+        }
+    )

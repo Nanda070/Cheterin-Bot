@@ -9,6 +9,7 @@ import {
   fetchEmbedTemplates,
   fetchRoles,
   saveEmbedTemplate,
+  setEmbedComponentsVersion,
   updateEmbedMessage,
   type ChannelInfo,
   type EmbedFieldSpec,
@@ -19,6 +20,7 @@ import {
 import { formatApiError } from '../api/errors'
 import { Button } from '../components/ui/Button'
 import { Checkbox } from '../components/ui/Checkbox'
+import { ComponentsVersionSelect, type ComponentsVersion } from '../components/ComponentsVersionSelect'
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { EmbedPreview } from '../components/EmbedPreview'
@@ -48,6 +50,7 @@ export function EmbedBuilderPage() {
   const [busy, setBusy] = useState(false)
   const [savedResult, setSavedResult] = useState<{ message_id: string; channel_id: string } | null>(null)
   const [templates, setTemplates] = useState<EmbedTemplate[]>([])
+  const [componentsVersion, setComponentsVersion] = useState<ComponentsVersion>('v1')
   const [templateName, setTemplateName] = useState('')
   const [templateNotice, setTemplateNotice] = useState('')
 
@@ -58,8 +61,23 @@ export function EmbedBuilderPage() {
     fetchRoles()
       .then(setRoles)
       .catch((err) => setError(formatApiError(err, t, 'embedBuilder.error.loadRoles')))
-    fetchEmbedTemplates().then(setTemplates).catch(() => {})
+    fetchEmbedTemplates()
+      .then((data) => {
+        setTemplates(data.templates)
+        setComponentsVersion(data.components_version)
+      })
+      .catch(() => {})
   }, [t])
+
+  const handleComponentsVersion = async (version: ComponentsVersion) => {
+    setComponentsVersion(version)
+    try {
+      const res = await setEmbedComponentsVersion(version)
+      setComponentsVersion(res.components_version)
+    } catch {
+      // Keep local selection; send still uses local value.
+    }
+  }
 
   const applyTemplate = (id: string) => {
     const template = templates.find((t) => t.id === id)
@@ -167,7 +185,7 @@ export function EmbedBuilderPage() {
 
     setBusy(true)
     try {
-      const payload = { content, embed, role_ids: roleIds }
+      const payload = { content, embed, role_ids: roleIds, components_version: componentsVersion }
       const result =
         mode === 'edit'
           ? await updateEmbedMessage(channelId, messageId, payload)
@@ -198,6 +216,10 @@ export function EmbedBuilderPage() {
           <Button variant={mode === 'edit' ? 'primary' : 'secondary'} onClick={() => setMode('edit')}>
             {t('embedBuilder.mode.edit')}
           </Button>
+        </div>
+
+        <div className="rounded-control border border-border bg-surface p-3">
+          <ComponentsVersionSelect value={componentsVersion} onChange={handleComponentsVersion} />
         </div>
 
         <div className="flex flex-col gap-2 rounded-control border border-border bg-surface p-3">

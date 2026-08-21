@@ -1,12 +1,16 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { renderWithLanguage } from '../test/renderWithLanguage'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { EmbedBuilderPage } from './EmbedBuilder'
 
 describe('EmbedBuilderPage', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  beforeEach(() => {
+    vi.spyOn(client, 'fetchEmbedTemplates').mockResolvedValue({ templates: [], components_version: 'v1' })
   })
 
   it('creates a new embed message', async () => {
@@ -27,7 +31,10 @@ describe('EmbedBuilderPage', () => {
     await waitFor(() =>
       expect(createSpy).toHaveBeenCalledWith(
         '500',
-        expect.objectContaining({ embed: expect.objectContaining({ title: 'Hello' }) }),
+        expect.objectContaining({
+          embed: expect.objectContaining({ title: 'Hello' }),
+          components_version: 'v1',
+        }),
       ),
     )
     expect(await screen.findByText(/999/)).toBeInTheDocument()

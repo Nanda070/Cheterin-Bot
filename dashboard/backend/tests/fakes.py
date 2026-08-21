@@ -100,7 +100,7 @@ class FakeCustomEmoji:
 
 
 class FakeMessage:
-    def __init__(self, message_id, embeds=None, components=None, content=None):
+    def __init__(self, message_id, embeds=None, components=None, content=None, *, components_v2=False):
         self.id = message_id
         self.content = content
         self.embeds = embeds or []
@@ -110,6 +110,7 @@ class FakeMessage:
         self.remove_reaction_raises = None
         self.edit_calls = []
         self.edit_raises = None
+        self.flags = type("Flags", (), {"components_v2": bool(components_v2)})()
 
     @property
     def jump_url(self):
@@ -133,8 +134,13 @@ class FakeMessage:
             self.content = kwargs["content"]
         if "embed" in kwargs:
             self.embeds = [kwargs["embed"]] if kwargs["embed"] else []
+        if "embeds" in kwargs:
+            self.embeds = list(kwargs["embeds"] or [])
         if "view" in kwargs:
             self.components = kwargs["view"]
+            view = kwargs["view"]
+            if view is not None and hasattr(view, "has_components_v2") and view.has_components_v2():
+                self.flags = type("Flags", (), {"components_v2": True})()
 
     async def delete(self):
         pass

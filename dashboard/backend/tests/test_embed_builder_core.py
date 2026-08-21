@@ -165,3 +165,12 @@ def test_delete_template_removes_only_target_and_guild():
 
 def test_delete_template_missing_returns_false():
     assert embed_builder.delete_template(1, "999") is False
+
+
+def test_components_version_defaults_and_persists():
+    assert embed_builder.get_components_version(1) == "v1"
+    assert embed_builder.set_components_version(1, "v2") == "v2"
+    assert embed_builder.get_components_version(1) == "v2"
+    assert embed_builder.set_components_version(1, "components_v2") == "v2"
+    assert embed_builder.set_components_version(1, "bogus") == "v1"
+    assert embed_builder.get_components_version(2) == "v1"
