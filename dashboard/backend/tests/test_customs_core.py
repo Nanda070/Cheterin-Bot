@@ -378,3 +378,17 @@ def test_defaults_in_settings(tmp_path, monkeypatch):
     assert saved["default_name"] == "10man"
     assert saved["default_ping"] == "role"
     assert saved["results_channel_id"] == "42"
+
+
+def test_components_version_persists(tmp_path, monkeypatch):
+    _isolate(tmp_path, monkeypatch)
+    guild_id = 17
+    settings = customs_core.get_settings(guild_id)
+    assert settings["components_version"] == "v1"
+    saved = customs_core.save_settings(guild_id, {"components_version": "v2"})
+    assert saved["components_version"] == "v2"
+    assert customs_core.get_settings(guild_id)["components_version"] == "v2"
+    lobby = customs_core.create_lobby(guild_id, host_id=1, name="Test")
+    assert lobby["components_version"] == "v1"
+    customs_core.update_lobby(guild_id, lobby["id"], components_version="v2")
+    assert customs_core.get_lobby(guild_id, lobby["id"])["components_version"] == "v2"

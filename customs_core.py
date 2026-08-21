@@ -98,6 +98,7 @@ def _empty_blob() -> dict[str, Any]:
         "avoid_last_map": True,
         "results_channel_id": "",
         "announcement_template": "🎮 {name}\nНабор открыт: {slots}\nСтарт: {time}",
+        "components_version": "v1",
         "reminder_minutes": 15,
         "reminder_mode": "lobby",
         "audit_channel_id": "",
@@ -203,6 +204,8 @@ def _normalized(data: dict | None) -> dict[str, Any]:
         results_channel_id = ""
     base["results_channel_id"] = results_channel_id
     base["announcement_template"] = str(data.get("announcement_template") or base["announcement_template"]).strip()[:500]
+    raw_cv = str(data.get("components_version") or base["components_version"]).strip().lower()
+    base["components_version"] = "v2" if raw_cv in ("v2", "2", "components_v2") else "v1"
     try:
         reminder_minutes = int(data.get("reminder_minutes", 15))
     except (TypeError, ValueError):
@@ -325,6 +328,8 @@ def _normalize_lobby(lobby: dict[str, Any]) -> dict[str, Any]:
     out.pop("veto", None)
     out["vote_message_id"] = str(out.get("vote_message_id") or "")
     out["score_message_id"] = str(out.get("score_message_id") or "")
+    raw_cv = str(out.get("components_version") or "v1").strip().lower()
+    out["components_version"] = "v2" if raw_cv in ("v2", "2", "components_v2") else "v1"
     out["ping"] = _normalize_ping(out.get("ping"))
     try:
         out["signup_minutes"] = max(0, min(240, int(out.get("signup_minutes") or 0)))
@@ -380,6 +385,7 @@ def get_settings(guild_id: int) -> dict[str, Any]:
         "avoid_last_map": data["avoid_last_map"],
         "results_channel_id": data["results_channel_id"],
         "announcement_template": data["announcement_template"],
+        "components_version": data["components_version"],
         "reminder_minutes": data["reminder_minutes"],
         "reminder_mode": data["reminder_mode"],
         "audit_channel_id": data["audit_channel_id"],
@@ -474,6 +480,9 @@ def save_settings(guild_id: int, payload: dict[str, Any]) -> dict[str, Any]:
         data["results_channel_id"] = results_channel_id
     if "announcement_template" in payload:
         data["announcement_template"] = str(payload.get("announcement_template") or "").strip()[:500]
+    if "components_version" in payload:
+        raw_cv = str(payload.get("components_version") or "v1").strip().lower()
+        data["components_version"] = "v2" if raw_cv in ("v2", "2", "components_v2") else "v1"
     if "reminder_minutes" in payload:
         try:
             data["reminder_minutes"] = max(0, min(240, int(payload.get("reminder_minutes") or 0)))
@@ -812,6 +821,7 @@ def create_lobby(
         "message_id": "",
         "vote_message_id": "",
         "score_message_id": "",
+        "components_version": "v1",
         "lobby_vc_id": "",
         "team_a_vc_id": "",
         "team_b_vc_id": "",

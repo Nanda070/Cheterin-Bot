@@ -37,12 +37,15 @@ import { VerificationPage } from './Verification'
 
 type Tab = 'moderation' | 'settings' | 'antiraid' | 'antispam' | 'tempban' | 'verification'
 
-const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
+const TYPE_ICON: Record<string, typeof Warning> = {
   spam_punish: Warning,
   tempban: Clock,
   manual_ban: Prohibit,
   manual_kick: SignOut,
+  manual_mute: SpeakerSimpleX,
+  manual_unmute: SpeakerSimpleSlash,
   warn_manual: Warning,
+  warn_escalation: Warning,
   command_ban: Prohibit,
   command_kick: SignOut,
   command_mute: SpeakerSimpleX,
@@ -52,6 +55,15 @@ const TYPE_ICON: Record<ModerationLogEntry['type'], typeof Warning> = {
   antiraid_trigger: Siren,
   verification_pass: UserCheck,
   verification_expired: UserCheck,
+  automod_links: ShieldWarning,
+  automod_invites: ShieldWarning,
+  automod_scam_links: ShieldWarning,
+  automod_bad_words: ShieldWarning,
+  automod_repeated_text: ShieldWarning,
+  automod_caps_lock: ShieldWarning,
+  automod_emoji_spam: ShieldWarning,
+  automod_mentions: ShieldWarning,
+  automod_zalgo: ShieldWarning,
 }
 
 const VALID_TABS: Tab[] = ['moderation', 'settings', 'antiraid', 'antispam', 'tempban', 'verification']
@@ -84,7 +96,14 @@ export function LockdownPage() {
     [t],
   )
 
-  const typeLabel = (type: ModerationLogEntry['type']) => t(`lockdown.type.${type}`)
+  const typeLabel = (type: string) => {
+    const key = `lockdown.type.${type}`
+    const translated = t(key)
+    if (translated !== key) return translated
+    const timelineKey = `members.caseTimeline.kind.${type}`
+    const fromTimeline = t(timelineKey)
+    return fromTimeline !== timelineKey ? fromTimeline : type
+  }
 
   const reload = () => {
     fetchLockdownStatus()
@@ -101,7 +120,7 @@ export function LockdownPage() {
   }, [searchParams])
   useEffect(() => {
     fetchModerationLog()
-      .then(setActivity)
+      .then((events) => setActivity(Array.isArray(events) ? events : []))
       .catch(() => setActivity([]))
   }, [])
 
@@ -236,7 +255,10 @@ export function LockdownPage() {
             {activity !== null && activity.length > 0 && (
               <ul className="mt-3 flex flex-col gap-3">
                 {activity.map((entry, index) => {
-                  const Icon = TYPE_ICON[entry.type]
+                  const Icon = TYPE_ICON[entry.type] ?? Warning
+                  const stamp = entry.timestamp ? new Date(entry.timestamp) : null
+                  const timeLabel =
+                    stamp && !Number.isNaN(stamp.getTime()) ? stamp.toLocaleString() : entry.timestamp || '—'
                   return (
                     <li
                       key={index}
@@ -246,12 +268,12 @@ export function LockdownPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-foreground">
                           <span className="font-medium">{typeLabel(entry.type)}</span> —{' '}
-                          <span>{entry.user_display}</span>
+                          <span>{entry.user_display || entry.user_id || '—'}</span>
                         </p>
-                        <p className="text-xs text-muted">{entry.reason}</p>
+                        {entry.reason ? <p className="text-xs text-muted">{entry.reason}</p> : null}
                         <p className="text-xs text-muted">
                           <span>{entry.moderator_display ?? t('lockdown.moderatorAuto')}</span> ·{' '}
-                          <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                          <span>{timeLabel}</span>
                         </p>
                       </div>
                     </li>

@@ -18,6 +18,7 @@ from discord.ext import commands, tasks
 
 import embed_style
 import i18n
+import components_v2
 from customs_winner_card import build_winner_gif
 import customs_core
 import valorant_maps
@@ -1432,6 +1433,14 @@ class CustomsCog(commands.Cog):
             show_back_to_lobby=_show_back_to_lobby(lobby),
         )
 
+    def _lobby_components_version(self, lobby: dict | None, guild_id: int | None = None) -> str:
+        if lobby and components_v2.is_v2(lobby.get("components_version")):
+            return components_v2.VERSION_V2
+        if guild_id is not None:
+            settings = customs_core.get_settings(guild_id)
+            return components_v2.normalize_version(settings.get("components_version"))
+        return components_v2.VERSION_V1
+
     def schedule_vote_resolve(self, guild_id: int, lobby_id: str) -> None:
         key = f"{guild_id}:{lobby_id}"
         prev = self._vote_tasks.get(key)
@@ -1494,11 +1503,18 @@ class CustomsCog(commands.Cog):
         embed = build_lobby_embed(lobby, lang, in_voice=in_voice_user_ids(guild, lobby))
         files = apply_map_image(embed, lobby)
         view = self.lobby_view_for(lobby, lang)
+        version = self._lobby_components_version(lobby, guild.id)
+        if getattr(getattr(message, "flags", None), "components_v2", False):
+            version = components_v2.VERSION_V2
         try:
-            if files:
-                await message.edit(embed=embed, attachments=files, view=view)
-            else:
-                await message.edit(embed=embed, view=view)
+            await components_v2.edit_message(
+                message,
+                version=version,
+                embed=embed,
+                view=view,
+                attachments=files if files else discord.utils.MISSING,
+                detach_layout=True,
+            )
         except discord.HTTPException:
             logger.exception("customs refresh failed lobby=%s", lobby_id)
 
@@ -1521,8 +1537,13 @@ class CustomsCog(commands.Cog):
         options = vote.get("options") or []
         embed = build_vote_embed(lobby, lang)
         view = CustomsMapVoteView(self, options=options)
+        version = self._lobby_components_version(lobby, guild.id)
+        if getattr(getattr(message, "flags", None), "components_v2", False):
+            version = components_v2.VERSION_V2
         try:
-            await message.edit(embed=embed, view=view)
+            await components_v2.edit_message(
+                message, version=version, embed=embed, view=view, detach_layout=True
+            )
         except discord.HTTPException:
             logger.exception("customs vote refresh failed lobby=%s", lobby_id)
 
@@ -1542,8 +1563,11 @@ class CustomsCog(commands.Cog):
             return
         embed = build_vote_embed(lobby, lang)
         view = CustomsMapVoteView(self, options=options)
+        version = self._lobby_components_version(lobby, guild.id)
         try:
-            message = await channel.send(embed=embed, view=view)
+            message = await components_v2.send_message(
+                channel, version=version, embed=embed, view=view, detach_layout=True
+            )
         except discord.HTTPException:
             logger.exception("customs vote post failed lobby=%s", lobby_id)
             return
@@ -1578,7 +1602,12 @@ class CustomsCog(commands.Cog):
             else:
                 lang = i18n.lang_for(guild.id)
                 embed = build_vote_embed(lobby, lang, finished=True, winner_label=winner_label)
-                await message.edit(embed=embed, view=None)
+                version = self._lobby_components_version(lobby, guild.id)
+                if getattr(getattr(message, "flags", None), "components_v2", False):
+                    version = components_v2.VERSION_V2
+                await components_v2.edit_message(
+                    message, version=version, embed=embed, view=None, detach_layout=True
+                )
         except discord.HTTPException:
             logger.debug("customs: could not finish vote message lobby=%s", lobby_id)
         customs_core.update_lobby(guild.id, lobby_id, vote_message_id="")
@@ -1601,8 +1630,13 @@ class CustomsCog(commands.Cog):
         finished = lobby.get("status") == customs_core.STATUS_FINISHED
         embed = build_score_embed(lobby, lang, finished=finished)
         view = None if finished else CustomsScoreView(self, lang=lang)
+        version = self._lobby_components_version(lobby, guild.id)
+        if getattr(getattr(message, "flags", None), "components_v2", False):
+            version = components_v2.VERSION_V2
         try:
-            await message.edit(embed=embed, view=view)
+            await components_v2.edit_message(
+                message, version=version, embed=embed, view=view, detach_layout=True
+            )
         except discord.HTTPException:
             logger.exception("customs score refresh failed lobby=%s", lobby_id)
 
@@ -1618,8 +1652,11 @@ class CustomsCog(commands.Cog):
             return
         embed = build_score_embed(lobby, lang)
         view = CustomsScoreView(self, lang=lang)
+        version = self._lobby_components_version(lobby, guild.id)
         try:
-            message = await channel.send(embed=embed, view=view)
+            message = await components_v2.send_message(
+                channel, version=version, embed=embed, view=view, detach_layout=True
+            )
         except discord.HTTPException:
             logger.exception("customs score post failed lobby=%s", lobby_id)
             return
@@ -1653,7 +1690,12 @@ class CustomsCog(commands.Cog):
             else:
                 lang = i18n.lang_for(guild.id)
                 embed = build_score_embed(lobby, lang, finished=True)
-                await message.edit(embed=embed, view=None)
+                version = self._lobby_components_version(lobby, guild.id)
+                if getattr(getattr(message, "flags", None), "components_v2", False):
+                    version = components_v2.VERSION_V2
+                await components_v2.edit_message(
+                    message, version=version, embed=embed, view=None, detach_layout=True
+                )
         except discord.HTTPException:
             logger.debug("customs: could not finish score message lobby=%s", lobby_id)
         if delete:
@@ -1772,17 +1814,38 @@ class CustomsCog(commands.Cog):
         embed = build_lobby_embed(lobby, lang)
         files = apply_map_image(embed, lobby)
         settings = customs_core.get_settings(guild.id)
-        content = ping_message_content(settings, lobby, include_participants=False)
+        template = str(settings.get("announcement_template") or "").strip()
+        slots = f"{len(lobby.get('players') or [])}/{lobby.get('max_players') or customs_core.MAX_PLAYERS}"
+        starts = int(lobby.get("signup_ends_at") or 0)
+        template_content = ""
+        if template:
+            try:
+                template_content = template.format(
+                    name=str(lobby.get("name") or "Кастомка"),
+                    slots=slots,
+                    time=f"<t:{starts}:R>" if starts else "—",
+                )
+            except (KeyError, ValueError):
+                template_content = template
+        ping_content = ping_message_content(settings, lobby, include_participants=False)
+        content = "\n".join(part for part in (ping_content, template_content) if part) or None
         view = self.lobby_view_for(lobby, lang)
-        send_kwargs: dict[str, Any] = {"content": content, "embed": embed, "view": view}
-        if files:
-            send_kwargs["files"] = files
-        message = await channel.send(**send_kwargs)
+        version = components_v2.normalize_version(settings.get("components_version"))
+        message = await components_v2.send_message(
+            channel,
+            version=version,
+            content=content,
+            embed=embed,
+            view=view,
+            files=files or None,
+            detach_layout=True,
+        )
         customs_core.update_lobby(
             guild.id,
             lobby["id"],
             channel_id=str(channel.id),
             message_id=str(message.id),
+            components_version=version,
         )
         await self.ensure_waiting_voice(guild, lobby["id"], announce_channel=channel)
         return message

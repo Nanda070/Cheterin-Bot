@@ -55,10 +55,10 @@ const landing: TranslationDict = {
 
   'landing.feature.valorant.title': 'VALORANT tools for your server',
   'landing.feature.valorant.body':
-    'Run Premier applications and role panels per server, follow linked Valorant accounts with ValChecker, and host Customs lobbies from the dashboard.',
-  'landing.feature.valorant.point1': 'Premier applications and configurable role panels',
+    'Follow linked Valorant accounts with ValChecker and host Customs lobbies from the dashboard — settings stay per server.',
+  'landing.feature.valorant.point1': 'Customs: maps, teams, voice, scores, and schedules',
   'landing.feature.valorant.point2': 'ValChecker profiles, match tracking, and status alerts',
-  'landing.feature.valorant.point3': 'Customs lobbies with maps, teams, voice, scores, and schedules',
+  'landing.feature.valorant.point3': 'Separate settings for each Discord server',
 
   'landing.feature.gta.title': 'Built for GTA5RP communities',
   'landing.feature.gta.body':

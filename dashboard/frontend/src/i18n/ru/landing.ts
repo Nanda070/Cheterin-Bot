@@ -55,10 +55,10 @@ const landing: TranslationDict = {
 
   'landing.feature.valorant.title': 'Инструменты VALORANT для вашего сервера',
   'landing.feature.valorant.body':
-    'Настраивайте Premier-заявки и ролевые панели отдельно для каждого сервера, следите за аккаунтами через ValChecker и проводите кастомки из дашборда.',
-  'landing.feature.valorant.point1': 'Premier-заявки и настраиваемые ролевые панели',
+    'Следите за аккаунтами через ValChecker и проводите кастомки из дашборда — настройки отдельно для каждого сервера.',
+  'landing.feature.valorant.point1': 'Кастомки: карты, команды, войсы, счёт и расписания',
   'landing.feature.valorant.point2': 'Профили ValChecker, трекинг матчей и алерты статуса',
-  'landing.feature.valorant.point3': 'Кастомки с картами, командами, войсами, счётом и расписаниями',
+  'landing.feature.valorant.point3': 'Отдельные настройки на каждый Discord-сервер',
 
   'landing.feature.gta.title': 'Для сообществ GTA5RP',
   'landing.feature.gta.body':

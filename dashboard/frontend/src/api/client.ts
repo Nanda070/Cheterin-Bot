@@ -202,21 +202,8 @@ export async function deactivateLockdown(): Promise<void> {
 }
 
 export interface ModerationLogEntry {
-  type:
-    | 'spam_punish'
-    | 'tempban'
-    | 'manual_ban'
-    | 'manual_kick'
-    | 'warn_manual'
-    | 'command_ban'
-    | 'command_kick'
-    | 'command_mute'
-    | 'command_unmute'
-    | 'command_unban'
-    | 'command_clear'
-    | 'antiraid_trigger'
-    | 'verification_pass'
-    | 'verification_expired'
+  /** Same event kinds as case timeline; unknown strings must not crash the UI. */
+  type: string
   timestamp: string
   user_id: string
   user_display: string
@@ -228,7 +215,7 @@ export interface ModerationLogEntry {
 
 export async function fetchModerationLog(): Promise<ModerationLogEntry[]> {
   const body = await apiFetch<{ events: ModerationLogEntry[] }>('/api/moderation-log')
-  return body.events
+  return Array.isArray(body.events) ? body.events : []
 }
 
 export type MassAssignTarget = 'all' | 'all_except_bots' | 'selected'
@@ -2810,6 +2797,8 @@ export interface CustomsSettings {
   avoid_last_map: boolean
   results_channel_id: string
   announcement_template: string
+  /** Discord Message Components: classic embeds (v1) or Layout V2 (v2). */
+  components_version: 'v1' | 'v2'
   reminder_minutes: number
   reminder_mode: 'lobby' | 'dm'
   audit_channel_id: string

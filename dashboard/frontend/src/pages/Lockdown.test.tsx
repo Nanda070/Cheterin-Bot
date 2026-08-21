@@ -1,15 +1,24 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as client from '../api/client'
 import { renderWithI18n } from '../test/renderWithI18n'
 import { LockdownPage } from './Lockdown'
+
+function renderLockdown(initialEntry = '/lockdown') {
+  return renderWithI18n(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <LockdownPage />
+    </MemoryRouter>,
+  )
+}
 
 describe('LockdownPage', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('shows inactive status', async () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     await waitFor(() => expect(screen.getByText(/выключен/i)).toBeInTheDocument())
     expect(screen.getByText('Включить антиспам')).toBeInTheDocument()
   })
@@ -21,7 +30,7 @@ describe('LockdownPage', () => {
       .mockResolvedValueOnce({ active: true, role_count: 3 })
     const activateSpy = vi.spyOn(client, 'activateLockdown').mockResolvedValue()
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     await waitFor(() => screen.getByText('Включить антиспам'))
     fireEvent.click(screen.getByText('Включить антиспам'))
     fireEvent.click(screen.getByText('Подтвердить'))
@@ -56,7 +65,7 @@ describe('LockdownPage', () => {
       },
     ])
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
 
     expect(await screen.findByText('rulebreaker')).toBeInTheDocument()
     expect(screen.getByText('mod')).toBeInTheDocument()
@@ -64,11 +73,56 @@ describe('LockdownPage', () => {
     expect(screen.getByText('Автоматически')).toBeInTheDocument()
   })
 
+  it('renders without crashing for types missing from the old icon map', async () => {
+    vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
+    vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([
+      {
+        type: 'manual_mute',
+        timestamp: '2026-07-04T12:00:00+00:00',
+        user_id: '71',
+        user_display: 'mutedUser',
+        moderator_id: '10',
+        moderator_display: 'mod',
+        reason: 'timeout',
+        extra: '',
+      },
+      {
+        type: 'automod_invites',
+        timestamp: '2026-07-04T11:30:00+00:00',
+        user_id: '72',
+        user_display: 'inviteSpammer',
+        moderator_id: null,
+        moderator_display: null,
+        reason: 'invite link',
+        extra: '',
+      },
+      {
+        type: 'future_unknown_event',
+        timestamp: '2026-07-04T11:00:00+00:00',
+        user_id: '73',
+        user_display: 'mystery',
+        moderator_id: null,
+        moderator_display: null,
+        reason: 'new backend type',
+        extra: '',
+      },
+    ])
+
+    renderLockdown()
+
+    expect(await screen.findByText('mutedUser')).toBeInTheDocument()
+    expect(screen.getByText('inviteSpammer')).toBeInTheDocument()
+    expect(screen.getByText('mystery')).toBeInTheDocument()
+    expect(screen.getByText('Таймаут (дашборд)')).toBeInTheDocument()
+    expect(screen.getByText('Автомод: приглашения')).toBeInTheDocument()
+    expect(screen.getByText('future_unknown_event')).toBeInTheDocument()
+  })
+
   it('shows an empty state when there is no activity', async () => {
     vi.spyOn(client, 'fetchLockdownStatus').mockResolvedValue({ active: false, role_count: 0 })
     vi.spyOn(client, 'fetchModerationLog').mockResolvedValue([])
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
 
     expect(await screen.findByText('Активности пока нет.')).toBeInTheDocument()
   })
@@ -86,7 +140,7 @@ describe('LockdownPage', () => {
       cooldown_minutes: 30,
     })
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     fireEvent.click(await screen.findByText('Антирейд'))
 
     expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()
@@ -105,7 +159,7 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     fireEvent.click(await screen.findByRole('button', { name: 'Анти-спам' }))
 
     expect(await screen.findByText('Детектор массовых тегов')).toBeInTheDocument()
@@ -131,7 +185,7 @@ describe('LockdownPage', () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     fireEvent.click(await screen.findByRole('button', { name: 'Ловушки от Спама' }))
 
     expect(await screen.findByText('Сообщения ловушек от спама')).toBeInTheDocument()
@@ -150,7 +204,7 @@ describe('LockdownPage', () => {
       reverify_days: 30,
     })
 
-    renderWithI18n(<LockdownPage />)
+    renderLockdown()
     fireEvent.click(await screen.findByText('Верификация'))
 
     expect(await screen.findByText(/выключен по умолчанию/)).toBeInTheDocument()

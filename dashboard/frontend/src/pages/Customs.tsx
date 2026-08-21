@@ -29,6 +29,7 @@ import {
   type RoleInfo,
 } from '../api/client'
 import { formatApiError } from '../api/errors'
+import { ComponentsVersionSelect } from '../components/ComponentsVersionSelect'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -685,6 +686,10 @@ export function CustomsPage() {
       </Card>
       <Card className="flex flex-col gap-3">
         <h2 className="font-semibold text-foreground">{t('customs.announceTitle')}</h2>
+        <ComponentsVersionSelect
+          value={settings.components_version === 'v2' ? 'v2' : 'v1'}
+          onChange={(version) => setSettings({ ...settings, components_version: version })}
+        />
         <textarea
           value={settings.announcement_template}
           onChange={(e) => setSettings({ ...settings, announcement_template: e.target.value })}
