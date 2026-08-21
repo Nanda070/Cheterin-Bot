@@ -1,6 +1,8 @@
 import discord
+import pytest
 
 import components_v2
+from dashboard.backend.tests.fakes import FakeChannel
 
 
 def test_normalize_version_defaults_to_v1():
@@ -46,3 +48,22 @@ def test_interactive_rows_clone_custom_ids():
     assert ids == ["customs:join", "customs:leave"]
     # Original view untouched when cloning
     assert len(view.children) == 2
+
+
+@pytest.mark.asyncio
+async def test_send_message_v2_forwards_allowed_mentions():
+    channel = FakeChannel(1)
+    embed = discord.Embed(title="Hi")
+    allowed = discord.AllowedMentions.none()
+    await components_v2.send_message(
+        channel,
+        version=components_v2.VERSION_V2,
+        content="ping",
+        embed=embed,
+        allowed_mentions=allowed,
+    )
+    sent = channel.send_calls[0]
+    assert sent.get("embed") is None
+    assert sent.get("content") is None
+    assert sent["view"].has_components_v2()
+    assert sent["allowed_mentions"] is allowed

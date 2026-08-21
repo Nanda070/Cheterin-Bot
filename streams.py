@@ -25,6 +25,7 @@ import aiohttp
 import discord
 from discord.ext import commands, tasks
 
+import components_v2
 import embed_style
 import i18n
 import settings_db
@@ -1476,11 +1477,14 @@ class Streams(commands.Cog):
         else:
             allowed = discord.AllowedMentions.none()
         try:
-            await channel.send(
+            await components_v2.send_message(
+                channel,
+                version=components_v2.VERSION_V2,
                 content=content or None,
                 embed=embed if use_embed else None,
                 view=view,
                 allowed_mentions=allowed,
+                detach_layout=True,
             )
             return True
         except discord.HTTPException as exc:

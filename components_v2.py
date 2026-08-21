@@ -244,6 +244,7 @@ async def send_message(
     embed: discord.Embed | None = None,
     view: discord.ui.View | None = None,
     files: list[discord.File] | None = None,
+    allowed_mentions: discord.AllowedMentions | None = None,
     keep_callbacks: bool = False,
     detach_layout: bool = True,
 ) -> discord.Message:
@@ -256,6 +257,8 @@ async def send_message(
         }
         if files:
             kwargs["files"] = files
+        if allowed_mentions is not None:
+            kwargs["allowed_mentions"] = allowed_mentions
         return await destination.send(**kwargs)
 
     layout = build_layout_view(
@@ -270,6 +273,8 @@ async def send_message(
     # Attachments still work with V2 when referenced from MediaGallery via File.
     if files:
         kwargs["files"] = files
+    if allowed_mentions is not None:
+        kwargs["allowed_mentions"] = allowed_mentions
     message = await destination.send(**kwargs)
     if detach_layout and not keep_callbacks:
         detach_layout_after_send(layout)
