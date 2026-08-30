@@ -569,6 +569,8 @@ const community: TranslationDict = {
   'embedBuilder.error.validation.fieldValue': 'Field value longer than 1024 characters',
   'embedBuilder.error.validation.totalLength': 'Total embed text exceeds 6000 characters',
   'embedBuilder.error.load': 'Failed to load message — check channel/ID',
+  'embedBuilder.v2LoadedNotice':
+    'This is a Discord Components V2 message (no classic embed). Mapped text was loaded into the editor; layout may be incomplete.',
   'embedBuilder.error.save': 'Failed to save — check channel/message ID and role permissions',
   'embedBuilder.saved': 'Saved: message_id {messageId} in channel {channelId}',
   'embedBuilder.send': 'Send',

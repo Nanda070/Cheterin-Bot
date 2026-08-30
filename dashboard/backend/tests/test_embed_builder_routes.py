@@ -142,7 +142,50 @@ async def test_get_embed_message_returns_parsed_spec_and_roles(aiohttp_client):
     body = await resp.json()
     assert body["content"] == "hi"
     assert body["embed"]["title"] == "Existing"
+    assert body["embed"]["author"]["name"] == ""
     assert body["role_ids"] == ["7"]
+    assert body["components_version"] == "v1"
+
+
+@pytest.mark.asyncio
+async def test_get_embed_message_content_only_returns_complete_spec(aiohttp_client):
+    message = FakeMessage(999, embeds=[], content="just text")
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/embed-messages/500/999")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["content"] == "just text"
+    assert body["embed"]["title"] == ""
+    assert body["embed"]["author"] == {"name": "", "url": "", "icon_url": ""}
+    assert body["embed"]["fields"] == []
+    assert body["components_version"] == "v1"
+
+
+@pytest.mark.asyncio
+async def test_get_embed_message_v2_maps_layout_without_error(aiohttp_client):
+    import components_v2
+
+    embed = embed_builder.build_embed({"title": "V2 Title", "description": "V2 body"})
+    layout = components_v2.build_layout_view(embed=embed, content="hello v2")
+    message = FakeMessage(999, embeds=[], components=layout, content=None, components_v2=True)
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/embed-messages/500/999")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["components_version"] == "v2"
+    assert body["content"] == "hello v2"
+    assert body["embed"]["title"] == "V2 Title"
+    assert "V2 body" in body["embed"]["description"]
+    assert body["embed"]["author"]["name"] == ""
+    assert isinstance(body["embed"]["fields"], list)
 
 
 @pytest.mark.asyncio

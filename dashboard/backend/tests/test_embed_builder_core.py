@@ -107,6 +107,63 @@ def test_embed_to_spec_returns_empty_color_when_absent():
     assert spec["color"] == ""
 
 
+def test_embed_to_spec_handles_none_author_footer_fields():
+    class FakeEmbed:
+        def to_dict(self):
+            return {
+                "title": "T",
+                "author": None,
+                "footer": None,
+                "image": None,
+                "thumbnail": None,
+                "fields": None,
+            }
+
+    spec = embed_builder.embed_to_spec(FakeEmbed())
+    assert spec["title"] == "T"
+    assert spec["author"] == {"name": "", "url": "", "icon_url": ""}
+    assert spec["footer"] == {"text": "", "icon_url": ""}
+    assert spec["image"] == {"url": ""}
+    assert spec["fields"] == []
+
+
+def test_message_to_editor_payload_content_only_has_complete_embed():
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    payload = embed_builder.message_to_editor_payload(FakeMessage(1, embeds=[], content="just text"))
+    assert payload["content"] == "just text"
+    assert payload["components_version"] == "v1"
+    assert payload["embed"]["author"]["name"] == ""
+    assert payload["embed"]["footer"]["text"] == ""
+    assert payload["embed"]["fields"] == []
+
+
+def test_v2_message_to_spec_maps_layout_from_classic_embed():
+    import components_v2
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    embed = embed_builder.build_embed(
+        {
+            "title": "Hello",
+            "description": "World",
+            "author": {"name": "Ann"},
+            "footer": {"text": "bye"},
+        }
+    )
+    layout = components_v2.build_layout_view(embed=embed, content="hi")
+    message = FakeMessage(1, embeds=[], components=layout, content=None, components_v2=True)
+    spec, content, saw_v2 = embed_builder.v2_message_to_spec(message)
+    assert saw_v2 is True
+    assert content == "hi"
+    assert spec["title"] == "Hello"
+    assert "World" in spec["description"]
+    assert spec["author"]["name"] == "Ann"
+    assert spec["footer"]["text"] == "bye"
+    payload = embed_builder.message_to_editor_payload(message)
+    assert payload["components_version"] == "v2"
+    assert payload["embed"]["title"] == "Hello"
+
+
 def test_is_embed_spec_empty_true_for_blank_spec():
     assert embed_builder.is_embed_spec_empty({}) is True
 

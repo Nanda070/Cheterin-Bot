@@ -40,3 +40,20 @@ def test_parse_role_button_ids_ignores_non_role_buttons():
 def test_parse_role_button_ids_handles_no_components():
     message = FakeMessage(1)
     assert embed_builder.parse_role_button_ids(message) == []
+
+
+def test_parse_role_button_ids_nested_v2_container():
+    inner = FakeComponentRow([discord.ui.Button(label="VIP", custom_id="btn_role_7")])
+    container = FakeComponentRow([inner])
+    message = FakeMessage(1, components=[container])
+    assert embed_builder.parse_role_button_ids(message) == [7]
+
+
+def test_parse_role_button_ids_from_layout_view():
+    import components_v2
+
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="VIP", custom_id="btn_role_7"))
+    layout = components_v2.build_layout_view(embed=discord.Embed(title="T"), source_view=view)
+    message = FakeMessage(1, components=layout, components_v2=True)
+    assert embed_builder.parse_role_button_ids(message) == [7]

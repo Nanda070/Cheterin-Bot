@@ -569,6 +569,8 @@ const community: TranslationDict = {
   'embedBuilder.error.validation.fieldValue': 'Значение поля длиннее 1024 символов',
   'embedBuilder.error.validation.totalLength': 'Суммарная длина текста эмбеда превышает 6000 символов',
   'embedBuilder.error.load': 'Не удалось загрузить сообщение — проверьте канал/ID',
+  'embedBuilder.v2LoadedNotice':
+    'Это сообщение Discord Components V2 (без классического эмбеда). В редактор загружен доступный текст; разметка может быть неполной.',
   'embedBuilder.error.save': 'Не удалось сохранить — проверьте канал/ID сообщения и права на роли',
   'embedBuilder.saved': 'Сохранено: ID сообщения {messageId} в канале {channelId}',
   'embedBuilder.send': 'Отправить',

@@ -1,6 +1,45 @@
 from datetime import datetime
+import logging
+import re
 
 import discord
+
+logger = logging.getLogger(__name__)
+
+_LINK_TITLE_RE = re.compile(r"^\[(.+)\]\((https?://[^)]+)\)$")
+
+# Discord component type values (stable even if enum names differ across discord.py).
+_TYPE_SECTION = 9
+_TYPE_TEXT_DISPLAY = 10
+_TYPE_THUMBNAIL = 11
+_TYPE_MEDIA_GALLERY = 12
+_TYPE_CONTAINER = 17
+_V2_LAYOUT_TYPES = {_TYPE_SECTION, _TYPE_TEXT_DISPLAY, _TYPE_THUMBNAIL, _TYPE_MEDIA_GALLERY, _TYPE_CONTAINER}
+
+
+def empty_embed_spec() -> dict:
+    """Complete editor-shaped spec so the dashboard never receives missing nested keys."""
+    return {
+        "title": "",
+        "description": "",
+        "url": "",
+        "color": "",
+        "author": {"name": "", "url": "", "icon_url": ""},
+        "footer": {"text": "", "icon_url": ""},
+        "image": {"url": ""},
+        "thumbnail": {"url": ""},
+        "timestamp": None,
+        "fields": [],
+    }
+
+
+def _color_hex(value) -> str:
+    if value is None:
+        return ""
+    try:
+        return f"#{int(value):06x}"
+    except (TypeError, ValueError):
+        return ""
 
 
 def build_embed(spec: dict) -> discord.Embed:
@@ -45,30 +84,311 @@ def build_embed(spec: dict) -> discord.Embed:
 
 
 def embed_to_spec(embed: discord.Embed) -> dict:
-    data = embed.to_dict()
-    color_value = data.get("color")
-    author = data.get("author", {})
-    footer = data.get("footer", {})
-    image = data.get("image", {})
-    thumbnail = data.get("thumbnail", {})
+    try:
+        data = embed.to_dict() if embed is not None else {}
+    except Exception:
+        logger.exception("embed.to_dict() failed")
+        return empty_embed_spec()
+    if not isinstance(data, dict):
+        return empty_embed_spec()
+
+    spec = empty_embed_spec()
+    spec["title"] = data.get("title") or ""
+    spec["description"] = data.get("description") or ""
+    spec["url"] = data.get("url") or ""
+    spec["color"] = _color_hex(data.get("color"))
+    spec["timestamp"] = data.get("timestamp")
+
+    author = data.get("author") or {}
+    if isinstance(author, dict):
+        spec["author"] = {
+            "name": author.get("name") or "",
+            "url": author.get("url") or "",
+            "icon_url": author.get("icon_url") or "",
+        }
+
+    footer = data.get("footer") or {}
+    if isinstance(footer, dict):
+        spec["footer"] = {
+            "text": footer.get("text") or "",
+            "icon_url": footer.get("icon_url") or "",
+        }
+
+    image = data.get("image") or {}
+    if isinstance(image, dict):
+        spec["image"] = {"url": image.get("url") or ""}
+
+    thumbnail = data.get("thumbnail") or {}
+    if isinstance(thumbnail, dict):
+        spec["thumbnail"] = {"url": thumbnail.get("url") or ""}
+
+    fields = data.get("fields") or []
+    if isinstance(fields, list):
+        spec["fields"] = [
+            {
+                "name": (f.get("name") or "") if isinstance(f, dict) else "",
+                "value": (f.get("value") or "") if isinstance(f, dict) else "",
+                "inline": bool(f.get("inline")) if isinstance(f, dict) else False,
+            }
+            for f in fields
+        ]
+    return spec
+
+
+def _component_type_value(node) -> int | None:
+    if isinstance(node, dict):
+        raw = node.get("type")
+    else:
+        raw = getattr(node, "type", None)
+        raw = getattr(raw, "value", raw)
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _node_children(node) -> list:
+    kids: list = []
+    if isinstance(node, dict):
+        for key in ("components", "children", "items"):
+            val = node.get(key)
+            if val:
+                kids.extend(val if isinstance(val, (list, tuple)) else [val])
+        accessory = node.get("accessory")
+        if accessory:
+            kids.append(accessory)
+        media = node.get("media")
+        if media:
+            kids.append(media)
+        return kids
+
+    children = getattr(node, "children", None)
+    if children is None:
+        children = getattr(node, "components", None)
+    if children:
+        try:
+            kids.extend(list(children))
+        except TypeError:
+            kids.append(children)
+    items = getattr(node, "items", None)
+    if items:
+        try:
+            kids.extend(list(items))
+        except TypeError:
+            kids.append(items)
+    accessory = getattr(node, "accessory", None)
+    if accessory is not None:
+        kids.append(accessory)
+    media = getattr(node, "media", None)
+    if media is not None:
+        kids.append(media)
+    return kids
+
+
+def _root_components(message) -> list:
+    components = getattr(message, "components", None)
+    if not components:
+        return []
+    if isinstance(components, (list, tuple)):
+        return list(components)
+    return [components]
+
+
+def _walk_components(nodes):
+    stack = list(nodes)
+    seen: set[int] = set()
+    while stack:
+        node = stack.pop()
+        if node is None:
+            continue
+        if not isinstance(node, dict):
+            marker = id(node)
+            if marker in seen:
+                continue
+            seen.add(marker)
+        yield node
+        stack.extend(reversed(_node_children(node)))
+
+
+def _node_text(node) -> str:
+    if isinstance(node, dict):
+        return str(node.get("content") or "")
+    return str(getattr(node, "content", None) or "")
+
+
+def _node_url(node) -> str:
+    if isinstance(node, dict):
+        url = node.get("url")
+        if url:
+            return str(url)
+        media = node.get("media") or {}
+        if isinstance(media, dict) and media.get("url"):
+            return str(media["url"])
+        return ""
+    url = getattr(node, "url", None)
+    if url:
+        return str(url)
+    media = getattr(node, "media", None)
+    if media is None:
+        return ""
+    if isinstance(media, dict):
+        return str(media.get("url") or "")
+    return str(getattr(media, "url", None) or "")
+
+
+def _node_accent_hex(node) -> str:
+    if isinstance(node, dict):
+        return _color_hex(node.get("accent_color") or node.get("accent_colour"))
+    colour = getattr(node, "accent_colour", None)
+    if colour is None:
+        colour = getattr(node, "accent_color", None)
+    if colour is None:
+        return ""
+    return _color_hex(getattr(colour, "value", colour))
+
+
+def _node_custom_id(node) -> str:
+    if isinstance(node, dict):
+        return str(node.get("custom_id") or "")
+    return str(getattr(node, "custom_id", None) or "")
+
+
+def _apply_v2_text_blocks(blocks: list[str], spec: dict) -> str:
+    """Best-effort reverse of components_v2.embed_to_text_blocks. Returns leftover content."""
+    cleaned = [b.strip() for b in blocks if (b or "").strip() and b.strip() != "\u200b"]
+    if not cleaned:
+        return ""
+
+    if cleaned[-1].startswith("-# "):
+        spec["footer"] = {"text": cleaned.pop()[3:].strip(), "icon_url": ""}
+
+    content_parts: list[str] = []
+    for block in cleaned:
+        lines = block.split("\n")
+        first = lines[0]
+        has_heading = first.startswith("## ") or any(line.startswith("## ") for line in lines)
+        if has_heading:
+            desc_lines: list[str] = []
+            for line in lines:
+                if line.startswith("## "):
+                    title = line[3:].strip()
+                    match = _LINK_TITLE_RE.match(title)
+                    if match:
+                        spec["title"] = match.group(1)
+                        spec["url"] = match.group(2)
+                    else:
+                        spec["title"] = title
+                elif line.startswith("**") and line.endswith("**") and len(line) >= 4 and not spec["author"]["name"]:
+                    spec["author"]["name"] = line[2:-2]
+                else:
+                    desc_lines.append(line)
+            joined = "\n".join(desc_lines).strip()
+            if joined:
+                spec["description"] = (
+                    f"{spec['description']}\n{joined}".strip() if spec["description"] else joined
+                )
+            continue
+
+        if first.startswith("**") and first.endswith("**") and len(first) >= 4:
+            spec["fields"].append(
+                {
+                    "name": first[2:-2],
+                    "value": "\n".join(lines[1:]),
+                    "inline": False,
+                }
+            )
+            continue
+
+        if not spec["title"] and not spec["description"] and not spec["fields"]:
+            content_parts.append(block)
+        elif spec["description"]:
+            spec["description"] = f"{spec['description']}\n{block}"
+        else:
+            spec["description"] = block
+
+    return "\n\n".join(content_parts)
+
+
+def v2_message_to_spec(message) -> tuple[dict, str, bool]:
+    """Map Components V2 layout (or nested rows) into an editor spec.
+
+    Returns (spec, extracted_content, saw_v2_layout).
+    """
+    spec = empty_embed_spec()
+    text_blocks: list[str] = []
+    image_urls: list[str] = []
+    thumbnail_url = ""
+    saw_v2 = False
+
+    for node in _walk_components(_root_components(message)):
+        type_value = _component_type_value(node)
+        if type_value in _V2_LAYOUT_TYPES:
+            saw_v2 = True
+        if type_value == _TYPE_TEXT_DISPLAY:
+            text = _node_text(node)
+            if text:
+                text_blocks.append(text)
+        elif type_value is None:
+            text = _node_text(node)
+            if text and not _node_children(node):
+                text_blocks.append(text)
+                saw_v2 = True
+        if type_value == _TYPE_CONTAINER:
+            accent = _node_accent_hex(node)
+            if accent:
+                spec["color"] = accent
+        if type_value == _TYPE_MEDIA_GALLERY:
+            url = _node_url(node)
+            if url:
+                image_urls.append(url)
+            for item in _node_children(node):
+                item_url = _node_url(item)
+                if item_url:
+                    image_urls.append(item_url)
+        if type_value == _TYPE_THUMBNAIL:
+            url = _node_url(node)
+            if url:
+                thumbnail_url = url
+
+    extracted_content = _apply_v2_text_blocks(text_blocks, spec)
+    if image_urls:
+        spec["image"] = {"url": image_urls[0]}
+        if len(image_urls) > 1 and not thumbnail_url:
+            spec["thumbnail"] = {"url": image_urls[1]}
+    if thumbnail_url:
+        spec["thumbnail"] = {"url": thumbnail_url}
+    return spec, extracted_content, saw_v2
+
+
+def message_to_editor_payload(message) -> dict:
+    """Parse a Discord message into the dashboard embed-editor payload."""
+    is_v2 = bool(getattr(getattr(message, "flags", None), "components_v2", False))
+    content = getattr(message, "content", None) or ""
+    spec = empty_embed_spec()
+    embeds = getattr(message, "embeds", None) or []
+
+    if embeds:
+        try:
+            spec = embed_to_spec(embeds[0])
+        except Exception:
+            logger.exception("embed_to_spec failed; returning empty spec")
+            spec = empty_embed_spec()
+    else:
+        try:
+            mapped_spec, mapped_content, saw_v2 = v2_message_to_spec(message)
+        except Exception:
+            logger.exception("v2_message_to_spec failed; returning empty spec")
+            mapped_spec, mapped_content, saw_v2 = empty_embed_spec(), "", is_v2
+        spec = mapped_spec
+        if not content:
+            content = mapped_content
+        is_v2 = is_v2 or saw_v2
+
     return {
-        "title": data.get("title", ""),
-        "description": data.get("description", ""),
-        "url": data.get("url", ""),
-        "color": f"#{color_value:06x}" if color_value is not None else "",
-        "author": {
-            "name": author.get("name", ""),
-            "url": author.get("url", ""),
-            "icon_url": author.get("icon_url", ""),
-        },
-        "footer": {"text": footer.get("text", ""), "icon_url": footer.get("icon_url", "")},
-        "image": {"url": image.get("url", "")},
-        "thumbnail": {"url": thumbnail.get("url", "")},
-        "timestamp": data.get("timestamp"),
-        "fields": [
-            {"name": f.get("name", ""), "value": f.get("value", ""), "inline": bool(f.get("inline"))}
-            for f in data.get("fields", [])
-        ],
+        "content": content,
+        "embed": spec,
+        "role_ids": [str(r) for r in parse_role_button_ids(message)],
+        "components_version": "v2" if is_v2 else "v1",
     }
 
 
@@ -103,6 +423,8 @@ def validate_embed_spec(spec: dict, content: str = "") -> str | None:
 
     total_length = len(title) + len(description) + len(footer_text) + len(author_name)
     for field in fields:
+        if not isinstance(field, dict):
+            continue
         name = field.get("name") or ""
         value = field.get("value") or ""
         if len(name) > 256:
@@ -134,14 +456,19 @@ def build_role_button_view(guild, role_ids: list[int]) -> discord.ui.View:
 
 def parse_role_button_ids(message) -> list[int]:
     role_ids = []
-    for row in getattr(message, "components", []) or []:
-        for child in getattr(row, "children", []):
-            custom_id = getattr(child, "custom_id", "") or ""
-            if custom_id.startswith("btn_role_"):
-                try:
-                    role_ids.append(int(custom_id.removeprefix("btn_role_")))
-                except ValueError:
-                    continue
+    seen: set[int] = set()
+    for node in _walk_components(_root_components(message)):
+        custom_id = _node_custom_id(node)
+        if not custom_id.startswith("btn_role_"):
+            continue
+        try:
+            role_id = int(custom_id.removeprefix("btn_role_"))
+        except ValueError:
+            continue
+        if role_id in seen:
+            continue
+        seen.add(role_id)
+        role_ids.append(role_id)
     return role_ids
 
 

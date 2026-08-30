@@ -200,12 +200,19 @@ async def get_embed_message(request: web.Request) -> web.Response:
     except discord.HTTPException:
         return web.json_response({"error": "discord_error"}, status=502)
 
-    spec = embed_builder.embed_to_spec(message.embeds[0]) if message.embeds else {}
-    role_ids = embed_builder.parse_role_button_ids(message)
+    try:
+        payload = embed_builder.message_to_editor_payload(message)
+    except Exception:
+        logger.exception("Failed to parse embed message %s in channel %s", message_id, channel_id)
+        is_v2 = bool(getattr(getattr(message, "flags", None), "components_v2", False))
+        payload = {
+            "content": getattr(message, "content", None) or "",
+            "embed": embed_builder.empty_embed_spec(),
+            "role_ids": [],
+            "components_version": "v2" if is_v2 else "v1",
+        }
 
-    return web.json_response(
-        {"content": message.content, "embed": spec, "role_ids": [str(r) for r in role_ids]}
-    )
+    return web.json_response(payload)
 
 
 @routes.put("/api/embed-messages/{channel_id}/{message_id}")

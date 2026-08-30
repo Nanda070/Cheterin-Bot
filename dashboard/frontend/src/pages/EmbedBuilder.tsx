@@ -24,7 +24,7 @@ import { ComponentsVersionSelect, type ComponentsVersion } from '../components/C
 import { Select } from '../components/ui/Select'
 import { Toggle } from '../components/ui/Toggle'
 import { EmbedPreview } from '../components/EmbedPreview'
-import { EMPTY_EMBED_SPEC, validateEmbedSpec } from '../utils/embedUtils'
+import { EMPTY_EMBED_SPEC, normalizeEmbedSpec, validateEmbedSpec } from '../utils/embedUtils'
 
 // Deep-link hints (?target=welcome|feedback|events) — Embeds tab under Roles & embeds
 // when someone is really looking for a specific embed surface elsewhere in the dashboard.
@@ -53,6 +53,7 @@ export function EmbedBuilderPage() {
   const [componentsVersion, setComponentsVersion] = useState<ComponentsVersion>('v1')
   const [templateName, setTemplateName] = useState('')
   const [templateNotice, setTemplateNotice] = useState('')
+  const [loadNotice, setLoadNotice] = useState('')
 
   useEffect(() => {
     fetchChannels()
@@ -83,7 +84,7 @@ export function EmbedBuilderPage() {
     const template = templates.find((t) => t.id === id)
     if (!template) return
     setContent(template.content)
-    setEmbed({ ...EMPTY_EMBED_SPEC, ...template.embed })
+    setEmbed(normalizeEmbedSpec(template.embed))
     setRoleIds(template.role_ids)
     setTemplateNotice(t('embedBuilder.templateLoaded', { name: template.name }))
   }
@@ -128,15 +129,18 @@ export function EmbedBuilderPage() {
   }
 
   const updateField = (index: number, patch: Partial<EmbedFieldSpec>) => {
-    setEmbed((prev) => ({ ...prev, fields: prev.fields.map((f, i) => (i === index ? { ...f, ...patch } : f)) }))
+    setEmbed((prev) => ({
+      ...prev,
+      fields: (prev.fields ?? []).map((f, i) => (i === index ? { ...f, ...patch } : f)),
+    }))
   }
 
   const addField = () => {
-    setEmbed((prev) => ({ ...prev, fields: [...prev.fields, { name: '', value: '', inline: false }] }))
+    setEmbed((prev) => ({ ...prev, fields: [...(prev.fields ?? []), { name: '', value: '', inline: false }] }))
   }
 
   const removeField = (index: number) => {
-    setEmbed((prev) => ({ ...prev, fields: prev.fields.filter((_, i) => i !== index) }))
+    setEmbed((prev) => ({ ...prev, fields: (prev.fields ?? []).filter((_, i) => i !== index) }))
   }
 
   const toggleRole = (roleId: string) => {
@@ -145,6 +149,7 @@ export function EmbedBuilderPage() {
 
   const handleLoad = async () => {
     setError('')
+    setLoadNotice('')
     if (!channelId || !messageId) {
       setError(t('embedBuilder.error.channelAndId'))
       return
@@ -152,11 +157,18 @@ export function EmbedBuilderPage() {
     setBusy(true)
     try {
       const data = await fetchEmbedMessage(channelId, messageId)
-      setContent(data.content)
-      setEmbed(data.embed)
-      setRoleIds(data.role_ids)
+      setContent(typeof data.content === 'string' ? data.content : '')
+      setEmbed(normalizeEmbedSpec(data.embed))
+      setRoleIds(Array.isArray(data.role_ids) ? data.role_ids.map(String) : [])
+      if (data.components_version === 'v2' || data.components_version === 'v1') {
+        setComponentsVersion(data.components_version)
+      }
+      if (data.components_version === 'v2') {
+        setLoadNotice(t('embedBuilder.v2LoadedNotice'))
+      }
     } catch (err) {
       setError(formatApiError(err, t, 'embedBuilder.error.load'))
+      setEmbed(EMPTY_EMBED_SPEC)
     } finally {
       setBusy(false)
     }
@@ -280,6 +292,7 @@ export function EmbedBuilderPage() {
             </Button>
           </div>
         )}
+        {loadNotice && <p className="text-sm text-muted">{loadNotice}</p>}
 
         <label className="text-sm text-muted" htmlFor="eb-content">
           {t('embedBuilder.field.messageContent')}
@@ -297,7 +310,7 @@ export function EmbedBuilderPage() {
         </label>
         <input
           id="eb-title"
-          value={embed.title}
+          value={embed.title ?? ''}
           onChange={(e) => updateEmbedField('title', e.target.value)}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
@@ -307,7 +320,7 @@ export function EmbedBuilderPage() {
         </label>
         <textarea
           id="eb-description"
-          value={embed.description}
+          value={embed.description ?? ''}
           onChange={(e) => updateEmbedField('description', e.target.value)}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
           rows={3}
@@ -325,7 +338,7 @@ export function EmbedBuilderPage() {
             className="h-9 w-12 rounded-control border border-border bg-background"
           />
           <input
-            value={embed.color}
+            value={embed.color ?? ''}
             onChange={(e) => updateEmbedField('color', e.target.value)}
             placeholder="#D44556"
             className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -337,8 +350,10 @@ export function EmbedBuilderPage() {
         </label>
         <input
           id="eb-author-name"
-          value={embed.author.name}
-          onChange={(e) => updateEmbedField('author', { ...embed.author, name: e.target.value })}
+          value={embed.author?.name ?? ''}
+          onChange={(e) =>
+            updateEmbedField('author', { ...(embed.author ?? EMPTY_EMBED_SPEC.author), name: e.target.value })
+          }
           placeholder={t('embedBuilder.authorPlaceholder')}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
@@ -348,8 +363,10 @@ export function EmbedBuilderPage() {
         </label>
         <input
           id="eb-footer-text"
-          value={embed.footer.text}
-          onChange={(e) => updateEmbedField('footer', { ...embed.footer, text: e.target.value })}
+          value={embed.footer?.text ?? ''}
+          onChange={(e) =>
+            updateEmbedField('footer', { ...(embed.footer ?? EMPTY_EMBED_SPEC.footer), text: e.target.value })
+          }
           placeholder={t('embedBuilder.footerPlaceholder')}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
@@ -359,7 +376,7 @@ export function EmbedBuilderPage() {
         </label>
         <input
           id="eb-image-url"
-          value={embed.image.url}
+          value={embed.image?.url ?? ''}
           onChange={(e) => updateEmbedField('image', { url: e.target.value })}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
@@ -369,7 +386,7 @@ export function EmbedBuilderPage() {
         </label>
         <input
           id="eb-thumbnail-url"
-          value={embed.thumbnail.url}
+          value={embed.thumbnail?.url ?? ''}
           onChange={(e) => updateEmbedField('thumbnail', { url: e.target.value })}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
@@ -381,21 +398,21 @@ export function EmbedBuilderPage() {
         />
 
         <div className="flex flex-col gap-2">
-          {embed.fields.map((field, index) => (
+          {(embed.fields ?? []).map((field, index) => (
             <div key={index} className="flex flex-wrap items-center gap-2 rounded-control border border-border/60 p-2">
               <input
-                value={field.name}
+                value={field.name ?? ''}
                 onChange={(e) => updateField(index, { name: e.target.value })}
                 placeholder={t('embedBuilder.fieldNamePlaceholder')}
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <input
-                value={field.value}
+                value={field.value ?? ''}
                 onChange={(e) => updateField(index, { value: e.target.value })}
                 placeholder={t('embedBuilder.fieldValuePlaceholder')}
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
-              <Checkbox checked={field.inline} onChange={(v) => updateField(index, { inline: v })} label="inline" />
+              <Checkbox checked={Boolean(field.inline)} onChange={(v) => updateField(index, { inline: v })} label="inline" />
               <button type="button" onClick={() => removeField(index)} className="cursor-pointer text-muted hover:text-danger">
                 ×
               </button>

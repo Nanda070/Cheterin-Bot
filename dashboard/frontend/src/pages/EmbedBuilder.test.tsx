@@ -101,6 +101,63 @@ describe('EmbedBuilderPage', () => {
     expect(screen.getByLabelText('Текст сообщения')).toHaveValue('existing content')
   })
 
+  it('loads a partial API embed without crashing on missing author/fields', async () => {
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'general' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    vi.spyOn(client, 'fetchEmbedMessage').mockResolvedValue({
+      content: 'partial',
+      embed: { title: 'Partial title' },
+      role_ids: [],
+    } as unknown as client.EmbedMessagePayload)
+
+    renderWithLanguage(<EmbedBuilderPage />)
+
+    fireEvent.click(await screen.findByText('Редактировать существующее'))
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
+    fireEvent.change(screen.getByPlaceholderText('ID существующего сообщения'), { target: { value: '999' } })
+    fireEvent.click(screen.getByText('Загрузить'))
+
+    await waitFor(() => expect(screen.getByLabelText(/^Заголовок/)).toHaveValue('Partial title'))
+    expect(screen.getByLabelText('Текст сообщения')).toHaveValue('partial')
+    expect(screen.getByLabelText(/^Автор/)).toHaveValue('')
+    expect(screen.getByPlaceholderText('Имя автора')).toBeInTheDocument()
+  })
+
+  it('loads a V2 payload into the form and shows a mapping notice', async () => {
+    vi.spyOn(client, 'fetchChannels').mockResolvedValue([{ id: '500', name: 'general' }])
+    vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
+    vi.spyOn(client, 'fetchEmbedMessage').mockResolvedValue({
+      content: 'v2 text',
+      embed: {
+        title: 'V2 Title',
+        description: 'mapped',
+        url: '',
+        color: '',
+        author: { name: '', url: '', icon_url: '' },
+        footer: { text: '', icon_url: '' },
+        image: { url: '' },
+        thumbnail: { url: '' },
+        timestamp: null,
+        fields: [],
+      },
+      role_ids: [],
+      components_version: 'v2',
+    })
+
+    renderWithLanguage(<EmbedBuilderPage />)
+
+    fireEvent.click(await screen.findByText('Редактировать существующее'))
+    fireEvent.click(screen.getByLabelText('Канал'))
+    fireEvent.click(await screen.findByRole('option', { name: 'general' }))
+    fireEvent.change(screen.getByPlaceholderText('ID существующего сообщения'), { target: { value: '999' } })
+    fireEvent.click(screen.getByText('Загрузить'))
+
+    await waitFor(() => expect(screen.getByLabelText(/^Заголовок/)).toHaveValue('V2 Title'))
+    expect(screen.getByLabelText('Текст сообщения')).toHaveValue('v2 text')
+    expect(screen.getByText(/без классического эмбеда/)).toBeInTheDocument()
+  })
+
   it('renders the live preview with the current title', async () => {
     vi.spyOn(client, 'fetchChannels').mockResolvedValue([])
     vi.spyOn(client, 'fetchRoles').mockResolvedValue([])
