@@ -2,7 +2,7 @@
 
 Статус: план, **решения зафиксированы**. Реализации в этом документе нет.  
 Публичный адрес: `https://cheterin.online/lookup` (в проде HTTPS; путь `/lookup`).  
-Этот документ **не** является спецификацией кода и **не** предлагает править VALORANT, cogs бота или текущий дашборд, пока не начнётся отдельная задача реализации.
+Этот документ **не** является спецификацией кода и **не** предлагает править VALORANT, cogs бота или текущий дашборд, пока не начнётся отдельная задача реализации. Известный дрейф текущего монолита (docs vs UI, i18n, legal-маршруты, leftovers бота) зафиксирован в **§14**: Lookup его **не закрывает**, кроме явно названных кусков фаз 8–9.
 
 Референс по **компоновке экранов** (не по цвету и не по текстам): [dclookup.id](https://www.dclookup.id/) — hero-поиск, карточка профиля, двухколоночные детали, теги, ряды ассетов, сетка бейджей, калькулятор прав + live preview. Референс **не** является источником юридических текстов, копирайта, бренда, палитры, рекламы или API-контракта.
 
@@ -160,6 +160,8 @@ Lookup должен:
 ### 4.3. Legal (канон на корне, общие страницы)
 
 Один комплект на **бот-сайт и Lookup**. Не `/lookup/legal/*` и не второй набор текстов. Существующие `/terms` и `/privacy` расширяются; добавляются `/cookies` и `/disclaimer` на том же хосте.
+
+**Дрейф vs канон:** в `App.tsx` сейчас есть только `/terms`, `/privacy`, `/credits`. Маршрутов `/cookies` и `/disclaimer` **нет** (404). Это не «уже живые страницы панели» — их создаёт **фаза 9**, не фаза 8.
 
 | Путь | Назначение |
 |---|---|
@@ -427,7 +429,8 @@ OAuth панели Lookup не использует.
 
 - `/lookup`, `/lookup/*` → Lookup UI;
 - `/api/lookup/*` → Lookup API;
-- `/about`, `/docs`, `/credits`, `/terms`, `/privacy`, `/cookies`, `/disclaimer` → как сейчас панель (legal — общие страницы);
+- `/about`, `/docs`, `/credits`, `/terms`, `/privacy` → как сейчас панель;
+- `/cookies`, `/disclaimer` → **канон §4.3, в коде ещё нет**; появляются в фазе 9 на том же хосте (общие с панелью);
 - остальное → бот+панель.
 
 `/about` **остаётся** в `dashboard/frontend`. Lookup SPA **не** забирает витрину бота.
@@ -523,15 +526,16 @@ CDN как основной download; same-origin прокси как fallback �
 Страница каталога. Контент — список оператора (может прийти в момент создания). Без публичных сабмишенов.
 
 **Фаза 8 — `/about`, docs, chrome**  
-Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **Без** поиска на about. Упоминание Lookup в **`/docs` и футере**. Easter eggs **оставить**. Убрать `--landing-*` как вторую тему.
+Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **Без** поиска на about. Упоминание Lookup в **`/docs` и футере**. Easter eggs **оставить**. Убрать `--landing-*` как вторую тему.  
+Не «выравнивать» дрейф §14: не переписывать VALORANT-разделы docs / What’s New под фактические вкладки панели и не чинить RU-hardcode / audit labels / cogs «заодно» с restyle.
 
 **Фаза 9 — Legal**  
-Один комплект: обновить Terms/Privacy; добавить `/cookies` и `/disclaimer`; секции Lookup, отдельное приложение, кэш, хеш-логи 48 ч, капча, CDN, отсутствие recent. Оператор Cheterin Group Ø / Nandak070. Футер Lookup → те же URL.
+Один комплект: обновить Terms/Privacy; **создать** `/cookies` и `/disclaimer` (сейчас отсутствуют в роутере панели — §14); секции Lookup, отдельное приложение, кэш, хеш-логи 48 ч, капча, CDN, отсутствие recent. Оператор Cheterin Group Ø / Nandak070. Футер Lookup → те же URL.
 
 **Фаза 10 — Жёсткость**  
 Капча после 30/мин с IP; 429 с retry до капчи; мониторинг токена; мобильный hero; a11y поля; проверка изоляции от бота; чеклист §6.4 и §2.10. Health не на hero.
 
-Параллелить: 4 с 1–3. Токены кита — с фазы 0. 8 и 9 — когда chrome Lookup стабилен.
+Параллелить: 4 с 1–3. Токены кита — с фазы 0. 8 и 9 — когда chrome Lookup стабилен. Ссылки футера на `/cookies` и `/disclaimer` — **вместе с фазой 9**, не вешать 404 из фазы 8.
 
 ---
 
@@ -556,6 +560,7 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 | CORS download | Download с CDN рвётся. | Прокси fallback. |
 | Scope creep папок | Рефакторинг всего монолита. | §8.4. |
 | Паритет всех фич dclookup | GDM, recent, deleter. | §3, §11. |
+| Lookup «починит» дрейф панели | Restyle about/docs или legal заодно закрывает VALORANT-вкладки, i18n, audit, MSK-алиасы. | §14: не трогать, кроме фаз 8–9 как написано. |
 
 ---
 
@@ -583,6 +588,7 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 - Гигантский hero-поиск на `/lookup/about` (поиск — на `/lookup`).
 - Два комплекта Terms/Privacy/Cookies/Disclaimer; legal только под `/lookup/legal` как канон.
 - Реорганизация cogs бота / VALORANT под видом Lookup.
+- Закрытие дрейфа §14 «заодно» с Lookup (VALORANT-вкладки, What’s New vs UI, slash EN-only, audit labels, ENV tempban, deprecated access, global slash sync, MSK-алиасы), кроме создания `/cookies` `/disclaimer` и restyle chrome в фазах 8–9.
 - Хранение скачанных аватаров как файловый хостинг (прокси — только fallback download, не библиотека).
 - Аналитические пиксели, сторонние трекеры (кроме необходимого для капчи — описать в Privacy).
 - Автоматический массовый перебор ID.
@@ -614,7 +620,7 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 10. **Калькулятор прав.** Полный: generic invite URL **и** поле Client ID **и** пресеты Lookup + Cheterin из конфига (не секреты в коде).
 11. **Ассеты.** Оба: прямой CDN основной, same-origin прокси — fallback.
 12. **Мониторинг.** Не на hero. Внутренний health — да. Без фейковых дашбордов. Дискретный футер — не v1.
-13. **Legal / оператор.** Cheterin Group Ø / Nandak070. Terms / Privacy / Cookies / Disclaimer — **один** набор. Канон: `/terms` `/privacy` `/cookies` `/disclaimer` на `cheterin.online`; футер Lookup туда же.
+13. **Legal / оператор.** Cheterin Group Ø / Nandak070. Terms / Privacy / Cookies / Disclaimer — **один** набор. Канон: `/terms` `/privacy` `/cookies` `/disclaimer` на `cheterin.online`; футер Lookup туда же. **Сейчас в роутере нет `/cookies` и `/disclaimer`** — это дрейф §14, закрывается фазой 9.
 14. **Рейт-лимит UX.** До порога — **429 + retry**. После **30 запросов/мин с IP** — **CAPTCHA**. Капча = cookies → Privacy.
 15. **Sharable DSA URL.** Всегда `/lookup/dsa/:id`. Нет query у апстрима — наши факты (возможно пусто) + ссылка в официальный реестр. Без выдуманных нарушений.
 16. **Docs.** Lookup в v1 в **футере и `/docs`**.
@@ -631,6 +637,7 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 - Любые правки `.py` / `.ts` / `.tsx` / `.css` / `.json` приложения.
 - Коммиты и пуш.
 - Рефакторинг бота, панели, VALORANT.
+- Закрытие дрейфа §14 (кроме `/cookies` `/disclaimer` и chrome фаз 8–9).
 - Фактическое создание папок `lookup/` и `lookup-api/`.
 - Наполнение каталога плагинов (ждёт список оператора).
 - Публичный API для сторонних разработчиков.
@@ -638,3 +645,81 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 - Вынос `packages/ui`.
 
 Когда начнётся реализация — фазы §9 в дереве §8, отдельными задачами, не «заодно».
+
+---
+
+## 14. Известный дрейф кодовой базы
+
+Инвентарь на **сентябрь 2026**. Это **факт текущего монолита**, не бэклог Lookup и не разрешение чинить бота из этой задачи.
+
+Правило для реализатора Lookup: строка из таблиц ниже **не** входит в фазы 0–7 и 10. Фаза 8 не переписывает продуктовые разделы docs, чтобы они совпали с UI. Фаза 9 **создаёт** отсутствующие `/cookies` и `/disclaimer` — это единственный дрейф, который Lookup закрывает сам. Остальное — отдельные задачи, если оператор их заведёт.
+
+### 14.1. Публичный chrome и legal (рядом с Lookup)
+
+| Дрейф | Как сейчас | Как в этом плане | Lookup |
+|---|---|---|---|
+| `/cookies`, `/disclaimer` | Нет в `App.tsx`; живые только `/terms`, `/privacy`, `/credits` | Канон §4.3 на корне | **Фаза 9** создаёт страницы и ссылки в футере |
+| `packages/ui` | Нет пакета; токены не вынесены | v1 = дубль CSS (§2.11, §8.3) | Не создавать в v1 |
+| Процесс панели | `start_dashboard` из `main.py`; рестарт бота гасит сайт | Lookup — отдельный процесс и токен (§1, §7.2) | Не вшивать API в панель |
+| `--landing-*` как вторая тема | Публичный chrome панели может расходиться с залогиненной панелью | Одна палитра уголь + тёмно-красный | Фаза 8 убирает вторую тему, не маскирует дашборд под карточки Lookup |
+
+### 14.2. Docs / What’s New vs UI панели
+
+| Дрейф | Факт |
+|---|---|
+| Вкладка VALORANT | `ValorantPage`: только **customs** и **valchecker**. Query `?tab=panels\|premier\|commands` **форсится** на customs. |
+| Premier и ролевые панели | Cogs + API живые (`premier.py`, `valorant_panels.py`, `/api/valorant/premier`, `/api/valorant/panels`). Отдельных вкладок панели нет. |
+| Ideas | Модерируемые идеи — `/feedback?tab=ideas`, не VALORANT. |
+| What’s New `2026.08.5` ключ `valorantPremierIdeas` | Текст: «VALORANT tab: Premier apps, role panels, and moderated ideas» — **не совпадает** с текущими табами. |
+| `/docs` (sections EN/RU) | Разделы всё ещё описывают Premier UI / панели так, будто они на вкладке VALORANT. |
+| `/leaderboard` без `:guildId` | Маршрут есть, данные не грузятся (нужен `guildId`) — не «глобальный топ Cheterin». |
+
+При фазе 8: кнопка Lookup и упоминание в docs/футере. **Не** править VALORANT-копирайт docs и не бампать What’s New, чтобы «честно закрыть» этот дрейф.
+
+### 14.3. i18n
+
+| Дрейф | Факт |
+|---|---|
+| `/valorant` random | Хардкод EN; нет в `slash_registry` / `slash_modules` |
+| Premier (панель/модалка) | EN-only |
+| VALORANT role panels | EN-only |
+| Ideas (промпт/эмбеды) | EN-only |
+| ValChecker | отдельные EN-остатки в UI |
+| `MassAssignModal.tsx` | строки на русском вне i18n |
+| `ReactionRoleForm` | часть placeholder’ов не через ключи — EN UI показывает RU |
+| Sticky / starboard / auto-reactions / custom commands / scheduled messages | мало user-facing копирайта в `locales/` |
+
+Ключ панели **`chetbot_ui_lang`** Lookup переиспользует. Не считать, что вся панель уже паритетна RU/EN.
+
+### 14.4. Панель и API
+
+| Дрейф | Факт |
+|---|---|
+| `has_dashboard_access` | DEPRECATED в `access.py`; живой fallback `_has_legacy_role_access`, если задан `DASHBOARD_ACCESS_ROLE_IDS` |
+| Super-admin URL | `/superadmin`, `/health`, `/news`, `/ctd` не закрыты клиентским гардом — режет API |
+| Audit labels | мутации ideas, polls, sticky*, custom-commands, scheduled-messages, invites, owner-alerts, timezone, sticky-roles, preview, relations, valorant, timed-roles часто → `audit.action.other` |
+| Polls в панели | list / get / end — **нет create** (создание слэшем `/poll`) |
+| Timed roles в панели | list / delete — **нет create** (слэш `/timed-role`) |
+| CORS | нет; сессия-cookie, same-origin / прокси. Lookup API на том же хосте `/api/lookup` — не повод включать CORS «для всех» |
+| ACL панели | бинарно: Manage Server / super-admin, без гранулярных пермов |
+
+### 14.5. Бот и рантайм
+
+| Дрейф | Факт |
+|---|---|
+| `COMMAND_SYNC_MODE=global` | заготовка на рост числа гильдий; дефолт `per_guild` |
+| `COMMAND_SYNC_HIDE_DISABLED` | opt-in; по умолчанию слэши видны, модуль отказывает в рантайме |
+| Tempban mention-exempt | роли-исключения всё ещё из **ENV**, не из дашборда |
+| Алиасы `MOSCOW_TZ` / `_MSK` | в `wordle_core`, `daily_topic_core`, `economy_core`, `scheduled_messages_core`, `birthdays.py` — тесты/legacy; боевые расписания — `timezone_core` |
+| Префикс `!` | объявлен у бота, продуктовых prefix-команд нет |
+| CTD и news-relay | только main guild — **продуктовое ограничение**, не баг; Lookup это не расширяет |
+
+### 14.6. Артефакты и планы
+
+| Дрейф | Факт |
+|---|---|
+| `MULTIGUILD_PLAN.md` | удалён; миграции в коде помечены done. Graphify wiki ещё ссылается на файл |
+| `AGENTS.md` / `CONTRIBUTING` / корневой `CHANGELOG` / `ROADMAP` | нет; история фич панели — `whatsNew.ts` |
+| Graphify `graphify-out/` | кэш анализа, не источник правды для Lookup |
+
+Эти строки **не** открывают скоуп Lookup и **не** отменяют §11 / §13.
