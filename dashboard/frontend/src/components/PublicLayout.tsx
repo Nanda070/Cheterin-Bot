@@ -15,6 +15,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { to: '/docs', labelKey: 'nav.docs' },
     { to: '/terms', labelKey: 'nav.terms' },
     { to: '/privacy', labelKey: 'nav.privacy' },
+    { to: '/cookies', labelKey: 'nav.cookies' },
+    { to: '/disclaimer', labelKey: 'nav.disclaimer' },
   ] as const
 
   const dashboardHref = user ? (user.active_guild_id ? '/' : '/servers') : loginUrl()
@@ -82,6 +84,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link to="/privacy" className="transition-colors hover:text-primary">
               {t('public.footer.privacy')}
+            </Link>
+            <Link to="/cookies" className="transition-colors hover:text-primary">
+              {t('public.footer.cookies')}
+            </Link>
+            <Link to="/disclaimer" className="transition-colors hover:text-primary">
+              {t('public.footer.disclaimer')}
             </Link>
           </nav>
         </div>

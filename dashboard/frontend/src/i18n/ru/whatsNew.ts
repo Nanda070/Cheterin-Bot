@@ -17,7 +17,7 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.customsManualTeams':
     'Кастомки: ручное назначение команд A / B в панели',
   'whatsNew.item.valorantPremierIdeas':
-    'Вкладка VALORANT: Premier-заявки, панели ролей и модерируемые идеи',
+    'Вкладка VALORANT: Premier-заявки и панели ролей (идеи — в Обратной связи)',
 }
 
 export default whatsNew

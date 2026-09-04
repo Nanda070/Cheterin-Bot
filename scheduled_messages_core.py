@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import settings_db
 
@@ -11,8 +11,6 @@ MODULE_NAME = "scheduled_messages"
 MAX_MESSAGES = 30
 MAX_CONTENT_LEN = 2000
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
-# Kept for tests / backward-compat imports; runtime uses timezone_core.
-MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 
 def is_valid_time(value: str) -> bool:

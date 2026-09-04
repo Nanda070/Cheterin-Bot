@@ -106,6 +106,6 @@ describe('WhatsNewCard', () => {
     expect(screen.getByText(LATEST_WHATS_NEW.date)).toBeInTheDocument()
     expect(screen.getByText(/окно активности в днях/)).toBeInTheDocument()
     expect(screen.getByText(/ручное назначение команд A \/ B/)).toBeInTheDocument()
-    expect(screen.getByText(/Premier-заявки, панели ролей/)).toBeInTheDocument()
+    expect(screen.getByText(/Premier-заявки и панели ролей/)).toBeInTheDocument()
   })
 })

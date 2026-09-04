@@ -40,8 +40,8 @@ class Lockdown(commands.Cog):
     async def _activate(self, interaction: discord.Interaction, guild: discord.Guild, lang: str):
         modified_count, errors = await lockdown_core.activate_antispam(
             guild,
-            lockdown_core.get_mention_exempt_ids(),
-            lockdown_core.get_mentionable_exempt_ids(),
+            lockdown_core.get_mention_exempt_ids(guild.id),
+            lockdown_core.get_mentionable_exempt_ids(guild.id),
             lang,
         )
 

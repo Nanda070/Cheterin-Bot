@@ -5,6 +5,7 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 
+import i18n
 import ideas_core
 
 
@@ -20,10 +21,11 @@ class IdeasCog(commands.Cog):
         channel = guild.get_channel(int(channel_id)) if channel_id.isdigit() else None
         if not isinstance(channel, discord.TextChannel):
             return
+        lang = i18n.lang_for(guild.id)
         member = guild.get_member(int(case["submitter_id"]))
         author = member.mention if member else f"<@{case['submitter_id']}>"
         embed = discord.Embed(description=case["text"], color=discord.Colour.blurple())
-        embed.set_author(name=f"Idea from {author}")
+        embed.set_author(name=i18n.t("ideas.embed.author", lang, author=author))
         if case.get("attachment_url"):
             embed.set_image(url=case["attachment_url"])
         message = await channel.send(embed=embed)
@@ -44,11 +46,22 @@ class IdeasCog(commands.Cog):
         attachment = message.attachments[0].url if message.attachments else ""
         if not text and not attachment:
             return
-        case = ideas_core.create_case(message.guild.id, message.author.id, text or "(attachment)", attachment)
+        case = ideas_core.create_case(
+            message.guild.id, message.author.id, text or "(attachment)", attachment
+        )
         review_id = settings["review_channel_id"]
         review = message.guild.get_channel(int(review_id)) if review_id.isdigit() else None
         if isinstance(review, discord.TextChannel):
-            await review.send(f"New idea `{case['case_id']}` from {message.author.mention}:\n{case['text']}")
+            lang = i18n.lang_for(message.guild.id)
+            await review.send(
+                i18n.t(
+                    "ideas.review.notify",
+                    lang,
+                    case_id=case["case_id"],
+                    author=message.author.mention,
+                    text=case["text"],
+                )
+            )
         try:
             await message.delete()
         except discord.HTTPException:

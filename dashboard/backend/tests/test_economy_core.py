@@ -154,7 +154,7 @@ def test_claim_daily_bonus_gap_resets_streak():
 
 
 def test_claim_daily_bonus_uses_real_date_by_default(monkeypatch):
-    monkeypatch.setattr(economy_core, "today_msk_date", lambda: "2026-02-01")
+    monkeypatch.setattr(economy_core, "today_msk_date", lambda *_a, **_k: "2026-02-01")
     result = economy_core.claim_daily_bonus(GUILD_ID, 1)
     assert result["claimed"] is True
 

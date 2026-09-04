@@ -88,11 +88,11 @@ export function MassAssignModal({ open, onClose }: Props) {
 
   const handleStart = async () => {
     if (!roleId) {
-      setError('Выберите роль')
+      setError(t('members.massAssign.errorRole'))
       return
     }
     if (target === 'selected' && selectedIds.size === 0) {
-      setError('Выберите хотя бы одного участника')
+      setError(t('members.massAssign.errorMembers'))
       return
     }
     setStarting(true)
@@ -101,7 +101,7 @@ export function MassAssignModal({ open, onClose }: Props) {
       const id = await startMassAssign(roleId, target, target === 'selected' ? Array.from(selectedIds) : undefined)
       setJobId(id)
     } catch {
-      setError('Не удалось запустить операцию (возможно, уже выполняется другая)')
+      setError(t('members.massAssign.errorStart'))
     } finally {
       setStarting(false)
     }
@@ -117,13 +117,20 @@ export function MassAssignModal({ open, onClose }: Props) {
   }
 
   return (
-    <Modal open={open} title="Массовая выдача роли" onClose={handleClose}>
+    <Modal open={open} title={t('members.massAssign.title')} onClose={handleClose}>
       {!jobId ? (
         <div className="flex flex-col gap-3">
           <label className="text-sm text-muted" htmlFor="mass-role">
-            Роль
+            {t('members.massAssign.role')}
           </label>
-          <Select id="mass-role" value={roleId} onChange={(id) => setRoleId(id)} options={roles} kind="role" placeholder="Выберите роль…" />
+          <Select
+            id="mass-role"
+            value={roleId}
+            onChange={(id) => setRoleId(id)}
+            options={roles}
+            kind="role"
+            placeholder={t('members.massAssign.selectRole')}
+          />
 
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-2 text-sm text-foreground">
@@ -134,7 +141,7 @@ export function MassAssignModal({ open, onClose }: Props) {
                 onChange={() => setTarget('selected')}
                 className="accent-primary"
               />
-              Выбранные участники
+              {t('members.massAssign.targetSelected')}
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
@@ -144,7 +151,7 @@ export function MassAssignModal({ open, onClose }: Props) {
                 onChange={() => setTarget('all')}
                 className="accent-primary"
               />
-              Все участники
+              {t('members.massAssign.targetAll')}
             </label>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
@@ -154,7 +161,7 @@ export function MassAssignModal({ open, onClose }: Props) {
                 onChange={() => setTarget('all_except_bots')}
                 className="accent-primary"
               />
-              Все кроме ботов
+              {t('members.massAssign.targetExceptBots')}
             </label>
           </div>
 
@@ -163,10 +170,10 @@ export function MassAssignModal({ open, onClose }: Props) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Поиск участника…"
+                placeholder={t('members.massAssign.search')}
                 className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
-              <p className="text-xs text-muted">Выбрано: {selectedIds.size}</p>
+              <p className="text-xs text-muted">{t('members.massAssign.selectedCount', { count: selectedIds.size })}</p>
               <div className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
                 {searchResults.map((member) => (
                   <Checkbox
@@ -184,21 +191,27 @@ export function MassAssignModal({ open, onClose }: Props) {
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={handleClose} disabled={starting}>
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={handleStart} disabled={starting}>
-              {starting ? 'Запускаем…' : 'Начать'}
+              {starting ? t('members.massAssign.starting') : t('members.massAssign.start')}
             </Button>
           </div>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-foreground">
-            Обработано: {status?.processed ?? 0} / {status?.total ?? '…'}
+            {t('members.massAssign.processed', {
+              processed: status?.processed ?? 0,
+              total: status?.total ?? '…',
+            })}
           </p>
           <p className="text-xs text-muted">
-            Успешно: {status?.succeeded ?? 0} · Пропущено (уже была роль): {status?.skipped ?? 0} · Ошибок:{' '}
-            {status?.failed ?? 0}
+            {t('members.massAssign.stats', {
+              succeeded: status?.succeeded ?? 0,
+              skipped: status?.skipped ?? 0,
+              failed: status?.failed ?? 0,
+            })}
           </p>
           {status?.errors && status.errors.length > 0 && (
             <div className="max-h-32 overflow-y-auto rounded-control border border-border bg-background p-2 text-xs text-danger">
@@ -210,7 +223,7 @@ export function MassAssignModal({ open, onClose }: Props) {
           {status?.status !== 'running' && (
             <div className="flex justify-end pt-2">
               <Button variant="primary" onClick={handleClose}>
-                Готово
+                {t('members.massAssign.done')}
               </Button>
             </div>
           )}

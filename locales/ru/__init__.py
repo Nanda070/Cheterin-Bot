@@ -31,6 +31,7 @@ from locales.ru.relations import MESSAGES as relations_messages
 from locales.ru.customs import MESSAGES as customs_messages
 from locales.ru.banner_rotation import MESSAGES as banner_rotation_messages
 from locales.ru.valchecker import MESSAGES as valchecker_messages
+from locales.ru.valorant import MESSAGES as valorant_messages
 from locales.ru.tempban import MESSAGES as tempban_messages
 from locales.ru.verification import MESSAGES as verification_messages
 from locales.ru.voice_rooms import MESSAGES as voice_rooms_messages
@@ -62,6 +63,7 @@ MESSAGES = merge_messages(
     customs_messages,
     banner_rotation_messages,
     valchecker_messages,
+    valorant_messages,
     daily_topic_messages,
     streams_messages,
     feedback_messages,

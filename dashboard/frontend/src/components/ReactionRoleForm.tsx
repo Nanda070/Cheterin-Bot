@@ -76,16 +76,16 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
   const handleSave = async () => {
     setError('')
     if (!channelId || !messageId) {
-      setError('Укажите канал и Message ID')
+      setError(t('reactionRoles.form.errorChannelMessage'))
       return
     }
     const validPairs = pairs.filter((p) => p.emoji && p.role_id)
     if (validPairs.length === 0) {
-      setError('Добавьте хотя бы одну пару эмодзи → роль')
+      setError(t('reactionRoles.form.errorPairs'))
       return
     }
     if (hasDuplicateEmoji(validPairs)) {
-      setError('Повторяющийся эмодзи в списке пар')
+      setError(t('reactionRoles.form.errorDuplicate'))
       return
     }
 
@@ -99,17 +99,21 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
       onSaved()
       onClose()
     } catch {
-      setError('Не удалось сохранить — проверьте канал/ID сообщения и права на роли')
+      setError(t('reactionRoles.form.errorSave'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <Modal open={open} title={editing ? 'Редактировать reaction role' : 'Создать reaction role'} onClose={onClose}>
+    <Modal
+      open={open}
+      title={editing ? t('reactionRoles.edit') : t('reactionRoles.create')}
+      onClose={onClose}
+    >
       <div className="flex flex-col gap-3">
         <label className="text-sm text-muted" htmlFor="rr-channel">
-          Канал
+          {t('reactionRoles.form.channel')}
         </label>
         <Select
           id="rr-channel"
@@ -117,11 +121,11 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
           onChange={(id) => setChannelId(id)}
           disabled={!!editing}
           options={channels}
-          placeholder="Выберите канал…"
+          placeholder={t('reactionRoles.form.selectChannel')}
         />
 
         <label className="text-sm text-muted" htmlFor="rr-message-id">
-          Message ID
+          {t('reactionRoles.form.messageId')}
         </label>
         <input
           id="rr-message-id"
@@ -129,7 +133,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
           onChange={(e) => setMessageId(e.target.value)}
           disabled={!!editing}
           className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary disabled:opacity-50"
-          placeholder="ID существующего сообщения"
+          placeholder={t('reactionRoles.form.messageIdPlaceholder')}
         />
 
         <div className="flex flex-col gap-2">
@@ -138,27 +142,27 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
               <input
                 value={pair.emoji}
                 onChange={(e) => updatePair(index, { emoji: e.target.value })}
-                placeholder="Эмодзи (вставьте unicode или выберите ниже)"
+                placeholder={t('reactionRoles.form.emojiPlaceholder')}
                 className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <Select
-                ariaLabel="Свой эмодзи сервера"
+                ariaLabel={t('reactionRoles.form.customEmoji')}
                 value=""
                 onChange={(id) => {
                   const custom = emojis.find((em) => em.id === id)
                   if (custom) updatePair(index, { emoji: `<:${custom.name}:${custom.id}>` })
                 }}
                 options={emojis}
-                placeholder="Свой эмодзи…"
+                placeholder={t('reactionRoles.form.customEmojiPlaceholder')}
                 className="min-w-0 flex-1 basis-28"
               />
               <Select
-                ariaLabel="Роль для этой пары"
+                ariaLabel={t('reactionRoles.form.roleAria')}
                 value={pair.role_id}
                 onChange={(id) => updatePair(index, { role_id: id })}
                 options={roles}
                 kind="role"
-                placeholder="Роль…"
+                placeholder={t('reactionRoles.form.rolePlaceholder')}
                 className="min-w-0 flex-1 basis-28"
               />
               <button
@@ -175,7 +179,7 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
             onClick={addPair}
             className="cursor-pointer self-start text-sm text-primary hover:text-primary-hover"
           >
-            + Добавить пару
+            {t('reactionRoles.form.addPair')}
           </button>
         </div>
 
@@ -183,10 +187,10 @@ export function ReactionRoleForm({ open, onClose, editing, onSaved }: Props) {
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={busy}>
-            {busy ? 'Сохраняем…' : 'Сохранить'}
+            {busy ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </div>

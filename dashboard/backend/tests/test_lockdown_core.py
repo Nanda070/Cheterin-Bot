@@ -1,13 +1,14 @@
-import json
-
 import pytest
 
 import lockdown_core
+import settings_db
 from dashboard.backend.tests.fakes import FakeGuild, FakeRole
 
 
 @pytest.fixture(autouse=True)
-def isolated_backup(tmp_path, monkeypatch):
+def isolated_settings(tmp_path, monkeypatch):
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    settings_db.init()
     monkeypatch.setattr(lockdown_core, "BACKUP_FILE", str(tmp_path / "antispam_backup.json"))
 
 
@@ -84,3 +85,28 @@ async def test_activate_collects_errors_and_continues():
     modified, errors = await lockdown_core.activate_antispam(guild, set(), set())
     assert modified == 1
     assert len(errors) == 1
+
+
+def test_migrate_from_env_copies_once(monkeypatch):
+    monkeypatch.setenv("ANTISPAM_MENTION_EXEMPT_ROLES", "11,22")
+    monkeypatch.setenv("ANTISPAM_MENTIONABLE_EXEMPT_ROLES", "33")
+    lockdown_core.migrate_from_env_if_needed(42)
+    settings = lockdown_core.get_exempt_settings(42)
+    assert settings["mention_exempt_role_ids"] == ["11", "22"]
+    assert settings["mentionable_exempt_role_ids"] == ["33"]
+    assert lockdown_core.get_mention_exempt_ids(42) == {11, 22}
+
+    monkeypatch.setenv("ANTISPAM_MENTION_EXEMPT_ROLES", "99")
+    lockdown_core.migrate_from_env_if_needed(42)
+    assert lockdown_core.get_exempt_settings(42)["mention_exempt_role_ids"] == ["11", "22"]
+
+
+def test_save_exempt_settings_roundtrip():
+    saved = lockdown_core.save_exempt_settings(
+        7,
+        {"mention_exempt_role_ids": ["1", "x", "2"], "mentionable_exempt_role_ids": ["3"]},
+    )
+    assert saved == {
+        "mention_exempt_role_ids": ["1", "2"],
+        "mentionable_exempt_role_ids": ["3"],
+    }

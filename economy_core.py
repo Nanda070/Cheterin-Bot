@@ -41,7 +41,8 @@ BALANCE_ADMIN_MAX = 2_000_000_000
 DAILY_AMOUNT_MAX = 1_000_000
 DAILY_STREAK_DAYS_MAX = 365
 
-_MSK = timezone(timedelta(hours=3))
+_MSK = timezone(timedelta(hours=3))  # Thin fallback when guild_id is omitted (tests/legacy).
+
 
 def save_config(guild_id: int, data: dict) -> None:
     settings_db.put(guild_id, MODULE_NAME, data)

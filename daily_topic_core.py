@@ -11,13 +11,10 @@
 
 import random
 import re
-from datetime import datetime, timezone, timedelta
 
 import settings_db
 
 MODULE_NAME = "daily_topic"
-
-MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
@@ -41,11 +38,6 @@ def _normalized(data: dict) -> dict:
     data.setdefault("chosen_time", "")
     data.setdefault("chosen_time_date", "")
     return data
-
-
-def _today_msk() -> str:
-    # Backward-compat alias used by older tests; prefer _today_local(guild_id).
-    return datetime.now(MOSCOW_TZ).strftime("%Y-%m-%d")
 
 
 def get_settings(guild_id: int) -> dict:

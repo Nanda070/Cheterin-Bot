@@ -100,7 +100,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Supply runs', 'Member sign-ups with reserve list and reminders', 'Play → Family → Supply'],
             ['Family', 'Role-based roster, join applications via tickets, family birthdays', 'Play → Family'],
             ['ValChecker', 'Valorant profiles, match tracking, compare, server LB, status alerts', 'Play → ValChecker'],
-            ['VALORANT', 'Premier applications, role panels, and random-item commands', 'Play → VALORANT'],
+            ['VALORANT', 'Premier applications, role panels, Customs, ValChecker, and /valorant commands', 'Play → VALORANT'],
             ['Customs', 'Valorant custom lobbies: ranks, map pool/votes, balance, voice move, scores, schedules', 'Play → Customs'],
             ['Banner & icon rotation', 'Scheduled server banner and icon rotation with dashboard uploads', 'Server → Banner & icon rotation'],
             ['Private voice rooms', 'Personal voice channels with a control panel', 'People → Private voice rooms'],
@@ -174,7 +174,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Play → Mafia', 'Module toggle, defaults, active games'],
             ['Play → Bunker', 'Module toggle, defaults, active games'],
             ['Play → ValChecker', 'Module toggle, match/status channels, poll interval'],
-            ['Play → VALORANT', 'Premier application panel, role panels, and /valorant command toggle'],
+            ['Play → VALORANT', 'Premier, role panels, /valorant toggle, Customs and ValChecker tabs; ideas under Feedback'],
             ['Play → Customs', 'Lobbies, ranks, map pool, voice, scores, rematch, schedules'],
             ['Play → Family', 'Roster, applications, birthdays; Supply tab for runs'],
             ['Play → Streams', 'Twitch / YouTube subscriptions'],
@@ -1712,15 +1712,18 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             application creates a thread in that server; the page also links the official Premier FAQ.
           </li>
           <li>
-            <strong>Panels:</strong> enable server-specific role panels for agents, playstyles, notifications, and
+            <strong>Panels:</strong> map Discord roles and publish panels for agents, playstyles, notifications, and
             cities/servers.
           </li>
           <li>
             <strong>/valorant:</strong> turn random agent, buddy, map, skin, and weapon commands on or off.
           </li>
           <li>
-            <strong>Customs:</strong> this tab links to the separate Customs page for manual Team A/B assignments and
-            lobby management.
+            <strong>Customs / ValChecker:</strong> same page tabs for custom lobbies and ValChecker settings.
+          </li>
+          <li>
+            <strong>Ideas:</strong> moderated idea intake stays under <strong>People → Feedback → Ideas</strong> (linked
+            from the Premier tab).
           </li>
         </UL>
       </>

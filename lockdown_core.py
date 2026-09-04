@@ -1,8 +1,11 @@
+import os
+
 import settings_db
 
 import discord
 
 BACKUP_FILE = "antispam_backup.json"
+EXEMPT_MODULE = "lockdown_exempt"
 
 
 def load_backup(guild_id: int) -> dict:
@@ -13,18 +16,57 @@ def save_backup(guild_id: int, data: dict):
     settings_db.put(guild_id, "lockdown_backup", data)
 
 
-def get_mention_exempt_ids() -> set[int]:
-    import os
+def _parse_id_list(raw: str | list | None) -> list[str]:
+    if isinstance(raw, list):
+        return [str(x).strip() for x in raw if str(x).strip().isdigit()]
+    if not isinstance(raw, str) or not raw.strip():
+        return []
+    return [part.strip() for part in raw.split(",") if part.strip().isdigit()]
 
-    raw = os.getenv("ANTISPAM_MENTION_EXEMPT_ROLES", "")
-    return {int(x.strip()) for x in raw.split(",") if x.strip()}
+
+def migrate_from_env_if_needed(guild_id: int) -> None:
+    """One-time: copy ANTISPAM_*_EXEMPT_ROLES from ENV into per-guild settings."""
+    if settings_db.has(guild_id, EXEMPT_MODULE):
+        return
+    settings_db.put(
+        guild_id,
+        EXEMPT_MODULE,
+        {
+            "mention_exempt_role_ids": _parse_id_list(os.getenv("ANTISPAM_MENTION_EXEMPT_ROLES", "")),
+            "mentionable_exempt_role_ids": _parse_id_list(
+                os.getenv("ANTISPAM_MENTIONABLE_EXEMPT_ROLES", "")
+            ),
+        },
+    )
 
 
-def get_mentionable_exempt_ids() -> set[int]:
-    import os
+def get_exempt_settings(guild_id: int) -> dict:
+    migrate_from_env_if_needed(guild_id)
+    data = settings_db.get(guild_id, EXEMPT_MODULE, {})
+    return {
+        "mention_exempt_role_ids": _parse_id_list(data.get("mention_exempt_role_ids")),
+        "mentionable_exempt_role_ids": _parse_id_list(data.get("mentionable_exempt_role_ids")),
+    }
 
-    raw = os.getenv("ANTISPAM_MENTIONABLE_EXEMPT_ROLES", "")
-    return {int(x.strip()) for x in raw.split(",") if x.strip()}
+
+def save_exempt_settings(guild_id: int, patch: dict) -> dict:
+    current = get_exempt_settings(guild_id)
+    if "mention_exempt_role_ids" in patch:
+        current["mention_exempt_role_ids"] = _parse_id_list(patch.get("mention_exempt_role_ids"))
+    if "mentionable_exempt_role_ids" in patch:
+        current["mentionable_exempt_role_ids"] = _parse_id_list(
+            patch.get("mentionable_exempt_role_ids")
+        )
+    settings_db.put(guild_id, EXEMPT_MODULE, current)
+    return get_exempt_settings(guild_id)
+
+
+def get_mention_exempt_ids(guild_id: int) -> set[int]:
+    return {int(x) for x in get_exempt_settings(guild_id)["mention_exempt_role_ids"]}
+
+
+def get_mentionable_exempt_ids(guild_id: int) -> set[int]:
+    return {int(x) for x in get_exempt_settings(guild_id)["mentionable_exempt_role_ids"]}
 
 
 def antispam_status(guild_id: int) -> tuple[bool, int]:

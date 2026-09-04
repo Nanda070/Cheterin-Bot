@@ -1,7 +1,6 @@
 """Guild-wide birthday calendar cog."""
 
 import logging
-from datetime import datetime, timedelta, timezone
 
 import discord
 from discord import app_commands
@@ -13,7 +12,6 @@ import i18n
 import slash_registry
 
 logger = logging.getLogger("birthdays")
-MOSCOW_TZ = timezone(timedelta(hours=3), name="MSK")
 
 
 class BirthdaysCog(commands.Cog):

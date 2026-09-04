@@ -1,7 +1,17 @@
 import { Warning } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
-import { fetchSpamSettings, updateSpamSettings, type SpamSettings } from '../api/client'
+import {
+  fetchLockdownExempt,
+  fetchRoles,
+  fetchSpamSettings,
+  updateLockdownExempt,
+  updateSpamSettings,
+  type LockdownExemptSettings,
+  type RoleInfo,
+  type SpamSettings,
+} from '../api/client'
 import { formatApiError } from '../api/errors'
+import { ChipPicker } from '../components/ChipPicker'
 import { ModuleConfigPanel } from '../components/ModuleConfigPanel'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -13,14 +23,23 @@ const inputClass =
 export function AntiSpamPage() {
   const t = useT()
   const [spam, setSpam] = useState<SpamSettings | null>(null)
+  const [exempt, setExempt] = useState<LockdownExemptSettings | null>(null)
+  const [roles, setRoles] = useState<RoleInfo[]>([])
   const [error, setError] = useState('')
   const [saved, setSaved] = useState('')
   const [busy, setBusy] = useState(false)
+  const [exemptBusy, setExemptBusy] = useState(false)
 
   useEffect(() => {
     fetchSpamSettings()
       .then(setSpam)
       .catch(() => setError(t('antispam.errorLoad')))
+    fetchLockdownExempt()
+      .then(setExempt)
+      .catch(() => setError(t('antispam.errorExemptLoad')))
+    fetchRoles()
+      .then(setRoles)
+      .catch(() => {})
   }, [t])
 
   const save = async () => {
@@ -36,6 +55,22 @@ export function AntiSpamPage() {
       setError(formatApiError(err, t, 'antispam.errorSave'))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const saveExempt = async () => {
+    if (!exempt) return
+    setExemptBusy(true)
+    setError('')
+    setSaved('')
+    try {
+      const updated = await updateLockdownExempt(exempt)
+      setExempt(updated)
+      setSaved(t('common.saved'))
+    } catch (err) {
+      setError(formatApiError(err, t, 'antispam.errorExemptSave'))
+    } finally {
+      setExemptBusy(false)
     }
   }
 
@@ -58,6 +93,32 @@ export function AntiSpamPage() {
         title={t('antispam.channelsTitle')}
         intro={t('antispam.channelsIntro')}
       />
+
+      {exempt && (
+        <section className="flex flex-col gap-4 border-t border-border pt-6">
+          <h2 className="font-semibold text-foreground">{t('antispam.exemptTitle')}</h2>
+          <p className="text-sm text-muted">{t('antispam.exemptIntro')}</p>
+          <Card className="flex flex-col gap-3">
+            <ChipPicker
+              label={t('antispam.mentionExempt')}
+              kind="role"
+              options={roles}
+              selected={exempt.mention_exempt_role_ids}
+              onChange={(ids) => setExempt({ ...exempt, mention_exempt_role_ids: ids })}
+            />
+            <ChipPicker
+              label={t('antispam.mentionableExempt')}
+              kind="role"
+              options={roles}
+              selected={exempt.mentionable_exempt_role_ids}
+              onChange={(ids) => setExempt({ ...exempt, mentionable_exempt_role_ids: ids })}
+            />
+          </Card>
+          <Button variant="primary" onClick={() => void saveExempt()} disabled={exemptBusy}>
+            {exemptBusy ? t('common.saving') : t('common.save')}
+          </Button>
+        </section>
+      )}
 
       <section className="flex flex-col gap-4 border-t border-border pt-6">
         <h2 className="font-semibold text-foreground">{t('antiraid.spamDetectTitle')}</h2>

@@ -50,8 +50,8 @@ async def lockdown_activate(request: web.Request) -> web.Response:
     lang = i18n.lang_for(request["guild_id"])
     modified_count, errors = await lockdown_core.activate_antispam(
         guild,
-        lockdown_core.get_mention_exempt_ids(),
-        lockdown_core.get_mentionable_exempt_ids(),
+        lockdown_core.get_mention_exempt_ids(request["guild_id"]),
+        lockdown_core.get_mentionable_exempt_ids(request["guild_id"]),
         lang,
     )
     await _log(
@@ -89,3 +89,21 @@ async def lockdown_deactivate(request: web.Request) -> web.Response:
         errors=errors if errors else None,
     )
     return web.json_response({"ok": True, "restored_count": restored_count, "errors": errors})
+
+
+@routes.get("/api/lockdown/exempt")
+@require_dashboard_access
+async def lockdown_exempt_get(request: web.Request) -> web.Response:
+    return web.json_response(lockdown_core.get_exempt_settings(request["guild_id"]))
+
+
+@routes.put("/api/lockdown/exempt")
+@require_dashboard_access
+async def lockdown_exempt_put(request: web.Request) -> web.Response:
+    try:
+        body = await request.json()
+    except ValueError:
+        return web.json_response({"error": "invalid_request"}, status=400)
+    if not isinstance(body, dict):
+        return web.json_response({"error": "invalid_request"}, status=400)
+    return web.json_response(lockdown_core.save_exempt_settings(request["guild_id"], body))

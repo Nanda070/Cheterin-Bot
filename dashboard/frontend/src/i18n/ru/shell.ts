@@ -11,6 +11,8 @@ const shell: TranslationDict = {
   'nav.docs': 'Документация',
   'nav.terms': 'Условия',
   'nav.privacy': 'Приватность',
+  'nav.cookies': 'Cookies',
+  'nav.disclaimer': 'Отказ',
   'nav.dashboard': 'Дашборд',
   'nav.switchServer': 'Сменить сервер',
   'nav.logout': 'Выйти',
@@ -128,6 +130,8 @@ const shell: TranslationDict = {
   'public.footer': 'Cheterin — Discord-бот и панель управления',
   'public.footer.terms': 'Условия пользования',
   'public.footer.privacy': 'Приватность',
+  'public.footer.cookies': 'Cookies',
+  'public.footer.disclaimer': 'Отказ от ответственности',
 }
 
 export default shell

@@ -228,6 +228,12 @@ export function ServerSelectPage() {
           <Link to="/privacy" className="text-muted transition-colors hover:text-foreground">
             {t('nav.privacy')}
           </Link>
+          <Link to="/cookies" className="text-muted transition-colors hover:text-foreground">
+            {t('nav.cookies')}
+          </Link>
+          <Link to="/disclaimer" className="text-muted transition-colors hover:text-foreground">
+            {t('nav.disclaimer')}
+          </Link>
           <a
             href={SUPPORT_INVITE}
             target="_blank"

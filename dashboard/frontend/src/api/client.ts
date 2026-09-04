@@ -193,6 +193,19 @@ export function fetchLockdownStatus(): Promise<LockdownStatus> {
   return apiFetch('/api/lockdown/status')
 }
 
+export interface LockdownExemptSettings {
+  mention_exempt_role_ids: string[]
+  mentionable_exempt_role_ids: string[]
+}
+
+export function fetchLockdownExempt(): Promise<LockdownExemptSettings> {
+  return apiFetch('/api/lockdown/exempt')
+}
+
+export function updateLockdownExempt(settings: Partial<LockdownExemptSettings>): Promise<LockdownExemptSettings> {
+  return apiFetch('/api/lockdown/exempt', jsonInit('PUT', settings))
+}
+
 export async function activateLockdown(): Promise<void> {
   await apiFetch('/api/lockdown/activate', jsonInit('POST'))
 }
@@ -3094,6 +3107,8 @@ export const fetchValorantPanels = () => apiFetch<{ settings: ValorantPanelSetti
 export const updateValorantPanels = (data: Partial<ValorantPanelSettings>) => apiFetch<{ settings: ValorantPanelSettings; catalog: ValorantPanelCatalog }>('/api/valorant/panels', jsonInit('PUT', data))
 export const fetchValorantCommands = () => apiFetch<{ enabled: boolean }>('/api/valorant/commands')
 export const updateValorantCommands = (enabled: boolean) => apiFetch<{ enabled: boolean }>('/api/valorant/commands', jsonInit('PUT', { enabled }))
+export const publishValorantPanel = (kind: string, channelId: string) =>
+  apiFetch<{ ok: boolean; message_id: string }>('/api/valorant/panels/publish', jsonInit('POST', { kind, channel_id: channelId }))
 export const fetchIdeasSettings = () => apiFetch<IdeasSettings>('/api/ideas/settings')
 export const updateIdeasSettings = (data: Partial<IdeasSettings>) => apiFetch<IdeasSettings>('/api/ideas/settings', jsonInit('PUT', data))
 export const fetchIdeaCases = (status?: string) => apiFetch<{ cases: IdeaCase[] }>(`/api/ideas/cases${status ? `?status=${encodeURIComponent(status)}` : ''}`).then((body) => body.cases)

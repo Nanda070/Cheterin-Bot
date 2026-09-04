@@ -15,12 +15,17 @@ DEFAULT_VOTE_EMOJIS = ["👍", "👎"]
 def get_settings(guild_id: int) -> dict:
     raw = settings_db.get(guild_id, MODULE_NAME)
     emojis = raw.get("vote_emojis") if isinstance(raw.get("vote_emojis"), list) else DEFAULT_VOTE_EMOJIS
+    prompt = str(raw.get("prompt") or "").strip()
+    if not prompt:
+        import i18n
+
+        prompt = i18n.t("ideas.default_prompt", i18n.lang_for(guild_id))[:1000]
     return {
         "enabled": bool(raw.get("enabled", False)),
         "intake_channel_id": str(raw.get("intake_channel_id") or ""),
         "review_channel_id": str(raw.get("review_channel_id") or ""),
         "channel_id": str(raw.get("channel_id") or ""),
-        "prompt": str(raw.get("prompt") or DEFAULT_PROMPT)[:1000],
+        "prompt": prompt[:1000],
         "vote_emojis": [str(emojis[0])[:64], str(emojis[1])[:64]] if len(emojis) >= 2 else list(DEFAULT_VOTE_EMOJIS),
     }
 

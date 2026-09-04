@@ -67,7 +67,7 @@ async def test_daily_bonus_disabled_flag():
 @pytest.mark.asyncio
 async def test_daily_first_claim(monkeypatch):
     cog, guild, player, friend = build()
-    monkeypatch.setattr(economy_core, "today_msk_date", lambda: "2026-01-10")
+    monkeypatch.setattr(economy_core, "today_msk_date", lambda *_a, **_k: "2026-01-10")
     interaction = FakeInteraction(player, guild)
 
     await EconomyCog.daily_command.callback(cog, interaction)
@@ -81,7 +81,7 @@ async def test_daily_first_claim(monkeypatch):
 @pytest.mark.asyncio
 async def test_daily_already_claimed_today(monkeypatch):
     cog, guild, player, friend = build()
-    monkeypatch.setattr(economy_core, "today_msk_date", lambda: "2026-01-10")
+    monkeypatch.setattr(economy_core, "today_msk_date", lambda *_a, **_k: "2026-01-10")
     await EconomyCog.daily_command.callback(cog, FakeInteraction(player, guild))
 
     interaction = FakeInteraction(player, guild)
@@ -94,10 +94,10 @@ async def test_daily_already_claimed_today(monkeypatch):
 @pytest.mark.asyncio
 async def test_daily_streak_grows_next_day(monkeypatch):
     cog, guild, player, friend = build()
-    monkeypatch.setattr(economy_core, "today_msk_date", lambda: "2026-01-10")
+    monkeypatch.setattr(economy_core, "today_msk_date", lambda *_a, **_k: "2026-01-10")
     await EconomyCog.daily_command.callback(cog, FakeInteraction(player, guild))
 
-    monkeypatch.setattr(economy_core, "today_msk_date", lambda: "2026-01-11")
+    monkeypatch.setattr(economy_core, "today_msk_date", lambda *_a, **_k: "2026-01-11")
     interaction = FakeInteraction(player, guild)
     await EconomyCog.daily_command.callback(cog, interaction)
 

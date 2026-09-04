@@ -19,7 +19,7 @@ MODULE_NAME = "wordle"
 WORD_LEN = 5
 MAX_ATTEMPTS = 6
 
-# День №1 — дата запуска фичи (по МСК). Слово дня детерминировано от номера дня.
+# Thin MSK helper for tests / callers without guild_id. Prefer today_for_guild.
 EPOCH = date(2026, 7, 19)
 MSK = timezone(timedelta(hours=3))
 _SHUFFLE_SEED = 404_2026  # фиксированный: порядок слов не меняется между рестартами

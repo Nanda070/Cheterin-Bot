@@ -485,6 +485,16 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
                   {t('nav.privacy')}
                 </Link>
               </li>
+              <li>
+                <Link to="/cookies" className="text-foreground/90 hover:text-foreground">
+                  {t('nav.cookies')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/disclaimer" className="text-foreground/90 hover:text-foreground">
+                  {t('nav.disclaimer')}
+                </Link>
+              </li>
             </ul>
           </div>
 

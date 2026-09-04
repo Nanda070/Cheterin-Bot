@@ -381,6 +381,43 @@ const legal: TranslationDict = {
   'terms.s12.title': '12. Contact',
   'terms.s12.p1':
     'For Service questions, open a ticket on the main server or contact your server\'s admins. The Service is operated by Cheterin Group Ø. For bot questions — Nandak070.',
+
+  'cookies.title': 'Cookie notice',
+  'cookies.lastUpdated': 'Last updated: September 4, 2026',
+  'cookies.s1.title': '1. What this notice covers',
+  'cookies.s1.p1':
+    '1.1. This page describes cookies and similar storage used by the Cheterin web control panel. It does not cover Discord itself.',
+  'cookies.s2.title': '2. What we store',
+  'cookies.s2.p1': '2.1. The panel uses only what is needed to run the site:',
+  'cookies.s2.li1':
+    'a session cookie so you stay signed in to the dashboard after Discord OAuth (cleared when you sign out or the session expires);',
+  'cookies.s2.li2':
+    'chetbot_ui_lang — remembers your interface language (English or Russian) in the browser.',
+  'cookies.s2.p2':
+    '2.2. We do not use advertising cookies, analytics trackers, or third-party tracking pixels on the panel.',
+  'cookies.s3.title': '3. Why',
+  'cookies.s3.p1':
+    '3.1. Session storage is required for authenticated use of the dashboard. The language preference is optional convenience only.',
+  'cookies.s4.title': '4. Control',
+  'cookies.s4.p1':
+    '4.1. You can clear cookies and site data in your browser, or sign out of the panel. Blocking the session cookie will prevent staying signed in.',
+
+  'disclaimer.title': 'Disclaimer',
+  'disclaimer.lastUpdated': 'Last updated: September 4, 2026',
+  'disclaimer.s1.title': '1. Not affiliated with Discord',
+  'disclaimer.s1.p1':
+    '1.1. Cheterin is an independent Discord bot and control panel. It is not affiliated with, endorsed by, or sponsored by Discord Inc. Discord is a trademark of Discord Inc.',
+  'disclaimer.s2.title': '2. Public data and completeness',
+  'disclaimer.s2.p1':
+    '2.1. Features that show Discord member, channel, role, or activity information rely on data Discord exposes to the bot for that server. That data can be incomplete, delayed, or unavailable.',
+  'disclaimer.s2.p2':
+    '2.2. Do not treat panel or bot output as a complete or official record of Discord activity.',
+  'disclaimer.s3.title': '3. No doxxing or misuse',
+  'disclaimer.s3.p1':
+    '3.1. Do not use the Service to harass, dox, or otherwise harm people. Server admins are responsible for how they configure and use moderation and logging features on their servers.',
+  'disclaimer.s4.title': '4. Responsibility',
+  'disclaimer.s4.p1':
+    '4.1. Use of the Service is at your own risk, subject to the Terms of Use and Privacy Policy.',
 }
 
 export default legal

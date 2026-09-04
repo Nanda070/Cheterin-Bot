@@ -15,6 +15,10 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_backup(tmp_path, monkeypatch):
+    import settings_db
+
+    monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
+    settings_db.init()
     monkeypatch.setattr(lockdown_core, "BACKUP_FILE", str(tmp_path / "antispam_backup.json"))
 
 
@@ -100,11 +104,11 @@ async def test_activate_with_partial_errors_logs_error_field(aiohttp_client):
     assert body["modified_count"] == 1
     assert len(body["errors"]) > 0
 
-    # Verify logged embed contains error field
+    # Errors are appended into the Details field value, not a separate field name.
     assert len(bot.sent_logs) == 1
     embed = bot.sent_logs[0]
-    error_field_found = any(f.name == "Ошибки" for f in embed.fields)
-    assert error_field_found, "Embed should contain 'Ошибки' field when errors exist"
+    blob = "\n".join(f"{f.name}\n{f.value}" for f in embed.fields)
+    assert "Ошибки" in blob or "Errors" in blob, "Embed should mention errors when activation partially fails"
 
 
 @pytest.mark.asyncio
@@ -134,11 +138,11 @@ async def test_deactivate_with_partial_errors_logs_error_field(aiohttp_client):
     assert body["ok"] is True
     assert len(body["errors"]) > 0
 
-    # Verify the deactivate log embed (last one) contains error field
+    # Verify the deactivate log embed (last one) contains error details
     assert len(bot.sent_logs) == 2
     embed = bot.sent_logs[-1]
-    error_field_found = any(f.name == "Ошибки" for f in embed.fields)
-    assert error_field_found, "Embed should contain 'Ошибки' field when errors exist"
+    blob = "\n".join(f"{f.name}\n{f.value}" for f in embed.fields)
+    assert "Ошибки" in blob or "Errors" in blob, "Embed should mention errors when deactivate partially fails"
 
 
 @pytest.mark.asyncio
@@ -152,3 +156,25 @@ async def test_activate_guild_unavailable_503(aiohttp_client):
 
     resp = await client.post("/api/lockdown/activate")
     assert resp.status == 503
+
+
+@pytest.mark.asyncio
+async def test_exempt_get_put(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/lockdown/exempt")
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["mention_exempt_role_ids"] == []
+    assert body["mentionable_exempt_role_ids"] == []
+
+    resp = await client.put(
+        "/api/lockdown/exempt",
+        json={"mention_exempt_role_ids": ["10", "20"], "mentionable_exempt_role_ids": ["30"]},
+    )
+    assert resp.status == 200
+    body = await resp.json()
+    assert body["mention_exempt_role_ids"] == ["10", "20"]
+    assert body["mentionable_exempt_role_ids"] == ["30"]

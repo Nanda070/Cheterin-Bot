@@ -75,8 +75,8 @@ class AntiRaidCog(commands.Cog):
             try:
                 modified_count, _errors = await lockdown_core.activate_antispam(
                     guild,
-                    lockdown_core.get_mention_exempt_ids(),
-                    lockdown_core.get_mentionable_exempt_ids(),
+                    lockdown_core.get_mention_exempt_ids(guild.id),
+                    lockdown_core.get_mentionable_exempt_ids(guild.id),
                     lang,
                 )
                 lockdown_result = modified_count

@@ -56,6 +56,10 @@ def test_describe_action_known_and_fallback():
     assert describe_action("PUT", "/api/config") == "audit.action.config"
     assert describe_action("POST", "/api/xp/reset-all") == "audit.action.xp_reset_all"
     assert describe_action("PUT", "/api/wordle") == "audit.action.wordle"
+    assert describe_action("PUT", "/api/ideas/settings") == "audit.action.ideas"
+    assert describe_action("PUT", "/api/valorant/premier") == "audit.action.valorant"
+    assert describe_action("PUT", "/api/lockdown/exempt") == "audit.action.lockdown_exempt"
+    assert describe_action("PUT", "/api/timezone") == "audit.action.timezone"
     assert describe_action("POST", "/api/unknown") == "audit.action.other"
 
 

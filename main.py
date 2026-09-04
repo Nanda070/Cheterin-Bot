@@ -13,6 +13,7 @@ import settings_db
 import settings_migration
 import embed_style
 import i18n
+import lockdown_core
 import slash_i18n
 
 load_dotenv()
@@ -79,6 +80,7 @@ class ChetBot(commands.Bot):
             )
         bot_config.migrate_from_env_if_needed(main_guild_id)
         feedback_categories.migrate_from_env_if_needed(main_guild_id)
+        lockdown_core.migrate_from_env_if_needed(main_guild_id)
         await self.load_extension("feedback_menu")
         await self.load_extension("welcome")
         await self.load_extension("button")

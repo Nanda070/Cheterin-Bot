@@ -17,7 +17,7 @@ const whatsNew: TranslationDict = {
   'whatsNew.item.customsManualTeams':
     'Customs: manual Team A / B assignment from the dashboard',
   'whatsNew.item.valorantPremierIdeas':
-    'VALORANT tab: Premier apps, role panels, and moderated ideas',
+    'VALORANT tab: Premier apps and role panels (ideas stay under Feedback)',
 }
 
 export default whatsNew

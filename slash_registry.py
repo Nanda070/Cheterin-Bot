@@ -82,6 +82,12 @@ SLASH_KEYS: tuple[str, ...] = (
     "relations_marriages_top",
     "relations_ship",
     "relations_date",
+    "valorant_group",
+    "valorant_agent",
+    "valorant_buddy",
+    "valorant_map",
+    "valorant_skin",
+    "valorant_weapon",
 )
 
 
@@ -251,3 +257,12 @@ def register_relations(cog) -> None:
     _cmd(cog.relations_marriages_top, "relations_marriages_top")
     _cmd(cog.relations_ship, "relations_ship")
     _cmd(cog.relations_date, "relations_date")
+
+
+def register_valorant_random(cog) -> None:
+    _grp(cog.group, "valorant_group")
+    _cmd(cog.agent, "valorant_agent")
+    _cmd(cog.buddy, "valorant_buddy")
+    _cmd(cog.map, "valorant_map")
+    _cmd(cog.skin, "valorant_skin")
+    _cmd(cog.weapon, "valorant_weapon")

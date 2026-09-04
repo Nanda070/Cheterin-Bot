@@ -21,6 +21,8 @@ import { NewsPage } from './pages/News'
 import { DocsPage } from './pages/Docs'
 import { TermsPage } from './pages/Terms'
 import { PrivacyPage } from './pages/Privacy'
+import { CookiesPage } from './pages/Cookies'
+import { DisclaimerPage } from './pages/Disclaimer'
 import { CreditsPage } from './pages/Credits'
 import { SansPage } from './pages/Sans'
 import { WaterfallRoomPage, CoreRoomPage, JudgmentRoomPage } from './pages/SecretRoom'
@@ -74,6 +76,8 @@ function App() {
             <Route path="/docs/:sectionId" element={<DocsPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/cookies" element={<CookiesPage />} />
+            <Route path="/disclaimer" element={<DisclaimerPage />} />
             <Route path="/credits" element={<CreditsPage />} />
             <Route path="/sans" element={<SansPage />} />
             <Route path="/snowdin" element={<SansPage />} />

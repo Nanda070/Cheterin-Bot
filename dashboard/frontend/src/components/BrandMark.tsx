@@ -14,7 +14,9 @@ function eggDisabledOnPath(pathname: string): boolean {
   return (
     pathname.startsWith('/docs') ||
     pathname.startsWith('/terms') ||
-    pathname.startsWith('/privacy')
+    pathname.startsWith('/privacy') ||
+    pathname.startsWith('/cookies') ||
+    pathname.startsWith('/disclaimer')
   )
 }
 
