@@ -1,11 +1,13 @@
 # Cheterin Lookup — продуктовый план
 
-> **Status (implementation):** code for phases **0–7** is in `lookup/` + `lookup-api/` (separate process; not in `main.py`).  
-> **Done:** phases **0–7**.  
-> **Partial:** phase **8** (chrome restyle incomplete), phase **10** (CAPTCHA stub).  
-> **Done-ish:** phase **9** (legal Lookup sections present; keep complete and consistent).  
-> **Remaining:** Discord Application + token env, nginx deploy, full About chrome restyle, real CAPTCHA, `plugins.json` fill, live smoke, **full docs pass (user-facing + developer)**.  
-> **Not done until docs are done:** shipping code ≠ plan completion — see **«Документация (обязательно)»** under §9.  
+> **Status (implementation):** code complete for phases **0–10** as of 2026-09.  
+> **Done:** phases **0–10** (including CAPTCHA gate, docs EN+RU, What's New, live smoke ✅).  
+> **Done:** phase **8** — chrome restyle unified (charcoal + dark-red), About page has Lookup CTA, easter eggs preserved.  
+> **Done:** phase **10** — CAPTCHA Turnstile/hCaptcha integration behind env flags; `captcha_required` flow wired to frontend `CaptchaGate` modal; `/api/lookup/captcha/verify` endpoint live; mobile/a11y polish applied.  
+> **Done:** documentation gate — ARCHITECTURE.md, RUN.md (lookup + lookup-api), PROXY.md, .env.example, /docs EN+RU Lookup sections, What's New 2026.09.1.  
+> **Done:** live smoke — all API endpoints tested with real Discord data (user, bot, server, health, config).  
+> **Operator remaining:** nginx reverse-proxy deploy on VPS, DNS, `plugins.json` content, rotate all 5 Lookup bot tokens+secrets in Discord Developer Portal after any chat exposure.  
+> **CAPTCHA site keys:** operator must set `LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET` in `lookup-api/.env` for the widget to appear.  
 > Locked decisions below are **unchanged** — do not reopen without an explicit product decision.
 
 Статус документа: план, **решения зафиксированы**. Этот файл — продуктовый план, не спецификация кода.  
