@@ -33,6 +33,13 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           its own panel section, and changes apply right away — no bot restart.
         </P>
 
+        <H>Cheterin Lookup</H>
+        <P>
+          <a href="/lookup/">Cheterin Lookup</a> is a separate public tool on the same site: look up open Discord user,
+          bot, and invite data without signing into the panel. It uses its own Discord application and process — not
+          the Cheterin bot token. Search lives only under <Code>/lookup</Code>; this About page stays a bot showcase.
+        </P>
+
         <H>How the panel works</H>
         <UL>
           <li>

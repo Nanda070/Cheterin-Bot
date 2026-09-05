@@ -216,6 +216,14 @@ export function PrivacyPage() {
         <Section title={t('privacy.s12.title')}>
           <p>{t('privacy.s12.p1')}</p>
         </Section>
+
+        <Section title={t('privacy.s13.title')}>
+          <p>{t('privacy.s13.p1')}</p>
+          <p>{t('privacy.s13.p2')}</p>
+          <p>{t('privacy.s13.p3')}</p>
+          <p>{t('privacy.s13.p4')}</p>
+          <p>{t('privacy.s13.p5')}</p>
+        </Section>
       </article>
     </PublicLayout>
   )

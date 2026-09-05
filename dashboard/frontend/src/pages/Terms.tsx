@@ -179,6 +179,12 @@ export function TermsPage() {
         <Section title={t('terms.s12.title')}>
           <p>{t('terms.s12.p1')}</p>
         </Section>
+
+        <Section title={t('terms.s13.title')}>
+          <p>{t('terms.s13.p1')}</p>
+          <p>{t('terms.s13.p2')}</p>
+          <p>{t('terms.s13.p3')}</p>
+        </Section>
       </article>
     </PublicLayout>
   )

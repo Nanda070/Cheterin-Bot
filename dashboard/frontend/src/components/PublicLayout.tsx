@@ -76,6 +76,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <Link to="/docs" className="transition-colors hover:text-primary">
               {t('nav.docs')}
             </Link>
+            <a href="/lookup/" className="transition-colors hover:text-primary">
+              {t('public.footer.lookup')}
+            </a>
             <Link to="/credits" className="transition-colors hover:text-primary">
               {t('public.footer.credits')}
             </Link>

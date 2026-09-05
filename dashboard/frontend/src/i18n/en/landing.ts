@@ -5,6 +5,7 @@ const landing: TranslationDict = {
   'landing.nav.addBot': 'Add to Discord',
   'landing.nav.signIn': 'Sign in',
   'landing.nav.myServers': 'My servers',
+  'landing.nav.lookup': 'Lookup',
 
   'landing.hero.brand': 'Cheterin',
   'landing.hero.headline': 'A bot that lives on your server',
@@ -12,6 +13,7 @@ const landing: TranslationDict = {
     'Moderation, levels, economy, and events — everything a living community needs.',
   'landing.hero.ctaAdd': 'Add to Discord',
   'landing.hero.ctaSignIn': 'Sign in',
+  'landing.hero.ctaLookup': 'Lookup',
   'landing.hero.ctaOpening': 'Opening Discord…',
   'landing.hero.inviteError': 'Could not open the invite link. Try again.',
 

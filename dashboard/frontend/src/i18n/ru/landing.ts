@@ -5,6 +5,7 @@ const landing: TranslationDict = {
   'landing.nav.addBot': 'Добавить в Discord',
   'landing.nav.signIn': 'Войти',
   'landing.nav.myServers': 'Мои серверы',
+  'landing.nav.lookup': 'Lookup',
 
   'landing.hero.brand': 'Cheterin',
   'landing.hero.headline': 'Бот, который живёт на сервере',
@@ -12,6 +13,7 @@ const landing: TranslationDict = {
     'Модерация, уровни, экономика и ивенты — всё, что нужно живому сообществу.',
   'landing.hero.ctaAdd': 'Добавить в Discord',
   'landing.hero.ctaSignIn': 'Войти',
+  'landing.hero.ctaLookup': 'Lookup',
   'landing.hero.ctaOpening': 'Открываем Discord…',
   'landing.hero.inviteError': 'Не удалось открыть ссылку-приглашение. Попробуйте ещё раз.',
 

@@ -337,6 +337,12 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
               >
                 {t('nav.docs')}
               </Link>
+              <a
+                href="/lookup/"
+                className="rounded-control px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                {t('landing.nav.lookup')}
+              </a>
             </nav>
             <LanguageToggle className="border-white/20 bg-white/10 [&_button]:text-white/80 [&_button[aria-pressed=true]]:bg-white/20 [&_button[aria-pressed=true]]:text-white" />
             <button
@@ -393,6 +399,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
             <GhostButton href={accountHref}>
               {heroAccountLabel}
             </GhostButton>
+            <GhostButton href="/lookup/">{t('landing.hero.ctaLookup')}</GhostButton>
           </div>
         </div>
 
@@ -463,6 +470,11 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
                 <Link to="/credits" className="text-foreground/90 hover:text-foreground">
                   {t('nav.credits')}
                 </Link>
+              </li>
+              <li>
+                <a href="/lookup/" className="text-foreground/90 hover:text-foreground">
+                  {t('landing.nav.lookup')}
+                </a>
               </li>
               <li>
                 <AccountLink href={dashboardHref} className="text-foreground/90 hover:text-foreground">

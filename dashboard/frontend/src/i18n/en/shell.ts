@@ -131,6 +131,8 @@ const shell: TranslationDict = {
   'public.footer.privacy': 'Privacy policy',
   'public.footer.cookies': 'Cookies',
   'public.footer.disclaimer': 'Disclaimer',
+  'public.footer.lookup': 'Lookup',
+  'nav.lookup': 'Lookup',
 }
 
 export default shell

@@ -32,6 +32,7 @@ export function CookiesPage() {
           <ul className="flex list-disc flex-col gap-1 pl-5">
             <li>{t('cookies.s2.li1')}</li>
             <li>{t('cookies.s2.li2')}</li>
+            <li>{t('cookies.s2.li3')}</li>
           </ul>
           <p>{t('cookies.s2.p2')}</p>
         </Section>
