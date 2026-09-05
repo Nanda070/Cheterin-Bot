@@ -1,8 +1,11 @@
 # Cheterin Lookup — продуктовый план
 
-> **Status (implementation):** started. Code lives in `lookup/` + `lookup-api/` (separate process; not in `main.py`).  
-> **Done:** phases **0–7** + **partial 8–10** (chrome/docs/legal mentions and related partials as shipped).  
-> **Remaining:** deploy with Lookup Discord token, full About chrome restyle, real CAPTCHA, live smoke.  
+> **Status (implementation):** code for phases **0–7** is in `lookup/` + `lookup-api/` (separate process; not in `main.py`).  
+> **Done:** phases **0–7**.  
+> **Partial:** phase **8** (chrome restyle incomplete), phase **10** (CAPTCHA stub).  
+> **Done-ish:** phase **9** (legal Lookup sections present; keep complete and consistent).  
+> **Remaining:** Discord Application + token env, nginx deploy, full About chrome restyle, real CAPTCHA, `plugins.json` fill, live smoke, **full docs pass (user-facing + developer)**.  
+> **Not done until docs are done:** shipping code ≠ plan completion — see **«Документация (обязательно)»** under §9.  
 > Locked decisions below are **unchanged** — do not reopen without an explicit product decision.
 
 Статус документа: план, **решения зафиксированы**. Этот файл — продуктовый план, не спецификация кода.  
@@ -531,16 +534,48 @@ CDN как основной download; same-origin прокси как fallback �
 Страница каталога. Контент — список оператора (может прийти в момент создания). Без публичных сабмишенов.
 
 **Фаза 8 — `/about`, docs, chrome**  
-Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **Без** поиска на about. Упоминание Lookup в **`/docs` и футере**. Easter eggs **оставить**. Убрать `--landing-*` как вторую тему.  
-Не «выравнивать» дрейф §14: не переписывать VALORANT-разделы docs / What’s New под фактические вкладки панели и не чинить RU-hardcode / audit labels / cogs «заодно» с restyle.
+Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **Без** поиска на about. Упоминание Lookup в **`/docs` и футере** (см. также **«Документация (обязательно)»** ниже — упоминание ≠ полный docs pass). Easter eggs **оставить**. Убрать `--landing-*` как вторую тему.  
+Не «выравнивать» дрейф §14: не переписывать VALORANT-разделы docs / What’s New под фактические вкладки панели и не чинить RU-hardcode / audit labels / cogs «заодно» с restyle. Полный About chrome restyle ещё **не сдан** (partial).
 
 **Фаза 9 — Legal**  
-Один комплект: обновить Terms/Privacy; **создать** `/cookies` и `/disclaimer` (сейчас отсутствуют в роутере панели — §14); секции Lookup, отдельное приложение, кэш, хеш-логи 48 ч, капча, CDN, отсутствие recent. Оператор Cheterin Group Ø / Nandak070. Футер Lookup → те же URL.
+Один комплект: обновить Terms/Privacy; **создать** `/cookies` и `/disclaimer`; секции Lookup, отдельное приложение, кэш, хеш-логи 48 ч, капча, CDN, отсутствие recent. Оператор Cheterin Group Ø / Nandak070. Футер Lookup → те же URL.  
+**Статус:** секции Lookup в legal **done-ish** — до закрытия плана они должны оставаться **полными и согласованными** с фактическим поведением (капча, кэш, cookies, отдельный Discord Application). Футер: Terms / Privacy / Cookies / Disclaimer / Docs / Lookup — без битых ссылок.
 
 **Фаза 10 — Жёсткость**  
-Капча после 30/мин с IP; 429 с retry до капчи; мониторинг токена; мобильный hero; a11y поля; проверка изоляции от бота; чеклист §6.4 и §2.10. Health не на hero.
+Капча после 30/мин с IP; 429 с retry до капчи; мониторинг токена; мобильный hero; a11y поля; проверка изоляции от бота; чеклист §6.4 и §2.10. Health не на hero.  
+**Статус:** CAPTCHA пока **stub** — реальная капча остаётся в Remaining.
 
 Параллелить: 4 с 1–3. Токены кита — с фазы 0. 8 и 9 — когда chrome Lookup стабилен. Ссылки футера на `/cookies` и `/disclaimer` — **вместе с фазой 9**, не вешать 404 из фазы 8.
+
+### Документация (обязательно)
+
+**Зафиксировано для завершения Lookup v1:** реализация кода **≠** «готово». План не считается выполненным, пока обновлена документация **и для пользователей, и для разработчиков**. Без полного docs pass Lookup **не сдаём**.
+
+#### Developer docs (internal / repo)
+
+Должны оставаться точными по фактическому деплою и изоляции:
+
+| Артефакт | Требование |
+|---|---|
+| `CHETERIN_LOOKUP_PLAN.md` | Status banner и фазы отражают реальность (Done / Partial / Remaining). |
+| `ARCHITECTURE.md` | Секции про Lookup актуальны (процессы, токен, префиксы `/lookup` и `/api/lookup`). |
+| `lookup/RUN.md` | Как собрать/запустить Lookup UI. |
+| `lookup-api/RUN.md` | Как запустить API, env (`LOOKUP_DISCORD_TOKEN`, Client IDs). |
+| `lookup-api/PROXY.md` | Прокси того же хоста на UI + `/api/lookup`. |
+| `.env.example` | Переменные Lookup без секретов в git; имена совпадают с RUN.md. |
+| Прочие engineer notes | Всё нужное для deploy/isolation (отдельный процесс, не `main.py`, не токен Cheterin). |
+
+#### User-facing docs (публичный продукт на сайте)
+
+| Поверхность | Требование |
+|---|---|
+| `/docs` (EN + RU в `dashboard/frontend/src/pages/docs/`) | Lookup **упомянут и описан честно** (что умеет / чего нет: invite-only server, нет Group DM, нет recent, отдельное приложение). Не только строка в футере. |
+| Landing `/about` | CTA/копирайт кнопки **«Lookup»** → `/lookup` согласован с продуктом (без поиска на about). |
+| Legal: Terms / Privacy / Cookies / Disclaimer | Секции Lookup **полные и согласованные** с поведением (уже частично сделано — держать актуальными). |
+| Футер | Ссылки согласованы: те же корневые legal URL, Docs, Lookup, Credits. |
+| What’s New / changelog для админов | При **публичном** включении Lookup в проде — запись в `whatsNew.ts` + i18n (когда оператор включает Lookup в production). Не бампать What’s New ради закрытия дрейфа VALORANT §14. |
+
+**Критерий закрытия:** checklist выше пройден; пользователь и инженер могут понять продукт и задеплоить его без устных уточнений «как сейчас на самом деле».
 
 ---
 
@@ -628,10 +663,11 @@ Restyle `/about`, docs, credits, футер → кит. Кнопка Lookup. **�
 13. **Legal / оператор.** Cheterin Group Ø / Nandak070. Terms / Privacy / Cookies / Disclaimer — **один** набор. Канон: `/terms` `/privacy` `/cookies` `/disclaimer` на `cheterin.online`; футер Lookup туда же. **Сейчас в роутере нет `/cookies` и `/disclaimer`** — это дрейф §14, закрывается фазой 9.
 14. **Рейт-лимит UX.** До порога — **429 + retry**. После **30 запросов/мин с IP** — **CAPTCHA**. Капча = cookies → Privacy.
 15. **Sharable DSA URL.** Всегда `/lookup/dsa/:id`. Нет query у апстрима — наши факты (возможно пусто) + ссылка в официальный реестр. Без выдуманных нарушений.
-16. **Docs.** Lookup в v1 в **футере и `/docs`**.
+16. **Docs.** Lookup в v1 в **футере и `/docs`**. Это минимум user-facing упоминания; **полный** обязательный docs pass (user + developer) — см. **«Документация (обязательно)»** в §9. Код без обновления всех документов ≠ завершение плана.
 17. **Easter eggs.** Сохранить при унификации chrome.
 18. **Папки.** Вариант A: `lookup/` + `lookup-api/` на корне. B и C отклонены.
 19. **Токены кита.** Да, дубль CSS-переменных в `lookup/` и публичном CSS дашборда до появления `packages/ui`.
+20. **Документация = gate завершения.** Обязательно обновить **все** документы по Lookup: developer (`CHETERIN_LOOKUP_PLAN.md`, `ARCHITECTURE.md`, `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`, `.env.example`, прочие deploy/isolation notes) **и** user-facing (`/docs` EN+RU, `/about` CTA при необходимости, legal-секции, футер; What’s New при публичном прод-включении). Implementation of code ≠ done.
 
 Ранее зафиксированное (приглашение для сервера, нет Group DM, нет публичных recent, отдельный token, уголь+тёмно-красный, паритет макетов, сильный копирайт) остаётся в силе — см. §2.1.
 
