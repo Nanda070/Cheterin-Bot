@@ -2,6 +2,11 @@ __pycache__/
 *.pyc
 node_modules/
 dashboard/frontend/dist/
+lookup/dist/
+lookup/node_modules/
+lookup-api/.venv/
+lookup-api/__pycache__/
+lookup-api/.env
 .agents/
 .superpowers/
 .pytest_cache/

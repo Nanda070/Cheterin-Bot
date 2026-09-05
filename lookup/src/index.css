@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cheterin kit — charcoal + dark red (duplicated from public chrome; no packages/ui in v1) */
+  --color-background: #0b0e14;
+  --color-background-deep: #070912;
+  --color-surface: #131722;
+  --color-surface-hover: #181d2c;
+  --color-border: #232838;
+
+  --color-foreground: #e8eaf0;
+  --color-muted: #8b93a7;
+
+  --color-primary: #a8283c;
+  --color-primary-hover: #c43c4e;
+  --color-primary-deep: #5c0f1e;
+  --color-primary-deeper: #3a0a14;
+  --color-primary-muted: #a8283c24;
+
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  * {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .lookup-page-bg {
+    background:
+      radial-gradient(ellipse 70% 50% at 50% -10%, #a8283c22, transparent 55%),
+      linear-gradient(180deg, #070912 0%, #0b0e14 50%, #0a0c12 100%);
+  }
+
+  .lookup-search-ring {
+    box-shadow: 0 0 0 1px #232838, 0 18px 50px -28px #a8283c66;
+  }
+}
