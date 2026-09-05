@@ -5,7 +5,9 @@
 > Документ только для коллабораторов репозитория (программисты с доступом к коду).  
 > Не добавлять в React-роуты, `dashboard/frontend/src/pages/docs/`, App.tsx, Landing, Docs.tsx, футер, нав, i18n публичного сайта и не раздавать как именованную статическую страницу через aiohttp.
 
-Файл лежит в корне рядом с `README.md` и `CHETERIN_LOOKUP_PLAN.md`. Источник правды по структуре монолита «бот + панель». Для будущего продукта Lookup см. `CHETERIN_LOOKUP_PLAN.md` (план зафиксирован, кода Lookup в репо нет).
+Файл лежит в корне рядом с `README.md` и `CHETERIN_LOOKUP_PLAN.md`. Источник правды по структуре монолита «бот + панель».
+
+**Lookup** живёт отдельно от процесса бота: SPA в `lookup/`, API в `lookup-api/` (не импортируется и не стартует из `main.py`). Локальный запуск и reverse-proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Продуктовый план и locked decisions — `CHETERIN_LOOKUP_PLAN.md` (реализация начата; статус в шапке плана).
 
 ---
 
@@ -111,7 +113,9 @@
 | `dashboard/frontend/` | React 19 + Vite + Tailwind |
 | `dashboard/frontend/src/pages/` | Страницы панели (не путать с публичными docs) |
 | `dashboard/frontend/src/pages/docs/` | **Публичная** документация сайта (`/docs`) — сюда ARCHITECTURE **не** класть |
-| `CHETERIN_LOOKUP_PLAN.md` | План Lookup (locked, без кода) |
+| `lookup/` | Lookup SPA (Vite/React), basename `/lookup` — см. `lookup/RUN.md` |
+| `lookup-api/` | Lookup HTTP API (`LOOKUP_DISCORD_TOKEN` only) — см. `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
+| `CHETERIN_LOOKUP_PLAN.md` | План Lookup (locked decisions; реализация начата) |
 | `graphify-out/` | Кэш анализа Graphify — **не** SoT |
 | `.env` / `.env.example` | Секреты / шаблон ключей (**не копировать значения в этот файл**) |
 
@@ -734,17 +738,17 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 
 ## 18. Планы: Lookup и дрейф
 
-См. **`CHETERIN_LOOKUP_PLAN.md`** (решения locked, **реализации нет**).
+См. **`CHETERIN_LOOKUP_PLAN.md`** (решения locked; **код в репо:** `lookup/` + `lookup-api/`).
 
-### 18.1. Зачем отдельный процесс
+### 18.1. Отдельный процесс (уже так)
 
-Сейчас панель стартует из `main.py` вместе с ботом. Рестарт/падение бота гасит cheterin.online. Lookup должен:
+Сейчас панель стартует из `main.py` вместе с ботом. Рестарт/падение бота гасит cheterin.online. Lookup **уже** вынесен:
 
-- жить на `/lookup` отдельным приложением (`lookup/` + `lookup-api/`);
-- использовать **отдельный** Discord Application token;
-- не зависеть от ChetBot process;
-- делить визуальный язык (уголь + тёмно-красный) и legal pages;
-- **не** стартовать из `main.py`.
+- SPA + API на корне репо: `lookup/` + `lookup-api/` (не внутри `dashboard/`);
+- **отдельный** Discord Application token (`LOOKUP_DISCORD_TOKEN` only — не `BOT_TOKEN`);
+- не зависит от ChetBot process; `main.py` Lookup не импортирует и не стартует;
+- делит визуальный язык (уголь + тёмно-красный) и legal pages с экосистемой;
+- локальный запуск / proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`.
 
 ### 18.2. Известный дрейф монолита (§14 плана) — Lookup почти не чинит
 
@@ -796,6 +800,7 @@ Lookup **не** закрывает этот дрейф, кроме cookies/discl
 | UI routes | `dashboard/frontend/src/App.tsx` |
 | Sidebar | `DashboardShell.tsx` `NAV_GROUPS` |
 | Публичные docs сайта | `pages/docs/` + `Docs.tsx` — **не** этот файл |
+| Lookup код (SPA / API) | `lookup/`, `lookup-api/` + `RUN.md` / `PROXY.md` |
 | Lookup план + дрейф | `CHETERIN_LOOKUP_PLAN.md` |
 | What’s New | `whatsNew.ts` |
 

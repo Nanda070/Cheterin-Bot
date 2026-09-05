@@ -1,8 +1,13 @@
 # Cheterin Lookup — продуктовый план
 
-Статус: план, **решения зафиксированы**. Реализации в этом документе нет.  
+> **Status (implementation):** started. Code lives in `lookup/` + `lookup-api/` (separate process; not in `main.py`).  
+> **Done:** phases **0–7** + **partial 8–10** (chrome/docs/legal mentions and related partials as shipped).  
+> **Remaining:** deploy with Lookup Discord token, full About chrome restyle, real CAPTCHA, live smoke.  
+> Locked decisions below are **unchanged** — do not reopen without an explicit product decision.
+
+Статус документа: план, **решения зафиксированы**. Этот файл — продуктовый план, не спецификация кода.  
 Публичный адрес: `https://cheterin.online/lookup` (в проде HTTPS; путь `/lookup`).  
-Этот документ **не** является спецификацией кода и **не** предлагает править VALORANT, cogs бота или текущий дашборд, пока не начнётся отдельная задача реализации. Известный дрейф текущего монолита (docs vs UI, i18n, legal-маршруты, leftovers бота) зафиксирован в **§14**: Lookup его **не закрывает**, кроме явно названных кусков фаз 8–9.
+Известный дрейф текущего монолита (docs vs UI, i18n, legal-маршруты, leftovers бота) зафиксирован в **§14**: Lookup его **не закрывает**, кроме явно названных кусков фаз 8–9.
 
 Референс по **компоновке экранов** (не по цвету и не по текстам): [dclookup.id](https://www.dclookup.id/) — hero-поиск, карточка профиля, двухколоночные детали, теги, ряды ассетов, сетка бейджей, калькулятор прав + live preview. Референс **не** является источником юридических текстов, копирайта, бренда, палитры, рекламы или API-контракта.
 
