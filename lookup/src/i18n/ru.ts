@@ -61,22 +61,61 @@ export const ru: TranslationDict = {
   'home.error.snowflake': 'Нужен snowflake (17–20 цифр).',
   'home.error.invite': 'Нужен код или ссылка приглашения.',
 
-  'about.title': 'О Cheterin Lookup',
+  'about.eyebrow': 'О Lookup',
+  'about.title': 'Публичный Discord lookup экосистемы Cheterin',
   'about.lead':
-    'Lookup — отдельный публичный инструмент экосистемы Cheterin. Он не требует входа в панель и не использует процесс или токен Discord-бота Cheterin.',
-  'about.s1.title': 'Что это',
-  'about.s1.body':
-    'Вы вводите открытый Discord ID или код приглашения. Мы запрашиваем официальный Discord API через отдельное приложение Lookup и показываем то, что реально пришло — без «полного профиля», без приватных гильдий и без ленты чужих поисков.',
-  'about.s2.title': 'Независимость',
-  'about.s2.body':
-    'Lookup API и UI работают своим процессом. Падение или рестарт бота Cheterin не должен гасить Lookup, и наоборот. Токены не смешиваются.',
-  'about.s3.title': 'Честные границы',
-  'about.s3.body':
-    'Нет Group DM, нет DM Deleter, нет поиска сервера по голому Guild ID, нет рекламы и нет публичного API для сторонних клиентов в v1. Сервер — только по invite.',
-  'about.s4.title': 'Правовое',
-  'about.s4.body':
-    'Terms, Privacy, Cookies и Disclaimer общие для бота, панели и Lookup. Оператор — Cheterin Group Ø / Nandak070. Lookup не аффилирован с Discord Inc.',
-  'about.cta': 'К поиску',
+    'Вставьте открытый ID или invite. Мы запрашиваем официальный Discord API через отдельное приложение Lookup и показываем только то, что реально пришло — без входа в панель и без токена бота Cheterin.',
+  'about.cta': 'Открыть Lookup',
+  'about.ctaBot': 'О боте',
+  'about.ctaDocs': 'Документация',
+
+  'about.pillar.product.title': 'Что это',
+  'about.pillar.product.body':
+    'Lookup — узкий инструмент: snowflake пользователя и бота, публичный снимок invite, плюс хелперы для времени snowflake, прав, аватаров и бейджей. Это не скрейпер приватных профилей и не OSINT-продукт.',
+  'about.pillar.independence.title': 'Отдельный процесс',
+  'about.pillar.independence.body':
+    'UI и API Lookup работают отдельно от бота Cheterin. Рестарт бота не должен гасить Lookup — и наоборот. Токены изолированы; OAuth панели не нужен.',
+  'about.pillar.api.title': 'Честно про Discord API',
+  'about.pillar.api.body':
+    'Всё, что вы видите — публичные данные API (или метаданные invite, которые Discord отдал по коду). Пустые поля значат, что Discord их не вернул — мы не выдумываем «полный профиль», приватные гильдии и ленту чужих поисков.',
+
+  'about.scope.eyebrow': 'Охват',
+  'about.scope.title': 'Что можно искать',
+  'about.scope.lead': 'Четыре честные поверхности. Без фейковых счётчиков и стены «недавних поисков».',
+  'about.scope.user.title': 'Пользователи',
+  'about.scope.user.body': 'Публичное имя, аватар, баннер и флаги по snowflake.',
+  'about.scope.bot.title': 'Боты',
+  'about.scope.bot.body': 'Описание приложения, scopes, permissions и intents — если Discord их отдал.',
+  'about.scope.server.title': 'Серверы',
+  'about.scope.server.body': 'Только публичный снимок invite — не поиск по голому Guild ID.',
+  'about.scope.tools.title': 'Инструменты',
+  'about.scope.tools.body': 'Часы snowflake, битмаска прав, CDN аватаров, каталог бейджей.',
+
+  'about.bounds.eyebrow': 'Границы',
+  'about.bounds.title': 'Чего Lookup не обещает',
+  'about.bounds.lead': 'Ясные лимиты делают продукт честным.',
+  'about.bounds.b1': 'Нет Group DM lookup и нет DM Deleter.',
+  'about.bounds.b2': 'Нет рекламы, нет публичного стороннего API в v1, нет «недавних поисков».',
+  'about.bounds.b3': 'Нет приватных данных гильдий и нет OSINT / stalking-позиционирования.',
+  'about.bounds.b4': 'Не аффилирован с Discord Inc. Злоупотребление публичными данными — ответственность пользователя.',
+
+  'about.bridge.eyebrow': 'Cheterin',
+  'about.bridge.title': 'Одна экосистема, общий chrome',
+  'about.bridge.lead':
+    'Lookup делит угольно-тёмно-красную палитру, бренд и правовую рамку с сайтом бота. Мосты между сервисами намеренно на виду.',
+  'about.bridge.bot.title': 'О боте',
+  'about.bridge.bot.body': 'Модули, invite и витрина бота Cheterin на /about.',
+  'about.bridge.docs.title': 'Документация',
+  'about.bridge.docs.body': 'Как бот и Lookup связаны.',
+  'about.bridge.panel.title': 'Панель',
+  'about.bridge.panel.body': 'Вход в дашборд настроек гильдии.',
+  'about.bridge.lookup.title': 'Lookup home',
+  'about.bridge.lookup.body': 'Поиск живёт здесь — не на этой about-странице.',
+
+  'about.legal.eyebrow': 'Правовое',
+  'about.legal.title': 'Общие условия для бота, панели и Lookup',
+  'about.legal.body':
+    'Terms, Privacy, Cookies и Disclaimer действуют на всю поверхность Cheterin. Оператор — Cheterin Group Ø / Nandak070.',
 
   'common.copy': 'Копировать',
   'common.copied': 'Скопировано',

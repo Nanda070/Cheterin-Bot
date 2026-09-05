@@ -61,22 +61,61 @@ export const en: TranslationDict = {
   'home.error.snowflake': 'Need a 17–20 digit snowflake.',
   'home.error.invite': 'Need an invite code or link.',
 
-  'about.title': 'About Cheterin Lookup',
+  'about.eyebrow': 'About Lookup',
+  'about.title': 'Public Discord lookup for the Cheterin ecosystem',
   'about.lead':
-    'Lookup is a separate public tool in the Cheterin ecosystem. It does not require panel login and does not use the Cheterin Discord bot process or token.',
-  'about.s1.title': 'What it is',
-  'about.s1.body':
-    'You enter an open Discord ID or invite code. We query the official Discord API through a dedicated Lookup application and show what actually came back — no “full profile”, no private guilds, and no feed of other people’s searches.',
-  'about.s2.title': 'Independence',
-  'about.s2.body':
-    'Lookup API and UI run as their own process. A Cheterin bot crash or restart should not take Lookup down, and vice versa. Tokens stay separate.',
-  'about.s3.title': 'Honest boundaries',
-  'about.s3.body':
-    'No Group DM, no DM Deleter, no server lookup by bare Guild ID, no ads, and no public third-party API in v1. Servers are invite-only.',
-  'about.s4.title': 'Legal',
-  'about.s4.body':
-    'Terms, Privacy, Cookies, and Disclaimer are shared across the bot, panel, and Lookup. Operator: Cheterin Group Ø / Nandak070. Lookup is not affiliated with Discord Inc.',
-  'about.cta': 'Go to search',
+    'Paste an open ID or invite. We ask Discord’s official API through a dedicated Lookup app and show only what came back — structured, without panel login and without the Cheterin bot token.',
+  'about.cta': 'Open Lookup',
+  'about.ctaBot': 'Bot about',
+  'about.ctaDocs': 'Docs',
+
+  'about.pillar.product.title': 'What it is',
+  'about.pillar.product.body':
+    'Lookup is a focused utility: user and bot snowflakes, public invite snapshots, plus helpers for snowflake time, permissions, avatars, and badges. It is not a private-profile scraper and not an OSINT product.',
+  'about.pillar.independence.title': 'Independent process',
+  'about.pillar.independence.body':
+    'Lookup UI and API run separately from the Cheterin bot. A bot restart should not take Lookup down, and vice versa. Tokens stay isolated; panel OAuth is not required.',
+  'about.pillar.api.title': 'Honest with the Discord API',
+  'about.pillar.api.body':
+    'Everything you see is public API data (or invite metadata Discord returns for that code). Empty fields mean Discord did not return them — we do not invent “full profiles”, private guilds, or other people’s search feeds.',
+
+  'about.scope.eyebrow': 'Scope',
+  'about.scope.title': 'What you can look up',
+  'about.scope.lead': 'Four honest surfaces. No fake counters, no recent-search wall.',
+  'about.scope.user.title': 'Users',
+  'about.scope.user.body': 'Public name, avatar, banner, and flags from a snowflake.',
+  'about.scope.bot.title': 'Bots',
+  'about.scope.bot.body': 'Application description, scopes, permissions, and intents when Discord returns them.',
+  'about.scope.server.title': 'Servers',
+  'about.scope.server.body': 'Public invite snapshot only — not lookup by bare Guild ID.',
+  'about.scope.tools.title': 'Tools',
+  'about.scope.tools.body': 'Snowflake clock, permissions bitfield, avatar CDN, badge catalog.',
+
+  'about.bounds.eyebrow': 'Boundaries',
+  'about.bounds.title': 'What Lookup does not claim',
+  'about.bounds.lead': 'Clear limits keep the product trustworthy.',
+  'about.bounds.b1': 'No Group DM lookup and no DM Deleter.',
+  'about.bounds.b2': 'No ads, no public third-party API in v1, no “recent searches”.',
+  'about.bounds.b3': 'No private guild data and no OSINT / stalking framing.',
+  'about.bounds.b4': 'Not affiliated with Discord Inc. Misuse of public data is the user’s responsibility.',
+
+  'about.bridge.eyebrow': 'Cheterin',
+  'about.bridge.title': 'One ecosystem, shared chrome',
+  'about.bridge.lead':
+    'Lookup shares the charcoal–dark-red language, brand mark, and legal frame with the bot site. Cross-links stay visible on purpose.',
+  'about.bridge.bot.title': 'Bot about',
+  'about.bridge.bot.body': 'Modules, invite, and the Cheterin bot showcase at /about.',
+  'about.bridge.docs.title': 'Docs',
+  'about.bridge.docs.body': 'How the bot and Lookup fit together.',
+  'about.bridge.panel.title': 'Panel',
+  'about.bridge.panel.body': 'Signed-in dashboard for guild settings.',
+  'about.bridge.lookup.title': 'Lookup home',
+  'about.bridge.lookup.body': 'Search lives here — not on this about page.',
+
+  'about.legal.eyebrow': 'Legal',
+  'about.legal.title': 'Shared terms across bot, panel, and Lookup',
+  'about.legal.body':
+    'Terms, Privacy, Cookies, and Disclaimer apply to the whole Cheterin surface. Operator: Cheterin Group Ø / Nandak070.',
 
   'common.copy': 'Copy',
   'common.copied': 'Copied',
