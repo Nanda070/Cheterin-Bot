@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* Base surfaces */
+  /* Cheterin kit — charcoal + dark red (shared with Lookup public chrome) */
   --color-background: #0b0e14;
+  --color-background-deep: #070912;
   --color-surface: #131722;
   --color-surface-hover: #181d2c;
   --color-border: #232838;
@@ -12,9 +13,11 @@
   --color-foreground: #e8eaf0;
   --color-muted: #8b93a7;
 
-  /* Brand accent — muted crimson (echoes landing, softer for dense UI) */
+  /* Brand accent */
   --color-primary: #a8283c;
   --color-primary-hover: #c43c4e;
+  --color-primary-deep: #5c0f1e;
+  --color-primary-deeper: #3a0a14;
   --color-primary-muted: #a8283c24;
 
   /* Status */
@@ -24,6 +27,8 @@
   --color-danger-hover: #f56565;
 
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-landing-display: 'Syne', sans-serif;
+  --font-landing-body: 'Manrope', sans-serif;
 
   --radius-card: 14px;
   --radius-control: 10px;
@@ -107,6 +112,27 @@
   }
 }
 
+@keyframes landing-glow-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -2%, 0) scale(1.08);
+  }
+}
+
+@keyframes landing-module-line {
+  from {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 400ms var(--ease-out-smooth) both;
 }
@@ -123,58 +149,69 @@
   animation: landing-section-in 650ms var(--ease-out-smooth) both;
 }
 
-.landing-wave {
-  line-height: 0;
-}
-
-/* Landing hero palette: deeper crimson + glow (refines global primary for marketing surfaces) */
+/* About (/about) — charcoal + dark-red kit, no second --landing-* theme */
 .landing {
-  --landing-accent: #9b1b2e;
-  --landing-accent-deep: #5c0f1e;
-  --landing-accent-deeper: #3a0a14;
-  --landing-accent-glow: #c43c4e;
-  --landing-accent-muted: #9b1b2e28;
-  --landing-cta-ink: #3a0a14;
-  --landing-glow-rgb: 196, 60, 78;
-
-  --color-primary: var(--landing-accent);
-  --color-primary-hover: var(--landing-accent-glow);
-  --color-primary-muted: var(--landing-accent-muted);
+  font-family: var(--font-landing-body);
 }
 
-.landing-plane {
+.landing-display {
+  font-family: var(--font-landing-display);
+}
+
+.landing-atmosphere {
   background:
-    radial-gradient(ellipse 80% 60% at 70% 18%, rgba(var(--landing-glow-rgb), 0.22), transparent 55%),
-    radial-gradient(ellipse 55% 45% at 12% 85%, rgba(20, 4, 10, 0.45), transparent 52%),
-    linear-gradient(165deg, var(--landing-accent-deep) 0%, var(--landing-accent-deeper) 100%);
+    radial-gradient(ellipse 70% 50% at 50% -10%, #a8283c22, transparent 55%),
+    radial-gradient(ellipse 40% 35% at 92% 70%, #5c0f1e40, transparent 55%),
+    linear-gradient(180deg, #070912 0%, #0b0e14 48%, #0a0c12 100%);
 }
 
 .landing-header {
-  background-color: color-mix(in srgb, var(--landing-accent-deep) 92%, #000 8%);
+  background-color: color-mix(in srgb, var(--color-background) 82%, transparent);
 }
 
-.landing-cta-ink {
-  color: var(--landing-cta-ink);
+.landing-glow {
+  animation: landing-glow-drift 16s var(--ease-out-smooth) infinite;
 }
 
-.landing-feature-glow {
-  box-shadow: 0 12px 40px -20px rgba(var(--landing-glow-rgb), 0.5);
+.landing-glow-delay {
+  animation: landing-glow-drift 20s var(--ease-out-smooth) infinite reverse;
 }
 
-/* Docs / Terms / Privacy — soft crimson echo of landing header (not a full hero plane) */
+.landing-module {
+  position: relative;
+}
+
+.landing-module::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(6rem, 30%);
+  height: 1px;
+  background: var(--color-primary);
+  animation: landing-module-line 700ms var(--ease-out-smooth) both;
+}
+
+.landing-lookup-band {
+  background:
+    radial-gradient(ellipse 55% 80% at 0% 50%, #a8283c18, transparent 60%),
+    var(--color-background);
+}
+
+/* Docs / Terms / Privacy — same kit tokens as About / Lookup */
 .public {
   --public-accent-deep: #5c0f1e;
-  --public-accent: #9b1b2e;
-  --public-glow-rgb: 196, 60, 78;
+  --public-accent: #a8283c;
+  --public-glow-rgb: 168, 40, 60;
 }
 
 .public-header {
-  background-color: color-mix(in srgb, var(--color-background) 82%, var(--public-accent-deep) 18%);
-  border-bottom-color: color-mix(in srgb, var(--color-border) 70%, var(--public-accent) 30%);
+  background-color: color-mix(in srgb, var(--color-background) 88%, var(--public-accent-deep) 12%);
+  border-bottom-color: color-mix(in srgb, var(--color-border) 80%, var(--public-accent) 20%);
 }
 
 .public-footer {
-  border-top-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
+  border-top-color: color-mix(in srgb, var(--color-border) 80%, var(--public-accent) 20%);
 }
 
 /* Public bunker / mafia player tables — atmospheric HUD surfaces */
@@ -269,6 +306,9 @@
   .animate-dropdown-in,
   .landing-hero-in,
   .landing-section-in,
+  .landing-glow,
+  .landing-glow-delay,
+  .landing-module::before,
   .game-panel--action,
   .game-timer--urgent {
     animation: none;
