@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 import os
 import re
@@ -139,11 +140,16 @@ class RateLimiter:
         while q and now - q[0] > 60:
             q.popleft()
         if len(q) >= self.limit:
-            # Soft CAPTCHA gate after threshold (provider wiring in phase 10)
+            # Soft CAPTCHA gate after threshold — operator must set LOOKUP_CAPTCHA_* env vars
             self._captcha[ip] = now + 60
             return False, 60, True
         q.append(now)
         return True, 0, False
+
+    def clear_captcha(self, ip: str) -> None:
+        """Called after successful CAPTCHA solve: clear gate and reset sliding window."""
+        self._captcha.pop(ip, None)
+        self._hits.pop(ip, None)
 
 
 def _hash(value: str) -> str:
@@ -283,8 +289,10 @@ def normalize_invite(code: str) -> str | None:
 
 @web.middleware
 async def rate_limit_middleware(request: web.Request, handler):
-    # Health and static-ish endpoints skip abuse counters lightly
+    # Health, config, plugins, and captcha/verify skip the rate-limit counter
     if request.path.endswith("/health") or request.path.endswith("/config") or request.path.endswith("/plugins"):
+        return await handler(request)
+    if request.path.endswith("/captcha/verify"):
         return await handler(request)
     if not request.path.startswith("/api/lookup/"):
         return await handler(request)
@@ -298,7 +306,7 @@ async def rate_limit_middleware(request: web.Request, handler):
             "code": "captcha_required" if captcha else "rate_limited",
             "retry_after": retry_after,
         }
-        raise web.HTTPTooManyRequests(text=__import__("json").dumps(body), content_type="application/json", headers={"Retry-After": str(retry_after)})
+        raise web.HTTPTooManyRequests(text=json.dumps(body), content_type="application/json", headers={"Retry-After": str(retry_after)})
     return await handler(request)
 
 
@@ -323,14 +331,101 @@ async def handle_health(request: web.Request) -> web.Response:
 
 
 async def handle_config(request: web.Request) -> web.Response:
+    captcha_enabled = os.getenv("LOOKUP_CAPTCHA_ENABLED", "false").lower() == "true"
     return web.json_response(
         {
             "lookup_client_id": os.getenv("LOOKUP_CLIENT_ID", ""),
             "cheterin_client_id": os.getenv("CHETERIN_CLIENT_ID", ""),
-            "captcha_enabled": os.getenv("LOOKUP_CAPTCHA_ENABLED", "false").lower() == "true",
+            "captcha_enabled": captcha_enabled,
+            "captcha_provider": os.getenv("LOOKUP_CAPTCHA_PROVIDER", "turnstile") if captcha_enabled else None,
+            "captcha_site_key": os.getenv("LOOKUP_CAPTCHA_SITE_KEY", "") if captcha_enabled else None,
             "rate_limit_per_minute": RATE_LIMIT_PER_MINUTE,
         }
     )
+
+
+# CAPTCHA provider verify URLs (backend-to-provider call; secret never goes to frontend)
+_CAPTCHA_VERIFY_URLS: dict[str, str] = {
+    "turnstile": "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    "hcaptcha": "https://api.hcaptcha.com/siteverify",
+}
+
+
+async def handle_captcha_verify(request: web.Request) -> web.Response:
+    """POST /api/lookup/captcha/verify — verify a CAPTCHA token and clear the IP gate.
+
+    Body: {"token": "<captcha-response-token>"}
+    Returns: {"ok": true} or HTTP error.
+
+    Requires LOOKUP_CAPTCHA_ENABLED=true, LOOKUP_CAPTCHA_PROVIDER, and LOOKUP_CAPTCHA_SECRET.
+    Operator: set LOOKUP_CAPTCHA_SITE_KEY in environment; the frontend reads it from /api/lookup/config.
+    """
+    captcha_enabled = os.getenv("LOOKUP_CAPTCHA_ENABLED", "false").lower() == "true"
+    if not captcha_enabled:
+        raise web.HTTPServiceUnavailable(
+            text='{"error":"captcha_not_enabled","message":"CAPTCHA is not configured on this instance"}',
+            content_type="application/json",
+        )
+
+    secret = os.getenv("LOOKUP_CAPTCHA_SECRET", "").strip()
+    if not secret:
+        raise web.HTTPServiceUnavailable(
+            text='{"error":"captcha_not_configured","message":"LOOKUP_CAPTCHA_SECRET not set"}',
+            content_type="application/json",
+        )
+
+    provider = os.getenv("LOOKUP_CAPTCHA_PROVIDER", "turnstile").lower().strip()
+    verify_url = _CAPTCHA_VERIFY_URLS.get(provider)
+    if not verify_url:
+        raise web.HTTPBadRequest(
+            text=json.dumps({"error": "unknown_provider", "provider": provider}),
+            content_type="application/json",
+        )
+
+    try:
+        body = await request.json()
+        token = (body.get("token") or "").strip()
+    except Exception:
+        raise web.HTTPBadRequest(
+            text='{"error":"invalid_body","message":"Expected JSON {\"token\": \"...\"}"}',
+            content_type="application/json",
+        )
+
+    if not token:
+        raise web.HTTPBadRequest(
+            text='{"error":"missing_token"}',
+            content_type="application/json",
+        )
+
+    ip = _client_ip(request)
+    session: ClientSession = request.app["http"]
+
+    try:
+        async with session.post(
+            verify_url,
+            data={"secret": secret, "response": token, "remoteip": ip},
+            headers={"User-Agent": "CheterinLookup/1.0"},
+        ) as resp:
+            result: dict[str, Any] = await resp.json(content_type=None)
+    except Exception as exc:
+        log.warning("captcha verify request failed: %s", exc)
+        raise web.HTTPBadGateway(
+            text='{"error":"provider_error","message":"Could not reach CAPTCHA provider"}',
+            content_type="application/json",
+        )
+
+    if not result.get("success"):
+        codes = result.get("error-codes") or []
+        raise web.HTTPForbidden(
+            text=json.dumps({"error": "captcha_failed", "codes": codes}),
+            content_type="application/json",
+        )
+
+    # Clear the captcha gate and rate-limit window so the IP can make fresh requests
+    limiter: RateLimiter = request.app["limiter"]
+    limiter.clear_captcha(ip)
+
+    return web.json_response({"ok": True})
 
 
 async def handle_plugins(request: web.Request) -> web.Response:
@@ -556,8 +651,6 @@ def load_plugins() -> list[dict[str, Any]]:
     path = _HERE / "plugins.json"
     if not path.exists():
         return []
-    import json
-
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         return list(data.get("plugins") or [])
@@ -591,6 +684,7 @@ def create_app() -> web.Application:
     app.router.add_get("/health", handle_health)
     app.router.add_get("/api/lookup/config", handle_config)
     app.router.add_get("/api/lookup/plugins", handle_plugins)
+    app.router.add_post("/api/lookup/captcha/verify", handle_captcha_verify)
     app.router.add_get("/api/lookup/user/{id}", handle_user)
     app.router.add_get("/api/lookup/bot/{id}", handle_bot)
     app.router.add_get("/api/lookup/server/{code}", handle_server)

@@ -2325,4 +2325,186 @@ export const DOC_SECTIONS_EN: DocSection[] = [
       </>
     ),
   },
+
+  // ────────────────────────── CHETERIN LOOKUP ──────────────────────────
+  {
+    id: 'lookup-what-is',
+    title: 'What is Cheterin Lookup?',
+    group: 'Cheterin Lookup',
+    content: (
+      <>
+        <H>Overview</H>
+        <P>
+          <a href="/lookup/">Cheterin Lookup</a> is a separate public tool on <Code>cheterin.online/lookup</Code>.
+          It lets you look up open Discord data — users, bots, and servers — <strong>without signing into the panel</strong> and without
+          using the Cheterin bot process or token.
+        </P>
+        <UL>
+          <li>Enter a 17–20 digit Discord user/bot snowflake, or a server invite code/link.</li>
+          <li>Lookup queries the official Discord API through a dedicated application and shows exactly what came back.</li>
+          <li>
+            No private data is returned: no email, no DMs, no guild list, no connected accounts. Only what Discord
+            exposes publicly.
+          </li>
+        </UL>
+        <Note>
+          Lookup has its own Discord Application and bot token — completely separate from the Cheterin bot. A Cheterin
+          bot restart or outage does not affect Lookup, and vice versa.
+        </Note>
+
+        <H>What Lookup can show</H>
+        <Table
+          headers={['Mode', 'Input', 'Returns']}
+          rows={[
+            ['User', 'Snowflake (17–20 digits)', 'Username, global name, avatar, banner, public flags, creation date'],
+            ['Bot', 'Bot/application snowflake', 'User card + app description, tags, scopes, permissions, intents'],
+            ['Server', 'Invite code or discord.gg / discord.com/invite link', 'Guild name, icon, member counts, features, verification level'],
+          ]}
+        />
+
+        <H>Tools</H>
+        <UL>
+          <li><strong>Snowflake</strong> — decode any Discord ID to a creation timestamp.</li>
+          <li><strong>Permissions calculator</strong> — pick permission flags, get a decimal/hex value and an OAuth2 invite URL.</li>
+          <li><strong>Avatar &amp; Banner downloader</strong> — download CDN assets by user ID + hash, or directly from a user/bot result page.</li>
+          <li><strong>Badge reference</strong> — all public UserFlags with bit values and names.</li>
+          <li><strong>DSA</strong> — shareable card with an EU DSA / Discord Statement of Reasons registry link for a given Discord ID.</li>
+          <li><strong>Plugins</strong> — operator-curated list of external utilities.</li>
+        </UL>
+
+        <H>What Lookup cannot do</H>
+        <UL>
+          <li>Server lookup by bare Guild ID (invite code required).</li>
+          <li>Group DM or DM lookup.</li>
+          <li>Email, phone, connected accounts, or any private profile data.</li>
+          <li>Recent search history or a public feed of other people's searches.</li>
+        </UL>
+      </>
+    ),
+  },
+  {
+    id: 'lookup-rate-limits',
+    title: 'Rate limits & CAPTCHA',
+    group: 'Cheterin Lookup',
+    content: (
+      <>
+        <H>Request limits</H>
+        <P>
+          Lookup enforces a sliding window of <strong>30 requests per minute per IP</strong>. After hitting the
+          threshold you receive a <Code>captcha_required</Code> error. Solve the CAPTCHA (when configured by the
+          operator) or wait 60 seconds before retrying.
+        </P>
+        <P>
+          Discord API rate limits are passed through transparently. If Discord itself rate-limits the Lookup
+          application, you may see a temporary 429 with a <Code>discord_rate_limited</Code> code.
+        </P>
+
+        <H>Cache</H>
+        <Table
+          headers={['Lookup type', 'Cache TTL']}
+          rows={[
+            ['User / Bot', '15 minutes'],
+            ['Server (invite)', '10 minutes'],
+          ]}
+        />
+        <P>Results are cached server-side. Identical IDs within the TTL window return cached data.</P>
+
+        <H>CAPTCHA (operator-configured)</H>
+        <P>
+          When the operator sets <Code>LOOKUP_CAPTCHA_ENABLED=true</Code> along with a provider site key and secret
+          (Cloudflare Turnstile or hCaptcha), a CAPTCHA widget appears after you exceed the rate limit. Solving the
+          CAPTCHA clears the gate for your IP and resets the sliding window.
+        </P>
+        <Note>
+          If CAPTCHA is not configured on the instance, a plain "wait 60 seconds" message is shown instead.
+        </Note>
+
+        <H>Abuse logging</H>
+        <P>
+          The service keeps a hashed log of (IP, queried ID) pairs for 48 hours, server-side only. These logs are never
+          exposed in the UI and are used only for abuse detection. See the Privacy page for details.
+        </P>
+      </>
+    ),
+  },
+  {
+    id: 'lookup-legal',
+    title: 'Legal & data',
+    group: 'Cheterin Lookup',
+    content: (
+      <>
+        <H>What data Lookup collects</H>
+        <UL>
+          <li>Hashed IP address and hashed queried ID — retained for 48 hours, server-side only, never shown in UI.</li>
+          <li>
+            <Code>chetbot_ui_lang</Code> localStorage key — stores your language preference (RU/EN). This is the only
+            client-side storage Lookup uses.
+          </li>
+        </UL>
+        <P>
+          Lookup does not use OAuth, does not store Discord tokens from users, and does not require login. No cookies
+          beyond session-level are set.
+        </P>
+
+        <H>Operator</H>
+        <P>Cheterin Group © / Nandak070. Lookup is not affiliated with Discord Inc.</P>
+
+        <H>Relevant legal pages</H>
+        <UL>
+          <li>
+            <a href="/terms">Terms of Service</a> — includes Lookup-specific clauses.
+          </li>
+          <li>
+            <a href="/privacy">Privacy Policy</a> — covers hashed IP/ID retention, CDN assets, TTL, and{' '}
+            <Code>chetbot_ui_lang</Code>.
+          </li>
+          <li>
+            <a href="/cookies">Cookies</a> — Lookup uses only <Code>chetbot_ui_lang</Code> (localStorage).
+          </li>
+          <li>
+            <a href="/disclaimer">Disclaimer</a> — API accuracy, no affiliation with Discord Inc., no doxxing.
+          </li>
+        </UL>
+      </>
+    ),
+  },
+  {
+    id: 'lookup-faq',
+    title: 'Lookup FAQ',
+    group: 'Cheterin Lookup',
+    content: (
+      <>
+        <H3>Why can't I look up a server by Guild ID?</H3>
+        <P>
+          The Discord API does not expose guild information directly by ID without the bot being a member. Lookup uses
+          the public Invite API, which requires an invite code. Bare Guild ID lookup is not supported in v1.
+        </P>
+
+        <H3>Why does a bot profile show "degraded"?</H3>
+        <P>
+          The public application RPC endpoint sometimes returns limited or no data. When that happens, Lookup falls back
+          to the user object only and marks the result as degraded. This is a Discord API limitation, not a Lookup bug.
+        </P>
+
+        <H3>Can I look up private users / closed profiles?</H3>
+        <P>
+          Lookup only returns what Discord's public API exposes to a bot token. If a user has a private profile or no
+          public flags, you will see a minimal result (ID, creation date, avatar if set). Email, DMs, connected
+          accounts, and guild memberships are never available.
+        </P>
+
+        <H3>Is Lookup the same as dclookup.id or similar tools?</H3>
+        <P>
+          No. Lookup is an independent tool built for the Cheterin ecosystem. It does not use undocumented endpoints,
+          user tokens, or privileged intents.
+        </P>
+
+        <H3>I got rate limited. What should I do?</H3>
+        <P>
+          Wait 60 seconds and try again, or solve the CAPTCHA if one appears. The limit is 30 requests per minute per
+          IP.
+        </P>
+      </>
+    ),
+  },
 ]

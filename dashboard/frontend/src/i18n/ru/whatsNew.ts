@@ -18,6 +18,8 @@ const whatsNew: TranslationDict = {
     'Кастомки: ручное назначение команд A / B в панели',
   'whatsNew.item.valorantPremierIdeas':
     'Вкладка VALORANT: Premier-заявки и панели ролей (идеи — в Обратной связи)',
+  'whatsNew.item.lookupLaunch':
+    'Cheterin Lookup запущен — ищите пользователей, ботов и серверы Discord на /lookup',
 }
 
 export default whatsNew

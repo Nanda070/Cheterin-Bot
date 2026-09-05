@@ -18,6 +18,8 @@ const whatsNew: TranslationDict = {
     'Customs: manual Team A / B assignment from the dashboard',
   'whatsNew.item.valorantPremierIdeas':
     'VALORANT tab: Premier apps and role panels (ideas stay under Feedback)',
+  'whatsNew.item.lookupLaunch':
+    'Cheterin Lookup is live — look up Discord users, bots, and servers at /lookup',
 }
 
 export default whatsNew

@@ -10,10 +10,12 @@ from aiohttp import web
 
 @pytest.fixture
 async def api_client(aiohttp_client, monkeypatch):
-    monkeypatch.delenv("LOOKUP_DISCORD_TOKEN", raising=False)
-    monkeypatch.delenv("BOT_TOKEN", raising=False)
+    # Import first (module-level dotenv may populate env from lookup-api/.env),
+    # then clear secrets so create_app() sees an unconfigured token.
     from app import create_app
 
+    monkeypatch.delenv("LOOKUP_DISCORD_TOKEN", raising=False)
+    monkeypatch.delenv("BOT_TOKEN", raising=False)
     app = create_app()
     return await aiohttp_client(app)
 
