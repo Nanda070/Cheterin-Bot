@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { lookupFetch, type LookupConfig } from '../api/client'
-import { CopyButton } from '../components/ui'
+import { CopyButton, PageHeader, Panel, controlClass } from '../components/ui'
 import { useT } from '../context/LanguageContext'
 import { buildAuthorizeUrl, PERMISSION_FLAGS } from '../lib/permissions'
 
@@ -50,21 +50,18 @@ export function PermissionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold">{t('permissions.title')}</h1>
-        <p className="mt-2 text-muted">{t('permissions.lead')}</p>
-      </header>
+    <div className="space-y-7 lookup-rise">
+      <PageHeader title={t('permissions.title')} lead={t('permissions.lead')} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
+        <div className="space-y-3">
           {groups.map(([group, flags]) => (
-            <section key={group} className="rounded-[14px] border border-border bg-surface/80 p-4">
+            <Panel key={group} className="p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="font-semibold">{group}</h2>
+                <h2 className="font-display font-semibold">{group}</h2>
                 <button
                   type="button"
-                  className="cursor-pointer text-xs text-primary-hover hover:underline"
+                  className="cursor-pointer text-xs font-medium text-primary-hover hover:underline"
                   onClick={() => {
                     const all = flags.reduce((acc, f) => acc | f.bit, 0n)
                     const selected = flags.every((f) => (mask & f.bit) === f.bit)
@@ -78,7 +75,14 @@ export function PermissionsPage() {
                 {flags.map((flag) => {
                   const checked = (mask & flag.bit) === flag.bit
                   return (
-                    <label key={flag.key} className="flex cursor-pointer items-center gap-2 text-sm">
+                    <label
+                      key={flag.key}
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-[10px] border px-2.5 py-2 text-sm transition-colors ${
+                        checked
+                          ? 'border-primary/40 bg-primary-muted text-foreground'
+                          : 'border-transparent hover:bg-surface-hover'
+                      }`}
+                    >
                       <input
                         type="checkbox"
                         checked={checked}
@@ -90,36 +94,40 @@ export function PermissionsPage() {
                   )
                 })}
               </div>
-            </section>
+            </Panel>
           ))}
           <button
             type="button"
             onClick={() => setMask(0n)}
-            className="cursor-pointer rounded-[10px] border border-border px-3 py-2 text-sm hover:bg-surface-hover"
+            className="cursor-pointer rounded-[10px] border border-border px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
           >
             {t('permissions.clear')}
           </button>
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <section className="rounded-[14px] border border-border bg-surface p-4">
-            <label className="block text-xs uppercase tracking-wide text-muted">{t('permissions.integer')}</label>
-            <p className="mt-1 font-mono text-sm break-all">{mask.toString()}</p>
-            <label className="mt-3 block text-xs uppercase tracking-wide text-muted">{t('permissions.hex')}</label>
-            <p className="mt-1 font-mono text-sm">0x{mask.toString(16)}</p>
-          </section>
+        <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          <Panel raised className="p-4">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
+              {t('permissions.integer')}
+            </p>
+            <p className="mt-1.5 break-all font-mono text-sm">{mask.toString()}</p>
+            <p className="mt-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted">
+              {t('permissions.hex')}
+            </p>
+            <p className="mt-1.5 font-mono text-sm">0x{mask.toString(16)}</p>
+          </Panel>
 
-          <section className="rounded-[14px] border border-border bg-surface p-4">
-            <label className="text-xs uppercase tracking-wide text-muted" htmlFor="client-id">
+          <Panel raised className="p-4">
+            <label className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted" htmlFor="client-id">
               {t('permissions.clientId')}
             </label>
             <input
               id="client-id"
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
-              className="mt-1 w-full rounded-[10px] border border-border bg-background px-3 py-2 outline-none focus:border-primary"
+              className={`mt-1.5 ${controlClass}`}
             />
-            <p className="mt-1 text-xs text-muted">{t('permissions.clientId.hint')}</p>
+            <p className="mt-1.5 text-xs text-muted">{t('permissions.clientId.hint')}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {config?.lookup_client_id ? (
                 <button
@@ -140,38 +148,40 @@ export function PermissionsPage() {
                 </button>
               ) : null}
             </div>
-          </section>
+          </Panel>
 
-          <section className="rounded-[14px] border border-border bg-surface p-4">
-            <label className="text-xs uppercase tracking-wide text-muted" htmlFor="scopes">
+          <Panel raised className="p-4">
+            <label className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted" htmlFor="scopes">
               {t('permissions.scopes')}
             </label>
             <input
               id="scopes"
               value={scopes}
               onChange={(e) => setScopes(e.target.value)}
-              className="mt-1 w-full rounded-[10px] border border-border bg-background px-3 py-2 outline-none focus:border-primary"
+              className={`mt-1.5 ${controlClass}`}
             />
-          </section>
+          </Panel>
 
-          <section className="rounded-[14px] border border-border bg-surface p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">{t('permissions.inviteUrl')}</h2>
+          <Panel raised className="p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h2 className="font-display text-sm font-semibold">{t('permissions.inviteUrl')}</h2>
               <CopyButton value={inviteUrl} />
             </div>
-            <p className="mt-2 break-all font-mono text-xs text-muted">{inviteUrl}</p>
-          </section>
+            <p className="break-all font-mono text-xs leading-relaxed text-muted">{inviteUrl}</p>
+          </Panel>
 
-          <section className="rounded-[14px] border border-border bg-surface p-4">
-            <h2 className="text-sm font-semibold">{t('permissions.preview')}</h2>
-            <div className="mt-3 flex items-center gap-3 rounded-[12px] border border-border bg-background-deep px-3 py-3">
-              <span className="h-4 w-4 rounded-full bg-primary" aria-hidden />
+          <Panel raised className="p-4">
+            <h2 className="mb-3 font-display text-sm font-semibold">{t('permissions.preview')}</h2>
+            <div className="flex items-center gap-3 rounded-[12px] border border-border bg-background-deep px-3 py-3.5">
+              <span className="h-4 w-4 rounded-full bg-primary shadow-[0_0_0_3px_#a8283c33]" aria-hidden />
               <div>
-                <p className="text-sm font-medium text-primary-hover">{t('permissions.preview.name')}</p>
-                <p className="text-xs text-muted">{mask.toString()} bits</p>
+                <p className="text-sm font-semibold text-primary-hover">{t('permissions.preview.name')}</p>
+                <p className="text-xs text-muted">
+                  {t('permissions.preview.bits', { count: mask.toString() })}
+                </p>
               </div>
             </div>
-          </section>
+          </Panel>
         </aside>
       </div>
     </div>

@@ -1,9 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PrimaryButton } from '../components/ui'
 import { useT } from '../context/LanguageContext'
 import { isSnowflake, normalizeInviteCode } from '../lib/discord'
 
 type Mode = 'user' | 'bot' | 'server'
+
+const TOOLS = [
+  ['/snowflake', 'snowflake'],
+  ['/permissions', 'permissions'],
+  ['/avatars', 'avatars'],
+  ['/badges', 'badges'],
+  ['/plugins', 'plugins'],
+] as const
 
 export function HomePage() {
   const t = useT()
@@ -42,13 +51,18 @@ export function HomePage() {
   const modes: Mode[] = ['user', 'bot', 'server']
 
   return (
-    <div className="space-y-14">
-      <section className="mx-auto max-w-3xl text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">{t('home.title')}</h1>
+    <div className="space-y-16 sm:space-y-20">
+      <section className="lookup-hero-in mx-auto max-w-3xl text-center">
+        <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-primary-hover">
+          Lookup
+        </p>
+        <h1 className="font-display text-[2.1rem] font-bold leading-[1.12] tracking-tight sm:text-5xl md:text-[3.25rem]">
+          {t('home.title')}
+        </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">{t('home.subtitle')}</p>
 
-        <form onSubmit={onSubmit} className="mt-8 space-y-4 text-left">
-          <div className="flex flex-wrap justify-center gap-2">
+        <form onSubmit={onSubmit} className="mt-9 space-y-4 text-left">
+          <div className="lookup-mode-track mx-auto justify-center">
             {modes.map((m) => (
               <button
                 key={m}
@@ -60,7 +74,7 @@ export function HomePage() {
                 className={`cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   mode === m
                     ? 'bg-primary text-white'
-                    : 'border border-border bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                    : 'text-muted hover:bg-surface-hover hover:text-foreground'
                 }`}
                 aria-pressed={mode === m}
               >
@@ -69,7 +83,7 @@ export function HomePage() {
             ))}
           </div>
 
-          <div className="lookup-search-ring flex flex-col gap-2 rounded-[16px] border-2 border-border bg-surface p-2 sm:flex-row sm:items-stretch">
+          <div className="lookup-search-ring flex flex-col gap-2 rounded-[18px] border border-border bg-surface p-2 sm:flex-row sm:items-stretch">
             <label className="sr-only" htmlFor="lookup-query">
               {t(`home.placeholder.${mode}`)}
             </label>
@@ -80,14 +94,11 @@ export function HomePage() {
               placeholder={t(`home.placeholder.${mode}`)}
               autoComplete="off"
               spellCheck={false}
-              className="min-h-12 flex-1 rounded-[12px] bg-transparent px-4 text-base text-foreground outline-none placeholder:text-muted"
+              className="min-h-12 flex-1 rounded-[12px] bg-transparent px-4 text-base text-foreground outline-none placeholder:text-muted sm:min-h-14"
             />
-            <button
-              type="submit"
-              className="cursor-pointer rounded-[12px] bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
+            <PrimaryButton type="submit" className="sm:min-w-[7.5rem]">
               {t('home.submit')}
-            </button>
+            </PrimaryButton>
           </div>
 
           <p className="text-center text-sm text-muted">{t(`home.hint.${mode}`)}</p>
@@ -99,37 +110,44 @@ export function HomePage() {
         </form>
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold">{t('home.modes.title')}</h2>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {modes.map((m) => (
-            <article key={m} className="rounded-[14px] border border-border bg-surface/80 p-5">
-              <h3 className="font-medium text-foreground">{t(`home.modes.${m}.title`)}</h3>
+      <section className="lookup-rise lookup-rise-delay-1">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{t('home.modes.title')}</h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {modes.map((m, index) => (
+            <article
+              key={m}
+              className={`lookup-panel lookup-card-lift p-5 ${index === 0 ? '' : ''}`}
+            >
+              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary-muted font-display text-sm font-bold text-primary-hover">
+                {index + 1}
+              </div>
+              <h3 className="font-display text-base font-semibold text-foreground">{t(`home.modes.${m}.title`)}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{t(`home.modes.${m}.body`)}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold">{t('home.tools.title')}</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(
-            [
-              ['/snowflake', 'snowflake'],
-              ['/permissions', 'permissions'],
-              ['/avatars', 'avatars'],
-              ['/badges', 'badges'],
-              ['/plugins', 'plugins'],
-            ] as const
-          ).map(([to, key]) => (
+      <section className="lookup-rise lookup-rise-delay-2">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{t('home.tools.title')}</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {TOOLS.map(([to, key]) => (
             <Link
               key={to}
               to={to}
-              className="rounded-[14px] border border-border bg-surface/80 p-4 transition-colors hover:border-primary/50 hover:bg-surface-hover"
+              className="lookup-panel lookup-card-lift group flex flex-col p-5"
             >
-              <p className="font-medium">{t(`home.tools.${key}`)}</p>
-              <p className="mt-1 text-sm text-muted">{t(`home.tools.${key}.desc`)}</p>
+              <p className="font-display text-base font-semibold transition-colors group-hover:text-primary-hover">
+                {t(`home.tools.${key}`)}
+              </p>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{t(`home.tools.${key}.desc`)}</p>
+              <span className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted group-hover:text-primary-hover">
+                →
+              </span>
             </Link>
           ))}
         </div>

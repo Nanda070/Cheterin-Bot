@@ -111,7 +111,19 @@ export type LookupConfig = {
   lookup_client_id: string
   cheterin_client_id: string
   captcha_enabled: boolean
+  captcha_provider: 'turnstile' | 'hcaptcha' | null
+  captcha_site_key: string | null
   rate_limit_per_minute: number
+}
+
+/** Verify a CAPTCHA token with the backend. Throws LookupApiError on failure. */
+export async function verifyCaptcha(token: string): Promise<void> {
+  const res = await fetch('/api/lookup/captcha/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) throw await parseError(res)
 }
 
 export type PluginEntry = {

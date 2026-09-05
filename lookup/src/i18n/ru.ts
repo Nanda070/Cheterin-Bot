@@ -1,4 +1,4 @@
-import type { TranslationDict } from './index'
+﻿import type { TranslationDict } from './index'
 
 export const ru: TranslationDict = {
   'brand.name': 'Cheterin',
@@ -13,6 +13,8 @@ export const ru: TranslationDict = {
   'nav.docs': 'Документация',
   'nav.panel': 'Панель',
   'nav.botAbout': 'О боте',
+  'nav.menu': 'Меню',
+  'nav.close': 'Закрыть',
 
   'footer.tagline': 'Открытый Lookup экосистемы Cheterin — без входа в панель и без токена бота Cheterin.',
   'footer.legal': 'Правовое',
@@ -126,6 +128,7 @@ export const ru: TranslationDict = {
   'bot.openPermissions': 'Открыть в калькуляторе',
   'bot.degraded': 'Discord не отдал метаданные приложения — показан только User-объект бота.',
   'bot.noDescription': 'Описание не указано.',
+  'bot.guildsApprox': 'Серверов (примерно)',
 
   'server.title': 'Сервер',
   'server.inviteOnly': 'Только по приглашению',
@@ -137,7 +140,7 @@ export const ru: TranslationDict = {
   'server.online': 'Онлайн (примерно)',
   'server.expires': 'Истекает',
   'server.never': 'Не истекает',
-  'server.features': 'Features',
+  'server.features': 'Возможности',
   'server.details': 'Снимок приглашения',
   'server.disclaimer':
     'Это публичный снимок invite API, не полный аудит сервера. Участники, роли и каналы кроме invite-канала здесь недоступны.',
@@ -166,7 +169,8 @@ export const ru: TranslationDict = {
   'permissions.scopes': 'Scopes',
   'permissions.inviteUrl': 'Invite URL',
   'permissions.preview': 'Превью роли',
-  'permissions.preview.name': 'Role preview',
+  'permissions.preview.name': 'Превью роли',
+  'permissions.preview.bits': '{count} бит',
   'permissions.selectAll': 'Выбрать группу',
   'permissions.clear': 'Сбросить',
   'permissions.copyUrl': 'Копировать URL',
@@ -212,4 +216,14 @@ export const ru: TranslationDict = {
   'error.502': 'Discord временно недоступен через Lookup.',
   'error.503': 'Lookup API не настроен (нет LOOKUP_DISCORD_TOKEN).',
   'error.network': 'Не удалось связаться с Lookup API.',
+
+  'captcha.title': 'Требуется CAPTCHA',
+  'captcha.lead': 'Вы превысили лимит запросов. Решите CAPTCHA, чтобы продолжить.',
+  'captcha.noProvider': 'CAPTCHA не настроена на этом сервере. Подождите 60 секунд и попробуйте снова.',
+  'captcha.solving': 'Решение…',
+  'captcha.verifying': 'Проверка…',
+  'captcha.retry': 'Повторить после решения',
+  'captcha.error': 'Проверка CAPTCHA не прошла. Попробуйте ещё раз.',
+  'captcha.instructions':
+    'Пройдите проверку ниже, затем повторите поиск. После успешного решения поиск возобновится автоматически.',
 }

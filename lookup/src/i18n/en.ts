@@ -13,6 +13,8 @@ export const en: TranslationDict = {
   'nav.docs': 'Docs',
   'nav.panel': 'Panel',
   'nav.botAbout': 'Bot about',
+  'nav.menu': 'Menu',
+  'nav.close': 'Close',
 
   'footer.tagline': 'Open Lookup for the Cheterin ecosystem — no panel login and no Cheterin bot token.',
   'footer.legal': 'Legal',
@@ -126,6 +128,7 @@ export const en: TranslationDict = {
   'bot.openPermissions': 'Open in calculator',
   'bot.degraded': 'Discord did not return application metadata — showing the bot User object only.',
   'bot.noDescription': 'No description provided.',
+  'bot.guildsApprox': 'Guilds (approx.)',
 
   'server.title': 'Server',
   'server.inviteOnly': 'Invite only',
@@ -167,6 +170,7 @@ export const en: TranslationDict = {
   'permissions.inviteUrl': 'Invite URL',
   'permissions.preview': 'Role preview',
   'permissions.preview.name': 'Role preview',
+  'permissions.preview.bits': '{count} bits',
   'permissions.selectAll': 'Select group',
   'permissions.clear': 'Clear',
   'permissions.copyUrl': 'Copy URL',
@@ -213,4 +217,14 @@ export const en: TranslationDict = {
   'error.502': 'Discord is temporarily unavailable through Lookup.',
   'error.503': 'Lookup API is not configured (missing LOOKUP_DISCORD_TOKEN).',
   'error.network': 'Could not reach Lookup API.',
+
+  'captcha.title': 'CAPTCHA required',
+  'captcha.lead': 'You have exceeded the request limit. Solve the CAPTCHA to continue.',
+  'captcha.noProvider': 'CAPTCHA is not configured on this instance. Wait 60 seconds and try again.',
+  'captcha.solving': 'Solving\u2026',
+  'captcha.verifying': 'Verifying\u2026',
+  'captcha.retry': 'Retry after solving',
+  'captcha.error': 'CAPTCHA verification failed. Try again.',
+  'captcha.instructions':
+    'Complete the challenge below, then try your search again. Your search will resume automatically after a successful solve.',
 }

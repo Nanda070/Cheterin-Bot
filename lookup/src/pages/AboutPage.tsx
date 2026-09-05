@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PageHeader, Panel } from '../components/ui'
 import { useT } from '../context/LanguageContext'
 
 export function AboutPage() {
@@ -7,22 +8,28 @@ export function AboutPage() {
   const sections = ['s1', 's2', 's3', 's4'] as const
 
   return (
-    <article className="mx-auto max-w-3xl space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">{t('about.title')}</h1>
-        <p className="mt-4 text-base leading-relaxed text-muted">{t('about.lead')}</p>
-      </header>
+    <article className="mx-auto max-w-3xl space-y-8 lookup-rise">
+      <PageHeader title={t('about.title')} lead={t('about.lead')} eyebrow="Lookup" />
 
-      {sections.map((key) => (
-        <section key={key} className="rounded-[14px] border border-border bg-surface/70 p-5">
-          <h2 className="text-lg font-semibold">{t(`about.${key}.title`)}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{t(`about.${key}.body`)}</p>
-        </section>
-      ))}
+      <div className="grid gap-3">
+        {sections.map((key, index) => (
+          <Panel key={key} className="p-5 sm:p-6">
+            <div className="flex gap-4">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-primary-muted font-display text-xs font-bold text-primary-hover">
+                {index + 1}
+              </span>
+              <div>
+                <h2 className="font-display text-lg font-semibold">{t(`about.${key}.title`)}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{t(`about.${key}.body`)}</p>
+              </div>
+            </div>
+          </Panel>
+        ))}
+      </div>
 
       <Link
         to="/"
-        className="inline-flex rounded-[10px] bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+        className="inline-flex cursor-pointer rounded-[12px] bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
       >
         {t('about.cta')}
       </Link>

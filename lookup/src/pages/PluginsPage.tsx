@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { lookupFetch, type PluginEntry } from '../api/client'
+import { EmptyState, LoadingBlock, PageHeader, Panel } from '../components/ui'
 import { useLanguage, useT } from '../context/LanguageContext'
 
 export function PluginsPage() {
@@ -14,35 +15,32 @@ export function PluginsPage() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold">{t('plugins.title')}</h1>
-        <p className="mt-2 text-muted">{t('plugins.lead')}</p>
-      </header>
+    <div className="space-y-7 lookup-rise">
+      <PageHeader title={t('plugins.title')} lead={t('plugins.lead')} />
 
-      {plugins == null ? <p className="text-muted">{t('common.loading')}</p> : null}
+      {plugins == null ? <LoadingBlock rows={3} /> : null}
 
       {plugins && plugins.length === 0 ? (
-        <p className="rounded-[14px] border border-border bg-surface/70 p-5 text-sm text-muted">{t('plugins.empty')}</p>
+        <EmptyState title={t('plugins.title')} body={t('plugins.empty')} />
       ) : null}
 
       {plugins && plugins.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {plugins.map((plugin) => (
-            <article key={plugin.id} className="rounded-[14px] border border-border bg-surface/80 p-5">
-              <h2 className="font-semibold">{plugin.name}</h2>
-              <p className="mt-2 text-sm text-muted">
+            <Panel key={plugin.id} className="lookup-card-lift flex flex-col p-5 sm:p-6">
+              <h2 className="font-display text-lg font-semibold">{plugin.name}</h2>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
                 {lang === 'ru' && plugin.description_ru ? plugin.description_ru : plugin.description}
               </p>
               <a
                 href={plugin.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex text-sm text-primary-hover hover:underline"
+                className="mt-5 inline-flex text-sm font-semibold text-primary-hover hover:underline"
               >
-                {t('plugins.open')}
+                {t('plugins.open')} →
               </a>
-            </article>
+            </Panel>
           ))}
         </div>
       ) : null}

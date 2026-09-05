@@ -1,17 +1,30 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { LookupApiError, lookupFetch, type LookupBot } from '../api/client'
-import { CopyButton, DetailRow, ErrorBanner, Tag } from '../components/ui'
+import { useLookupContext } from '../App'
+import {
+  CopyButton,
+  DetailRow,
+  ErrorBanner,
+  GhostLink,
+  LoadingBlock,
+  Panel,
+  ProfileBanner,
+  SectionTitle,
+  Tag,
+} from '../components/ui'
 import { useT } from '../context/LanguageContext'
 import { isSnowflake } from '../lib/discord'
-import { useLookupErrorMessage } from './UserPage'
+import { useLookupErrorMessage } from '../lib/useLookup'
 
 export function BotPage() {
   const { id = '' } = useParams()
   const t = useT()
+  const { showCaptcha } = useLookupContext()
   const [data, setData] = useState<LookupBot | null>(null)
   const [error, setError] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
+  const loadRef = useRef<(() => void) | undefined>(undefined)
 
   const load = () => {
     if (!isSnowflake(id)) {
@@ -23,84 +36,93 @@ export function BotPage() {
     setError(null)
     void lookupFetch<LookupBot>(`/bot/${id}`)
       .then(setData)
-      .catch(setError)
+      .catch((err: unknown) => {
+        setError(err)
+        if (err instanceof LookupApiError && err.code === 'captcha_required') {
+          showCaptcha(() => loadRef.current?.())
+        }
+      })
       .finally(() => setLoading(false))
   }
+  loadRef.current = load
 
   useEffect(load, [id])
   const errMsg = useLookupErrorMessage(error)
 
-  if (loading) return <p className="text-muted">{t('common.loading')}</p>
+  if (loading) return <LoadingBlock rows={6} />
   if (error || !data) return <ErrorBanner message={errMsg} onRetry={load} />
 
   const user = data.user
   const app = data.application
 
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-[16px] border border-border bg-surface">
-        <div
-          className="h-36 bg-primary-deep sm:h-44"
-          style={
-            user.banner_url
-              ? { backgroundImage: `url(${user.banner_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-              : undefined
-          }
-        />
-        <div className="relative px-5 pb-5 pt-12 sm:px-6">
+    <div className="space-y-6 lookup-rise">
+      <Panel className="overflow-hidden">
+        <ProfileBanner imageUrl={user.banner_url} />
+        <div className="relative px-5 pb-6 pt-14 sm:px-6">
           <img
             src={user.avatar_url}
             alt=""
-            className="absolute -top-10 left-5 h-20 w-20 rounded-full border-4 border-surface object-cover"
+            className="absolute -top-11 left-5 h-[5.5rem] w-[5.5rem] rounded-full border-4 border-surface object-cover sm:left-6"
           />
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold">{app?.name || user.global_name || user.username}</h1>
-              <p className="text-muted">@{user.username}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Tag>BOT</Tag>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                {app?.name || user.global_name || user.username}
+              </h1>
+              <p className="mt-1 text-muted">@{user.username}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Tag tone="accent">BOT</Tag>
                 {(user.public_flags & (1 << 16)) !== 0 ? <Tag>{t('bot.verified')}</Tag> : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <CopyButton value={user.id} />
-              <Link to={`/user/${user.id}`} className="rounded-[8px] border border-border px-2 py-1 text-xs hover:bg-surface-hover">
-                {t('user.title')}
-              </Link>
+              <GhostLink to={`/user/${user.id}`}>{t('user.title')}</GhostLink>
               {data.permissions ? (
-                <Link
-                  to={`/permissions?permissions=${data.permissions}&client_id=${app?.id || user.id}`}
-                  className="rounded-[8px] border border-border px-2 py-1 text-xs hover:bg-surface-hover"
-                >
+                <GhostLink to={`/permissions?permissions=${data.permissions}&client_id=${app?.id || user.id}`}>
                   {t('bot.openPermissions')}
-                </Link>
+                </GhostLink>
               ) : null}
             </div>
           </div>
         </div>
+      </Panel>
+
+      {data.degraded ? <ErrorBanner message={t('bot.degraded')} /> : null}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel className="p-5 sm:p-6">
+          <SectionTitle>{t('bot.about')}</SectionTitle>
+          <p className="text-sm leading-relaxed text-muted">
+            {app?.description?.trim() || t('bot.noDescription')}
+          </p>
+          {data.application?.tags?.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {data.application.tags.map((tag) => (
+                <Tag key={tag}>{tag}</Tag>
+              ))}
+            </div>
+          ) : null}
+        </Panel>
+
+        <Panel className="p-5 sm:p-6">
+          <SectionTitle>{t('bot.details')}</SectionTitle>
+          <dl>
+            <DetailRow label={t('user.id')}>
+              <span className="font-mono text-[0.85rem]">{user.id}</span>
+            </DetailRow>
+            <DetailRow label={t('common.createdAt')}>{new Date(user.created_at).toUTCString()}</DetailRow>
+            {app?.approximate_guild_count != null ? (
+              <DetailRow label={t('bot.guildsApprox')}>{app.approximate_guild_count}</DetailRow>
+            ) : null}
+          </dl>
+        </Panel>
       </div>
 
-      {data.degraded ? (
-        <ErrorBanner message={t('bot.degraded')} />
-      ) : null}
-
-      <section className="rounded-[14px] border border-border bg-surface/80 p-5">
-        <h2 className="mb-2 text-lg font-semibold">{t('bot.about')}</h2>
-        <p className="text-sm leading-relaxed text-muted">
-          {app?.description?.trim() || t('bot.noDescription')}
-        </p>
-        {data.application?.tags?.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {data.application.tags.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
-          </div>
-        ) : null}
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-[14px] border border-border bg-surface/80 p-5">
-          <h2 className="mb-2 text-lg font-semibold">{t('bot.scopes')}</h2>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel className="p-5 sm:p-6">
+          <SectionTitle>{t('bot.scopes')}</SectionTitle>
           {data.scopes.length ? (
             <div className="flex flex-wrap gap-2">
               {data.scopes.map((s) => (
@@ -110,27 +132,30 @@ export function BotPage() {
           ) : (
             <p className="text-sm text-muted">{t('common.empty')}</p>
           )}
-        </section>
+        </Panel>
 
-        <section className="rounded-[14px] border border-border bg-surface/80 p-5">
-          <h2 className="mb-2 text-lg font-semibold">{t('bot.permissions')}</h2>
+        <Panel className="p-5 sm:p-6">
+          <SectionTitle>{t('bot.permissions')}</SectionTitle>
           {data.permissions_names.length ? (
-            <ul className="space-y-1 text-sm text-muted">
+            <ul className="space-y-1.5 text-sm text-muted">
               {data.permissions_names.map((name) => (
-                <li key={name}>{name}</li>
+                <li key={name} className="flex gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" aria-hidden />
+                  {name}
+                </li>
               ))}
             </ul>
           ) : (
             <p className="text-sm text-muted">{t('common.empty')}</p>
           )}
           {data.permissions ? (
-            <p className="mt-3 font-mono text-xs text-foreground">{data.permissions}</p>
+            <p className="mt-4 font-mono text-xs text-foreground/90">{data.permissions}</p>
           ) : null}
-        </section>
+        </Panel>
       </div>
 
-      <section className="rounded-[14px] border border-border bg-surface/80 p-5">
-        <h2 className="mb-2 text-lg font-semibold">{t('bot.intents')}</h2>
+      <Panel className="p-5 sm:p-6">
+        <SectionTitle>{t('bot.intents')}</SectionTitle>
         {data.intents.length ? (
           <div className="flex flex-wrap gap-2">
             {data.intents.map((i) => (
@@ -140,18 +165,7 @@ export function BotPage() {
         ) : (
           <p className="text-sm text-muted">{t('common.empty')}</p>
         )}
-      </section>
-
-      <section className="rounded-[14px] border border-border bg-surface/80 p-5">
-        <h2 className="mb-2 text-lg font-semibold">{t('bot.details')}</h2>
-        <dl>
-          <DetailRow label={t('user.id')}>{user.id}</DetailRow>
-          <DetailRow label={t('common.createdAt')}>{new Date(user.created_at).toUTCString()}</DetailRow>
-          {app?.approximate_guild_count != null ? (
-            <DetailRow label="Guilds (approx.)">{app.approximate_guild_count}</DetailRow>
-          ) : null}
-        </dl>
-      </section>
+      </Panel>
     </div>
   )
 }
