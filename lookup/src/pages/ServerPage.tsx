@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { LookupApiError, lookupFetch, type LookupServer } from '../api/client'
+import { useLookupContext } from '../App'
 import {
   CopyButton,
   DetailGrid,
@@ -20,10 +21,12 @@ import { useLookupErrorMessage } from '../lib/useLookup'
 export function ServerPage() {
   const { code: rawCode = '' } = useParams()
   const t = useT()
+  const { showCaptcha } = useLookupContext()
   const code = normalizeInviteCode(decodeURIComponent(rawCode)) || decodeURIComponent(rawCode)
   const [data, setData] = useState<LookupServer | null>(null)
   const [error, setError] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
+  const loadRef = useRef<(() => void) | undefined>(undefined)
 
   const load = () => {
     const normalized = normalizeInviteCode(code)
@@ -36,11 +39,23 @@ export function ServerPage() {
     setError(null)
     void lookupFetch<LookupServer>(`/server/${encodeURIComponent(normalized)}`)
       .then(setData)
-      .catch(setError)
+      .catch((err: unknown) => {
+        setError(err)
+        if (err instanceof LookupApiError && err.code === 'captcha_required') {
+          showCaptcha(() => loadRef.current?.())
+        }
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [code])
+  useEffect(() => {
+    loadRef.current = load
+  })
+
+  useEffect(() => {
+    load()
+  }, [code])
+
   const errMsg = useLookupErrorMessage(error)
 
   if (loading) return <LoadingBlock rows={5} />
