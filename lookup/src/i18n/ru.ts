@@ -47,10 +47,10 @@ export const ru: TranslationDict = {
   'siteFooter.legal.cookies': 'Cookies',
   'siteFooter.legal.disclaimer': 'Отказ',
 
-  'home.title': 'Узнайте, кто в Group DM!',
+  'home.title': 'Узнайте, больше о Людях!',
   'home.eyebrow': 'Discord Lookup',
   'home.subtitle':
-    'Вставьте snowflake пользователя или бота, либо код/ссылку приглашения. Режимы — User / Bot / Server; Group DM не поддерживается.',
+    'Вставьте ID пользователя или бота, либо код/ссылку приглашения. Режимы — User / Bot / Server;',
   'home.mode.user': 'Пользователь',
   'home.mode.bot': 'Бот',
   'home.mode.server': 'Сервер',

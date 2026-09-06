@@ -47,10 +47,10 @@ export const en: TranslationDict = {
   'siteFooter.legal.cookies': 'Cookies',
   'siteFooter.legal.disclaimer': 'Disclaimer',
 
-  'home.title': 'Expose who is in Group DMs!',
+  'home.title': 'Learn more about people!',
   'home.eyebrow': 'Discord Lookup',
   'home.subtitle':
-    'Paste a user or bot snowflake, or a server invite code/link. Modes stay User / Bot / Server — Group DM is not available.',
+    'Paste a user or bot ID, or an invite code/link. Modes — User / Bot / Server;',
   'home.mode.user': 'User',
   'home.mode.bot': 'Bot',
   'home.mode.server': 'Server',
