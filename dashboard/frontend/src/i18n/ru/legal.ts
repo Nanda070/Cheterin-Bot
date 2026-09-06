@@ -3,7 +3,7 @@ import type { TranslationDict } from '../types'
 /** Privacy policy and terms of service (public pages). */
 const legal: TranslationDict = {
   'privacy.title': 'Политика конфиденциальности',
-  'privacy.lastUpdated': 'Последнее обновление: 16 августа 2026',
+  'privacy.lastUpdated': 'Последнее обновление: 6 сентября 2026',
 
   'privacy.s1.title': '1. Общие положения',
   'privacy.s1.p1':
@@ -218,7 +218,7 @@ const legal: TranslationDict = {
     'Вопросы по данным: администрация вашего сервера (или тикет на основном сервере). Оператор Сервиса — Cheterin Group Ø. По вопросам бота и хостинга — Nandak070.',
 
   'terms.title': 'Условия пользования',
-  'terms.lastUpdated': 'Последнее обновление: 16 августа 2026',
+  'terms.lastUpdated': 'Последнее обновление: 6 сентября 2026',
 
   'terms.s1.title': '1. Термины и определения',
   'terms.s1.li1.prefix': '«Сервис»',
