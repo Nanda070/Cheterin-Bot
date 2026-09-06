@@ -58,10 +58,9 @@ async def test_asset_path_serves_asset_file(aiohttp_client, dist_dir):
 async def test_well_known_discord_not_spa_fallback(aiohttp_client, dist_dir):
     well_known = dist_dir / ".well-known"
     well_known.mkdir()
-    (well_known / "discord").write_text(
-        "dh=cf90ba633c23069048cee5676d56aa69e395e188\n"
-        "dh=608fcfb7697fc80b4a151675c6342afdd40a1e5a\n",
-        encoding="utf-8",
+    (well_known / "discord").write_bytes(
+        b"dh=cf90ba633c23069048cee5676d56aa69e395e188\n"
+        b"dh=608fcfb7697fc80b4a151675c6342afdd40a1e5a\n"
     )
 
     app = web.Application()

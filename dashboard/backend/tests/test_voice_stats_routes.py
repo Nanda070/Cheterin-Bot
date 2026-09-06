@@ -1,5 +1,6 @@
 """Voice stats route: hour/weekday bucketing uses guild timezone via timezone_core."""
 
+import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -34,6 +35,8 @@ async def test_voice_stats_buckets_by_guild_timezone(aiohttp_client, monkeypatch
     # 10:00–11:00 UTC+3 on a fixed day → unix range for that hour.
     start = int(datetime(2026, 7, 24, 10, 0, tzinfo=UTC3).timestamp())
     end = int(datetime(2026, 7, 24, 11, 0, tzinfo=UTC3).timestamp())
+    # Freeze time to one day after the session so it is within any days=30 window.
+    monkeypatch.setattr(time, "time", lambda: end + 86400)
     stats_db.voice_session_add(GUILD, 20, 500, "General", start, end, end - start)
 
     _, app = build()
@@ -59,6 +62,8 @@ async def test_voice_stats_same_unix_different_hour_in_utc(aiohttp_client, monke
     # Same absolute window as above: 07:00–08:00 UTC.
     start = int(datetime(2026, 7, 24, 10, 0, tzinfo=UTC3).timestamp())
     end = int(datetime(2026, 7, 24, 11, 0, tzinfo=UTC3).timestamp())
+    # Freeze time so the session falls within the 30-day query window.
+    monkeypatch.setattr(time, "time", lambda: end + 86400)
     stats_db.voice_session_add(GUILD, 20, 500, "General", start, end, end - start)
 
     _, app = build()

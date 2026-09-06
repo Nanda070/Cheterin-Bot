@@ -17,6 +17,7 @@ import { ServerPage } from './pages/ServerPage'
 import { SnowflakePage } from './pages/SnowflakePage'
 import { TimestampPage } from './pages/TimestampPage'
 import { UserPage } from './pages/UserPage'
+import { DevBlogPage } from './pages/DevBlogPage'
 
 // ---------------------------------------------------------------------------
 // Lookup config + CAPTCHA context
@@ -105,6 +106,8 @@ export default function App() {
               <Route path="/permissions" element={<PermissionsLegacyRedirect />} />
               <Route path="/avatars" element={<Navigate to="/plugins/avatars" replace />} />
               <Route path="/badges" element={<Navigate to="/plugins/badges" replace />} />
+
+              <Route path="/dev-blog" element={<DevBlogPage />} />
 
               {/* DSA is a home mode — no standalone page */}
               <Route path="/dsa" element={<DsaRedirect />} />

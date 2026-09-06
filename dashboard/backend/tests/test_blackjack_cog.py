@@ -85,7 +85,7 @@ def make_game(player_cards, dealer_cards, deck=None, bet=100):
 async def test_disabled_module():
     cog, player, guild = build(casino_enabled=False)
     interaction = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
+    await BlackjackCog.blackjack_command(cog, interaction, 50)
     assert "«Казино» отключён" in interaction.response.messages[0]["content"]
 
 
@@ -93,7 +93,7 @@ async def test_disabled_module():
 async def test_requires_economy():
     cog, player, guild = build(economy_enabled=False)
     interaction = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
+    await BlackjackCog.blackjack_command(cog, interaction, 50)
     assert "Экономика" in interaction.response.messages[0]["content"]
 
 
@@ -102,7 +102,7 @@ async def test_active_game_blocks_second():
     cog, player, guild = build()
     cog._games[(guild.id, player.id)] = make_game(["10♠", "7♦"], ["9♣", "5♥"])
     interaction = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
+    await BlackjackCog.blackjack_command(cog, interaction, 50)
     assert "уже идёт партия" in interaction.response.messages[0]["content"]
 
 
@@ -118,7 +118,7 @@ async def test_active_game_is_isolated_per_guild(monkeypatch):
     assert not cog.has_active_game(guild.id, player.id)
     assert cog.has_active_game(other_guild_id, player.id)
 
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
+    await BlackjackCog.blackjack_command(cog, interaction, 100)
     assert isinstance(interaction.response.messages[0]["view"], BlackjackView)
     assert cog.has_active_game(guild.id, player.id)
     assert cog.has_active_game(other_guild_id, player.id)
@@ -128,7 +128,7 @@ async def test_cooldown_blocks_new_game():
     economy_db.add(GUILD_ID, player.id, 1000, "seed")
     cog._cooldowns[(guild.id, player.id)] = time.monotonic() + 30
     interaction = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 50)
+    await BlackjackCog.blackjack_command(cog, interaction, 50)
     assert "отдыхает" in interaction.response.messages[0]["content"]
     assert economy_db.get_balance(GUILD_ID, player.id) == 1000
 
@@ -148,12 +148,12 @@ async def test_cooldown_is_per_guild(monkeypatch):
     )
 
     blocked = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, blocked, 50)
+    await BlackjackCog.blackjack_command(cog, blocked, 50)
     assert "отдыхает" in blocked.response.messages[0]["content"]
 
     ok = FakeInteraction(player, other)
     ok.guild_id = other.id
-    await BlackjackCog.blackjack_command.callback(cog, ok, 50)
+    await BlackjackCog.blackjack_command(cog, ok, 50)
     assert isinstance(ok.response.messages[0]["view"], BlackjackView)
     assert economy_db.get_balance(99, player.id) == 950
     assert economy_db.get_balance(GUILD_ID, player.id) == 1000
@@ -164,7 +164,7 @@ async def test_bet_below_min_rejected():
     cog, player, guild = build(min_bet=10)
     economy_db.add(GUILD_ID, player.id, 1000, "seed")
     interaction = FakeInteraction(player, guild)
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 1)
+    await BlackjackCog.blackjack_command(cog, interaction, 1)
     assert "Минимальная" in interaction.response.messages[0]["content"]
     assert economy_db.get_balance(GUILD_ID, player.id) == 1000
 
@@ -178,7 +178,7 @@ async def test_game_starts_deducts_bet_and_sends_view(monkeypatch):
     monkeypatch.setattr(bj, "new_game", lambda bet: make_game(["10♠", "7♦"], ["9♣", "5♥"], deck=["2♠"], bet=bet))
     interaction = FakeInteraction(player, guild)
 
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
+    await BlackjackCog.blackjack_command(cog, interaction, 100)
 
     assert economy_db.get_balance(GUILD_ID, player.id) == 900
     msg = interaction.response.messages[0]
@@ -194,7 +194,7 @@ async def test_natural_blackjack_pays_and_records_stats(monkeypatch):
     monkeypatch.setattr(bj, "new_game", lambda bet: make_game(["A♠", "K♦"], ["9♣", "5♥"], deck=["2♠", "3♠"], bet=bet))
     interaction = FakeInteraction(player, guild)
 
-    await BlackjackCog.blackjack_command.callback(cog, interaction, 100)
+    await BlackjackCog.blackjack_command(cog, interaction, 100)
 
     # ×2.5: −100 ставка, +250 приз
     assert economy_db.get_balance(GUILD_ID, player.id) == 1150

@@ -11,6 +11,11 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
   {
+    version: '2026.09.2',
+    date: '2026-09',
+    itemKeys: ['pluginsHub', 'badgeCatalog', 'dsaLookup', 'devBlog'],
+  },
+  {
     version: '2026.09.1',
     date: '2026-09',
     itemKeys: ['lookupLaunch'],

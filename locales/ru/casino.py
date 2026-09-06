@@ -62,5 +62,6 @@ MESSAGES: dict[str, str] = {
     "casino.bj.double_insufficient": "Недостаточно средств для удвоения.",
     "casino.bj.active_game": "У тебя уже идёт партия в блэкджек — сначала доиграй её.",
     "casino.bj.already_active": "У тебя уже идёт партия в блэкджек — сначала доиграй её.",
+        "casino.bj.need_bet": "Укажите сумму ставки.",
     "casino.bj.not_your_game": "Это не твоя партия.",
 }

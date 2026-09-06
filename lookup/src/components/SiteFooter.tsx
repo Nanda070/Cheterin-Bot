@@ -156,6 +156,18 @@ export function SiteFooter() {
             </li>
           </ul>
         </div>
+
+        <div>
+          <ColHeading>{t('siteFooter.col.community')}</ColHeading>
+          <ul className="mt-4 flex flex-col gap-2.5">
+            <li>
+              <ColLink href={SOCIAL.discord}>{t('siteFooter.lookup.support')}</ColLink>
+            </li>
+            <li>
+              <ColLink href="/dev-blog">{t('siteFooter.lookup.devBlog')}</ColLink>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div className="border-t border-border/70">

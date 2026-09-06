@@ -52,6 +52,7 @@ import { RelationsPage } from './pages/Relations'
 import { HealthPage } from './pages/Health'
 import { BannerRotationPage } from './pages/BannerRotation'
 import { ValorantPage } from './pages/Valorant'
+import { DevBlogPage } from './pages/DevBlogPage'
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
             <Route path="/cookies" element={<CookiesPage />} />
             <Route path="/disclaimer" element={<DisclaimerPage />} />
             <Route path="/credits" element={<CreditsPage />} />
+            <Route path="/dev-blog" element={<DevBlogPage />} />
             <Route path="/sans" element={<SansPage />} />
             <Route path="/snowdin" element={<SansPage />} />
             <Route path="/waterfall" element={<WaterfallRoomPage />} />

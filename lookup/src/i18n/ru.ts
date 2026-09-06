@@ -32,6 +32,9 @@ export const ru: TranslationDict = {
   'siteFooter.col.services': 'Сервисы',
   'siteFooter.col.tools': 'Инструменты',
   'siteFooter.col.legal': 'Документы',
+  'siteFooter.col.community': 'Сообщество',
+  'siteFooter.lookup.support': 'Сервер поддержки',
+  'siteFooter.lookup.devBlog': 'Dev Blog',
   'siteFooter.lookup.desc':
     'Открытый Lookup экосистемы Cheterin — публичный поиск пользователей, ботов и invite без входа в панель и бота Cheterin.',
   'siteFooter.lookup.user': 'Discord User Lookup',

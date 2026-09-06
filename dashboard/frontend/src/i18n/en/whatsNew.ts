@@ -20,6 +20,14 @@ const whatsNew: TranslationDict = {
     'VALORANT tab: Premier apps and role panels (ideas stay under Feedback)',
   'whatsNew.item.lookupLaunch':
     'Cheterin Lookup is live — look up Discord users, bots, and servers at /lookup',
+  'whatsNew.item.pluginsHub':
+    'Lookup Plugins hub — unified catalog with built-in tools and curated Vencord UserPlugins',
+  'whatsNew.item.badgeCatalog':
+    'Badge catalog — complete mezotv Discord badge reference including Nitro, boosts, flairs, and guild tags',
+  'whatsNew.item.dsaLookup':
+    'DSA mode — look up public EU DSA Statements of Reasons by Discord ID',
+  'whatsNew.item.devBlog':
+    'Dev Blog — full development history from first commit to today at /dev-blog',
 }
 
 export default whatsNew

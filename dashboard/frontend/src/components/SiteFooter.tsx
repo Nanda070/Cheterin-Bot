@@ -169,6 +169,9 @@ export function SiteFooter({ descriptionSlot }: Props) {
             <li>
               <ColLink to="/credits">{t('siteFooter.bot.credits')}</ColLink>
             </li>
+            <li>
+              <ColLink to="/dev-blog">{t('siteFooter.bot.devBlog')}</ColLink>
+            </li>
           </ul>
         </div>
       </div>

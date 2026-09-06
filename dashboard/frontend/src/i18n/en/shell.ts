@@ -148,6 +148,7 @@ const shell: TranslationDict = {
   'siteFooter.bot.support': 'Support server',
   'siteFooter.bot.add': 'Add to Discord',
   'siteFooter.bot.credits': 'Credits',
+  'siteFooter.bot.devBlog': 'Dev Blog',
   'siteFooter.legal.terms': 'Terms',
   'siteFooter.legal.privacy': 'Privacy',
   'siteFooter.legal.cookies': 'Cookies',

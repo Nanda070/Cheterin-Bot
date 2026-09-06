@@ -20,6 +20,14 @@ const whatsNew: TranslationDict = {
     'Вкладка VALORANT: Premier-заявки и панели ролей (идеи — в Обратной связи)',
   'whatsNew.item.lookupLaunch':
     'Cheterin Lookup запущен — ищите пользователей, ботов и серверы Discord на /lookup',
+  'whatsNew.item.pluginsHub':
+    'Plugins hub в Lookup — единый каталог встроенных инструментов и Vencord UserPlugins',
+  'whatsNew.item.badgeCatalog':
+    'Каталог бейджей — полный набор mezotv: Nitro, бусты, флеры, guild tags',
+  'whatsNew.item.dsaLookup':
+    'Режим DSA — поиск публичных Statement of Reasons EU DSA по Discord ID',
+  'whatsNew.item.devBlog':
+    'Dev Blog — полная история разработки с первого коммита на /dev-blog',
 }
 
 export default whatsNew

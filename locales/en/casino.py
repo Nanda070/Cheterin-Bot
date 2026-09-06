@@ -63,4 +63,5 @@ MESSAGES: dict[str, str] = {
     "casino.bj.active_game": "You already have a blackjack game — finish it first.",
     "casino.bj.already_active": "You already have a blackjack game — finish it first.",
     "casino.bj.not_your_game": "This isn't your game.",
+    "casino.bj.need_bet": "Enter a bet amount.",
 }
