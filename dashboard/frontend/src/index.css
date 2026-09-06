@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -27,8 +27,6 @@
   --color-danger-hover: #f56565;
 
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --font-landing-display: 'Syne', sans-serif;
-  --font-landing-body: 'Manrope', sans-serif;
 
   --radius-card: 14px;
   --radius-control: 10px;
@@ -112,27 +110,6 @@
   }
 }
 
-@keyframes landing-glow-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(3%, -2%, 0) scale(1.08);
-  }
-}
-
-@keyframes landing-module-line {
-  from {
-    transform: scaleX(0);
-    transform-origin: left center;
-  }
-  to {
-    transform: scaleX(1);
-    transform-origin: left center;
-  }
-}
-
 .animate-fade-in-up {
   animation: fade-in-up 400ms var(--ease-out-smooth) both;
 }
@@ -149,69 +126,73 @@
   animation: landing-section-in 650ms var(--ease-out-smooth) both;
 }
 
-/* About (/about) — charcoal + dark-red kit, no second --landing-* theme */
+.landing-wave {
+  line-height: 0;
+}
+
+/*
+ * About (/about) — 42120ca layout craft + charcoal / dark-red kit.
+ * Hero plane is charcoal-forward with dark-red glow (not a purple or full-crimson second theme).
+ */
 .landing {
-  font-family: var(--font-landing-body);
+  --landing-glow-rgb: 168, 40, 60;
+  --landing-cta-ink: #070912;
+  --landing-plane-from: #070912;
+  --landing-plane-mid: #10141d;
+  --landing-plane-to: #0a0c12;
 }
 
-.landing-display {
-  font-family: var(--font-landing-display);
-}
-
-.landing-atmosphere {
+.landing-plane {
   background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, #a8283c22, transparent 55%),
-    radial-gradient(ellipse 40% 35% at 92% 70%, #5c0f1e40, transparent 55%),
-    linear-gradient(180deg, #070912 0%, #0b0e14 48%, #0a0c12 100%);
+    radial-gradient(ellipse 80% 60% at 70% 18%, rgba(var(--landing-glow-rgb), 0.26), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 12% 85%, rgba(92, 15, 30, 0.32), transparent 52%),
+    linear-gradient(165deg, var(--landing-plane-from) 0%, var(--landing-plane-mid) 48%, var(--landing-plane-to) 100%);
 }
 
 .landing-header {
-  background-color: color-mix(in srgb, var(--color-background) 82%, transparent);
+  background-color: color-mix(in srgb, var(--color-background-deep) 90%, var(--color-primary-deep) 10%);
 }
 
-.landing-glow {
-  animation: landing-glow-drift 16s var(--ease-out-smooth) infinite;
+.landing-cta-ink {
+  color: var(--landing-cta-ink);
 }
 
-.landing-glow-delay {
-  animation: landing-glow-drift 20s var(--ease-out-smooth) infinite reverse;
-}
-
-.landing-module {
-  position: relative;
-}
-
-.landing-module::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: min(6rem, 30%);
-  height: 1px;
-  background: var(--color-primary);
-  animation: landing-module-line 700ms var(--ease-out-smooth) both;
+.landing-feature-glow {
+  box-shadow: 0 12px 40px -20px rgba(var(--landing-glow-rgb), 0.5);
 }
 
 .landing-lookup-band {
   background:
-    radial-gradient(ellipse 55% 80% at 0% 50%, #a8283c18, transparent 60%),
+    radial-gradient(ellipse 55% 80% at 0% 50%, rgba(var(--landing-glow-rgb), 0.12), transparent 60%),
     var(--color-background);
 }
 
-/* Docs / Terms / Privacy — same kit tokens as About / Lookup */
+/* Docs / Terms / Privacy — charcoal kit echo */
 .public {
   --public-accent-deep: #5c0f1e;
   --public-accent: #a8283c;
   --public-glow-rgb: 168, 40, 60;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
 
 .public-header {
-  background-color: color-mix(in srgb, var(--color-background) 88%, var(--public-accent-deep) 12%);
-  border-bottom-color: color-mix(in srgb, var(--color-border) 80%, var(--public-accent) 20%);
+  background-color: color-mix(in srgb, var(--color-background) 86%, var(--public-accent-deep) 14%);
+  border-bottom-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
 }
 
 .public-footer {
-  border-top-color: color-mix(in srgb, var(--color-border) 80%, var(--public-accent) 20%);
+  background-color: color-mix(in srgb, var(--color-background-deep) 92%, var(--public-accent-deep) 8%);
+  border-top-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
+  color: var(--color-muted);
+}
+
+.public-footer a {
+  color: color-mix(in srgb, var(--color-foreground) 82%, var(--color-muted) 18%);
+}
+
+.public-footer a:hover {
+  color: var(--color-primary);
 }
 
 /* Public bunker / mafia player tables — atmospheric HUD surfaces */
@@ -306,9 +287,6 @@
   .animate-dropdown-in,
   .landing-hero-in,
   .landing-section-in,
-  .landing-glow,
-  .landing-glow-delay,
-  .landing-module::before,
   .game-panel--action,
   .game-timer--urgent {
     animation: none;

@@ -1,4 +1,23 @@
-import { DiscordLogo } from '@phosphor-icons/react'
+import {
+  CalendarCheck,
+  ChartBar,
+  Coins,
+  Crosshair,
+  Detective,
+  DiscordLogo,
+  GameController,
+  Gift,
+  Headset,
+  House,
+  IdentificationBadge,
+  Megaphone,
+  Package,
+  ShieldCheck,
+  Sparkle,
+  Trophy,
+  UsersThree,
+  type Icon,
+} from '@phosphor-icons/react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchInviteUrl, loginUrl } from '../api/client'
@@ -26,19 +45,11 @@ type FeatureDef = {
   titleKey: string
   bodyKey: string
   points: [string, string, string]
+  icons: Icon[]
+  reverse?: boolean
 }
 
 const FEATURES: FeatureDef[] = [
-  {
-    id: 'moderation',
-    titleKey: 'landing.feature.moderation.title',
-    bodyKey: 'landing.feature.moderation.body',
-    points: [
-      'landing.feature.moderation.point1',
-      'landing.feature.moderation.point2',
-      'landing.feature.moderation.point3',
-    ],
-  },
   {
     id: 'levels',
     titleKey: 'landing.feature.levels.title',
@@ -48,16 +59,7 @@ const FEATURES: FeatureDef[] = [
       'landing.feature.levels.point2',
       'landing.feature.levels.point3',
     ],
-  },
-  {
-    id: 'welcome',
-    titleKey: 'landing.feature.welcome.title',
-    bodyKey: 'landing.feature.welcome.body',
-    points: [
-      'landing.feature.welcome.point1',
-      'landing.feature.welcome.point2',
-      'landing.feature.welcome.point3',
-    ],
+    icons: [Trophy, ChartBar, Headset],
   },
   {
     id: 'economy',
@@ -68,6 +70,31 @@ const FEATURES: FeatureDef[] = [
       'landing.feature.economy.point2',
       'landing.feature.economy.point3',
     ],
+    icons: [Coins, Gift, ChartBar],
+    reverse: true,
+  },
+  {
+    id: 'moderation',
+    titleKey: 'landing.feature.moderation.title',
+    bodyKey: 'landing.feature.moderation.body',
+    points: [
+      'landing.feature.moderation.point1',
+      'landing.feature.moderation.point2',
+      'landing.feature.moderation.point3',
+    ],
+    icons: [ShieldCheck, IdentificationBadge, Megaphone],
+  },
+  {
+    id: 'welcome',
+    titleKey: 'landing.feature.welcome.title',
+    bodyKey: 'landing.feature.welcome.body',
+    points: [
+      'landing.feature.welcome.point1',
+      'landing.feature.welcome.point2',
+      'landing.feature.welcome.point3',
+    ],
+    icons: [House, UsersThree, IdentificationBadge],
+    reverse: true,
   },
   {
     id: 'events',
@@ -78,36 +105,7 @@ const FEATURES: FeatureDef[] = [
       'landing.feature.events.point2',
       'landing.feature.events.point3',
     ],
-  },
-  {
-    id: 'valorant',
-    titleKey: 'landing.feature.valorant.title',
-    bodyKey: 'landing.feature.valorant.body',
-    points: [
-      'landing.feature.valorant.point1',
-      'landing.feature.valorant.point2',
-      'landing.feature.valorant.point3',
-    ],
-  },
-  {
-    id: 'gta',
-    titleKey: 'landing.feature.gta.title',
-    bodyKey: 'landing.feature.gta.body',
-    points: [
-      'landing.feature.gta.point1',
-      'landing.feature.gta.point2',
-      'landing.feature.gta.point3',
-    ],
-  },
-  {
-    id: 'games',
-    titleKey: 'landing.feature.games.title',
-    bodyKey: 'landing.feature.games.body',
-    points: [
-      'landing.feature.games.point1',
-      'landing.feature.games.point2',
-      'landing.feature.games.point3',
-    ],
+    icons: [CalendarCheck, Trophy, Gift],
   },
   {
     id: 'messages',
@@ -118,14 +116,107 @@ const FEATURES: FeatureDef[] = [
       'landing.feature.messages.point2',
       'landing.feature.messages.point3',
     ],
+    icons: [Megaphone, Headset, Sparkle],
+    reverse: true,
+  },
+  {
+    id: 'valorant',
+    titleKey: 'landing.feature.valorant.title',
+    bodyKey: 'landing.feature.valorant.body',
+    points: [
+      'landing.feature.valorant.point1',
+      'landing.feature.valorant.point2',
+      'landing.feature.valorant.point3',
+    ],
+    icons: [Crosshair, UsersThree, Trophy],
+  },
+  {
+    id: 'games',
+    titleKey: 'landing.feature.games.title',
+    bodyKey: 'landing.feature.games.body',
+    points: [
+      'landing.feature.games.point1',
+      'landing.feature.games.point2',
+      'landing.feature.games.point3',
+    ],
+    icons: [Detective, GameController, Sparkle],
+    reverse: true,
+  },
+  {
+    id: 'gta',
+    titleKey: 'landing.feature.gta.title',
+    bodyKey: 'landing.feature.gta.body',
+    points: [
+      'landing.feature.gta.point1',
+      'landing.feature.gta.point2',
+      'landing.feature.gta.point3',
+    ],
+    icons: [UsersThree, Package, CalendarCheck],
   },
 ]
 
-const START_STEPS = [
-  { titleKey: 'landing.start.step1.title', bodyKey: 'landing.start.step1.body' },
-  { titleKey: 'landing.start.step2.title', bodyKey: 'landing.start.step2.body' },
-  { titleKey: 'landing.start.step3.title', bodyKey: 'landing.start.step3.body' },
-] as const
+function WaveDivider({ className = '', fill = 'var(--color-background)' }: { className?: string; fill?: string }) {
+  return (
+    <div className={`landing-wave ${className}`} aria-hidden>
+      <svg viewBox="0 0 1440 96" preserveAspectRatio="none" className="block h-12 w-full sm:h-16 md:h-20">
+        <path
+          fill={fill}
+          d="M0,64 C240,96 480,16 720,40 C960,64 1200,96 1440,48 L1440,96 L0,96 Z"
+        />
+      </svg>
+    </div>
+  )
+}
+
+function FeatureVisual({ icons }: { icons: Icon[] }) {
+  return (
+    <div className="relative mx-auto flex h-56 w-full max-w-md items-center justify-center sm:h-64">
+      <div className="absolute inset-6 rounded-[2rem] bg-primary/10 blur-2xl" aria-hidden />
+      <div className="relative grid grid-cols-3 gap-3">
+        {icons.map((Icon, index) => (
+          <div
+            key={index}
+            className={[
+              'landing-feature-glow flex items-center justify-center rounded-2xl border border-border/80 bg-surface/90',
+              index === 1 ? 'h-24 w-24 sm:h-28 sm:w-28' : 'h-20 w-20 sm:h-24 sm:w-24',
+              index === 0 ? '-translate-y-3' : '',
+              index === 2 ? 'translate-y-4' : '',
+            ].join(' ')}
+          >
+            <Icon size={index === 1 ? 40 : 32} weight="duotone" className="text-primary" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FeatureSection({ feature, index }: { feature: FeatureDef; index: number }) {
+  const t = useT()
+  return (
+    <section
+      className={[
+        'landing-section-in grid items-center gap-10 lg:grid-cols-2 lg:gap-16',
+        feature.reverse ? 'lg:[&>*:first-child]:order-2' : '',
+      ].join(' ')}
+      style={{ animationDelay: `${Math.min(index * 60, 240)}ms` }}
+    >
+      <div>
+        <h3 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{t(feature.titleKey)}</h3>
+        <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">{t(feature.bodyKey)}</p>
+        <ul className="mt-5 flex flex-col gap-2.5">
+          {feature.points.map((key) => (
+            <li key={key} className="flex items-start gap-2.5 text-sm text-foreground/90">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              {t(key)}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <FeatureVisual icons={feature.icons} />
+    </section>
+  )
+}
 
 function PrimaryButton({
   children,
@@ -141,9 +232,9 @@ function PrimaryButton({
   className?: string
 }) {
   const base = [
-    'inline-flex items-center justify-center gap-2 rounded-control px-5 py-2.5 text-sm font-semibold',
-    'bg-primary text-white transition-colors duration-200 hover:bg-primary-hover',
-    'disabled:cursor-wait disabled:opacity-80',
+    'inline-flex items-center justify-center gap-2 rounded-control px-5 py-2.5 text-sm font-semibold transition-all duration-200',
+    'landing-cta-ink bg-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)]',
+    'hover:bg-white/95 disabled:cursor-wait disabled:opacity-80',
     className,
   ].join(' ')
 
@@ -179,8 +270,8 @@ function GhostButton({
   className?: string
 }) {
   const classNames = [
-    'inline-flex items-center justify-center gap-2 rounded-control border border-border bg-transparent px-5 py-2.5',
-    'text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary-muted',
+    'inline-flex items-center justify-center gap-2 rounded-control border border-white/30 bg-white/8 px-5 py-2.5',
+    'text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/14',
     className,
   ].join(' ')
 
@@ -222,38 +313,6 @@ function AccountLink({
   )
 }
 
-function FeatureRow({ feature, index }: { feature: FeatureDef; index: number }) {
-  const t = useT()
-  const n = String(index + 1).padStart(2, '0')
-
-  return (
-    <article
-      className="landing-section-in landing-module border-t border-border/80 py-10 sm:py-12"
-      style={{ animationDelay: `${Math.min(index * 50, 280)}ms` }}
-    >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14">
-        <div>
-          <p className="landing-display text-xs font-semibold tracking-[0.2em] text-primary/80">{n}</p>
-          <h3 className="landing-display mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {t(feature.titleKey)}
-          </h3>
-        </div>
-        <div>
-          <p className="max-w-xl text-base leading-relaxed text-muted">{t(feature.bodyKey)}</p>
-          <ul className="mt-5 flex flex-col gap-2.5">
-            {feature.points.map((key) => (
-              <li key={key} className="flex items-start gap-3 text-sm text-foreground/90">
-                <span className="mt-2 h-px w-4 shrink-0 bg-primary" aria-hidden />
-                {t(key)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </article>
-  )
-}
-
 export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
   const t = useT()
   const { user } = useAuth()
@@ -281,11 +340,11 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
 
   return (
     <div className="landing flex min-h-dvh flex-col bg-background text-foreground">
-      <header className="landing-header sticky top-0 z-20 border-b border-border/80 text-foreground backdrop-blur">
+      <header className="landing-header sticky top-0 z-20 border-b border-white/10 text-white backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <BrandMark
             to="/about"
-            className="landing-display flex items-center gap-2 font-bold tracking-tight text-foreground"
+            className="flex items-center gap-2 font-semibold tracking-tight text-white"
             iconClassName="text-primary"
             iconSize={22}
           />
@@ -293,36 +352,36 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
           <div className="flex items-center gap-2 sm:gap-3">
             <nav className="hidden items-center gap-1 md:flex" aria-label="About">
               <a
-                href="#modules"
-                className="rounded-control px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                href="#features"
+                className="rounded-control px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {t('landing.nav.features')}
               </a>
               <Link
                 to="/docs"
-                className="rounded-control px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                className="rounded-control px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {t('nav.docs')}
               </Link>
               <a
                 href="/lookup/"
-                className="rounded-control px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                className="rounded-control px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {t('landing.nav.lookup')}
               </a>
             </nav>
-            <LanguageToggle />
+            <LanguageToggle className="border-white/20 bg-white/10 [&_button]:text-white/80 [&_button[aria-pressed=true]]:bg-white/20 [&_button[aria-pressed=true]]:text-white" />
             <button
               type="button"
               onClick={() => void openInvite()}
               disabled={inviteBusy}
-              className="hidden cursor-pointer rounded-control bg-primary px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-80 sm:inline-flex"
+              className="landing-cta-ink hidden cursor-pointer rounded-control bg-white px-3 py-1.5 text-sm font-semibold transition hover:bg-white/95 disabled:opacity-80 sm:inline-flex"
             >
               {inviteBusy ? t('landing.hero.ctaOpening') : t('landing.nav.addBot')}
             </button>
             <AccountLink
               href={accountHref}
-              className="rounded-control border border-border px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-surface-hover"
+              className="rounded-control border border-white/30 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/10"
             >
               {accountLabel}
             </AccountLink>
@@ -330,39 +389,35 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
         </div>
       </header>
 
-      <section id="top" className="landing-atmosphere relative overflow-hidden">
-        <div className="landing-glow pointer-events-none absolute -left-1/4 top-0 h-[70%] w-[70%] rounded-full bg-primary/10 blur-3xl" aria-hidden />
-        <div className="landing-glow-delay pointer-events-none absolute -right-1/5 bottom-0 h-[55%] w-[55%] rounded-full bg-primary-deep/40 blur-3xl" aria-hidden />
+      <section id="top" className="landing-plane relative overflow-hidden text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 68% 22%, rgba(168,40,60,0.22), transparent 55%), radial-gradient(ellipse 50% 40% at 18% 78%, rgba(255,255,255,0.06), transparent 50%)',
+          }}
+          aria-hidden
+        />
 
-        <div className="relative mx-auto flex min-h-[min(88vh,820px)] w-full max-w-6xl flex-col justify-center px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-24">
-          <p className="landing-hero-in landing-display text-[clamp(3.25rem,12vw,7.5rem)] font-extrabold leading-[0.92] tracking-tight text-foreground">
-            {t('landing.hero.brand')}
-          </p>
-          <h1
-            className="landing-hero-in mt-6 max-w-2xl text-xl font-semibold leading-snug tracking-tight text-foreground/95 sm:text-2xl md:text-3xl"
-            style={{ animationDelay: '90ms' }}
-          >
+        <div className="landing-hero-in relative mx-auto flex min-h-[min(78vh,720px)] w-full max-w-6xl flex-col justify-center px-4 pb-8 pt-16 sm:px-6 sm:pt-20">
+          <p className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">{t('landing.hero.brand')}</p>
+          <h1 className="mt-4 max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-white/95 sm:text-3xl md:text-4xl">
             {t('landing.hero.headline')}
           </h1>
-          <p
-            className="landing-hero-in mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg"
-            style={{ animationDelay: '160ms' }}
-          >
-            {t('landing.hero.sub')}
-          </p>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">{t('landing.hero.sub')}</p>
 
           {authErrorKey && (
-            <p className="mt-5 max-w-xl rounded-control border border-border bg-surface px-3 py-2 text-sm text-foreground">
+            <p className="mt-5 max-w-xl rounded-control border border-white/20 bg-black/30 px-3 py-2 text-sm text-white">
               {t(authErrorKey)}
             </p>
           )}
           {inviteError && (
-            <p className="mt-5 max-w-xl rounded-control border border-border bg-surface px-3 py-2 text-sm text-foreground">
+            <p className="mt-5 max-w-xl rounded-control border border-white/20 bg-black/30 px-3 py-2 text-sm text-white">
               {inviteError}
             </p>
           )}
 
-          <div className="landing-hero-in mt-9 flex flex-wrap items-center gap-3" style={{ animationDelay: '240ms' }}>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <PrimaryButton onClick={() => void openInvite()} disabled={inviteBusy}>
               <DiscordLogo size={20} weight="fill" />
               {inviteBusy ? t('landing.hero.ctaOpening') : t('landing.hero.ctaAdd')}
@@ -371,69 +426,50 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
             <GhostButton href="/lookup/">{t('landing.hero.ctaLookup')}</GhostButton>
           </div>
         </div>
+
+        <WaveDivider />
       </section>
 
       <main className="relative z-10 flex-1">
-        <section className="border-t border-border/80">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-            <div className="landing-section-in max-w-2xl">
-              <p className="text-sm font-medium uppercase tracking-[0.16em] text-primary">{t('landing.start.eyebrow')}</p>
-              <h2 className="landing-display mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                {t('landing.start.title')}
-              </h2>
-            </div>
-
-            <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
-              {START_STEPS.map((step, index) => (
-                <li
-                  key={step.titleKey}
-                  className="landing-section-in"
-                  style={{ animationDelay: `${120 + index * 80}ms` }}
-                >
-                  <p className="landing-display text-sm font-semibold tracking-[0.18em] text-primary">
-                    {String(index + 1).padStart(2, '0')}
-                  </p>
-                  <h3 className="landing-display mt-3 text-lg font-bold text-foreground">{t(step.titleKey)}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">{t(step.bodyKey)}</p>
-                </li>
-              ))}
-            </ol>
+        <div id="features" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="landing-section-in mb-14 max-w-2xl">
+            <p className="text-sm font-medium uppercase tracking-[0.14em] text-primary">{t('landing.features.eyebrow')}</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              {t('landing.features.intro')}
+            </h2>
           </div>
-        </section>
 
-        <section id="modules" className="border-t border-border/80">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-            <div className="landing-section-in mb-4 max-w-2xl">
-              <p className="text-sm font-medium uppercase tracking-[0.16em] text-primary">{t('landing.features.eyebrow')}</p>
-              <h2 className="landing-display mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                {t('landing.features.intro')}
-              </h2>
-            </div>
-
-            <div>
-              {FEATURES.map((feature, index) => (
-                <FeatureRow key={feature.id} feature={feature} index={index} />
-              ))}
-            </div>
+          <div className="flex flex-col gap-20 sm:gap-24">
+            {FEATURES.map((feature, index) => (
+              <FeatureSection key={feature.id} feature={feature} index={index} />
+            ))}
           </div>
-        </section>
+        </div>
 
-        <section id="lookup" className="landing-lookup-band border-y border-border/80">
+        <section id="lookup" className="landing-lookup-band border-y border-border">
           <div className="landing-section-in mx-auto flex w-full max-w-6xl flex-col items-start gap-6 px-4 py-14 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-16">
             <div className="max-w-xl">
-              <p className="text-sm font-medium uppercase tracking-[0.16em] text-primary">{t('landing.lookup.eyebrow')}</p>
-              <h2 className="landing-display mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{t('landing.lookup.title')}</h2>
+              <p className="text-sm font-medium uppercase tracking-[0.14em] text-primary">{t('landing.lookup.eyebrow')}</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                {t('landing.lookup.title')}
+              </h2>
               <p className="mt-3 text-base leading-relaxed text-muted">{t('landing.lookup.body')}</p>
             </div>
-            <PrimaryButton href="/lookup/">{t('landing.lookup.cta')}</PrimaryButton>
+            <a
+              href="/lookup/"
+              className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              {t('landing.lookup.cta')}
+            </a>
           </div>
         </section>
 
-        <section className="landing-atmosphere relative overflow-hidden">
+        <section className="landing-plane relative overflow-hidden text-white">
+          <WaveDivider className="rotate-180" fill="var(--color-background)" />
           <div className="landing-section-in relative mx-auto flex w-full max-w-6xl flex-col items-start gap-6 px-4 py-14 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-16">
             <div className="max-w-xl">
-              <h2 className="landing-display text-2xl font-bold tracking-tight sm:text-3xl">{t('landing.cta.title')}</h2>
-              <p className="mt-2 text-base text-muted">{t('landing.cta.body')}</p>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t('landing.cta.title')}</h2>
+              <p className="mt-2 text-base text-white/75">{t('landing.cta.body')}</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <PrimaryButton onClick={() => void openInvite()} disabled={inviteBusy}>
@@ -449,7 +485,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
       <footer className="border-t border-border bg-background">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
           <div>
-            <BrandMark to="/about" iconSize={20} className="landing-display flex items-center gap-2 font-bold tracking-tight" />
+            <BrandMark to="/about" iconSize={20} />
             <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mt-3 block max-w-xs cursor-default">
               <p className="text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
             </SecretClickTarget>
@@ -461,7 +497,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
             <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.product')}</h3>
             <ul className="mt-3 flex flex-col gap-2 text-sm">
               <li>
-                <a href="#modules" className="text-foreground/90 hover:text-foreground">
+                <a href="#features" className="text-foreground/90 hover:text-foreground">
                   {t('landing.nav.features')}
                 </a>
               </li>

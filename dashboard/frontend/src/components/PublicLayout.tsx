@@ -11,50 +11,45 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const t = useT()
   const { user } = useAuth()
 
-  const navLinks = [
-    { to: '/docs', labelKey: 'nav.docs' },
-    { to: '/terms', labelKey: 'nav.terms' },
-    { to: '/privacy', labelKey: 'nav.privacy' },
-    { to: '/cookies', labelKey: 'nav.cookies' },
-    { to: '/disclaimer', labelKey: 'nav.disclaimer' },
-  ] as const
-
   const dashboardHref = user ? (user.active_guild_id ? '/' : '/servers') : loginUrl()
   const dashboardIsSpa = dashboardHref.startsWith('/') && !dashboardHref.startsWith('/api')
 
   return (
-    <div className="public flex min-h-dvh flex-col">
+    <div className="public flex min-h-dvh flex-col overflow-x-hidden">
       <header className="public-header sticky top-0 z-10 border-b backdrop-blur">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <BrandMark to="/about" iconSize={20} />
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <BrandMark to="/about" iconSize={20} className="shrink-0" />
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <LanguageToggle />
-            <nav className="flex items-center gap-1 sm:gap-2">
-              {navLinks.map(({ to, labelKey }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({ isActive }) =>
-                    `rounded-control px-2.5 py-1.5 text-sm transition-colors sm:px-3 ${
-                      isActive ? 'bg-primary-muted text-foreground' : 'text-muted hover:bg-surface-hover hover:text-foreground'
-                    }`
-                  }
-                >
-                  {t(labelKey)}
-                </NavLink>
-              ))}
+            <nav className="flex min-w-0 flex-wrap items-center justify-end gap-1 sm:gap-2" aria-label="Public">
+              <NavLink
+                to="/docs"
+                className={({ isActive }) =>
+                  `rounded-control px-2.5 py-1.5 text-sm transition-colors sm:px-3 ${
+                    isActive ? 'bg-primary-muted text-foreground' : 'text-muted hover:bg-surface-hover hover:text-foreground'
+                  }`
+                }
+              >
+                {t('nav.docs')}
+              </NavLink>
+              <a
+                href="/lookup/"
+                className="rounded-control px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground sm:px-3"
+              >
+                {t('nav.lookup')}
+              </a>
               {dashboardIsSpa ? (
                 <Link
                   to={dashboardHref}
-                  className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+                  className="rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
                 >
                   {t('nav.dashboard')}
                 </Link>
               ) : (
                 <a
                   href={dashboardHref}
-                  className="ml-1 rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+                  className="rounded-control bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
                 >
                   {t('nav.dashboard')}
                 </a>
@@ -66,13 +61,18 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
 
-      <footer className="public-footer border-t">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:px-6">
-          <p className="flex items-center gap-2">
-            <Sparkle size={16} weight="fill" className="text-primary" />
-            {t('public.footer')}
-          </p>
-          <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+      <footer className="public-footer mt-auto border-t">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-7 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <Sparkle size={16} weight="fill" className="shrink-0 text-primary" />
+              <span>{t('public.footer')}</span>
+            </p>
+          </div>
+          <nav
+            className="flex flex-wrap gap-x-4 gap-y-2 text-sm"
+            aria-label="Legal and product links"
+          >
             <Link to="/docs" className="transition-colors hover:text-primary">
               {t('nav.docs')}
             </Link>
