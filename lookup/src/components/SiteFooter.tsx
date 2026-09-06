@@ -116,7 +116,7 @@ export function SiteFooter() {
               <ColLink to="/?mode=server">{t('siteFooter.lookup.server')}</ColLink>
             </li>
             <li>
-              <ColLink to="/dsa">{t('siteFooter.lookup.dsa')}</ColLink>
+              <ColLink to="/?mode=dsa">{t('siteFooter.lookup.dsa')}</ColLink>
             </li>
           </ul>
         </div>
@@ -125,16 +125,16 @@ export function SiteFooter() {
           <ColHeading>{t('siteFooter.col.tools')}</ColHeading>
           <ul className="mt-4 flex flex-col gap-2.5">
             <li>
-              <ColLink to="/permissions">{t('siteFooter.lookup.permissions')}</ColLink>
+              <ColLink to="/plugins/permissions">{t('siteFooter.lookup.permissions')}</ColLink>
             </li>
             <li>
-              <ColLink to="/snowflake">{t('siteFooter.lookup.snowflake')}</ColLink>
+              <ColLink to="/plugins/snowflake">{t('siteFooter.lookup.snowflake')}</ColLink>
             </li>
             <li>
-              <ColLink to="/timestamp">{t('siteFooter.lookup.timestamp')}</ColLink>
+              <ColLink to="/plugins/timestamp">{t('siteFooter.lookup.timestamp')}</ColLink>
             </li>
             <li>
-              <ColLink to="/badges">{t('siteFooter.lookup.badges')}</ColLink>
+              <ColLink to="/plugins/badges">{t('siteFooter.lookup.badges')}</ColLink>
             </li>
           </ul>
         </div>

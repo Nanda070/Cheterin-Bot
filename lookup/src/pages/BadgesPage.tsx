@@ -28,18 +28,6 @@ export function BadgesPage() {
   return (
     <div className="space-y-10 lookup-rise">
       <PageHeader title={t('badges.title')} lead={t('badges.lead')} />
-      <p className="text-xs leading-relaxed text-muted">
-        {t('badges.attribution')}{' '}
-        <a
-          href="https://github.com/mezotv/discord-badges"
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium text-primary-hover hover:underline"
-        >
-          mezotv/discord-badges
-        </a>{' '}
-        (MIT).
-      </p>
 
       {GROUPS.map((group) => {
         const items = BADGE_CATALOG.filter((b) => b.group === group.id)

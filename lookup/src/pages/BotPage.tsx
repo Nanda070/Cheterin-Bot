@@ -80,7 +80,7 @@ export function BotPage() {
               <CopyButton value={user.id} />
               <GhostLink to={`/user/${user.id}`}>{t('user.title')}</GhostLink>
               {data.permissions ? (
-                <GhostLink to={`/permissions?permissions=${data.permissions}&client_id=${app?.id || user.id}`}>
+                <GhostLink to={`/plugins/permissions?permissions=${data.permissions}&client_id=${app?.id || user.id}`}>
                   {t('bot.openPermissions')}
                 </GhostLink>
               ) : null}

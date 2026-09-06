@@ -5,7 +5,7 @@
       "name": "ID Resolver",
       "description": "Decode a Discord snowflake into creation time and components.",
       "description_ru": "Разбор Discord snowflake: время создания и компоненты.",
-      "url": "/lookup/snowflake",
+      "url": "/lookup/plugins/snowflake",
       "tags": ["lookup", "tools"]
     },
     {
@@ -13,7 +13,7 @@
       "name": "Timestamp Generator",
       "description": "Build Discord relative and absolute timestamp markdown from a date or snowflake.",
       "description_ru": "Генерация Discord timestamp (относительных и абсолютных) из даты или snowflake.",
-      "url": "/lookup/timestamp",
+      "url": "/lookup/plugins/timestamp",
       "tags": ["lookup", "tools"]
     },
     {
@@ -21,7 +21,7 @@
       "name": "Permissions Calculator",
       "description": "Compose a permission bitfield and OAuth2 bot invite URL.",
       "description_ru": "Сборка битмаски прав и OAuth2-ссылки приглашения бота.",
-      "url": "/lookup/permissions",
+      "url": "/lookup/plugins/permissions",
       "tags": ["lookup", "tools"]
     },
     {
@@ -29,7 +29,7 @@
       "name": "Avatar & Banner Downloader",
       "description": "Preview and download Discord CDN avatars or banners by user ID and hash.",
       "description_ru": "Превью и скачивание аватаров/баннеров Discord CDN по ID и hash.",
-      "url": "/lookup/avatars",
+      "url": "/lookup/plugins/avatars",
       "tags": ["lookup", "tools"]
     },
     {
@@ -37,16 +37,8 @@
       "name": "Badge List",
       "description": "Full Discord badge reference with icons — flags, Nitro, boosts, and more.",
       "description_ru": "Полный справочник бейджей Discord с иконками — флаги, Nitro, бусты и др.",
-      "url": "/lookup/badges",
+      "url": "/lookup/plugins/badges",
       "tags": ["lookup", "tools"]
-    },
-    {
-      "id": "lookup-dsa",
-      "name": "DSA Lookup",
-      "description": "Look up public Discord Statements of Reasons from the EU DSA Transparency Database.",
-      "description_ru": "Поиск публичных Discord Statement of Reasons в базе прозрачности EU DSA.",
-      "url": "/lookup/dsa",
-      "tags": ["lookup", "tools", "dsa"]
     },
     {
       "id": "questmaster",

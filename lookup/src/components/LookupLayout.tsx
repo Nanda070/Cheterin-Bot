@@ -17,7 +17,6 @@ export function LookupLayout({ children }: { children: ReactNode }) {
     { to: '/', label: t('nav.home'), end: true },
     { to: '/about', label: t('nav.about') },
     { to: '/plugins', label: t('nav.plugins') },
-    { to: '/dsa', label: t('nav.dsa') },
   ] as const
 
   const closeMenu = () => setMenuOpen(false)

@@ -1,15 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { lookupFetch, type LookupConfig } from './api/client'
 import { CaptchaGate } from './components/CaptchaGate'
 import { LookupLayout } from './components/LookupLayout'
+import { PluginsLayout } from './components/PluginsLayout'
 import { ScrollToTop } from './components/ScrollToTop'
 import { LanguageProvider } from './context/LanguageContext'
 import { AboutPage } from './pages/AboutPage'
 import { AvatarsPage } from './pages/AvatarsPage'
 import { BadgesPage } from './pages/BadgesPage'
 import { BotPage } from './pages/BotPage'
-import { DsaPage } from './pages/DsaPage'
 import { HomePage } from './pages/HomePage'
 import { PermissionsPage } from './pages/PermissionsPage'
 import { PluginsPage } from './pages/PluginsPage'
@@ -67,6 +67,13 @@ function LookupProvider({ children }: { children: ReactNode }) {
   )
 }
 
+function DsaRedirect() {
+  const { id } = useParams()
+  const qs = new URLSearchParams({ mode: 'dsa' })
+  if (id) qs.set('id', id)
+  return <Navigate to={`/?${qs.toString()}`} replace />
+}
+
 export default function App() {
   return (
     <LanguageProvider>
@@ -80,15 +87,29 @@ export default function App() {
               <Route path="/user/:id" element={<UserPage />} />
               <Route path="/bot/:id" element={<BotPage />} />
               <Route path="/server/:code" element={<ServerPage />} />
-              <Route path="/snowflake" element={<SnowflakePage />} />
-              <Route path="/snowflake/:id" element={<SnowflakePage />} />
-              <Route path="/timestamp" element={<TimestampPage />} />
-              <Route path="/permissions" element={<PermissionsPage />} />
-              <Route path="/avatars" element={<AvatarsPage />} />
-              <Route path="/badges" element={<BadgesPage />} />
-              <Route path="/dsa" element={<DsaPage />} />
-              <Route path="/dsa/:id" element={<DsaPage />} />
-              <Route path="/plugins" element={<PluginsPage />} />
+
+              <Route path="/plugins" element={<PluginsLayout />}>
+                <Route index element={<PluginsPage />} />
+                <Route path="snowflake" element={<SnowflakePage />} />
+                <Route path="snowflake/:id" element={<SnowflakePage />} />
+                <Route path="timestamp" element={<TimestampPage />} />
+                <Route path="permissions" element={<PermissionsPage />} />
+                <Route path="avatars" element={<AvatarsPage />} />
+                <Route path="badges" element={<BadgesPage />} />
+              </Route>
+
+              {/* Legacy tool URLs → nested under /plugins */}
+              <Route path="/snowflake" element={<Navigate to="/plugins/snowflake" replace />} />
+              <Route path="/snowflake/:id" element={<SnowflakeLegacyRedirect />} />
+              <Route path="/timestamp" element={<Navigate to="/plugins/timestamp" replace />} />
+              <Route path="/permissions" element={<PermissionsLegacyRedirect />} />
+              <Route path="/avatars" element={<Navigate to="/plugins/avatars" replace />} />
+              <Route path="/badges" element={<Navigate to="/plugins/badges" replace />} />
+
+              {/* DSA is a home mode — no standalone page */}
+              <Route path="/dsa" element={<DsaRedirect />} />
+              <Route path="/dsa/:id" element={<DsaRedirect />} />
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </LookupLayout>
@@ -96,4 +117,14 @@ export default function App() {
       </BrowserRouter>
     </LanguageProvider>
   )
+}
+
+function SnowflakeLegacyRedirect() {
+  const { id } = useParams()
+  return <Navigate to={id ? `/plugins/snowflake/${id}` : '/plugins/snowflake'} replace />
+}
+
+function PermissionsLegacyRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/plugins/permissions${search}`} replace />
 }

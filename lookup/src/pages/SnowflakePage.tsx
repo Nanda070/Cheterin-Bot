@@ -14,7 +14,7 @@ export function SnowflakePage() {
   const onDecode = () => {
     const value = input.trim()
     if (!isSnowflake(value)) return
-    navigate(`/snowflake/${value}`)
+    navigate(`/plugins/snowflake/${value}`)
   }
 
   return (

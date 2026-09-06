@@ -435,7 +435,9 @@ async def handle_captcha_verify(request: web.Request) -> web.Response:
 
 
 async def handle_plugins(request: web.Request) -> web.Response:
-    manifest = request.app["plugins"]
+    # Reload from disk so catalog edits apply without restarting the process.
+    manifest = load_plugins(quiet=True)
+    request.app["plugins"] = manifest
     return web.json_response({"plugins": manifest})
 
 
@@ -695,14 +697,20 @@ async def handle_cdn_proxy(request: web.Request) -> web.StreamResponse:
         )
 
 
-def load_plugins() -> list[dict[str, Any]]:
+def load_plugins(*, quiet: bool = False) -> list[dict[str, Any]]:
     path = _HERE / "plugins.json"
     if not path.exists():
+        if not quiet:
+            log.warning("plugins.json missing at %s", path)
         return []
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return list(data.get("plugins") or [])
+        plugins = list(data.get("plugins") or [])
+        if not quiet:
+            log.info("Loaded %d plugin catalog entries from %s", len(plugins), path)
+        return plugins
     except Exception:  # noqa: BLE001
+        log.exception("Failed to load plugins.json from %s", path)
         return []
 
 

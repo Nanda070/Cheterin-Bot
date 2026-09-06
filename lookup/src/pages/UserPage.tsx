@@ -102,7 +102,7 @@ export function UserPage() {
             <div className="flex flex-wrap gap-2">
               <CopyButton value={user.id} />
               {user.bot ? <GhostLink to={`/bot/${user.id}`}>{t('user.openBot')}</GhostLink> : null}
-              <GhostLink to={`/snowflake/${user.id}`}>{t('user.openSnowflake')}</GhostLink>
+              <GhostLink to={`/plugins/snowflake/${user.id}`}>{t('user.openSnowflake')}</GhostLink>
             </div>
           </div>
         </div>

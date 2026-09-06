@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { lookupFetch, type PluginEntry } from '../api/client'
 import { EmptyState, LoadingBlock, PageHeader, Panel } from '../components/ui'
 import { useLanguage, useT } from '../context/LanguageContext'
+import { mergePluginCatalog } from '../lib/fallbackPlugins'
 
 type SectionId = 'lookup' | 'vencord' | 'external'
 
@@ -43,8 +44,8 @@ export function PluginsPage() {
 
   useEffect(() => {
     void lookupFetch<{ plugins: PluginEntry[] }>('/plugins')
-      .then((res) => setPlugins(res.plugins))
-      .catch(() => setPlugins([]))
+      .then((res) => setPlugins(mergePluginCatalog(res.plugins)))
+      .catch(() => setPlugins(mergePluginCatalog([])))
   }, [])
 
   const sections = useMemo(() => {
@@ -61,7 +62,7 @@ export function PluginsPage() {
 
       {plugins == null ? <LoadingBlock rows={3} /> : null}
 
-      {plugins && plugins.length === 0 ? (
+      {plugins && sections.length === 0 ? (
         <EmptyState title={t('plugins.title')} body={t('plugins.empty')} />
       ) : null}
 

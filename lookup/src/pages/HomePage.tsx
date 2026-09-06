@@ -1,18 +1,72 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { lookupFetch } from '../api/client'
+import { DsaResultsPanel, type DsaResponse } from '../components/DsaResultsPanel'
 import { LookupIcon } from '../components/LookupIcon'
-import { PrimaryButton } from '../components/ui'
+import { ErrorBanner, LoadingBlock, PrimaryButton } from '../components/ui'
 import { useT } from '../context/LanguageContext'
 import { isSnowflake, normalizeInviteCode } from '../lib/discord'
+import { useLookupErrorMessage } from '../lib/useLookup'
 
-type Mode = 'user' | 'bot' | 'server'
+type Mode = 'user' | 'bot' | 'server' | 'dsa'
+
+const MODES: Mode[] = ['user', 'bot', 'server', 'dsa']
+
+function parseMode(raw: string | null): Mode {
+  if (raw === 'bot' || raw === 'server' || raw === 'dsa' || raw === 'user') return raw
+  return 'user'
+}
 
 export function HomePage() {
   const t = useT()
   const navigate = useNavigate()
-  const [mode, setMode] = useState<Mode>('user')
-  const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [mode, setMode] = useState<Mode>(() => parseMode(searchParams.get('mode')))
+  const [query, setQuery] = useState(() => searchParams.get('id') ?? '')
   const [error, setError] = useState<string | null>(null)
+  const [dsaData, setDsaData] = useState<DsaResponse | null>(null)
+  const [dsaLoading, setDsaLoading] = useState(false)
+  const [dsaError, setDsaError] = useState<unknown>(null)
+  const dsaLookupErr = useLookupErrorMessage(dsaError)
+  const dsaErrMsg =
+    dsaError instanceof Error && dsaError.message === 'invalid' ? t('common.invalidId') : dsaLookupErr
+
+  useEffect(() => {
+    const nextMode = parseMode(searchParams.get('mode'))
+    setMode(nextMode)
+    const id = searchParams.get('id') ?? ''
+    if (nextMode === 'dsa') {
+      setQuery(id)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (mode !== 'dsa') {
+      setDsaData(null)
+      setDsaError(null)
+      setDsaLoading(false)
+      return
+    }
+    const id = (searchParams.get('id') ?? '').trim()
+    if (!id) {
+      setDsaData(null)
+      setDsaError(null)
+      setDsaLoading(false)
+      return
+    }
+    if (!isSnowflake(id)) {
+      setDsaError(new Error('invalid'))
+      setDsaData(null)
+      setDsaLoading(false)
+      return
+    }
+    setDsaLoading(true)
+    setDsaError(null)
+    void lookupFetch<DsaResponse>(`/dsa/${id}`)
+      .then(setDsaData)
+      .catch(setDsaError)
+      .finally(() => setDsaLoading(false))
+  }, [mode, searchParams])
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -37,11 +91,30 @@ export function HomePage() {
       setError(t('home.error.snowflake'))
       return
     }
+
     setError(null)
+
+    if (mode === 'dsa') {
+      setSearchParams({ mode: 'dsa', id: value })
+      return
+    }
+
     navigate(`/${mode}/${value}`)
   }
 
-  const modes: Mode[] = ['user', 'bot', 'server']
+  const selectMode = (m: Mode) => {
+    setMode(m)
+    setError(null)
+    setDsaError(null)
+    if (m === 'dsa') {
+      const next: Record<string, string> = { mode: 'dsa' }
+      const id = query.trim()
+      if (isSnowflake(id)) next.id = id
+      setSearchParams(next)
+    } else if (searchParams.get('mode') || searchParams.get('id')) {
+      setSearchParams({})
+    }
+  }
 
   return (
     <div className="space-y-16 sm:space-y-20">
@@ -59,14 +132,11 @@ export function HomePage() {
 
         <form onSubmit={onSubmit} className="mt-9 space-y-4 text-left">
           <div className="lookup-mode-track mx-auto justify-center">
-            {modes.map((m) => (
+            {MODES.map((m) => (
               <button
                 key={m}
                 type="button"
-                onClick={() => {
-                  setMode(m)
-                  setError(null)
-                }}
+                onClick={() => selectMode(m)}
                 className={`cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   mode === m
                     ? 'bg-primary text-white'
@@ -104,14 +174,23 @@ export function HomePage() {
             </p>
           ) : null}
         </form>
+
+        {mode === 'dsa' ? (
+          <div className="mt-8 space-y-4">
+            <p className="text-left text-sm leading-relaxed text-muted">{t('dsa.sourceNote')}</p>
+            {dsaLoading ? <LoadingBlock rows={4} /> : null}
+            {!dsaLoading && dsaError ? <ErrorBanner message={dsaErrMsg} /> : null}
+            {!dsaLoading && !dsaError && dsaData ? <DsaResultsPanel data={dsaData} /> : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="lookup-rise lookup-rise-delay-1">
         <div className="mb-5 flex items-end justify-between gap-4">
           <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{t('home.modes.title')}</h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          {modes.map((m, index) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {MODES.map((m, index) => (
             <article key={m} className="lookup-panel lookup-card-lift p-5">
               <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary-muted font-display text-sm font-bold text-primary-hover">
                 {index + 1}
