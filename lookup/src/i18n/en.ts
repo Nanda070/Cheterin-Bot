@@ -240,9 +240,12 @@ export const en: TranslationDict = {
   'permissions.copyUrl': 'Copy URL',
 
   'avatars.title': 'Avatar & banner',
-  'avatars.lead': 'Build a CDN URL from ID and hash. Primary path is Discord CDN; proxy is the CORS fallback.',
+  'avatars.lead':
+    'Look up by user/bot ID (hash fills automatically) or paste a hash to build a CDN URL. Discord CDN first; proxy is the CORS fallback.',
   'avatars.userId': 'User / bot ID',
+  'avatars.placeholder': 'User or bot snowflake ID',
   'avatars.hash': 'Avatar or banner hash',
+  'avatars.hashHint': 'Optional — leave empty to fetch from profile',
   'avatars.kind': 'Kind',
   'avatars.kind.avatar': 'Avatar',
   'avatars.kind.banner': 'Banner',
@@ -250,7 +253,12 @@ export const en: TranslationDict = {
   'avatars.format': 'Format',
   'avatars.preview': 'Preview',
   'avatars.cdn': 'CDN',
-  'avatars.needFields': 'Need an ID and hash from a user or bot card.',
+  'avatars.submit': 'Look up',
+  'avatars.clear': 'Clear',
+  'avatars.needId': 'Enter a valid user or bot ID.',
+  'avatars.needFields': 'ID alone is enough. Hash is optional if the profile is public.',
+  'avatars.noAvatar': 'This profile has no custom avatar (default Discord avatar).',
+  'avatars.noBanner': 'This profile has no banner.',
 
   'badges.title': 'Badge reference',
   'badges.lead':

@@ -240,9 +240,12 @@ export const ru: TranslationDict = {
   'permissions.copyUrl': 'Копировать URL',
 
   'avatars.title': 'Аватар и баннер',
-  'avatars.lead': 'Соберите CDN-ссылку по ID и hash. Основной путь — Discord CDN; прокси — запасной вариант при CORS.',
+  'avatars.lead':
+    'Найдите по ID пользователя/бота (hash подставится сам) или вставьте hash для CDN-ссылки. Основной путь — Discord CDN; прокси — запасной вариант при CORS.',
   'avatars.userId': 'User / bot ID',
+  'avatars.placeholder': 'Snowflake ID пользователя или бота',
   'avatars.hash': 'Hash аватара или баннера',
+  'avatars.hashHint': 'Необязательно — оставьте пустым, чтобы взять из профиля',
   'avatars.kind': 'Тип',
   'avatars.kind.avatar': 'Аватар',
   'avatars.kind.banner': 'Баннер',
@@ -250,7 +253,12 @@ export const ru: TranslationDict = {
   'avatars.format': 'Формат',
   'avatars.preview': 'Превью',
   'avatars.cdn': 'CDN',
-  'avatars.needFields': 'Нужны ID и hash из карточки пользователя или бота.',
+  'avatars.submit': 'Найти',
+  'avatars.clear': 'Очистить',
+  'avatars.needId': 'Введите корректный ID пользователя или бота.',
+  'avatars.needFields': 'Достаточно одного ID. Hash необязателен, если профиль доступен.',
+  'avatars.noAvatar': 'У этого профиля нет своего аватара (дефолт Discord).',
+  'avatars.noBanner': 'У этого профиля нет баннера.',
 
   'badges.title': 'Справочник бейджей',
   'badges.lead':
