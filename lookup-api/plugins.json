@@ -1,12 +1,132 @@
 {
   "plugins": [
     {
+      "id": "lookup-snowflake",
+      "name": "ID Resolver",
+      "description": "Decode a Discord snowflake into creation time and components.",
+      "description_ru": "Разбор Discord snowflake: время создания и компоненты.",
+      "url": "/lookup/snowflake",
+      "tags": ["lookup", "tools"]
+    },
+    {
+      "id": "lookup-timestamp",
+      "name": "Timestamp Generator",
+      "description": "Build Discord relative and absolute timestamp markdown from a date or snowflake.",
+      "description_ru": "Генерация Discord timestamp (относительных и абсолютных) из даты или snowflake.",
+      "url": "/lookup/timestamp",
+      "tags": ["lookup", "tools"]
+    },
+    {
+      "id": "lookup-permissions",
+      "name": "Permissions Calculator",
+      "description": "Compose a permission bitfield and OAuth2 bot invite URL.",
+      "description_ru": "Сборка битмаски прав и OAuth2-ссылки приглашения бота.",
+      "url": "/lookup/permissions",
+      "tags": ["lookup", "tools"]
+    },
+    {
+      "id": "lookup-avatars",
+      "name": "Avatar & Banner Downloader",
+      "description": "Preview and download Discord CDN avatars or banners by user ID and hash.",
+      "description_ru": "Превью и скачивание аватаров/баннеров Discord CDN по ID и hash.",
+      "url": "/lookup/avatars",
+      "tags": ["lookup", "tools"]
+    },
+    {
+      "id": "lookup-badges",
+      "name": "Badge List",
+      "description": "Full Discord badge reference with icons — flags, Nitro, boosts, and more.",
+      "description_ru": "Полный справочник бейджей Discord с иконками — флаги, Nitro, бусты и др.",
+      "url": "/lookup/badges",
+      "tags": ["lookup", "tools"]
+    },
+    {
+      "id": "lookup-dsa",
+      "name": "DSA Lookup",
+      "description": "Look up public Discord Statements of Reasons from the EU DSA Transparency Database.",
+      "description_ru": "Поиск публичных Discord Statement of Reasons в базе прозрачности EU DSA.",
+      "url": "/lookup/dsa",
+      "tags": ["lookup", "tools", "dsa"]
+    },
+    {
+      "id": "questmaster",
+      "name": "QuestMaster",
+      "description": "Auto-complete Discord Quests from inside Discord.",
+      "description_ru": "Автозавершение Discord Quests прямо в клиенте.",
+      "url": "https://github.com/Nanda070/discord-quest-auto-completer",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "vencord-fakedeafen",
+      "name": "Vencord-FakeDeafen",
+      "description": "Appear muted/deafened while you still hear and speak — button or keybind.",
+      "description_ru": "Выглядеть замьюченным/заглушённым, продолжая слышать и говорить — кнопка или хоткей.",
+      "url": "https://github.com/Nanda070/Vencord-FakeDeafen",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "voicechatutilities",
+      "name": "VoiceChatUtilities",
+      "description": "Bulk voice-channel actions: move, mute, disconnect, and more.",
+      "description_ru": "Массовые действия в голосовом канале: перенос, мьют, кик и др.",
+      "url": "https://github.com/Nanda070/vc-voiceChatUtilities",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "followuser",
+      "name": "FollowUser",
+      "description": "Context-menu follow to stay in the same voice channel as a user.",
+      "description_ru": "Follow из контекстного меню — оставаться в том же голосовом канале, что и пользователь.",
+      "url": "https://github.com/Nanda070/vc-followUser",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "betteractivities",
+      "name": "BetterActivities",
+      "description": "Activity icons in the member list; show every activity at once.",
+      "description_ru": "Иконки активностей в списке участников; показ всех активностей сразу.",
+      "url": "https://github.com/Nanda070/vc-betterActivities",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "trustmebro",
+      "name": "TrustMeBro",
+      "description": "Vencord userplugin related to Discord age-verification prompts (UK OSA).",
+      "description_ru": "Vencord userplugin, связанный с запросами возрастной верификации Discord (UK OSA).",
+      "url": "https://github.com/Nanda070/TrustMeBro",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "silentdelete",
+      "name": "SilentDelete",
+      "description": "Replace message text with a placeholder before delete so loggers see dummy content.",
+      "description_ru": "Перед удалением подменяет текст сообщения заглушкой — логгеры видят фиктивный контент.",
+      "url": "https://github.com/Nanda070/SilentDelete",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "rmcord",
+      "name": "rmcord",
+      "description": "Bulk-delete your own messages from a floating panel (guilds, channels, DMs).",
+      "description_ru": "Массовое удаление своих сообщений из плавающей панели (серверы, каналы, ЛС).",
+      "url": "https://github.com/Nanda070/rmcord",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
+      "id": "vencord-fakedeafen-detector",
+      "name": "Vencord-FakeDeafenDetector",
+      "description": "Flag members who speak while appearing self-muted or deafened.",
+      "description_ru": "Подсвечивает участников, которые говорят, выглядя замьюченными или заглушёнными.",
+      "url": "https://github.com/Nanda070/Vencord-FakeDeafenDetector",
+      "tags": ["vencord", "userplugins"]
+    },
+    {
       "id": "discord-developers",
       "name": "Discord Developer Portal",
-      "description": "Create applications, manage bot tokens, OAuth2, and intents.",
-      "description_ru": "Создание приложений, bot token, OAuth2 и intents.",
+      "description": "Create apps, manage tokens, OAuth2, and intents.",
+      "description_ru": "Создание приложений, токены, OAuth2 и intents.",
       "url": "https://discord.com/developers/applications",
-      "tags": ["official", "bots"]
+      "tags": ["official", "external"]
     },
     {
       "id": "discord-api-docs",
@@ -14,23 +134,23 @@
       "description": "Official REST/Gateway reference for users, guilds, invites, and permissions.",
       "description_ru": "Официальный справочник REST/Gateway: пользователи, гильдии, инвайты, права.",
       "url": "https://discord.com/developers/docs/intro",
-      "tags": ["official", "docs"]
+      "tags": ["official", "external"]
     },
     {
       "id": "discord-permissions-calculator",
       "name": "Discord Permissions Calculator",
-      "description": "Classic community bitfield builder for OAuth2 bot invites.",
-      "description_ru": "Классический калькулятор битмаски прав для OAuth2-приглашения бота.",
+      "description": "Community bitfield builder for OAuth2 bot invites.",
+      "description_ru": "Калькулятор битмаски прав для OAuth2-приглашения бота.",
       "url": "https://discordapi.com/permissions.html",
-      "tags": ["permissions", "tools"]
+      "tags": ["external", "tools"]
     },
     {
       "id": "snowflake-tool",
       "name": "Discord Snowflake Tool",
-      "description": "Decode Discord snowflakes to UTC timestamps (worker/process/increment).",
-      "description_ru": "Разбор Discord snowflake в UTC (worker/process/increment).",
+      "description": "Decode snowflakes to UTC timestamps (worker/process/increment).",
+      "description_ru": "Разбор snowflake в UTC (worker/process/increment).",
       "url": "https://snowsta.mp/",
-      "tags": ["snowflake", "tools"]
+      "tags": ["external", "tools"]
     },
     {
       "id": "discord-js-guide",
@@ -38,7 +158,7 @@
       "description": "Practical guide for building Discord bots with discord.js.",
       "description_ru": "Практический гайд по ботам на discord.js.",
       "url": "https://discordjs.guide/",
-      "tags": ["bots", "docs"]
+      "tags": ["external", "docs"]
     },
     {
       "id": "discord-api-types",
@@ -46,15 +166,15 @@
       "description": "TypeScript typings for Discord API payloads, including UserFlags.",
       "description_ru": "TypeScript-типы для payload Discord API, включая UserFlags.",
       "url": "https://discord-api-types.dev/",
-      "tags": ["types", "docs"]
+      "tags": ["external", "docs"]
     },
     {
       "id": "support-dev",
       "name": "Discord Developer Support",
-      "description": "Official help articles for Active Developer and app requirements.",
-      "description_ru": "Официальные статьи для Active Developer и требований к приложениям.",
+      "description": "Official help for Active Developer and app requirements.",
+      "description_ru": "Официальная помощь по Active Developer и требованиям к приложениям.",
       "url": "https://support-dev.discord.com/hc/en-us",
-      "tags": ["official", "support"]
+      "tags": ["official", "external"]
     },
     {
       "id": "discord-safety",
@@ -62,7 +182,7 @@
       "description": "Transparency and safety resources from Discord.",
       "description_ru": "Ресурсы Discord по безопасности и прозрачности.",
       "url": "https://discord.com/safety-library",
-      "tags": ["official", "safety"]
+      "tags": ["official", "external"]
     },
     {
       "id": "eu-dsa",
@@ -70,15 +190,15 @@
       "description": "European Commission overview of the Digital Services Act.",
       "description_ru": "Обзор Digital Services Act от Европейской комиссии.",
       "url": "https://digital-strategy.ec.europa.eu/en/policies/digital-services-act",
-      "tags": ["legal", "dsa"]
+      "tags": ["external", "dsa"]
     },
     {
       "id": "cheterin-docs",
       "name": "Cheterin Docs",
-      "description": "Cheterin bot documentation on cheterin.online — modules, setup, Lookup.",
-      "description_ru": "Документация бота Cheterin на cheterin.online — модули, настройка, Lookup.",
+      "description": "Cheterin bot docs — modules, setup, Lookup.",
+      "description_ru": "Документация бота Cheterin — модули, настройка, Lookup.",
       "url": "https://cheterin.online/docs",
-      "tags": ["cheterin", "docs"]
+      "tags": ["cheterin", "external"]
     },
     {
       "id": "cheterin-about",
@@ -86,7 +206,7 @@
       "description": "Public showcase for the Cheterin Discord bot and control panel.",
       "description_ru": "Публичная витрина Discord-бота Cheterin и панели управления.",
       "url": "https://cheterin.online/about",
-      "tags": ["cheterin"]
+      "tags": ["cheterin", "external"]
     },
     {
       "id": "discord-status",
@@ -94,7 +214,7 @@
       "description": "Official Discord service status and incident history.",
       "description_ru": "Официальный статус сервисов Discord и история инцидентов.",
       "url": "https://discordstatus.com/",
-      "tags": ["official", "status"]
+      "tags": ["official", "external"]
     }
   ]
 }

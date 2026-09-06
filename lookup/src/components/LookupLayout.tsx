@@ -1,18 +1,12 @@
 import { useState, type ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { BrandMark, LanguageToggle } from './ui'
+import { SiteFooter } from './SiteFooter'
 import { useT } from '../context/LanguageContext'
 
 const ROOT_LINKS = {
   docs: '/docs',
   about: '/about',
-  panel: '/',
-  terms: '/terms',
-  privacy: '/privacy',
-  cookies: '/cookies',
-  disclaimer: '/disclaimer',
-  credits: '/credits',
-  support: 'https://discord.gg/cheterin',
 } as const
 
 export function LookupLayout({ children }: { children: ReactNode }) {
@@ -23,6 +17,7 @@ export function LookupLayout({ children }: { children: ReactNode }) {
     { to: '/', label: t('nav.home'), end: true },
     { to: '/about', label: t('nav.about') },
     { to: '/plugins', label: t('nav.plugins') },
+    { to: '/dsa', label: t('nav.dsa') },
   ] as const
 
   const closeMenu = () => setMenuOpen(false)
@@ -43,12 +38,7 @@ export function LookupLayout({ children }: { children: ReactNode }) {
             <LanguageToggle />
             <nav className="hidden items-center gap-0.5 md:flex" aria-label="Lookup">
               {nav.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={'end' in item ? item.end : false}
-                  className={linkClass}
-                >
+                <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} className={linkClass}>
                   {item.label}
                 </NavLink>
               ))}
@@ -117,97 +107,11 @@ export function LookupLayout({ children }: { children: ReactNode }) {
         ) : null}
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-9 sm:px-6 sm:py-11">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-9 sm:px-6 sm:py-11" data-scroll-reset>
+        {children}
+      </main>
 
-      <footer className="mt-auto border-t border-border bg-background-deep/90">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
-          <div>
-            <BrandMark to="/" />
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-muted">{t('footer.tagline')}</p>
-            <p className="mt-5 text-xs tracking-wide text-muted/80">{t('footer.copyright')}</p>
-          </div>
-          <div>
-            <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">{t('footer.product')}</h2>
-            <ul className="mt-4 flex flex-col gap-2.5 text-sm">
-              <li>
-                <Link to="/" className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.home')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.about')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/plugins" className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.plugins')}
-                </Link>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.docs} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.docs')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.panel} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.panel')}
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">{t('footer.legal')}</h2>
-            <ul className="mt-4 flex flex-col gap-2.5 text-sm">
-              <li>
-                <a href={ROOT_LINKS.terms} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('footer.terms')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.privacy} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('footer.privacy')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.cookies} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('footer.cookies')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.disclaimer} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('footer.disclaimer')}
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">{t('footer.community')}</h2>
-            <ul className="mt-4 flex flex-col gap-2.5 text-sm">
-              <li>
-                <a
-                  href={ROOT_LINKS.support}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-foreground/85 transition-colors hover:text-foreground"
-                >
-                  {t('footer.support')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.credits} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('footer.credits')}
-                </a>
-              </li>
-              <li>
-                <a href={ROOT_LINKS.about} className="text-foreground/85 transition-colors hover:text-foreground">
-                  {t('nav.botAbout')}
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

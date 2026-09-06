@@ -4,10 +4,9 @@ import { loginUrl } from '../api/client'
 import { BrandMark } from './BrandMark'
 import { LanguageToggle } from './LanguageToggle'
 import { LookupIcon } from './LookupIcon'
+import { SiteFooter } from './SiteFooter'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
-
-const SUPPORT_INVITE = 'https://discord.gg/cheterin'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const t = useT()
@@ -37,10 +36,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </NavLink>
               <a
                 href="/lookup/"
-                className="inline-flex items-center gap-1.5 rounded-control px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground sm:px-3"
+                className="inline-flex items-center gap-1 rounded-control px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-surface-hover hover:text-foreground sm:px-3"
               >
-                <LookupIcon size={14} className="text-primary" />
-                {t('nav.lookup')}
+                <LookupIcon size={14} className="shrink-0 text-primary" />
+                <span>{t('nav.lookup')}</span>
               </a>
               {dashboardIsSpa ? (
                 <Link
@@ -64,94 +63,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</main>
 
-      <footer className="public-footer mt-auto border-t">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
-          <div>
-            <BrandMark to="/about" iconSize={20} />
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
-            <p className="mt-2 text-xs text-muted">{t('landing.footer.copyright')}</p>
-          </div>
-
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.product')}</h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <Link to="/about" className="text-foreground/90 transition-colors hover:text-foreground">
-                  Cheterin
-                </Link>
-              </li>
-              <li>
-                <Link to="/docs" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('nav.docs')}
-                </Link>
-              </li>
-              <li>
-                <a href="/lookup/" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.lookup')}
-                </a>
-              </li>
-              <li>
-                {dashboardIsSpa ? (
-                  <Link to={dashboardHref} className="text-foreground/90 transition-colors hover:text-foreground">
-                    {t('nav.dashboard')}
-                  </Link>
-                ) : (
-                  <a href={dashboardHref} className="text-foreground/90 transition-colors hover:text-foreground">
-                    {t('nav.dashboard')}
-                  </a>
-                )}
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.legal')}</h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <Link to="/terms" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.terms')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.privacy')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/cookies" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.cookies')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/disclaimer" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.disclaimer')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.community')}</h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <a
-                  href={SUPPORT_INVITE}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-foreground/90 transition-colors hover:text-foreground"
-                >
-                  {t('landing.footer.support')}
-                </a>
-              </li>
-              <li>
-                <Link to="/credits" className="text-foreground/90 transition-colors hover:text-foreground">
-                  {t('public.footer.credits')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

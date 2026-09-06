@@ -25,11 +25,10 @@ import { BrandMark } from '../components/BrandMark'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { LookupIcon } from '../components/LookupIcon'
 import { SecretClickTarget } from '../components/SecretClickTarget'
+import { SiteFooter } from '../components/SiteFooter'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
 import { SECRET_ROOMS } from '../utils/easterEggs'
-
-const SUPPORT_INVITE = 'https://discord.gg/cheterin'
 
 /** Dashboard SPA paths use React Router; `/lookup` and `/api/*` need a full navigation. */
 function isSpaPath(href: string): boolean {
@@ -323,8 +322,6 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
   const accountHref = user ? (user.active_guild_id ? '/' : '/servers') : loginUrl()
   const accountLabel = user ? t('landing.nav.myServers') : t('landing.nav.signIn')
   const heroAccountLabel = user ? t('landing.nav.myServers') : t('landing.hero.ctaSignIn')
-  const dashboardHref = accountHref
-  const dashboardLabel = user ? t('landing.nav.myServers') : t('nav.dashboard')
 
   const openInvite = async () => {
     setInviteBusy(true)
@@ -345,7 +342,7 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <BrandMark
             to="/about"
-            className="flex items-center gap-2 font-semibold tracking-tight text-white"
+            className="text-white"
             iconClassName="text-primary"
             iconSize={22}
           />
@@ -486,99 +483,13 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
         </section>
       </main>
 
-      <footer className="border-t border-border bg-background">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
-          <div>
-            <BrandMark to="/about" iconSize={20} />
-            <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mt-3 block max-w-xs cursor-default">
-              <p className="text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
-            </SecretClickTarget>
-            <p className="mt-2 text-xs text-muted">{t('landing.footer.copyright')}</p>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.product')}</h3>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <a href="#features" className="text-foreground/90 hover:text-foreground">
-                  {t('landing.nav.features')}
-                </a>
-              </li>
-              <li>
-                <Link to="/docs" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.docs')}
-                </Link>
-              </li>
-              <li>
-                <a href="/lookup/" className="text-foreground/90 hover:text-foreground">
-                  {t('landing.nav.lookup')}
-                </a>
-              </li>
-              <li>
-                <AccountLink href={dashboardHref} className="text-foreground/90 hover:text-foreground">
-                  {dashboardLabel}
-                </AccountLink>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.legal')}</h3>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <Link to="/terms" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.terms')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.privacy')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/cookies" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.cookies')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/disclaimer" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.disclaimer')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">{t('landing.footer.community')}</h3>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <a
-                  href={SUPPORT_INVITE}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-foreground/90 hover:text-foreground"
-                >
-                  {t('landing.footer.support')}
-                </a>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => void openInvite()}
-                  className="cursor-pointer text-left text-foreground/90 hover:text-foreground"
-                >
-                  {t('landing.nav.addBot')}
-                </button>
-              </li>
-              <li>
-                <Link to="/credits" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.credits')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter
+        descriptionSlot={
+          <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mt-3 block max-w-sm cursor-default">
+            <p className="text-sm leading-relaxed text-muted">{t('siteFooter.bot.desc')}</p>
+          </SecretClickTarget>
+        }
+      />
     </div>
   )
 }

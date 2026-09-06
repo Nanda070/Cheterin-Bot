@@ -133,7 +133,26 @@ const shell: TranslationDict = {
   'public.footer.cookies': 'Cookies',
   'public.footer.disclaimer': 'Отказ от ответственности',
   'public.footer.lookup': 'Lookup',
+  'public.footer.about': 'О сервисе',
+  'public.footer.plugins': 'Плагины',
   'nav.lookup': 'Lookup',
+
+  'siteFooter.col.services': 'Сервисы',
+  'siteFooter.col.legal': 'Документы',
+  'siteFooter.col.community': 'Сообщество',
+  'siteFooter.bot.desc':
+    'Публичный мультисерверный Discord-бот и панель управления для живых сообществ — модерация, уровни, игры и другое.',
+  'siteFooter.bot.modules': 'Модули',
+  'siteFooter.bot.docs': 'Документация',
+  'siteFooter.bot.lookup': 'Lookup',
+  'siteFooter.bot.dashboard': 'Панель',
+  'siteFooter.bot.support': 'Сервер поддержки',
+  'siteFooter.bot.add': 'Добавить в Discord',
+  'siteFooter.bot.credits': 'Авторы',
+  'siteFooter.legal.terms': 'Условия',
+  'siteFooter.legal.privacy': 'Приватность',
+  'siteFooter.legal.cookies': 'Cookies',
+  'siteFooter.legal.disclaimer': 'Отказ',
 }
 
 export default shell

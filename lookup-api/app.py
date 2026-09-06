@@ -19,6 +19,12 @@ from typing import Any
 from aiohttp import ClientSession, ClientTimeout, web
 from dotenv import load_dotenv
 
+from dsa import (
+    DSA_CACHE_TTL,
+    fetch_discord_statements,
+    source_meta as dsa_source_meta,
+)
+
 # Load lookup-api/.env then repo-root .env (without overriding existing env)
 _HERE = Path(__file__).resolve().parent
 _ROOT = _HERE.parent
@@ -433,6 +439,48 @@ async def handle_plugins(request: web.Request) -> web.Response:
     return web.json_response({"plugins": manifest})
 
 
+async def handle_dsa_meta(request: web.Request) -> web.Response:
+    """GET /api/lookup/dsa — source metadata (no upstream call)."""
+    return web.json_response({"source": dsa_source_meta()})
+
+
+async def handle_dsa(request: web.Request) -> web.Response:
+    """GET /api/lookup/dsa/{id} — public Discord SoRs from EU DSA CSV export."""
+    entity_id = request.match_info["id"].strip()
+    if not SNOWFLAKE_RE.match(entity_id):
+        raise web.HTTPBadRequest(text='{"error":"invalid_snowflake"}', content_type="application/json")
+
+    cache: TtlCache = request.app["cache"]
+    cached = cache.get(f"dsa:{entity_id}")
+    if cached is not None:
+        return web.json_response(cached)
+
+    await record_abuse(request.app, _client_ip(request), entity_id)
+    session: ClientSession = request.app["http"]
+    try:
+        statements = await fetch_discord_statements(session, entity_id)
+    except Exception as exc:
+        log.warning("DSA upstream failed for %s: %s", entity_id, exc)
+        raise web.HTTPBadGateway(
+            text=json.dumps({"error": "dsa_upstream_error", "message": "EU DSA Transparency Database unavailable"}),
+            content_type="application/json",
+        )
+
+    payload = {
+        "id": entity_id,
+        "found": len(statements) > 0,
+        "count": len(statements),
+        "statements": statements,
+        "source": dsa_source_meta(),
+        "disclaimer": (
+            "Empty results do not mean the account is clean or flagged — only that no matching "
+            "public Statement of Reasons for Discord Netherlands B.V. was returned by the official export."
+        ),
+    }
+    cache.set(f"dsa:{entity_id}", payload, DSA_CACHE_TTL)
+    return web.json_response(payload)
+
+
 async def handle_user(request: web.Request) -> web.Response:
     user_id = request.match_info["id"]
     if not SNOWFLAKE_RE.match(user_id):
@@ -684,6 +732,8 @@ def create_app() -> web.Application:
     app.router.add_get("/health", handle_health)
     app.router.add_get("/api/lookup/config", handle_config)
     app.router.add_get("/api/lookup/plugins", handle_plugins)
+    app.router.add_get("/api/lookup/dsa", handle_dsa_meta)
+    app.router.add_get("/api/lookup/dsa/{id}", handle_dsa)
     app.router.add_post("/api/lookup/captcha/verify", handle_captcha_verify)
     app.router.add_get("/api/lookup/user/{id}", handle_user)
     app.router.add_get("/api/lookup/bot/{id}", handle_bot)

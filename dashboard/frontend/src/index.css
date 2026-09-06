@@ -2,16 +2,16 @@
 @import "tailwindcss";
 
 @theme {
-  /* Cheterin kit — charcoal + dark red (shared with Lookup public chrome) */
-  --color-background: #0b0e14;
-  --color-background-deep: #070912;
-  --color-surface: #131722;
-  --color-surface-hover: #181d2c;
-  --color-border: #232838;
+  /* Cheterin kit — charcoal + dark-red (dashboard + public + Lookup parity) */
+  --color-background: #0c0d10;
+  --color-background-deep: #070708;
+  --color-surface: #141416;
+  --color-surface-hover: #1a1a1d;
+  --color-border: #2a2a30;
 
   /* Text */
-  --color-foreground: #e8eaf0;
-  --color-muted: #8b93a7;
+  --color-foreground: #ececef;
+  --color-muted: #9a9aa3;
 
   /* Brand accent */
   --color-primary: #a8283c;
@@ -179,6 +179,18 @@
 .public-header {
   background-color: color-mix(in srgb, var(--color-background) 86%, var(--public-accent-deep) 14%);
   border-bottom-color: color-mix(in srgb, var(--color-border) 75%, var(--public-accent) 25%);
+  /* Isolate chrome from legal/article content inheritance */
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+}
+
+.public-header a,
+.public-header button {
+  font-family: inherit;
+  letter-spacing: normal;
 }
 
 .public-footer {
@@ -193,6 +205,48 @@
 
 .public-footer a:hover {
   color: var(--color-primary);
+}
+
+/* Unified public footer (About / docs / legal) — charcoal grid, multi-column */
+.site-footer {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-background-deep) 88%, var(--color-primary-deep) 12%) 0%, var(--color-background-deep) 100%);
+  background-color: var(--color-background-deep);
+  color: var(--color-muted);
+}
+
+.site-footer-grid {
+  display: grid;
+  gap: 2.5rem;
+  grid-template-columns: minmax(0, 1.4fr);
+}
+
+@media (min-width: 768px) {
+  .site-footer-grid {
+    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Docs surfaces — charcoal-red kit (no cool/blue leftover chrome) */
+.docs-shell {
+  --docs-accent: var(--color-primary);
+  --docs-accent-muted: var(--color-primary-muted);
+  color: var(--color-foreground);
+}
+
+.docs-shell a {
+  color: color-mix(in srgb, var(--color-primary-hover) 85%, white);
+}
+
+.docs-shell a:hover {
+  color: var(--color-foreground);
+}
+
+.docs-shell code,
+.docs-shell pre {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border);
+  color: var(--color-foreground);
 }
 
 /* Public bunker / mafia player tables — atmospheric HUD surfaces */

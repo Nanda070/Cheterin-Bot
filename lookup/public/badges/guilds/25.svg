@@ -1,0 +1,47 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_490_209)">
+<mask id="mask0_490_209" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+<path d="M32 0H0V32H32V0Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_490_209)">
+<path d="M26 16V12H28V8H30V2H22V6H20V14H22V16H10V14H12V6H10V2H2V8H4V12H6V16H8V18H6V20H4V24H2V28H4V30H28V28H30V24H28V20H26V18H24V16H26Z" fill="#D1CDD5"/>
+<path d="M10 16H8V12H6V8H4V4H8V8H10V16Z" fill="#FF7FC0"/>
+<path d="M24 16H22V8H24V4H28V8H26V12H24V16Z" fill="#FF7FC0"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M18 22H20V24H22V26H24V30H8V26H10V24H12V22H14V18H18V22Z" fill="white"/>
+<path d="M18 24V26H14V24H18Z" fill="#FF1B90"/>
+<path d="M28 30V32H4V30H28Z" fill="black"/>
+<path d="M4 30H2V28H4V30Z" fill="black"/>
+<path d="M30 30H28V28H30V30Z" fill="black"/>
+<path d="M4 28H2V26H4V28Z" fill="#847D8B"/>
+<path d="M30 28H28V26H30V28Z" fill="#847D8B"/>
+<path d="M2 28H0V24H2V28Z" fill="black"/>
+<path d="M32 28H30V24H32V28Z" fill="black"/>
+<path d="M4 24H2V20H4V24Z" fill="black"/>
+<path d="M30 24H28V20H30V24Z" fill="black"/>
+<path d="M6 20H4V18H6V20Z" fill="black"/>
+<path d="M28 20H26V18H28V20Z" fill="black"/>
+<path d="M8 18H6V16H8V18Z" fill="black"/>
+<path d="M26 18H24V16H26V18Z" fill="black"/>
+<path d="M6 16H4V12H6V16Z" fill="black"/>
+<path d="M14 14H18V6H20V14H22V16H10V14H12V6H14V14Z" fill="black"/>
+<path d="M28 16H26V12H28V16Z" fill="black"/>
+<path d="M4 12H2V8H4V12Z" fill="black"/>
+<path d="M30 12H28V8H30V12Z" fill="black"/>
+<path d="M2 8H0V2H2V8Z" fill="black"/>
+<path d="M32 8H30V2H32V8Z" fill="black"/>
+<path d="M12 6H10V2H12V6Z" fill="black"/>
+<path d="M22 6H20V2H22V6Z" fill="black"/>
+<path d="M10 2H2V0H10V2Z" fill="black"/>
+<path d="M30 2H22V0H30V2Z" fill="black"/>
+<path d="M12 24H10V20H12V24Z" fill="black"/>
+<path d="M22 24H20V20H22V24Z" fill="black"/>
+<path d="M28 28H24V30H28V28Z" fill="#847D8B"/>
+<path d="M8 28H4V30H8V28Z" fill="#847D8B"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_490_209">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -46,6 +46,7 @@ export function DocsPage() {
 
   return (
     <PublicLayout>
+      <div className="docs-shell">
       <DocsBanner />
       <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <aside className="shrink-0 lg:w-56 xl:w-60">
@@ -102,6 +103,7 @@ export function DocsPage() {
         </article>
 
         <DocsToc containerRef={articleRef} activeId={active.id} />
+      </div>
       </div>
     </PublicLayout>
   )

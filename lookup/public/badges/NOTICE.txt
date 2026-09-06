@@ -1,0 +1,1 @@
+Badge icons from mezotv/discord-badges (MIT License)\nhttps://github.com/mezotv/discord-badges\nCopyright (c) 2022 Dominik K.\nSee LICENSE.mezotv.txt\n

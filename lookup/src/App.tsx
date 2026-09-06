@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { lookupFetch, type LookupConfig } from './api/client'
 import { CaptchaGate } from './components/CaptchaGate'
 import { LookupLayout } from './components/LookupLayout'
+import { ScrollToTop } from './components/ScrollToTop'
 import { LanguageProvider } from './context/LanguageContext'
 import { AboutPage } from './pages/AboutPage'
 import { AvatarsPage } from './pages/AvatarsPage'
@@ -14,6 +15,7 @@ import { PermissionsPage } from './pages/PermissionsPage'
 import { PluginsPage } from './pages/PluginsPage'
 import { ServerPage } from './pages/ServerPage'
 import { SnowflakePage } from './pages/SnowflakePage'
+import { TimestampPage } from './pages/TimestampPage'
 import { UserPage } from './pages/UserPage'
 
 // ---------------------------------------------------------------------------
@@ -69,6 +71,7 @@ export default function App() {
   return (
     <LanguageProvider>
       <BrowserRouter basename="/lookup">
+        <ScrollToTop />
         <LookupProvider>
           <LookupLayout>
             <Routes>
@@ -79,6 +82,7 @@ export default function App() {
               <Route path="/server/:code" element={<ServerPage />} />
               <Route path="/snowflake" element={<SnowflakePage />} />
               <Route path="/snowflake/:id" element={<SnowflakePage />} />
+              <Route path="/timestamp" element={<TimestampPage />} />
               <Route path="/permissions" element={<PermissionsPage />} />
               <Route path="/avatars" element={<AvatarsPage />} />
               <Route path="/badges" element={<BadgesPage />} />

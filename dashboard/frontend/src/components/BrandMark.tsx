@@ -32,9 +32,11 @@ type Props = {
  * Site brand mark — navigates immediately on click.
  * 7 rapid clicks (streak survives SPA nav) → glitch + tagline; 5 more → /sans.
  */
+const BRAND_MARK_BASE = 'inline-flex items-center gap-2 font-semibold tracking-tight'
+
 export function BrandMark({
   to = '/about',
-  className = 'flex items-center gap-2 font-semibold tracking-tight',
+  className = '',
   iconClassName = 'text-primary',
   iconSize = 20,
   labelClassName,
@@ -50,7 +52,7 @@ export function BrandMark({
   return (
     <Link
       to={to}
-      className={className}
+      className={`${BRAND_MARK_BASE}${className ? ` ${className}` : ''}`}
       onClick={(e) => {
         if (eggsOff) return
 
