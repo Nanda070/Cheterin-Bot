@@ -2477,7 +2477,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
         <H3>Why can't I look up a server by Guild ID?</H3>
         <P>
           The Discord API does not expose guild information directly by ID without the bot being a member. Lookup uses
-          the public Invite API, which requires an invite code. Bare Guild ID lookup is not supported in v1.
+          the public Invite API, which requires an invite code. Bare Guild ID lookup is not supported.
         </P>
 
         <H3>Why does a bot profile show "degraded"?</H3>

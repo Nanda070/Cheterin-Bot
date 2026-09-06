@@ -12,6 +12,7 @@ const ROOT_LINKS = {
   cookies: '/cookies',
   disclaimer: '/disclaimer',
   credits: '/credits',
+  support: 'https://discord.gg/cheterin',
 } as const
 
 export function LookupLayout({ children }: { children: ReactNode }) {
@@ -119,7 +120,7 @@ export function LookupLayout({ children }: { children: ReactNode }) {
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-9 sm:px-6 sm:py-11">{children}</main>
 
       <footer className="mt-auto border-t border-border bg-background-deep/90">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.55fr_1fr_1fr]">
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
           <div>
             <BrandMark to="/" />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-muted">{t('footer.tagline')}</p>
@@ -178,9 +179,29 @@ export function LookupLayout({ children }: { children: ReactNode }) {
                   {t('footer.disclaimer')}
                 </a>
               </li>
+            </ul>
+          </div>
+          <div>
+            <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted">{t('footer.community')}</h2>
+            <ul className="mt-4 flex flex-col gap-2.5 text-sm">
+              <li>
+                <a
+                  href={ROOT_LINKS.support}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-foreground/85 transition-colors hover:text-foreground"
+                >
+                  {t('footer.support')}
+                </a>
+              </li>
               <li>
                 <a href={ROOT_LINKS.credits} className="text-foreground/85 transition-colors hover:text-foreground">
                   {t('footer.credits')}
+                </a>
+              </li>
+              <li>
+                <a href={ROOT_LINKS.about} className="text-foreground/85 transition-colors hover:text-foreground">
+                  {t('nav.botAbout')}
                 </a>
               </li>
             </ul>

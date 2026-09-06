@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { LookupIcon } from './LookupIcon'
 import { useLanguage, useT } from '../context/LanguageContext'
 import { copyText } from '../lib/discord'
 
@@ -36,13 +37,14 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
 export function BrandMark({ to = '/' }: { to?: string }) {
   const t = useT()
   return (
-    <Link to={to} className="group flex items-center gap-2.5 font-display text-[1.05rem] font-semibold tracking-tight text-foreground">
-      <span
-        aria-hidden
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-sm font-bold text-white transition-transform duration-200 group-hover:scale-[1.03]"
-      >
-        C
-      </span>
+    <Link
+      to={to}
+      className="group flex items-center gap-2.5 font-display text-[1.05rem] font-semibold tracking-tight text-foreground"
+    >
+      <LookupIcon
+        size={22}
+        className="text-primary transition-transform duration-200 group-hover:scale-[1.03]"
+      />
       <span>{t('brand.name')}</span>
     </Link>
   )

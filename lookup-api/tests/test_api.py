@@ -36,11 +36,18 @@ async def test_config(api_client):
     assert data["rate_limit_per_minute"] == 30
 
 
-async def test_plugins_empty(api_client):
+async def test_plugins_catalog(api_client):
     resp = await api_client.get("/api/lookup/plugins")
     assert resp.status == 200
     data = await resp.json()
-    assert data["plugins"] == []
+    plugins = data["plugins"]
+    assert isinstance(plugins, list)
+    assert len(plugins) >= 8
+    for item in plugins:
+        assert item.get("id")
+        assert item.get("name")
+        assert item.get("url")
+        assert item.get("description")
 
 
 async def test_user_without_token_is_503(api_client):

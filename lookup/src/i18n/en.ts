@@ -19,6 +19,8 @@ export const en: TranslationDict = {
   'footer.tagline': 'Open Lookup for the Cheterin ecosystem — no panel login and no Cheterin bot token.',
   'footer.legal': 'Legal',
   'footer.product': 'Product',
+  'footer.community': 'Community',
+  'footer.support': 'Support server',
   'footer.terms': 'Terms',
   'footer.privacy': 'Privacy',
   'footer.cookies': 'Cookies',
@@ -95,7 +97,7 @@ export const en: TranslationDict = {
   'about.bounds.title': 'What Lookup does not claim',
   'about.bounds.lead': 'Clear limits keep the product trustworthy.',
   'about.bounds.b1': 'No Group DM lookup and no DM Deleter.',
-  'about.bounds.b2': 'No ads, no public third-party API in v1, no “recent searches”.',
+  'about.bounds.b2': 'No ads, no public third-party API in the current release, no “recent searches”.',
   'about.bounds.b3': 'No private guild data and no OSINT / stalking framing.',
   'about.bounds.b4': 'Not affiliated with Discord Inc. Misuse of public data is the user’s responsibility.',
 
@@ -181,8 +183,6 @@ export const en: TranslationDict = {
   'server.never': 'Does not expire',
   'server.features': 'Features',
   'server.details': 'Invite snapshot',
-  'server.disclaimer':
-    'This is a public invite API snapshot, not a full server audit. Members, roles, and channels beyond the invite channel are unavailable here.',
 
   'snowflake.title': 'Snowflake decoder',
   'snowflake.lead': 'Local Discord snowflake decode. No Discord request required.',
@@ -228,14 +228,19 @@ export const en: TranslationDict = {
   'avatars.needFields': 'Need an ID and hash from a user or bot card.',
 
   'badges.title': 'Badge reference',
-  'badges.lead': 'Public Discord UserFlags. Profile cards only show flags present in the API response.',
+  'badges.lead':
+    'Discord profile badges: public UserFlags plus catalogued Nitro and Server Boosting tenure icons. Profile cards only show flags present in the API response.',
   'badges.bit': 'Bit',
+  'badges.catalogOnly': 'Catalog only',
+  'badges.group.flags': 'Public flags & profile badges',
+  'badges.group.nitro': 'Nitro',
+  'badges.group.boost': 'Server Boosting',
 
   'dsa.title': 'DSA',
   'dsa.lead':
     'Reserved for official EU DSA / Discord Statement of Reasons transparency. We do not invent violations or scrape portals past CAPTCHA.',
   'dsa.skeleton':
-    'No stable live per-ID source in v1 yet. Official outbound links are below. /lookup/dsa/:id is shareable: we show the id and a registry link, never a fake status.',
+    'No stable live per-ID source yet. Official outbound links are below. /lookup/dsa/:id is shareable: we show the id and a registry link, never a fake status.',
   'dsa.idLabel': 'Discord ID',
   'dsa.placeholder': 'ID to share',
   'dsa.open': 'Open DSA card',
@@ -246,7 +251,7 @@ export const en: TranslationDict = {
 
   'plugins.title': 'Plugins',
   'plugins.lead':
-    'External utilities the Cheterin operator curates next to Lookup. Plugins do not run on cheterin.online. No public submissions in v1.',
+    'External utilities the Cheterin operator curates next to Lookup. Plugins do not run on cheterin.online. Public submissions are not accepted.',
   'plugins.empty': 'The list is empty for now. The operator will add manifesto entries when there is something worth sharing.',
   'plugins.open': 'Open',
 

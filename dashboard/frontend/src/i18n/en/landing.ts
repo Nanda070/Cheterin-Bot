@@ -9,9 +9,9 @@ const landing: TranslationDict = {
   'landing.nav.panel': 'Panel',
 
   'landing.hero.brand': 'Cheterin',
-  'landing.hero.headline': 'Multi-guild Discord bot and web panel',
+  'landing.hero.headline': 'A bot that lives on the server',
   'landing.hero.sub':
-    'Moderation, levels, economy, events, games, and VALORANT tools — configured at cheterin.online, isolated per server, in Russian and English.',
+    'Moderation, levels, economy, and events — everything a living community needs.',
   'landing.hero.ctaAdd': 'Add to Discord',
   'landing.hero.ctaSignIn': 'Sign in to panel',
   'landing.hero.ctaLookup': 'Open Lookup',
@@ -93,10 +93,8 @@ const landing: TranslationDict = {
   'landing.feature.messages.point2': 'Custom commands and private rooms',
   'landing.feature.messages.point3': 'Stream alerts and banner/icon rotation',
 
-  'landing.lookup.eyebrow': 'Separate tool',
   'landing.lookup.title': 'Cheterin Lookup',
-  'landing.lookup.body':
-    'Look up Discord users, bots, and server invites. Lookup runs as its own service — not inside the bot process — and lives at /lookup.',
+  'landing.lookup.body': 'Look up Discord users, bots, and server invites.',
   'landing.lookup.cta': 'Go to Lookup',
 
   'landing.cta.title': 'Ready for your server?',
@@ -110,7 +108,6 @@ const landing: TranslationDict = {
   'landing.footer.community': 'Community',
   'landing.footer.support': 'Support server',
   'landing.footer.copyright': '© 2026 — Cheterin Group Ø',
-  'landing.footer.langs': 'Interface languages: Russian and English',
 }
 
 export default landing

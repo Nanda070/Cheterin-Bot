@@ -94,8 +94,6 @@ export function ServerPage() {
         </div>
       </Panel>
 
-      <p className="text-sm text-muted">{t('server.disclaimer')}</p>
-
       <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
         <Panel className="p-5 sm:p-6">
           <SectionTitle>{t('server.details')}</SectionTitle>

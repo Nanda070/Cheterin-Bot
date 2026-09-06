@@ -9,9 +9,9 @@ const landing: TranslationDict = {
   'landing.nav.panel': 'Панель',
 
   'landing.hero.brand': 'Cheterin',
-  'landing.hero.headline': 'Мультисерверный Discord-бот и веб-панель',
+  'landing.hero.headline': 'Бот, который живёт на сервере',
   'landing.hero.sub':
-    'Модерация, уровни, экономика, ивенты, игры и инструменты VALORANT — настройка на cheterin.online, изоляция по серверам, русский и английский.',
+    'Модерация, уровни, экономика и ивенты — всё, что нужно живому сообществу.',
   'landing.hero.ctaAdd': 'Добавить в Discord',
   'landing.hero.ctaSignIn': 'Войти в панель',
   'landing.hero.ctaLookup': 'Открыть Lookup',
@@ -93,10 +93,8 @@ const landing: TranslationDict = {
   'landing.feature.messages.point2': 'Свои команды и приватные комнаты',
   'landing.feature.messages.point3': 'Алерты стримов и ротация баннера/иконки',
 
-  'landing.lookup.eyebrow': 'Отдельный инструмент',
   'landing.lookup.title': 'Cheterin Lookup',
-  'landing.lookup.body':
-    'Просмотр Discord-пользователей, ботов и инвайтов серверов. Lookup — отдельный сервис, не процесс бота, и живёт на /lookup.',
+  'landing.lookup.body': 'Просмотр Discord-пользователей, ботов и инвайтов серверов.',
   'landing.lookup.cta': 'Перейти в Lookup',
 
   'landing.cta.title': 'Готовы добавить на сервер?',
@@ -110,7 +108,6 @@ const landing: TranslationDict = {
   'landing.footer.community': 'Сообщество',
   'landing.footer.support': 'Сервер поддержки',
   'landing.footer.copyright': '© 2026 — Cheterin Group Ø',
-  'landing.footer.langs': 'Языки интерфейса: русский и английский',
 }
 
 export default landing

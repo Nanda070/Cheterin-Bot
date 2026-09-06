@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom'
 import { fetchInviteUrl, loginUrl } from '../api/client'
 import { BrandMark } from '../components/BrandMark'
 import { LanguageToggle } from '../components/LanguageToggle'
+import { LookupIcon } from '../components/LookupIcon'
 import { SecretClickTarget } from '../components/SecretClickTarget'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../context/LanguageContext'
@@ -449,16 +450,19 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
         <section id="lookup" className="landing-lookup-band border-y border-border">
           <div className="landing-section-in mx-auto flex w-full max-w-6xl flex-col items-start gap-6 px-4 py-14 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-16">
             <div className="max-w-xl">
-              <p className="text-sm font-medium uppercase tracking-[0.14em] text-primary">{t('landing.lookup.eyebrow')}</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {t('landing.lookup.title')}
-              </h2>
+              <div className="mb-3 flex items-center gap-2.5">
+                <LookupIcon size={22} className="text-primary" />
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  {t('landing.lookup.title')}
+                </h2>
+              </div>
               <p className="mt-3 text-base leading-relaxed text-muted">{t('landing.lookup.body')}</p>
             </div>
             <a
               href="/lookup/"
               className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
             >
+              <LookupIcon size={16} className="text-white" />
               {t('landing.lookup.cta')}
             </a>
           </div>
@@ -489,7 +493,6 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
             <SecretClickTarget clicks={8} to={SECRET_ROOMS.waterfall} className="mt-3 block max-w-xs cursor-default">
               <p className="text-sm leading-relaxed text-muted">{t('landing.footer.tagline')}</p>
             </SecretClickTarget>
-            <p className="mt-3 text-xs text-muted">{t('landing.footer.langs')}</p>
             <p className="mt-2 text-xs text-muted">{t('landing.footer.copyright')}</p>
           </div>
 
@@ -504,11 +507,6 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
               <li>
                 <Link to="/docs" className="text-foreground/90 hover:text-foreground">
                   {t('nav.docs')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/credits" className="text-foreground/90 hover:text-foreground">
-                  {t('nav.credits')}
                 </Link>
               </li>
               <li>
@@ -571,6 +569,11 @@ export function LandingPage({ authErrorKey }: { authErrorKey?: string }) {
                 >
                   {t('landing.nav.addBot')}
                 </button>
+              </li>
+              <li>
+                <Link to="/credits" className="text-foreground/90 hover:text-foreground">
+                  {t('nav.credits')}
+                </Link>
               </li>
             </ul>
           </div>

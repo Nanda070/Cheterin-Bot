@@ -47,8 +47,8 @@ export function DocsPage() {
   return (
     <PublicLayout>
       <DocsBanner />
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <aside className="shrink-0 lg:w-60">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <aside className="shrink-0 lg:w-56 xl:w-60">
           <DocsSearch items={navItems} />
           <DocsSidebar items={navItems} groups={groups} activeId={active.id} />
         </aside>
@@ -56,7 +56,7 @@ export function DocsPage() {
         <article
           key={`${lang}-${active.id}`}
           ref={articleRef}
-          className="animate-fade-in-up min-w-0 flex-1 rounded-card border border-border bg-surface p-6"
+          className="animate-fade-in-up min-w-0 flex-1 rounded-card border border-border bg-surface p-6 lg:max-w-none xl:pr-2"
         >
           <div className="mb-2 flex items-start justify-between gap-3">
             <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{active.title}</h1>

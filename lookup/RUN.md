@@ -1,8 +1,8 @@
 # Cheterin Lookup (SPA)
 
-Public Lookup UI for `https://cheterin.online/lookup`.
+Vite + React UI for Cheterin Lookup. Production base path: `/lookup/`.
 
-## Local run
+## Local
 
 ```bash
 cd lookup
@@ -10,17 +10,28 @@ npm install
 npm run dev
 ```
 
-Dev server: `http://127.0.0.1:5174/lookup/`  
-API proxy: `/api/lookup` → `http://127.0.0.1:8090` (start `lookup-api` separately).
+Open `http://127.0.0.1:5174/lookup/` (dev server proxies `/api/lookup` → `127.0.0.1:8090`).
+
+## Build
 
 ```bash
 npm run build
-npm run preview
+# output: lookup/dist  (served under /lookup/ by nginx or dashboard preview)
 ```
 
-## Notes
+## Combined preview with dashboard (port 4173)
 
-- Vite `base` is `/lookup/`.
-- Language key: `chetbot_ui_lang` (RU default).
-- Does **not** import dashboard frontend code.
-- Brand header name: **Cheterin**.
+```bash
+npm --prefix lookup run build
+npm --prefix dashboard/frontend run build
+npm --prefix dashboard/frontend run preview -- --host 127.0.0.1 --port 4173
+```
+
+Requires Lookup API on `:8090` for live Discord lookups:
+
+```bash
+cd lookup-api
+python app.py
+```
+
+See `lookup-api/RUN.md` and `lookup-api/PROXY.md`.

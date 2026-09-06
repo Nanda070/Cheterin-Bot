@@ -1,3 +1,100 @@
 {
-  "plugins": []
+  "plugins": [
+    {
+      "id": "discord-developers",
+      "name": "Discord Developer Portal",
+      "description": "Create applications, manage bot tokens, OAuth2, and intents.",
+      "description_ru": "Создание приложений, bot token, OAuth2 и intents.",
+      "url": "https://discord.com/developers/applications",
+      "tags": ["official", "bots"]
+    },
+    {
+      "id": "discord-api-docs",
+      "name": "Discord API Docs",
+      "description": "Official REST/Gateway reference for users, guilds, invites, and permissions.",
+      "description_ru": "Официальный справочник REST/Gateway: пользователи, гильдии, инвайты, права.",
+      "url": "https://discord.com/developers/docs/intro",
+      "tags": ["official", "docs"]
+    },
+    {
+      "id": "discord-permissions-calculator",
+      "name": "Discord Permissions Calculator",
+      "description": "Classic community bitfield builder for OAuth2 bot invites.",
+      "description_ru": "Классический калькулятор битмаски прав для OAuth2-приглашения бота.",
+      "url": "https://discordapi.com/permissions.html",
+      "tags": ["permissions", "tools"]
+    },
+    {
+      "id": "snowflake-tool",
+      "name": "Discord Snowflake Tool",
+      "description": "Decode Discord snowflakes to UTC timestamps (worker/process/increment).",
+      "description_ru": "Разбор Discord snowflake в UTC (worker/process/increment).",
+      "url": "https://snowsta.mp/",
+      "tags": ["snowflake", "tools"]
+    },
+    {
+      "id": "discord-js-guide",
+      "name": "discord.js Guide",
+      "description": "Practical guide for building Discord bots with discord.js.",
+      "description_ru": "Практический гайд по ботам на discord.js.",
+      "url": "https://discordjs.guide/",
+      "tags": ["bots", "docs"]
+    },
+    {
+      "id": "discord-api-types",
+      "name": "discord-api-types",
+      "description": "TypeScript typings for Discord API payloads, including UserFlags.",
+      "description_ru": "TypeScript-типы для payload Discord API, включая UserFlags.",
+      "url": "https://discord-api-types.dev/",
+      "tags": ["types", "docs"]
+    },
+    {
+      "id": "support-dev",
+      "name": "Discord Developer Support",
+      "description": "Official help articles for Active Developer and app requirements.",
+      "description_ru": "Официальные статьи для Active Developer и требований к приложениям.",
+      "url": "https://support-dev.discord.com/hc/en-us",
+      "tags": ["official", "support"]
+    },
+    {
+      "id": "discord-safety",
+      "name": "Discord Safety Library",
+      "description": "Transparency and safety resources from Discord.",
+      "description_ru": "Ресурсы Discord по безопасности и прозрачности.",
+      "url": "https://discord.com/safety-library",
+      "tags": ["official", "safety"]
+    },
+    {
+      "id": "eu-dsa",
+      "name": "EU Digital Services Act",
+      "description": "European Commission overview of the Digital Services Act.",
+      "description_ru": "Обзор Digital Services Act от Европейской комиссии.",
+      "url": "https://digital-strategy.ec.europa.eu/en/policies/digital-services-act",
+      "tags": ["legal", "dsa"]
+    },
+    {
+      "id": "cheterin-docs",
+      "name": "Cheterin Docs",
+      "description": "Cheterin bot documentation on cheterin.online — modules, setup, Lookup.",
+      "description_ru": "Документация бота Cheterin на cheterin.online — модули, настройка, Lookup.",
+      "url": "https://cheterin.online/docs",
+      "tags": ["cheterin", "docs"]
+    },
+    {
+      "id": "cheterin-about",
+      "name": "Cheterin About",
+      "description": "Public showcase for the Cheterin Discord bot and control panel.",
+      "description_ru": "Публичная витрина Discord-бота Cheterin и панели управления.",
+      "url": "https://cheterin.online/about",
+      "tags": ["cheterin"]
+    },
+    {
+      "id": "discord-status",
+      "name": "Discord Status",
+      "description": "Official Discord service status and incident history.",
+      "description_ru": "Официальный статус сервисов Discord и история инцидентов.",
+      "url": "https://discordstatus.com/",
+      "tags": ["official", "status"]
+    }
+  ]
 }

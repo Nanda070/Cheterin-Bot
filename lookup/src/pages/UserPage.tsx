@@ -16,7 +16,7 @@ import {
 } from '../components/ui'
 import { useLanguage, useT } from '../context/LanguageContext'
 import { cdnAvatarUrl, cdnBannerUrl, isSnowflake } from '../lib/discord'
-import { badgesFromFlags } from '../lib/permissions'
+import { badgesFromFlags } from '../lib/badges'
 import { useLookupErrorMessage } from '../lib/useLookup'
 
 export function UserPage() {
@@ -84,11 +84,18 @@ export function UserPage() {
                 @{user.username}
                 {user.discriminator && user.discriminator !== '0' ? `#${user.discriminator}` : ''}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 {user.bot ? <Tag tone="accent">BOT</Tag> : null}
                 {user.system ? <Tag>SYSTEM</Tag> : null}
                 {badges.map((b) => (
-                  <Tag key={b.key}>{lang === 'ru' ? b.nameRu : b.nameEn}</Tag>
+                  <span
+                    key={b.key}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-hover/80 px-2.5 py-1 text-xs text-foreground"
+                    title={lang === 'ru' ? b.nameRu : b.nameEn}
+                  >
+                    <img src={b.icon} alt="" width={16} height={16} className="h-4 w-4 object-contain" />
+                    {lang === 'ru' ? b.nameRu : b.nameEn}
+                  </span>
                 ))}
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { LookupIcon } from '../components/LookupIcon'
 import { PrimaryButton } from '../components/ui'
 import { useT } from '../context/LanguageContext'
 import { isSnowflake, normalizeInviteCode } from '../lib/discord'
@@ -53,9 +54,12 @@ export function HomePage() {
   return (
     <div className="space-y-16 sm:space-y-20">
       <section className="lookup-hero-in mx-auto max-w-3xl text-center">
-        <p className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-primary-hover">
-          Lookup
-        </p>
+        <div className="mb-4 flex items-center justify-center gap-2">
+          <LookupIcon size={22} className="text-primary" />
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-primary-hover">
+            Lookup
+          </p>
+        </div>
         <h1 className="font-display text-[2.1rem] font-bold leading-[1.12] tracking-tight sm:text-5xl md:text-[3.25rem]">
           {t('home.title')}
         </h1>

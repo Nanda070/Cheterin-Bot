@@ -406,40 +406,45 @@ const legal: TranslationDict = {
   'cookies.lastUpdated': 'Last updated: September 6, 2026',
   'cookies.s1.title': '1. What this notice covers',
   'cookies.s1.p1':
-    '1.1. This page describes cookies and similar storage used by the Cheterin web control panel and Cheterin Lookup. It does not cover Discord itself.',
+    '1.1. This page describes cookies and similar browser storage used by the Cheterin web control panel and Cheterin Lookup on cheterin.online. It does not describe cookies set by Discord.com, Discord’s CDN, or third-party sites you open from outbound links.',
   'cookies.s2.title': '2. What we store',
-  'cookies.s2.p1': '2.1. The panel and Lookup use only what is needed to run the site:',
+  'cookies.s2.p1': '2.1. We keep storage minimal and operational:',
   'cookies.s2.li1':
-    'a session cookie so you stay signed in to the dashboard after Discord OAuth (cleared when you sign out or the session expires);',
+    'Session cookie for the control panel — set after Discord OAuth so you remain signed in while using guild settings. It is cleared when you sign out or when the session expires. Lookup itself does not require this cookie.',
   'cookies.s2.li2':
-    'chetbot_ui_lang — remembers your interface language (English or Russian) in the browser (shared by panel, docs, legal pages, and Lookup);',
+    '`chetbot_ui_lang` — stores your interface language preference (Russian or English). It is shared across About, docs, legal pages, the panel chrome, and Lookup so the RU/EN toggle stays consistent.',
   'cookies.s2.li3':
-    'when anti-abuse CAPTCHA is enabled for Lookup after repeated requests, cookies from the CAPTCHA provider may be set — only for that challenge, not for advertising.',
+    'CAPTCHA provider cookies (Turnstile or hCaptcha) — only when the operator has enabled anti-abuse CAPTCHA and Lookup asks you to complete a challenge after repeated requests. Those cookies belong to the CAPTCHA vendor’s challenge flow, not to advertising.',
   'cookies.s2.p2':
-    '2.2. We do not use advertising cookies, analytics trackers, or third-party tracking pixels on the panel or Lookup.',
-  'cookies.s3.title': '3. Why',
+    '2.2. We do not place advertising cookies, marketing pixels, social tracking pixels, or third-party analytics trackers on the panel or Lookup. We do not sell browsing data.',
+  'cookies.s2.p3':
+    '2.3. Lookup queries may transit Discord’s public API and Discord CDN for avatars/banners. Those requests are subject to Discord’s own privacy practices; we do not permanently host avatar/banner files on cheterin.online beyond short-lived proxy responses when used as a download fallback.',
+  'cookies.s3.title': '3. Retention and purpose',
   'cookies.s3.p1':
-    '3.1. Session storage is required for authenticated use of the dashboard. The language preference is optional convenience across Cheterin surfaces. CAPTCHA cookies exist only when Lookup needs to slow automated abuse.',
-  'cookies.s4.title': '4. Control',
+    '3.1. The panel session cookie exists only to keep an authenticated dashboard session. Language preference remains until you change it or clear site data. CAPTCHA cookies last as long as the provider needs to validate the challenge (typically short-lived).',
+  'cookies.s3.p2':
+    '3.2. We do not keep a long-term “recent searches” cookie for Lookup. Rate-limit state, when used, is operational and short-lived on the Lookup API side — not a marketing profile.',
+  'cookies.s4.title': '4. Your controls',
   'cookies.s4.p1':
-    '4.1. You can clear cookies and site data in your browser, or sign out of the panel. Blocking the session cookie will prevent staying signed in. Language can be changed with the RU/EN control.',
+    '4.1. You can clear cookies and site data in your browser, or sign out of the panel. Blocking the session cookie prevents staying signed in to the dashboard. Language can be changed anytime with the RU/EN control. If CAPTCHA is required and you block its cookies, Lookup may refuse further requests until the challenge can complete.',
 
   'disclaimer.title': 'Disclaimer',
   'disclaimer.lastUpdated': 'Last updated: September 6, 2026',
   'disclaimer.s1.title': '1. Not affiliated with Discord',
   'disclaimer.s1.p1':
-    '1.1. Cheterin is an independent Discord bot, control panel, and Lookup tool. It is not affiliated with, endorsed by, or sponsored by Discord Inc. Discord is a trademark of Discord Inc.',
-  'disclaimer.s2.title': '2. Public data and completeness',
+    '1.1. Cheterin (bot, control panel, and Lookup) is an independent project operated by Cheterin Group Ø / Nandak070. It is not affiliated with, endorsed by, sponsored by, or partnered with Discord Inc. “Discord” is a trademark of Discord Inc.',
+  'disclaimer.s2.title': '2. Public Discord API limits',
   'disclaimer.s2.p1':
-    '2.1. Features that show Discord member, channel, role, activity, or Lookup results rely on data Discord exposes to the bot or Lookup application. That data can be incomplete, delayed, or unavailable.',
+    '2.1. Bot features, panel views, and Lookup results depend on what Discord’s official API returns to our applications. Data can be incomplete, delayed, rate-limited, redacted, or unavailable. Empty fields usually mean Discord did not return that field — not that we “hid” it.',
   'disclaimer.s2.p2':
-    '2.2. Do not treat panel, bot, or Lookup output as a complete or official record of Discord activity. Lookup shows invite snapshots and public user/application fields only — not private guild audits.',
-  'disclaimer.s3.title': '3. No doxxing or misuse',
+    '2.2. Do not treat panel, bot, or Lookup output as a complete official audit of Discord activity, membership, or moderation history. Lookup shows public user/application fields and public invite snapshots only. Server lookup requires an invite code; bare Guild ID lookup is not supported.',
+  'disclaimer.s2.p3':
+    '2.3. Lookup honesty: we do not invent “full profiles”, private guild data, Group DM contents, or fake DSA violation statuses. If a live DSA upstream source is unavailable, the DSA page remains an honest skeleton with official outbound links only.',
+  'disclaimer.s3.title': '3. No doxxing or harassment',
   'disclaimer.s3.p1':
-    '3.1. Do not use the Service (including Lookup) to harass, dox, or otherwise harm people. Server admins are responsible for how they configure and use moderation and logging features on their servers.',
+    '3.1. Do not use the Service — including Lookup — to harass, stalk, dox, or otherwise harm people. Public IDs and invite codes do not grant permission to misuse data. Server administrators remain responsible for how they configure moderation, logging, and access on their own servers.',
   'disclaimer.s4.title': '4. Responsibility',
   'disclaimer.s4.p1':
-    '4.1. Use of the Service is at your own risk, subject to the Terms of Use and Privacy Policy.',
+    '4.1. Use of the Service is at your own risk and is subject to the Terms of Use and Privacy Policy. Discord API outages, token revocation, or network limits may interrupt Lookup without prior notice.',
 }
-
 export default legal

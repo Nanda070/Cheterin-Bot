@@ -69,33 +69,3 @@ export function buildAuthorizeUrl(clientId: string, permissions: bigint, scopes:
   })
   return `https://discord.com/oauth2/authorize?${params.toString()}`
 }
-
-export type BadgeDef = {
-  key: string
-  bit: number
-  nameEn: string
-  nameRu: string
-}
-
-/** Public UserFlags commonly shown by lookup UIs. */
-export const BADGE_CATALOG: BadgeDef[] = [
-  { key: 'staff', bit: 1 << 0, nameEn: 'Discord Employee', nameRu: 'Сотрудник Discord' },
-  { key: 'partner', bit: 1 << 1, nameEn: 'Partnered Server Owner', nameRu: 'Владелец партнёрского сервера' },
-  { key: 'hypesquad', bit: 1 << 2, nameEn: 'HypeSquad Events', nameRu: 'HypeSquad Events' },
-  { key: 'bug1', bit: 1 << 3, nameEn: 'Bug Hunter Level 1', nameRu: 'Bug Hunter Level 1' },
-  { key: 'hype_bravery', bit: 1 << 6, nameEn: 'HypeSquad Bravery', nameRu: 'HypeSquad Bravery' },
-  { key: 'hype_brilliance', bit: 1 << 7, nameEn: 'HypeSquad Brilliance', nameRu: 'HypeSquad Brilliance' },
-  { key: 'hype_balance', bit: 1 << 8, nameEn: 'HypeSquad Balance', nameRu: 'HypeSquad Balance' },
-  { key: 'premium_early', bit: 1 << 9, nameEn: 'Early Supporter', nameRu: 'Early Supporter' },
-  { key: 'team', bit: 1 << 10, nameEn: 'Team User', nameRu: 'Team User' },
-  { key: 'bug2', bit: 1 << 14, nameEn: 'Bug Hunter Level 2', nameRu: 'Bug Hunter Level 2' },
-  { key: 'verified_bot', bit: 1 << 16, nameEn: 'Verified Bot', nameRu: 'Verified Bot' },
-  { key: 'verified_dev', bit: 1 << 17, nameEn: 'Early Verified Bot Developer', nameRu: 'Early Verified Bot Developer' },
-  { key: 'mod_alumni', bit: 1 << 18, nameEn: 'Moderator Programs Alumni', nameRu: 'Moderator Programs Alumni' },
-  { key: 'active_dev', bit: 1 << 22, nameEn: 'Active Developer', nameRu: 'Active Developer' },
-]
-
-export function badgesFromFlags(flags: number | null | undefined): BadgeDef[] {
-  const value = flags ?? 0
-  return BADGE_CATALOG.filter((b) => (value & b.bit) === b.bit)
-}

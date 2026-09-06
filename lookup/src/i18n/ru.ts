@@ -19,6 +19,8 @@ export const ru: TranslationDict = {
   'footer.tagline': 'Открытый Lookup экосистемы Cheterin — без входа в панель и без токена бота Cheterin.',
   'footer.legal': 'Правовое',
   'footer.product': 'Продукт',
+  'footer.community': 'Сообщество',
+  'footer.support': 'Сервер поддержки',
   'footer.terms': 'Условия',
   'footer.privacy': 'Приватность',
   'footer.cookies': 'Cookies',
@@ -95,7 +97,7 @@ export const ru: TranslationDict = {
   'about.bounds.title': 'Чего Lookup не обещает',
   'about.bounds.lead': 'Ясные лимиты делают продукт честным.',
   'about.bounds.b1': 'Нет Group DM lookup и нет DM Deleter.',
-  'about.bounds.b2': 'Нет рекламы, нет публичного стороннего API в v1, нет «недавних поисков».',
+  'about.bounds.b2': 'Нет рекламы, нет публичного стороннего API в текущем релизе, нет «недавних поисков».',
   'about.bounds.b3': 'Нет приватных данных гильдий и нет OSINT / stalking-позиционирования.',
   'about.bounds.b4': 'Не аффилирован с Discord Inc. Злоупотребление публичными данными — ответственность пользователя.',
 
@@ -181,8 +183,6 @@ export const ru: TranslationDict = {
   'server.never': 'Не истекает',
   'server.features': 'Возможности',
   'server.details': 'Снимок приглашения',
-  'server.disclaimer':
-    'Это публичный снимок invite API, не полный аудит сервера. Участники, роли и каналы кроме invite-канала здесь недоступны.',
 
   'snowflake.title': 'Декодер Snowflake',
   'snowflake.lead': 'Локальный разбор Discord snowflake. Запрос к Discord не нужен.',
@@ -228,14 +228,19 @@ export const ru: TranslationDict = {
   'avatars.needFields': 'Нужны ID и hash из карточки пользователя или бота.',
 
   'badges.title': 'Справочник бейджей',
-  'badges.lead': 'Публичные UserFlags Discord. На карточке профиля показываются только флаги из ответа API.',
+  'badges.lead':
+    'Бейджи профиля Discord: публичные UserFlags плюс каталог Nitro и Server Boosting. На карточке профиля показываются только флаги из ответа API.',
   'badges.bit': 'Бит',
+  'badges.catalogOnly': 'Только каталог',
+  'badges.group.flags': 'Публичные флаги и бейджи профиля',
+  'badges.group.nitro': 'Nitro',
+  'badges.group.boost': 'Server Boosting',
 
   'dsa.title': 'DSA',
   'dsa.lead':
     'Раздел зарезервирован под официальную прозрачность EU DSA / Discord Statement of Reasons. Мы не выдумываем нарушения и не скрейпим порталы в обход капчи.',
   'dsa.skeleton':
-    'Живого стабильного источника по ID в v1 пока нет. Ниже — исходящие официальные ссылки. URL /lookup/dsa/:id можно шарить: покажем id и ссылку в реестр, без фейкового статуса.',
+    'Живого стабильного источника по ID пока нет. Ниже — исходящие официальные ссылки. URL /lookup/dsa/:id можно шарить: покажем id и ссылку в реестр, без фейкового статуса.',
   'dsa.idLabel': 'Discord ID',
   'dsa.placeholder': 'ID для шаринга',
   'dsa.open': 'Открыть карточку DSA',
@@ -245,7 +250,7 @@ export const ru: TranslationDict = {
 
   'plugins.title': 'Плагины',
   'plugins.lead':
-    'Каталог внешних утилит, которые оператор Cheterin считает полезными рядом с Lookup. Плагины не исполняются на cheterin.online. Публичных сабмишенов в v1 нет.',
+    'Каталог внешних утилит, которые оператор Cheterin считает полезными рядом с Lookup. Плагины не исполняются на cheterin.online. Публичных сабмишенов нет.',
   'plugins.empty': 'Список пока пуст. Оператор добавит записи в манифест, когда будет чем делиться.',
   'plugins.open': 'Открыть',
 
