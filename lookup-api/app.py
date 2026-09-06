@@ -1,6 +1,6 @@
 """Cheterin Lookup API — isolated aiohttp service.
 
-Uses LOOKUP_DISCORD_TOKEN only. Never imports bot cogs, dashboard.backend, or ValChecker.
+Supports LOOKUP_DISCORD_TOKENS (comma-list) or LOOKUP_DISCORD_TOKEN (single). Never imports bot cogs, dashboard.backend, or ValChecker. Never imports bot cogs, dashboard.backend, or ValChecker.
 """
 
 from __future__ import annotations
@@ -32,6 +32,80 @@ load_dotenv(_HERE / ".env")
 load_dotenv(_ROOT / ".env")
 
 log = logging.getLogger("lookup-api")
+
+
+# ── Token pool ───────────────────────────────────────────────────────────────
+
+class TokenPool:
+    """Round-robin Discord bot-token pool with 429-aware rotation.
+
+    Tokens are loaded from ``LOOKUP_DISCORD_TOKENS`` (comma-separated, preferred)
+    or ``LOOKUP_DISCORD_TOKEN`` (single-token fallback).  Each call to
+    :meth:`discord_get` advances the round-robin pointer so consecutive requests
+    spread across all configured tokens.  On HTTP 429 the failing slot is skipped
+    and the next token is tried immediately; if every token is exhausted the pool
+    waits ``min(Retry-After, 5 s)`` before one final attempt.
+    """
+
+    def __init__(self, tokens: list[str]) -> None:
+        self._tokens: list[str] = [t.strip() for t in tokens if t and t.strip()]
+        self._idx: int = 0
+        self._lock: asyncio.Lock = asyncio.Lock()
+
+    def __bool__(self) -> bool:
+        return bool(self._tokens)
+
+    def __len__(self) -> int:
+        return len(self._tokens)
+
+    def _pick(self) -> tuple[int, str]:
+        """Return ``(slot, token)`` and advance the pointer. Call under ``self._lock``."""
+        n = len(self._tokens)
+        slot = self._idx % n
+        self._idx = (slot + 1) % n
+        return slot, self._tokens[slot]
+
+    async def discord_get(self, session: ClientSession, path: str) -> tuple[int, Any]:
+        """GET ``{DISCORD_API}{path}`` with round-robin token selection.
+
+        Rotates to the next token immediately on HTTP 429.  After all tokens
+        have been tried once it waits up to 5 s then makes one final attempt.
+        """
+        if not self._tokens:
+            return 503, {"message": "LOOKUP_DISCORD_TOKEN missing"}
+
+        n = len(self._tokens)
+        last_retry_after: float = 1.0
+
+        for attempt in range(n + 1):
+            async with self._lock:
+                slot, token = self._pick()
+
+            headers = {
+                "Authorization": f"Bot {token}",
+                "User-Agent": "CheterinLookup/1.0",
+            }
+            try:
+                async with session.get(f"{DISCORD_API}{path}", headers=headers) as resp:
+                    if resp.status == 429:
+                        last_retry_after = float(resp.headers.get("Retry-After", "1"))
+                        log.warning(
+                            "discord_get: slot %d/%d 429 on %s (retry_after=%.1fs attempt %d/%d)",
+                            slot + 1, n, path, last_retry_after, attempt + 1, n + 1,
+                        )
+                        if attempt < n - 1:
+                            continue  # try next token immediately
+                        await asyncio.sleep(min(last_retry_after, 5.0))
+                        continue
+                    try:
+                        data = await resp.json(content_type=None)
+                    except Exception:
+                        data = {"message": await resp.text()}
+                    return resp.status, data
+            except Exception as exc:  # noqa: BLE001
+                log.warning("discord_get attempt %d/%d error: %s", attempt + 1, n + 1, exc)
+
+        return 429, {"message": "All Discord tokens are rate-limited; try again shortly."}
 
 DISCORD_API = "https://discord.com/api/v10"
 CDN = "https://cdn.discordapp.com"
@@ -232,17 +306,17 @@ def shape_user(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 async def discord_get(app: web.Application, path: str) -> tuple[int, Any]:
-    token = app["token"]
-    if not token:
-        return 503, {"message": "LOOKUP_DISCORD_TOKEN missing"}
+    """Delegate to the app-level :class:`TokenPool`."""
+    pool: TokenPool = app["token_pool"]
     session: ClientSession = app["http"]
-    headers = {"Authorization": f"Bot {token}", "User-Agent": "CheterinLookup/1.0"}
-    async with session.get(f"{DISCORD_API}{path}", headers=headers) as resp:
-        try:
-            data = await resp.json(content_type=None)
-        except Exception:
-            data = {"message": await resp.text()}
-        return resp.status, data
+    return await pool.discord_get(session, path)
+
+
+
+
+
+
+
 
 
 async def fetch_application_rpc(app: web.Application, app_id: str) -> dict[str, Any] | None:
@@ -325,16 +399,16 @@ async def record_abuse(app: web.Application, ip: str, queried: str) -> None:
 
 
 async def handle_health(request: web.Request) -> web.Response:
-    token_ok = bool(request.app["token"])
+    pool: TokenPool = request.app["token_pool"]
     return web.json_response(
         {
             "ok": True,
             "service": "lookup-api",
-            "token_configured": token_ok,
+            "token_configured": bool(pool),
+            "token_count": len(pool),
             "rate_limit_per_minute": RATE_LIMIT_PER_MINUTE,
         }
     )
-
 
 async def handle_config(request: web.Request) -> web.Response:
     captcha_enabled = os.getenv("LOOKUP_CAPTCHA_ENABLED", "false").lower() == "true"
@@ -724,13 +798,23 @@ async def on_cleanup(app: web.Application) -> None:
 
 
 def create_app() -> web.Application:
-    token = os.getenv("LOOKUP_DISCORD_TOKEN", "").strip()
+    # Prefer LOOKUP_DISCORD_TOKENS (comma-list); fall back to LOOKUP_DISCORD_TOKEN (single).
+    raw_multi = os.getenv("LOOKUP_DISCORD_TOKENS", "").strip()
+    raw_single = os.getenv("LOOKUP_DISCORD_TOKEN", "").strip()
+    if raw_multi:
+        tokens = [t.strip() for t in raw_multi.split(",") if t.strip()]
+    elif raw_single:
+        tokens = [raw_single]
+    else:
+        tokens = []
     # Guardrail: never silently fall back to BOT_TOKEN
-    if not token and os.getenv("BOT_TOKEN"):
-        log.warning("BOT_TOKEN is set but LOOKUP_DISCORD_TOKEN is missing — Lookup will not use BOT_TOKEN")
+    if not tokens and os.getenv("BOT_TOKEN"):
+        log.warning("BOT_TOKEN is set but LOOKUP_DISCORD_TOKEN(S) is missing - Lookup will not use BOT_TOKEN")
 
+    pool = TokenPool(tokens)
     app = web.Application(middlewares=[rate_limit_middleware])
-    app["token"] = token
+    app["token_pool"] = pool
+    app["token"] = tokens[0] if tokens else ""  # kept for legacy access
     app["cache"] = TtlCache()
     app["limiter"] = RateLimiter()
     app["abuse_logs"] = deque()
@@ -758,8 +842,11 @@ def main() -> None:
     host = os.getenv("LOOKUP_API_HOST", "127.0.0.1")
     port = int(os.getenv("LOOKUP_API_PORT", "8090"))
     app = create_app()
-    if not app["token"]:
-        log.warning("LOOKUP_DISCORD_TOKEN is empty — Discord routes will return 503")
+    pool: TokenPool = app["token_pool"]
+    if not pool:
+        log.warning("No LOOKUP_DISCORD_TOKEN(S) configured - Discord routes will return 503")
+    else:
+        log.info("Token pool loaded: %d token(s) configured", len(pool))
     web.run_app(app, host=host, port=port, print=lambda msg: log.info("%s", msg))
 
 

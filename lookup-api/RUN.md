@@ -1,4 +1,4 @@
-# Lookup API — local run
+# Lookup API - local run
 
 Isolated aiohttp service. **Not** started from `main.py`. Default bind: `127.0.0.1:8090`.
 
@@ -8,10 +8,30 @@ Isolated aiohttp service. **Not** started from `main.py`. Default bind: `127.0.0
 cd lookup-api
 python -m venv .venv
 # Windows: .venv\Scripts\activate
+# Unix:    source .venv/bin/activate
 pip install -r requirements.txt
-copy .env.example .env   # or cp on Unix
-# Edit .env — set LOOKUP_DISCORD_TOKEN (Lookup app bot token only)
+cp .env.example .env   # then edit .env
 ```
+
+## Token configuration
+
+### Single token (simple)
+```env
+LOOKUP_DISCORD_TOKEN=<bot-token>
+```
+
+### Multi-token round-robin (production)
+Set `LOOKUP_DISCORD_TOKENS` to a comma-separated list:
+```env
+LOOKUP_DISCORD_TOKENS=Token1,Token2,Token3,Token4,Token5
+```
+- Requests are distributed round-robin across all tokens.
+- On HTTP 429 the pool rotates to the next token immediately and retries.
+- After all tokens are exhausted it waits `min(Retry-After, 5 s)` then tries once more.
+- `LOOKUP_DISCORD_TOKENS` takes priority over `LOOKUP_DISCORD_TOKEN`.
+- Never use `BOT_TOKEN` here — the guardrail rejects it.
+
+Health endpoint shows the count: `GET /api/lookup/health` → `{"token_count": N, ...}`
 
 ## Run
 
@@ -24,7 +44,8 @@ Health: `GET http://127.0.0.1:8090/api/lookup/health`
 ## Tests
 
 ```bash
-pytest
+pytest                        # all tests
+pytest tests/test_token_pool.py -v   # token pool unit tests only
 ```
 
 ## Deploy notes
@@ -40,9 +61,3 @@ Official public Statements of Reasons for Discord Netherlands B.V. (platform id 
 
 - Meta: `GET /api/lookup/dsa`
 - By entity snowflake: `GET /api/lookup/dsa/{id}`
-
-Upstream CSV (no Research API key required):
-
-`https://transparency.dsa.ec.europa.eu/statement/csv?platform_id[]=59&s=<snowflake>`
-
-The Discord entity id is in CSV field `platform_uid`. Empty results are honest “no public SoR”, not a clearance status.
