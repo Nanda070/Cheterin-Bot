@@ -1,14 +1,8 @@
 ﻿# Cheterin Lookup — продуктовый план
 
-> **Status (implementation):** public release ready for operator deploy as of 2026-09.  
-> **Done:** phases **0–10** (including CAPTCHA gate, docs EN+RU, What's New, live smoke ✅).  
-> **Done:** phase **8** — chrome restyle unified (charcoal + dark-red), About page has Lookup CTA, easter eggs preserved.  
-> **Done:** phase **10** — CAPTCHA Turnstile/hCaptcha integration behind env flags; `captcha_required` flow wired to frontend `CaptchaGate` modal; `/api/lookup/captcha/verify` endpoint live; mobile/a11y polish applied.  
-> **Done:** documentation gate — ARCHITECTURE.md, RUN.md (lookup + lookup-api), PROXY.md, .env.example, /docs EN+RU Lookup sections, What's New 2026.09.1.  
-> **Done:** live smoke — all API endpoints tested with real Discord data (user, bot, server, health, config).  
-> **Done:** operator-curated `plugins.json` catalog shipped; badge catalog with local SVG icons.  
-> **Operator remaining:** nginx reverse-proxy deploy on VPS, DNS, rotate all Lookup bot tokens+secrets in Discord Developer Portal after any chat exposure, optional CAPTCHA site keys (`LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET`).  
-> **CAPTCHA site keys:** operator must set keys in `lookup-api/.env` for the widget to appear.  
+> **Status (Sep 2026, after Lookup launch + Oracle deploy):** shipped in production at `https://cheterin.online/lookup`.  
+> **Implemented:** phases **0–10**; TokenPool (`LOOKUP_DISCORD_TOKENS` round-robin + 429 rotate, commit `33f8714`); operator-filled `plugins.json`; plugins hub `/lookup/plugins` (nested snowflake / timestamp / permissions / badges / avatars); DSA as home mode `?mode=dsa` (legacy `/lookup/dsa` redirects); legal `/cookies` `/disclaimer`; unified footers; charcoal-red CSS tokens; nginx `/lookup` + `/api/lookup`; tmux `chetlookup`; bot+dashboard still one process (`chetmain` / `update.sh`).  
+> **Operator remaining:** CAPTCHA provider keys (`LOOKUP_CAPTCHA_ENABLED` + `LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET`) — widget stays off until set; rotate Lookup Discord tokens in the Developer Portal if they were ever exposed in chat.  
 > Locked decisions below are **unchanged** — do not reopen without an explicit product decision.
 
 Статус документа: план, **решения зафиксированы**. Этот файл — продуктовый план, не спецификация кода.  

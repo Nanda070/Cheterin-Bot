@@ -19,6 +19,7 @@
   <a href="https://cheterin.online">Панель</a> ·
   <a href="https://cheterin.online/docs">Документация</a> ·
   <a href="https://cheterin.online/about">О боте</a> ·
+  <a href="https://cheterin.online/lookup">Lookup</a> ·
   <a href="https://cheterin.online/credits">Авторы</a> ·
   <a href="https://discord.gg/cheterin">Cheterin Group</a>
 </p>
@@ -39,7 +40,8 @@
 | **Контент** | События, розыгрыши, опросы, эмбеды, стримы, ротация баннера и иконки сервера |
 
 На сервере: **`/help`** — короткая справка.  
-Статус бота: `Playing /help • Cheterin`.
+Статус бота: `Playing /help • Cheterin`.  
+Публичный Lookup (ID / инвайт, без входа в панель): [cheterin.online/lookup](https://cheterin.online/lookup).
 
 ---
 
@@ -60,6 +62,7 @@
 |:---|:---|
 | **Панель** | [cheterin.online](https://cheterin.online) |
 | **Документация** | [cheterin.online/docs](https://cheterin.online/docs) |
+| **Lookup** | [cheterin.online/lookup](https://cheterin.online/lookup) |
 | **Авторы** | [cheterin.online/credits](https://cheterin.online/credits) |
 | **Репозиторий** | [github.com/Nanda070/Cheterin_Bot_Dashboard](https://github.com/Nanda070/Cheterin_Bot_Dashboard) |
 | **Cheterin Group** | [discord.gg/cheterin](https://discord.gg/cheterin) |

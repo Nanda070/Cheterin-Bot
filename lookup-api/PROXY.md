@@ -2,13 +2,15 @@
 
 Lookup is a **separate** UI + API from the Cheterin bot dashboard process.
 
+Production (Ubuntu / Oracle): nginx on the same host. Bot+dashboard = tmux `chetmain` (`python main.py`). Lookup API = tmux `chetlookup` (`lookup-api`, `:8090`). Tokens: `LOOKUP_DISCORD_TOKENS` (TokenPool) in `lookup-api/.env` — never `BOT_TOKEN`.
+
 ## Concept
 
 | Path | Upstream |
 |---|---|
 | `/lookup`, `/lookup/*` | Lookup static SPA (`lookup/dist`, Vite `base: '/lookup/'`) |
 | `/api/lookup/*` | Lookup API (`lookup-api`, default `127.0.0.1:8090`) |
-| `/about`, `/docs`, `/terms`, `/privacy`, `/cookies`, `/disclaimer`, panel routes | Existing dashboard frontend/backend |
+| `/about`, `/docs`, `/dev-blog`, `/terms`, `/privacy`, `/cookies`, `/disclaimer`, panel routes | Existing dashboard frontend/backend |
 
 ## Local single-port preview (dashboard `:4173`)
 

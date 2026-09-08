@@ -48,12 +48,15 @@ pytest                        # all tests
 pytest tests/test_token_pool.py -v   # token pool unit tests only
 ```
 
-## Deploy notes
+## Deploy notes (Oracle / Ubuntu)
 
-- Reverse-proxy `/api/lookup/*` to this process (see `PROXY.md`).
-- Rotate Lookup Discord tokens if ever exposed in chat/logs.
-- Optional CAPTCHA: set `LOOKUP_CAPTCHA_ENABLED=true` plus site key + secret.
-- Curated plugins: edit `plugins.json` and restart the API (or redeploy).
+- Process: tmux session **`chetlookup`** (`python app.py` in `lookup-api/`). Not started from `main.py` / `chetmain`.
+- Reverse-proxy `/api/lookup/*` to `127.0.0.1:8090` (see `PROXY.md`). Static SPA is nginx `/lookup` → `lookup/dist`.
+- Repo `update.sh` refreshes bot+dashboard (`chetmain`) only — restart this session after API or `plugins.json` changes.
+- `LOOKUP_DISCORD_TOKENS` (comma-list) is the production pool; never `BOT_TOKEN`.
+- Rotate Lookup Discord tokens in the Developer Portal if they were ever exposed in chat/logs.
+- Optional CAPTCHA: set `LOOKUP_CAPTCHA_ENABLED=true` plus `LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET` (and optional `LOOKUP_CAPTCHA_PROVIDER`). Until then the widget stays off.
+- Curated plugins: `plugins.json` is operator-filled; edit and restart the API.
 
 ## DSA Lookup
 

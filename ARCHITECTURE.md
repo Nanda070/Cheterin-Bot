@@ -5,9 +5,9 @@
 > Документ только для коллабораторов репозитория (программисты с доступом к коду).  
 > Не добавлять в React-роуты, `dashboard/frontend/src/pages/docs/`, App.tsx, Landing, Docs.tsx, футер, нав, i18n публичного сайта и не раздавать как именованную статическую страницу через aiohttp.
 
-Файл лежит в корне рядом с `README.md` и `CHETERIN_LOOKUP_PLAN.md`. Источник правды по структуре монолита «бот + панель».
+Файл лежит в корне рядом с `README.md` и `CHETERIN_LOOKUP_PLAN.md`. Источник правды по структуре монолита «бот + панель» и отдельному процессу Lookup.
 
-**Lookup** живёт отдельно от процесса бота: SPA в `lookup/`, API в `lookup-api/` (не импортируется и не стартует из `main.py`). Локальный запуск и reverse-proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Продуктовый план и locked decisions — `CHETERIN_LOOKUP_PLAN.md` (реализация начата; статус в шапке плана).
+**Lookup shipped** (Sep 2026, прод Oracle): SPA `lookup/` + API `lookup-api/`. Не импортируется и не стартует из `main.py`. Публично: `https://cheterin.online/lookup`. Локальный запуск и reverse-proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Locked decisions — `CHETERIN_LOOKUP_PLAN.md` (шапка плана = implemented vs leftover operator).
 
 ---
 
@@ -59,7 +59,7 @@
 2. `bot.start(BOT_TOKEN)`.
 3. `finally`: `dashboard_runner.cleanup()`.
 
-**Следствие:** если бот падает / рестартит — панель тоже. Поэтому Lookup спроектирован как **отдельный процесс** (`CHETERIN_LOOKUP_PLAN.md`).
+**Следствие:** если бот падает / рестартит — панель тоже. Lookup — **отдельный процесс** (tmux `chetlookup`); рестарт `chetmain` его не гасит.
 
 ### 3.3. `on_ready`
 
@@ -77,21 +77,44 @@
 
 ## 4. Модель процесса
 
+Два OS-процесса на одном Ubuntu-хосте (Oracle). Nginx режет пути; CORS не нужен.
+
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Один OS-процесс (Python)                                │
-│  ┌────────────────────┐    ┌──────────────────────────┐ │
-│  │ discord.py ChetBot │    │ aiohttp dashboard         │ │
-│  │ cogs / tree / loops│◄──►│ EncryptedCookieStorage    │ │
-│  └────────────────────┘    │ SPA static (dist)         │ │
-│           ▲                └──────────────────────────┘ │
-│           │ shared: settings.db, *_db.py, cores          │
-└─────────────────────────────────────────────────────────┘
+                    nginx  cheterin.online
+         /  /about /docs /api/* (панель)     /lookup/*     /api/lookup/*
+                    │                            │                │
+                    ▼                            ▼                ▼
+┌───────────────────────────────────┐   ┌──────────────────────────────┐
+│  Процесс A — python main.py       │   │  Процесс B — lookup-api      │
+│  tmux chetmain                    │   │  tmux chetlookup             │
+│  ┌────────────┐  ┌──────────────┐ │   │  aiohttp 127.0.0.1:8090      │
+│  │ ChetBot    │◄►│ aiohttp      │ │   │  TokenPool (не BOT_TOKEN)    │
+│  │ cogs/tree  │  │ dashboard    │ │   │  static: lookup/dist         │
+│  └────────────┘  │ SPA dist     │ │   │  (nginx alias, не main.py)   │
+│   shared SQLite  └──────────────┘ │   └──────────────────────────────┘
+└───────────────────────────────────┘
+        update.sh → git pull, pip, dashboard build, attach chetmain
+        Lookup SPA/API: отдельная сборка + рестарт chetlookup (не в update.sh)
 ```
 
-- **Нет CORS** — same-origin / reverse-proxy; сессия-cookie `chetbot_dashboard_session`.
-- Shared memory/SQLite между ботом и HTTP.
-- Health: `GET /api/health` → `{"status":"ok"}`.
+- **Нет CORS** — same-origin / reverse-proxy; сессия-cookie панели `chetbot_dashboard_session`.
+- Shared memory/SQLite только внутри процесса A (бот ↔ HTTP панели).
+- Health панели: `GET /api/health` → `{"status":"ok"}`.
+- Health Lookup: `GET /api/lookup/health` → `ok`, `token_configured`, `token_count`.
+
+### 4.1. Lookup (shipped, изолирован)
+
+| | |
+|:---|:---|
+| **SPA** | `lookup/` (Vite/React, `basename=/lookup`) |
+| **API** | `lookup-api/` (`LOOKUP_DISCORD_TOKENS` предпочтительно, иначе `LOOKUP_DISCORD_TOKEN`) |
+| **TokenPool** | Round-robin по списку; на HTTP 429 сразу следующий слот; после исчерпания всех — `min(Retry-After, 5s)` и ещё одна попытка. Коммит `33f8714`. |
+| **Guardrail** | Никогда не берёт `BOT_TOKEN`. |
+| **Plugins hub** | `/lookup/plugins` — каталог + вложенные tools: `snowflake`, `timestamp`, `permissions`, `badges`, `avatars`. Старые URL (`/lookup/snowflake` и т.д.) → redirect. |
+| **DSA** | Режим домашней страницы `/lookup?mode=dsa` (`&id=`). `/lookup/dsa` и `/lookup/dsa/:id` только редиректят. Не отдельная primary-страница. |
+| **Каталог** | Операторский `lookup-api/plugins.json` (заполнен). `GET /api/lookup/plugins`. |
+| **Капча** | Код есть (`CaptchaGate`, `/api/lookup/captcha/verify`). Виджет живой только если оператор задал ключи провайдера. |
+| **Цвет** | Тот же charcoal-red кит, что публичный сайт и панель: CSS-токены (`--color-background` `#0c0d10`, `--color-primary` `#a8283c`, …). Залогиненная панель **не** маскируется под lookup-карточки — только токены. |
 
 ---
 
@@ -114,10 +137,13 @@
 | `dashboard/frontend/src/pages/` | Страницы панели (не путать с публичными docs) |
 | `dashboard/frontend/src/pages/docs/` | **Публичная** документация сайта (`/docs`) — сюда ARCHITECTURE **не** класть |
 | `lookup/` | Lookup SPA (Vite/React), basename `/lookup` — см. `lookup/RUN.md` |
-| `lookup-api/` | Lookup HTTP API (`LOOKUP_DISCORD_TOKEN` only) — см. `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
-| `CHETERIN_LOOKUP_PLAN.md` | План Lookup (locked decisions; реализация начата) |
+| `lookup-api/` | Lookup HTTP API + `TokenPool` — см. `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
+| `lookup-api/plugins.json` | Операторский каталог плагинов (заполнен) |
+| `lookup-api/tests/` | pytest Lookup API / TokenPool (`lookup-api/pytest.ini`) |
+| `CHETERIN_LOOKUP_PLAN.md` | План Lookup (locked decisions; реализация **shipped**) |
+| `update.sh` / `scripts/update.sh` | VPS: git pull, pip, сборка `dashboard/frontend`, attach tmux `chetmain` |
 | `graphify-out/` | Кэш анализа Graphify — **не** SoT |
-| `.env` / `.env.example` | Секреты / шаблон ключей (**не копировать значения в этот файл**) |
+| `.env` / `.env.example` | Секреты бота/панели / шаблон (**не копировать значения сюда**). Lookup-секреты — `lookup-api/.env` |
 
 Исторически в доках упоминались папки `cogs/` / `cores/` / `dbs/` — в текущем дереве модули лежат **в корне** репозитория рядом с `main.py`.
 
@@ -610,9 +636,10 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Path | Страница |
 |:---|:---|
 | `/login` | Login |
-| `/about` | Landing (витрина бота) |
-| `/docs`, `/docs/:sectionId` | Docs |
-| `/terms`, `/privacy`, `/credits` | Legal / credits |
+| `/about` | Landing (витрина бота; кнопка Lookup → `/lookup`, без hero-поиска) |
+| `/docs`, `/docs/:sectionId` | Docs (упоминание Lookup в публичных секциях) |
+| `/dev-blog` | История разработки |
+| `/terms`, `/privacy`, `/cookies`, `/disclaimer`, `/credits` | Legal / credits — один комплект на бот и Lookup |
 | `/sans`, `/snowdin`, `/waterfall`, `/core`, `/judgment` | easter eggs |
 | `/bracket/:token` | Public bracket |
 | `/mafia/:token` | Public mafia action |
@@ -621,7 +648,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | `/access-denied` | AccessDenied |
 | `*` | NotFound |
 
-**Нет** маршрутов `/cookies`, `/disclaimer` (дрейф; Lookup фаза 9 создаст).
+Публичный chrome (шапка/футер) **единый** на `/about`, `/docs`, `/dev-blog`, legal. Lookup SPA имеет свой `SiteFooter` с теми же корневыми legal URL. `ARCHITECTURE.md` в эти маршруты **не** кладётся.
 
 ### 13.2. Shell (`/` + `DashboardShell` через `PublicLandingOrDashboard`)
 
@@ -677,15 +704,20 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 
 | | |
 |:---|:---|
-| Backend tests | `pytest.ini` → `testpaths = dashboard/backend/tests`, `asyncio_mode = auto` |
-| Frontend tests | `npm test` → `vitest run` в `dashboard/frontend` |
+| Backend tests (бот/панель) | корневой `pytest.ini` → `testpaths = dashboard/backend/tests`, `asyncio_mode = auto` |
+| Frontend tests (панель) | `npm test` → `vitest run` в `dashboard/frontend` |
+| Lookup API tests | `lookup-api/pytest.ini` → `lookup-api/tests/` (`test_token_pool.py`, `test_api.py`) |
+| Lookup SPA | нет vitest; `npm run build` = `tsc -b && vite build`, lint = oxlint |
 | Docker | **Нет** в репозитории |
-| Прод | Ubuntu VPS; статика из `DASHBOARD_FRONTEND_DIST` (путь к `dashboard/frontend/dist`) |
-| Стек Python | `requirements.txt`: discord.py, dotenv, aiohttp, aiohttp-session, cryptography, Pillow, psutil, tzdata, pytest* |
-| Frontend | React 19, Vite, Tailwind (см. `package.json`) |
-| Порт API | `DASHBOARD_PORT` (часто 8080) за reverse-proxy на cheterin.online |
-
-Сборка фронта → `dist` → aiohttp `setup_static_routes` отдаёт SPA (не отдельный nginx-only app).
+| Прод | Ubuntu на Oracle Cloud. Бот+панель — один процесс (`python main.py`, tmux **`chetmain`**). Lookup API — отдельный (`python app.py` в `lookup-api/`, tmux **`chetlookup`**). |
+| `update.sh` | `bash ~/Cheterin_Bot_Dashboard/update.sh` → git pull, venv pip, сборка `dashboard/frontend`, attach `chetmain`. **Не** собирает `lookup/` и **не** рестартит `chetlookup`. |
+| Nginx | `/lookup` + `/lookup/*` → `lookup/dist` (Vite `base: '/lookup/'`); `/api/lookup/*` → `127.0.0.1:8090`; остальное (about/docs/legal/панель) → процесс A. Пример: `lookup-api/PROXY.md`. |
+| Статика панели | `DASHBOARD_FRONTEND_DIST` → aiohttp `setup_static_routes` (не отдельный nginx-only app для панели). |
+| Стек Python (бот) | `requirements.txt`: discord.py, dotenv, aiohttp, aiohttp-session, cryptography, Pillow, psutil, tzdata, pytest* |
+| Lookup API deps | `lookup-api/requirements.txt` (свой venv допустим) |
+| Frontend | React 19, Vite, Tailwind — отдельно `dashboard/frontend` и `lookup/` |
+| Порт панели | `DASHBOARD_PORT` (часто 8080) за reverse-proxy |
+| Порт Lookup API | `LOOKUP_API_PORT` (дефолт 8090, bind `127.0.0.1`) |
 
 ---
 
@@ -721,6 +753,20 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | `BUTTON_WEBHOOK_*` | webhook для button collector |
 | Каналы/роли `LOG_CHANNEL_ID`, `WELCOME_CHANNEL_ID`, `CTD_*`, `SPAM_*`, … | исторический ENV → миграция в `bot_config` / spam settings; часть tempban exempt всё ещё ENV |
 
+### Lookup (`lookup-api/.env`, не процесс бота)
+
+Имена только. Значения — в `lookup-api/.env.example`, не сюда.
+
+| Key | Смысл |
+|:---|:---|
+| `LOOKUP_DISCORD_TOKENS` | Предпочтительно: comma-list bot-токенов Lookup; round-robin + 429 rotate |
+| `LOOKUP_DISCORD_TOKEN` | Fallback на один токен, если multi не задан |
+| `LOOKUP_API_HOST` / `LOOKUP_API_PORT` | Bind (дефолт `127.0.0.1:8090`) |
+| `LOOKUP_CLIENT_ID` / `CHETERIN_CLIENT_ID` | Пресеты калькулятора прав (не секреты) |
+| `LOOKUP_CAPTCHA_ENABLED` | `true` только после ключей провайдера |
+| `LOOKUP_CAPTCHA_SITE_KEY` / `LOOKUP_CAPTCHA_SECRET` | Ключи Turnstile/hCaptcha — **оператор, leftover** |
+| `LOOKUP_CAPTCHA_PROVIDER` | `turnstile` (дефолт) или hCaptcha |
+
 ---
 
 ## 17. История (сделано)
@@ -730,33 +776,51 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Multi-guild (`settings.db`, guild picker, active flag) | Done (`MULTIGUILD_PLAN.md` удалён) |
 | Language RU/EN (бот + панель + slash translator) | Done |
 | Timezone IANA вместо хардкода MSK | Done (см. workspace rule guild-timezone) |
-| What’s New панели | `2026.08.2` … `2026.08.5` в `whatsNew.ts` (quote/relations/valchecker → banner/customs → dynamic banner/premierIdeas copy drift) |
+| What’s New панели | `2026.09.2` (plugins hub, badges, DSA, Dev Blog), `2026.09.1` (Lookup launch), `2026.08.2` … `2026.08.5` в `whatsNew.ts` |
+| Lookup launch + Oracle deploy | Done (Sep 2026): SPA+API в проде, TokenPool `33f8714`, nginx `/lookup` + `/api/lookup`, tmux `chetlookup` |
 
 История фич панели = `dashboard/frontend/src/whatsNew.ts`, не корневой CHANGELOG.
 
 ---
 
-## 18. Планы: Lookup и дрейф
+## 18. Lookup в проде и дрейф монолита
 
-См. **`CHETERIN_LOOKUP_PLAN.md`** (решения locked; **код в репо:** `lookup/` + `lookup-api/`).
+См. **`CHETERIN_LOOKUP_PLAN.md`** (locked decisions не переоткрывать). Код и прод — **shipped**, не «план only».
 
-### 18.1. Отдельный процесс (уже так)
+### 18.1. Что уже в коде и на Oracle
 
-Сейчас панель стартует из `main.py` вместе с ботом. Рестарт/падение бота гасит cheterin.online. Lookup **уже** вынесен:
+- SPA + API на корне: `lookup/` + `lookup-api/` (не внутри `dashboard/`);
+- `main.py` Lookup не импортирует и не стартует;
+- **TokenPool:** `LOOKUP_DISCORD_TOKENS` (comma-list) предпочтительнее `LOOKUP_DISCORD_TOKEN`; 429 rotate (`33f8714`); никогда `BOT_TOKEN`;
+- nginx: `/lookup` → `lookup/dist`, `/api/lookup` → `:8090`; tmux `chetlookup`;
+- публичный chrome: `/about`, `/docs`, `/dev-blog`, `/terms` `/privacy` `/cookies` `/disclaimer` `/credits`; единые футеры;
+- панель и Lookup делят charcoal-red **токены**, не layout карточек Lookup.
 
-- SPA + API на корне репо: `lookup/` + `lookup-api/` (не внутри `dashboard/`);
-- **отдельный** Discord Application token (`LOOKUP_DISCORD_TOKEN` only — не `BOT_TOKEN`);
-- не зависит от ChetBot process; `main.py` Lookup не импортирует и не стартует;
-- делит визуальный язык (уголь + тёмно-красный) и legal pages с экосистемой;
-- локальный запуск / proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`.
+| Path | Назначение |
+|:---|:---|
+| `/lookup` | Hero: режимы `user` / `bot` / `server` / `dsa` (`?mode=` + `?id=`) |
+| `/lookup/about` | About продукта Lookup (не витрина бота) |
+| `/lookup/user/:id`, `/lookup/bot/:id`, `/lookup/server/:code` | Карточки |
+| `/lookup/plugins` | Хаб: каталог + tabs tools |
+| `/lookup/plugins/snowflake`, `.../timestamp`, `.../permissions`, `.../badges`, `.../avatars` | Tools |
+| `/lookup/dsa`, `/lookup/dsa/:id` | Redirect на `/?mode=dsa` |
+| `/lookup/dev-blog` | Dev blog внутри Lookup SPA (канон сайта — корневой `/dev-blog`) |
+| `/api/lookup/health`, `/config`, `/plugins`, `/dsa`, `/dsa/{id}`, `/user/{id}`, `/bot/{id}`, `/server/{code}`, `/cdn/...`, `POST /captcha/verify` | API |
 
-### 18.2. Известный дрейф монолита (§14 плана) — Lookup почти не чинит
+### 18.2. Leftover оператора (не пробелы кода)
 
-Краткий каталог (полный текст — в плане §14):
+| | |
+|:---|:---|
+| CAPTCHA ключи | `LOOKUP_CAPTCHA_ENABLED` + `LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET` — виджет не появится, пока не заданы |
+| Ротация токенов в Portal | Если Lookup-токены светились в чате — сменить в Discord Developer Portal (пул в ENV уже умеет несколько) |
+
+`plugins.json` оператор **заполнил**. Nginx/DNS на Oracle — **сделаны**.
+
+### 18.3. Дрейф монолита (§14 плана) — Lookup его не закрывает
 
 | Область | Факт |
 |:---|:---|
-| Legal | нет `/cookies`, `/disclaimer` → **фаза 9 Lookup создаёт** |
+| Legal | `/cookies`, `/disclaimer` **есть** (фаза 9 сдана) |
 | VALORANT UI | только customs + valchecker; premier/panels API живы без вкладок |
 | What’s New / docs | текст про Premier/panels/ideas на VALORANT tab **не совпадает** с UI |
 | Ideas | живут в `/feedback?tab=ideas` |
@@ -768,8 +832,6 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | `MOSCOW_TZ` aliases | legacy в части cores |
 | Prefix `!` | объявлен, не используется продуктово |
 | CTD/news | только main guild — продукт, не баг |
-
-Lookup **не** закрывает этот дрейф, кроме cookies/disclaimer (фаза 9) и chrome/docs-упоминаний Lookup (фаза 8) без «честного» переписывания VALORANT-копирайта.
 
 ---
 
@@ -800,8 +862,12 @@ Lookup **не** закрывает этот дрейф, кроме cookies/discl
 | UI routes | `dashboard/frontend/src/App.tsx` |
 | Sidebar | `DashboardShell.tsx` `NAV_GROUPS` |
 | Публичные docs сайта | `pages/docs/` + `Docs.tsx` — **не** этот файл |
-| Lookup код (SPA / API) | `lookup/`, `lookup-api/` + `RUN.md` / `PROXY.md` |
-| Lookup план + дрейф | `CHETERIN_LOOKUP_PLAN.md` |
+| Lookup SPA routes | `lookup/src/App.tsx` |
+| Lookup API / TokenPool | `lookup-api/app.py` `TokenPool` |
+| Plugins catalog | `lookup-api/plugins.json` |
+| Lookup run / proxy | `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
+| VPS bot+панель | `update.sh` → `scripts/update.sh` (tmux `chetmain`) |
+| Lookup план + leftover | `CHETERIN_LOOKUP_PLAN.md` (шапка) |
 | What’s New | `whatsNew.ts` |
 
 ---
