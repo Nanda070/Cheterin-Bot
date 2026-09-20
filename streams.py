@@ -103,21 +103,6 @@ def default_template(platform: str, lang: str) -> str:
 
 _LIVE_TITLE_STYLES = frozenset({"live_dot", "title_only", "live_badge"})
 
-# Shared promo banner for every LIVE alert (Twitch + TikTok LIVE). Hosted on ChetMedia.
-_DEFAULT_LIVE_BANNER_URL = "https://chetmedia.com/branding/stream-notify-banner.jpg"
-
-
-def shared_live_banner_url() -> str:
-    """Public image URL used as Discord embed/gallery image for all live stream alerts."""
-    return (os.getenv("STREAM_LIVE_BANNER_URL") or "").strip() or _DEFAULT_LIVE_BANNER_URL
-
-
-def apply_shared_live_banner(embed: discord.Embed) -> None:
-    """Force the common VAL QAUYM / streams banner on live embeds (same for every streamer)."""
-    url = shared_live_banner_url()
-    if url:
-        embed.set_image(url=url)
-
 
 def tiktok_template(sub: dict, kind: str, lang: str) -> str:
     specific = str(sub.get(f"{kind}_template") or "").strip()
@@ -1308,7 +1293,9 @@ class Streams(commands.Cog):
                 )
             if game:
                 embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
-            apply_shared_live_banner(embed)
+            thumb = (stream.get("thumbnail_url") or "").replace("{width}", "640").replace("{height}", "360")
+            if thumb:
+                embed.set_image(url=f"{thumb}?t={int(time.time())}")
 
             await self._announce(sub, content, embed, view=_watch_view(url, lang, live=True))
             update_subscription(guild_id, sub["id"], last_stream_id=stream_id, last_notified_ts=now)
@@ -1418,6 +1405,8 @@ class Streams(commands.Cog):
         template = tiktok_template(sub, "live", lang)
         content = render_template(template, channel_name, title, "", live_url, lang)
 
+        cover = live.get("cover_url") or live.get("cover") or ""
+
         embed = discord.Embed(
             title=card_title("tiktok", channel_name, lang, tiktok_kind="live"),
             description=title,
@@ -1430,7 +1419,8 @@ class Streams(commands.Cog):
                 value=str(live["viewer_count"]),
                 inline=True,
             )
-        apply_shared_live_banner(embed)
+        if cover:
+            embed.set_image(url=cover)
         return content, embed, _live_view(live_url, channel_url, lang)
 
     async def _build_tiktok_video_announce(
@@ -1574,7 +1564,6 @@ class Streams(commands.Cog):
         )
         embed.add_field(name=i18n.t("streams.embed.viewers", lang), value="42", inline=True)
         embed.add_field(name=i18n.t("streams.embed.game", lang), value=game, inline=True)
-        apply_shared_live_banner(embed)
         embed.set_footer(text=i18n.t("streams.test.footer", lang))
         view = _watch_view(url, lang, live=True)
         if not await self._announce(sub, content, embed, view=view):
