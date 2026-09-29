@@ -8,9 +8,12 @@ Production (Ubuntu / Oracle): nginx on the same host. Bot+dashboard = systemd `c
 
 | Path | Upstream |
 |---|---|
-| `/lookup`, `/lookup/*` | Lookup static SPA (`lookup/dist`, Vite `base: '/lookup/'`) |
+| `/lookup` (exact, no slash) | **301** → `/lookup/` (required; Vite `base: '/lookup/'`) |
+| `/lookup/` + `/lookup/*` | Lookup static SPA (`lookup/dist`) |
 | `/api/lookup/*` | Lookup API (`lookup-api`, default `127.0.0.1:8090`) |
 | `/about`, `/docs`, `/dev-blog`, `/terms`, `/privacy`, `/cookies`, `/disclaimer`, panel routes | Existing dashboard frontend/backend |
+
+**Trailing slash:** Production nginx must redirect exact `/lookup` → `/lookup/`. A bare `location /lookup/` does **not** match `/lookup`, so links without the slash 404 against the dashboard SPA. Local dashboard Vite preview already serves both (see `serve-lookup-static` in `dashboard/frontend/vite.config.ts`); production fix is nginx-only.
 
 ## Local single-port preview (dashboard `:4173`)
 
@@ -44,6 +47,12 @@ python app.py   # listens on 8090
 ## Example (nginx)
 
 ```nginx
+# Exact /lookup (no trailing slash) → canonical /lookup/
+# Preserve query string (?mode=dsa etc.)
+location = /lookup {
+  return 301 /lookup/$is_args$args;
+}
+
 # Lookup UI
 location /lookup/ {
   alias /var/www/cheterin/lookup/;
@@ -58,6 +67,16 @@ location /api/lookup/ {
   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   proxy_set_header X-Forwarded-Proto $scheme;
 }
+```
+
+**Operator one-liner (paste into the `server { }` for cheterin.online, then reload):**
+
+```nginx
+location = /lookup { return 301 /lookup/$is_args$args; }
+```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
 ## Standalone (dev / smoke)

@@ -718,7 +718,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Docker | **Нет** в репозитории |
 | Прод | Ubuntu на Oracle Cloud. Бот+панель — один процесс (`python main.py`, systemd **`cheterin-bot.service`**). Lookup API — отдельный (`python app.py` в `lookup-api/`, systemd **`cheterin-lookup.service`**). |
 | `update.sh` | `bash ~/Cheterin_Bot_Dashboard/update.sh` → git pull, pip bot+lookup-api, сборка `dashboard/frontend` + `lookup/`, `systemctl restart` `cheterin-bot` + `cheterin-lookup`. |
-| Nginx | `/lookup` + `/lookup/*` → `lookup/dist` (Vite `base: '/lookup/'`); `/api/lookup/*` → `127.0.0.1:8090`; остальное (about/docs/legal/панель) → процесс A. Пример: `lookup-api/PROXY.md`. |
+| Nginx | exact `/lookup` → **301** `/lookup/` (обязательно: Vite `base: '/lookup/'`); `/lookup/` + `/lookup/*` → `lookup/dist`; `/api/lookup/*` → `127.0.0.1:8090`; остальное (about/docs/legal/панель) → процесс A. Пример: `lookup-api/PROXY.md`. |
 | Статика панели | `DASHBOARD_FRONTEND_DIST` → aiohttp `setup_static_routes` (не отдельный nginx-only app для панели). |
 | Стек Python (бот) | `requirements.txt`: discord.py, dotenv, aiohttp, aiohttp-session, cryptography, Pillow, psutil, tzdata, pytest* |
 | Lookup API deps | `lookup-api/requirements.txt` (свой venv допустим) |
@@ -799,13 +799,13 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 - SPA + API на корне: `lookup/` + `lookup-api/` (не внутри `dashboard/`);
 - `main.py` Lookup не импортирует и не стартует;
 - **TokenPool:** `LOOKUP_DISCORD_TOKENS` (comma-list) предпочтительнее `LOOKUP_DISCORD_TOKEN`; 429 rotate (`33f8714`); никогда `BOT_TOKEN`;
-- nginx: `/lookup` → `lookup/dist`, `/api/lookup` → `:8090`; systemd `cheterin-lookup`;
+- nginx: exact `/lookup` → 301 `/lookup/`; `/lookup/` → `lookup/dist`; `/api/lookup` → `:8090`; systemd `cheterin-lookup`;
 - публичный chrome: `/about`, `/docs`, `/dev-blog`, `/terms` `/privacy` `/cookies` `/disclaimer` `/credits`; единые футеры;
 - панель и Lookup делят charcoal-red **токены**, не layout карточек Lookup.
 
 | Path | Назначение |
 |:---|:---|
-| `/lookup` | Hero: режимы `user` / `bot` / `server` / `dsa` (`?mode=` + `?id=`) |
+| `/lookup/` (канон; bare `/lookup` → 301) | Hero: режимы `user` / `bot` / `server` / `dsa` (`?mode=` + `?id=`) |
 | `/lookup/about` | About продукта Lookup (не витрина бота) |
 | `/lookup/user/:id`, `/lookup/bot/:id`, `/lookup/server/:code` | Карточки |
 | `/lookup/plugins` | Хаб: каталог + tabs tools |

@@ -215,7 +215,7 @@ Ordered `load_extension` list is maintained in `main.py` (~52 extensions under `
 | Docker | **Not** in repo |
 | Prod processes | **systemd** `cheterin-bot` + `cheterin-lookup` |
 | `update.sh` | git pull; pip bot + lookup-api; build both frontends; `systemctl restart` both units |
-| Nginx | `/lookup` → `lookup/dist`; `/api/lookup/*` → `:8090`; rest → bot process |
+| Nginx | exact `/lookup` → **301** `/lookup/`; `/lookup/` → `lookup/dist`; `/api/lookup/*` → `:8090`; rest → bot process (see `lookup-api/PROXY.md`) |
 | Panel port | `DASHBOARD_PORT` (often 8080) behind reverse proxy |
 | Lookup API port | `LOOKUP_API_PORT` default `8090`, bind `127.0.0.1` |
 
@@ -248,7 +248,7 @@ Lookup (`lookup-api/.env`): `LOOKUP_DISCORD_TOKENS` (preferred) or `LOOKUP_DISCO
 
 Lookup product plan is **closed** (phases 0–10 shipped); historical plan files removed. Code is **shipped**.
 
-- Paths: `/lookup`, `/lookup/about`, `/lookup/user|bot|server/...`, `/lookup/plugins/...`, `/api/lookup/...`
+- Paths: `/lookup/` (canonical; bare `/lookup` must 301), `/lookup/about`, `/lookup/user|bot|server/...`, `/lookup/plugins/...`, `/api/lookup/...`
 - Operator leftover: CAPTCHA provider keys; rotate Lookup tokens in Discord Developer Portal if ever exposed
 - Locked product decisions (invite-only server, separate Discord app tokens, no Group DM / no recent feed, charcoal-red UI) stay as implemented behavior — do not reopen without an explicit product call
 

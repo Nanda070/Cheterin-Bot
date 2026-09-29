@@ -383,6 +383,20 @@ const BLOG_EN: BlogEntry[] = [
       },
     ],
   },
+  {
+    date: 'September 29, 2026',
+    title: 'Lookup trailing-slash nginx redirect',
+    bullets: [
+      {
+        lead: 'Bare /lookup 404.',
+        body: 'Vite base is /lookup/; nginx location /lookup/ does not match exact /lookup, so cheterin.online/lookup returned 404 while /lookup/ worked.',
+      },
+      {
+        lead: 'Canonical redirect.',
+        body: 'Docs and deploy/nginx notes now require location = /lookup { return 301 /lookup/$is_args$args; }. Operator applies on the VPS and reloads nginx; no app-code change needed (local Vite preview already serves both).',
+      },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -750,6 +764,20 @@ const BLOG_RU: BlogEntry[] = [
       {
         lead: 'Новый URL репозитория.',
         body: 'Публичный GitHub теперь https://github.com/Nanda070/Cheterin-Bot (раньше Nanda070/Cheterin_Bot_Dashboard). Бейджи README, docs, ссылка в футере и git remote origin указывают на новое имя; локальные и VPS-пути папки остаются Cheterin_Bot_Dashboard.',
+      },
+    ],
+  },
+  {
+    date: '29 сентября 2026 г.',
+    title: 'Редирект nginx для /lookup без слэша',
+    bullets: [
+      {
+        lead: '404 на /lookup.',
+        body: 'Vite base — /lookup/; location /lookup/ в nginx не матчит точный /lookup, поэтому cheterin.online/lookup отдавал 404, а /lookup/ работал.',
+      },
+      {
+        lead: 'Канонический редирект.',
+        body: 'В PROXY.md и deploy/nginx notes зафиксировано: location = /lookup { return 301 /lookup/$is_args$args; }. Оператор вносит на VPS и делает reload nginx; код приложения не менялся (локальный Vite preview уже обслуживает оба URL).',
       },
     ],
   },
