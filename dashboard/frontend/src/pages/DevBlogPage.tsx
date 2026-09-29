@@ -288,16 +288,54 @@ const BLOG_EN: BlogEntry[] = [
     ],
   },
   {
-    date: 'September 29, 2026',
-    title: 'Repository layout: bot package',
+    date: 'September 20–28, 2026',
+    title: 'Lookup production: TokenPool, plugins & docs pipeline',
     bullets: [
       {
-        lead: 'VALORANT-style tree.',
-        body: 'Bot modules moved under bot/ (core, modules by domain, cards, data). main.py stays the entrypoint; dashboard and Lookup paths unchanged.',
+        lead: 'TokenPool.',
+        body: 'lookup-api rotates multiple Discord tokens (LOOKUP_DISCORD_TOKENS) for round-robin resilience — still isolated from BOT_TOKEN and main.py.',
+      },
+      {
+        lead: 'Plugins & Avatars polish.',
+        body: 'Plugins hub nesting under /lookup/plugins, Avatars ID-only profile hash fetch, empty-catalog fixes.',
+      },
+      {
+        lead: 'Engineer docs.',
+        body: 'ARCHITECTURE.md and Lookup RUN/PROXY synced with production Oracle layout (chetmain / chetlookup).',
+      },
+      {
+        lead: 'Ship pipeline.',
+        body: 'Cursor rule: every product change → technical docs + Dev Blog + commit/push + update.sh deploy + production smoke.',
+      },
+    ],
+  },
+  {
+    date: 'September 29, 2026',
+    title: 'Bot package layout, legal refresh & cookie consent',
+    bullets: [
+      {
+        lead: 'VALORANT-style bot/ tree.',
+        body: 'Bot modules under bot/ (core, modules by domain, cards, data). main.py stays the entrypoint; dashboard and Lookup paths unchanged; Lookup still isolated.',
       },
       {
         lead: 'Docs folder.',
-        body: 'ARCHITECTURE and the Lookup plan live in docs/; deploy/ holds nginx process notes. Lookup remains isolated from main.py.',
+        body: 'ARCHITECTURE and the Lookup plan live in docs/; deploy/ holds nginx process notes.',
+      },
+      {
+        lead: 'Header legal strip.',
+        body: 'Logged-in dashboard top nav keeps Documentation and Terms only; Privacy, Cookies, and Disclaimer move to legal-page subnav and the site footer.',
+      },
+      {
+        lead: 'Legal subnav.',
+        body: 'Shared charcoal-red tabs on Terms ↔ Privacy ↔ Cookies ↔ Disclaimer for easy cross-links.',
+      },
+      {
+        lead: 'Cookie consent plaque.',
+        body: 'Bottom banner (RU/EN) with Accept + Cookies policy link; stores chetbot_cookie_consent in localStorage; does not permanently block the app.',
+      },
+      {
+        lead: 'Legal copy refresh.',
+        body: 'Terms, Privacy, Cookies, and Disclaimer updated for bot + dashboard + Lookup, OAuth session, TokenPool, contacts (discord.gg/cheterin, adnan.huseynli1@gmail.com), last updated 29 September 2026.',
       },
       {
         lead: 'Secret hygiene.',
@@ -580,16 +618,54 @@ const BLOG_RU: BlogEntry[] = [
     ],
   },
   {
-    date: '29 сентября 2026 г.',
-    title: 'Структура репозитория: пакет bot/',
+    date: '20–28 сентября 2026 г.',
+    title: 'Lookup в проде: TokenPool, плагины и пайплайн docs',
     bullets: [
       {
-        lead: 'Дерево как у VALORANT.',
-        body: 'Модули бота перенесены в bot/ (core, modules по доменам, cards, data). Точка входа — main.py; dashboard и Lookup на прежних путях.',
+        lead: 'TokenPool.',
+        body: 'lookup-api крутит несколько Discord-токенов (LOOKUP_DISCORD_TOKENS) round-robin — по-прежнему отдельно от BOT_TOKEN и main.py.',
+      },
+      {
+        lead: 'Plugins и Avatars.',
+        body: 'Каталог плагинов под /lookup/plugins, поиск Avatars по ID, исправления пустого каталога.',
+      },
+      {
+        lead: 'Инженерные docs.',
+        body: 'ARCHITECTURE.md и Lookup RUN/PROXY синхронизированы с прод-раскладкой Oracle (chetmain / chetlookup).',
+      },
+      {
+        lead: 'Пайплайн поставки.',
+        body: 'Правило Cursor: каждое продуктовое изменение → техдоки + Dev Blog + commit/push + update.sh + smoke продакшена.',
+      },
+    ],
+  },
+  {
+    date: '29 сентября 2026 г.',
+    title: 'Пакет bot/, обновление legal и cookie-согласие',
+    bullets: [
+      {
+        lead: 'Дерево bot/ как у VALORANT.',
+        body: 'Модули бота в bot/ (core, modules по доменам, cards, data). Точка входа — main.py; dashboard и Lookup на прежних путях; Lookup изолирован.',
       },
       {
         lead: 'Папка docs/.',
-        body: 'ARCHITECTURE и план Lookup — в docs/; deploy/ — заметки по nginx/процессам. Lookup по-прежнему изолирован от main.py.',
+        body: 'ARCHITECTURE и план Lookup — в docs/; deploy/ — заметки по nginx/процессам.',
+      },
+      {
+        lead: 'Шапка панели.',
+        body: 'В верхней полосе залогиненной панели остаются Документация и Условия; Приватность, Cookies и Отказ — в поднавигации legal-страниц и футере.',
+      },
+      {
+        lead: 'Legal-subnav.',
+        body: 'Общие вкладки charcoal-red: Условия ↔ Приватность ↔ Cookies ↔ Отказ.',
+      },
+      {
+        lead: 'Плашка cookies.',
+        body: 'Нижний баннер (RU/EN) с «Принять» и ссылкой на политику; ключ chetbot_cookie_consent в localStorage; не блокирует приложение навсегда.',
+      },
+      {
+        lead: 'Обновление legal-текстов.',
+        body: 'Условия, Приватность, Cookies и Отказ актуализированы под бот + панель + Lookup, OAuth-сессию, TokenPool, контакты (discord.gg/cheterin, adnan.huseynli1@gmail.com); дата — 29 сентября 2026.',
       },
       {
         lead: 'Гигиена секретов.',
@@ -620,8 +696,8 @@ export function DevBlogPage() {
           </h1>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted">
             {isRu
-              ? 'Полная хронология Cheterin — от первого коммита до сегодня. Записи охватывают ключевые этапы: запуск панели, модули бота, мультисерверность, ValChecker, Lookup и многое другое.'
-              : 'Full Cheterin timeline from first commit to today — dashboard launch, bot modules, multi-guild isolation, ValChecker, Lookup, and more.'}
+              ? 'Полная хронология Cheterin — от первого коммита до сегодня. Записи охватывают ключевые этапы: запуск панели, модули бота, мультисерверность, ValChecker, Lookup, legal/cookies и многое другое.'
+              : 'Full Cheterin timeline from first commit to today — dashboard launch, bot modules, multi-guild isolation, ValChecker, Lookup, legal/cookies, and more.'}
           </p>
         </div>
 

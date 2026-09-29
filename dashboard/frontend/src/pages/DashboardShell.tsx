@@ -347,15 +347,6 @@ export function DashboardShell() {
             <Link to="/terms" className="transition-colors hover:text-foreground">
               {t('nav.terms')}
             </Link>
-            <Link to="/privacy" className="transition-colors hover:text-foreground">
-              {t('nav.privacy')}
-            </Link>
-            <Link to="/cookies" className="transition-colors hover:text-foreground">
-              {t('nav.cookies')}
-            </Link>
-            <Link to="/disclaimer" className="transition-colors hover:text-foreground">
-              {t('nav.disclaimer')}
-            </Link>
           </nav>
         </div>
 

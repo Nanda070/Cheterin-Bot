@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LegalSubnav } from '../components/LegalSubnav'
 import { PublicLayout } from '../components/PublicLayout'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -20,6 +21,7 @@ export function CookiesPage() {
         key={`${lang}-cookies`}
         className="animate-fade-in-up mx-auto max-w-3xl rounded-card border border-border bg-surface/90 p-6 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_12%,transparent)] sm:p-8"
       >
+        <LegalSubnav />
         <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{t('cookies.title')}</h1>
         <p className="mt-1 pl-3.5 text-xs text-muted">{t('cookies.lastUpdated')}</p>
 
@@ -33,6 +35,8 @@ export function CookiesPage() {
             <li>{t('cookies.s2.li1')}</li>
             <li>{t('cookies.s2.li2')}</li>
             <li>{t('cookies.s2.li3')}</li>
+            <li>{t('cookies.s2.li4')}</li>
+            <li>{t('cookies.s2.li5')}</li>
           </ul>
           <p>{t('cookies.s2.p2')}</p>
           <p>{t('cookies.s2.p3')}</p>
@@ -45,6 +49,11 @@ export function CookiesPage() {
 
         <Section title={t('cookies.s4.title')}>
           <p>{t('cookies.s4.p1')}</p>
+        </Section>
+
+        <Section title={t('cookies.s5.title')}>
+          <p>{t('cookies.s5.p1')}</p>
+          <p>{t('cookies.s5.p2')}</p>
         </Section>
       </article>
     </PublicLayout>

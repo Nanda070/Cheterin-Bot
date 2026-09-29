@@ -20,6 +20,8 @@
   <a href="https://cheterin.online/docs">Документация</a> ·
   <a href="https://cheterin.online/about">О боте</a> ·
   <a href="https://cheterin.online/lookup">Lookup</a> ·
+  <a href="https://cheterin.online/dev-blog">Dev Blog</a> ·
+  <a href="https://cheterin.online/terms">Условия</a> ·
   <a href="https://cheterin.online/credits">Авторы</a> ·
   <a href="https://discord.gg/cheterin">Cheterin Group</a>
 </p>
@@ -62,6 +64,8 @@
 |:---|:---|
 | **Панель** | [cheterin.online](https://cheterin.online) |
 | **Документация** | [cheterin.online/docs](https://cheterin.online/docs) |
+| **Dev Blog** | [cheterin.online/dev-blog](https://cheterin.online/dev-blog) |
+| **Условия** | [cheterin.online/terms](https://cheterin.online/terms) |
 | **Lookup** | [cheterin.online/lookup](https://cheterin.online/lookup) |
 | **Авторы** | [cheterin.online/credits](https://cheterin.online/credits) |
 | **Репозиторий** | [github.com/Nanda070/Cheterin_Bot_Dashboard](https://github.com/Nanda070/Cheterin_Bot_Dashboard) |

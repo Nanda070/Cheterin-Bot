@@ -313,7 +313,7 @@ React page           →  api/client     →  /api/...
 | Контур | Механизм |
 |:---|:---|
 | Бот (эмбеды, тексты) | `locales/ru|en` + `i18n.guild_t(guild_id, key)` + `language_core` (`module=language`, `{"code":"ru"|"en"}`) |
-| Панель UI | cookie/localStorage **`chetbot_ui_lang`** (`LanguageContext`) |
+| Панель UI | cookie/localStorage **`chetbot_ui_lang`** (`LanguageContext`); согласие на плашку cookies — **`chetbot_cookie_consent`** (`CookieBanner`) |
 | Slash names/descriptions | `slash_i18n.SlashI18nTranslator` + `slash_registry` / gen scripts |
 | Timezone | `timezone_core`: IANA, **default `Europe/Moscow`**; `module=timezone` |
 
@@ -647,7 +647,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | `/about` | Landing (витрина бота; кнопка Lookup → `/lookup`, без hero-поиска) |
 | `/docs`, `/docs/:sectionId` | Docs (упоминание Lookup в публичных секциях) |
 | `/dev-blog` | История разработки |
-| `/terms`, `/privacy`, `/cookies`, `/disclaimer`, `/credits` | Legal / credits — один комплект на бот и Lookup |
+| `/terms`, `/privacy`, `/cookies`, `/disclaimer`, `/credits` | Legal / credits — один комплект на бот и Lookup. Legal-страницы делят `LegalSubnav` (Условия ↔ Приватность ↔ Cookies ↔ Отказ). Верхняя шапка залогиненной панели показывает только Документация + Условия; остальные legal — в футере и subnav. Cookie-плашка: `CookieBanner` + localStorage `chetbot_cookie_consent`. |
 | `/sans`, `/snowdin`, `/waterfall`, `/core`, `/judgment` | easter eggs |
 | `/bracket/:token` | Public bracket |
 | `/mafia/:token` | Public mafia action |
@@ -656,7 +656,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | `/access-denied` | AccessDenied |
 | `*` | NotFound |
 
-Публичный chrome (шапка/футер) **единый** на `/about`, `/docs`, `/dev-blog`, legal. Lookup SPA имеет свой `SiteFooter` с теми же корневыми legal URL. `ARCHITECTURE.md` в эти маршруты **не** кладётся.
+Публичный chrome (шапка/футер) **единый** на `/about`, `/docs`, `/dev-blog`, legal. Legal-страницы: `LegalSubnav` + обновлённые тексты (Sep 2026). Cookie-плашка в корне `App.tsx`. Lookup SPA имеет свой `SiteFooter` с теми же корневыми legal URL. `ARCHITECTURE.md` в эти маршруты **не** кладётся.
 
 ### 13.2. Shell (`/` + `DashboardShell` через `PublicLandingOrDashboard`)
 

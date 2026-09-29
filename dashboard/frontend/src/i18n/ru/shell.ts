@@ -154,6 +154,19 @@ const shell: TranslationDict = {
   'siteFooter.legal.privacy': 'Приватность',
   'siteFooter.legal.cookies': 'Cookies',
   'siteFooter.legal.disclaimer': 'Отказ',
+
+  'legal.nav.aria': 'Правовые документы',
+  'legal.nav.terms': 'Условия',
+  'legal.nav.privacy': 'Приватность',
+  'legal.nav.cookies': 'Cookies',
+  'legal.nav.disclaimer': 'Отказ',
+
+  'cookieBanner.aria': 'Уведомление о cookies',
+  'cookieBanner.text':
+    'Мы используем необходимые cookies и localStorage для сессии панели, языка интерфейса и запоминания согласия. Рекламы и сторонней аналитики нет.',
+  'cookieBanner.link': 'Политика Cookies',
+  'cookieBanner.learnMore': 'Подробнее',
+  'cookieBanner.accept': 'Принять',
 }
 
 export default shell

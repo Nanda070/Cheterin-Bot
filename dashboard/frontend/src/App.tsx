@@ -53,6 +53,7 @@ import { HealthPage } from './pages/Health'
 import { BannerRotationPage } from './pages/BannerRotation'
 import { ValorantPage } from './pages/Valorant'
 import { DevBlogPage } from './pages/DevBlogPage'
+import { CookieBanner } from './components/CookieBanner'
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
       <ScrollToTop />
       <LanguageProvider>
         <AuthProvider>
+          <CookieBanner />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/about" element={<LandingPage />} />

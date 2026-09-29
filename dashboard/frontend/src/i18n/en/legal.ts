@@ -3,15 +3,15 @@ import type { TranslationDict } from '../types'
 /** Privacy policy and terms of service (public pages). */
 const legal: TranslationDict = {
   'privacy.title': 'Privacy Policy',
-  'privacy.lastUpdated': 'Last updated: September 6, 2026',
+  'privacy.lastUpdated': 'Last updated: September 29, 2026',
 
   'privacy.s1.title': '1. General provisions',
   'privacy.s1.p1':
-    '1.1. This policy explains what data the Cheterin Discord bot and its web control panel (the "Service") process, why they are used, where they are stored, and how to delete them.',
+    '1.1. This policy explains what data the Cheterin Discord bot, web control panel, and public Cheterin Lookup tool (together, the "Service") process, why they are used, where they are stored, and how to delete them. The Service runs on cheterin.online and related paths (/lookup, /docs, legal pages).',
   'privacy.s1.p2':
-    '1.2. Cheterin is one hosted bot that can run on many Discord servers at once. Each server\'s data is kept separate by server ID: one server\'s settings and activity are not visible to others. The team that hosts the bot manages the infrastructure; each server\'s admins manage that server\'s settings and data in the dashboard. We do not sell or share data with third parties.',
+    '1.2. Cheterin is one hosted bot that can run on many Discord servers at once. Each server\'s data is kept separate by server ID: one server\'s settings and activity are not visible to others. The team that hosts the bot (Cheterin Group Ø) manages the infrastructure; each server\'s admins manage that server\'s settings and data in the dashboard. We do not sell or share data with third parties for marketing. Lookup uses a separate Discord Application and does not require dashboard OAuth login.',
   'privacy.s1.p3':
-    '1.3. We store only what is needed for the features you use.',
+    '1.3. We store only what is needed for the features you use, dashboard authentication, Lookup anti-abuse protection, and basic UI preferences (language, cookie-notice consent).',
 
   'privacy.s2.title': '2. What data is processed',
   'privacy.s2.p1': '2.1. When you sign in to the dashboard through Discord:',
@@ -215,15 +215,15 @@ const legal: TranslationDict = {
 
   'privacy.s12.title': '12. Contact',
   'privacy.s12.p1':
-    'Questions about data: contact your server\'s admins (or open a ticket on the main server). The Service is operated by Cheterin Group Ø. For bot and hosting questions — Nandak070.',
+    'Questions about data: contact your server\'s admins or open a ticket on the support server https://discord.gg/cheterin. The Service is operated by Cheterin Group Ø. Email: adnan.huseynli1@gmail.com. For bot and hosting questions — Nandak070.',
 
   'terms.title': 'Terms of Use',
-  'terms.lastUpdated': 'Last updated: September 6, 2026',
+  'terms.lastUpdated': 'Last updated: September 29, 2026',
 
   'terms.s1.title': '1. Terms and definitions',
   'terms.s1.li1.prefix': '"Service"',
   'terms.s1.li1.rest':
-    '— the Cheterin Discord bot, web control panel (dashboard), public website, and related features.',
+    '— the Cheterin Discord bot, web control panel (dashboard), public website (including documentation and Dev Blog), Cheterin Lookup, and related features on cheterin.online.',
   'terms.s1.li2.prefix': '"Bot"',
   'terms.s1.li2.rest': '— the Cheterin Discord application added to a server.',
   'terms.s1.li3.prefix': '"Dashboard"',
@@ -288,11 +288,13 @@ const legal: TranslationDict = {
     'banner and server-icon rotation: scheduled per-server image rotation with dashboard uploads and optional log channel;',
   'terms.s3.li16c': 'member /help command with short paginated feature overview;',
   'terms.s3.li17':
-    'a web dashboard to manage the above, with server selection, RU/EN UI and bot language, Ctrl+K navigation, and an audit of panel actions.',
+    'a web dashboard to manage the above, with server selection, RU/EN UI and bot language, Ctrl+K navigation, and an audit of panel actions;',
+  'terms.s3.li18':
+    'Cheterin Lookup: public views of open Discord API data (user, bot, invite), plugins and badges catalogs, DSA mode (public Statements of Reasons), without dashboard OAuth.',
   'terms.s3.p2':
     '3.2. You can invite the bot to your server, then pick that server in the dashboard and configure modules independently of other servers. Modules start disabled on a new server.',
   'terms.s3.p3':
-    '3.3. Some tools (tickets on the main server, news relay, Super Admin) are available only on the main server.',
+    '3.3. Some tools (tickets on the main server, news relay, Super Admin) are available only on the main server. Lookup is publicly available at /lookup and does not require the bot to be a member of a server.',
   'terms.s3.p4':
     '3.4. Features may change: modules can be added, updated, or removed without prior notice.',
 
@@ -340,7 +342,7 @@ const legal: TranslationDict = {
   'terms.s6.p4':
     '6.4. Changes made in the dashboard are recorded in an audit log (who changed what and when). Using the panel means you accept that logging.',
   'terms.s6.p5':
-    '6.5. Public pages (documentation, terms, privacy policy, public brackets, public leaderboard) work without signing in.',
+    '6.5. Public pages (documentation, Dev Blog, terms, privacy policy, cookies, disclaimer, public brackets, public leaderboard, Lookup) work without signing in to the dashboard. Legal pages share navigation across Terms ↔ Privacy ↔ Cookies ↔ Disclaimer.',
 
   'terms.s7.title': '7. User content',
   'terms.s7.p1':
@@ -380,19 +382,19 @@ const legal: TranslationDict = {
 
   'terms.s12.title': '12. Contact',
   'terms.s12.p1':
-    'For Service questions, open a ticket on the main server or contact your server\'s admins. The Service is operated by Cheterin Group Ø. For bot questions — Nandak070.',
+    'For Service questions: support server https://discord.gg/cheterin, email adnan.huseynli1@gmail.com, or your server\'s admins. The Service is operated by Cheterin Group Ø. For bot questions — Nandak070.',
 
   'terms.s13.title': '13. Cheterin Lookup',
   'terms.s13.p1':
-    '13.1. Cheterin Lookup (`/lookup`) is part of the same Service ecosystem: a public tool that shows open Discord data returned by the official API for IDs and invite codes you enter.',
+    '13.1. Cheterin Lookup (`/lookup`) is part of the same Service ecosystem: a public tool that shows open Discord data returned by the official API for IDs and invite codes you enter. The plugins catalog, badges catalog, and DSA mode (public Statements of Reasons) are part of Lookup.',
   'terms.s13.p2':
-    '13.2. Lookup uses a separate Discord Application and token from the Cheterin bot. It does not require dashboard OAuth login. Abuse of Lookup may lead to rate limits, CAPTCHA, or blocking without affecting your right to remove the bot from a server.',
+    '13.2. Lookup uses a separate Discord Application and token pool (TokenPool) from the Cheterin bot. It does not require dashboard OAuth login. Abuse of Lookup may lead to rate limits, CAPTCHA, or blocking without affecting your right to remove the bot from a server.',
   'terms.s13.p3':
     '13.3. Do not use Lookup for harassment, doxxing, stalking, or bulk scraping of IDs. Lookup is not an OSINT agency and does not promise complete profiles, private guild data, Group DM lookup, or a public feed of other users’ searches.',
 
   'privacy.s13.title': '13. Cheterin Lookup',
   'privacy.s13.p1':
-    '13.1. Lookup does not use Discord OAuth login. You may enter Discord snowflake IDs or invite codes; we query the official Discord API through a dedicated Lookup application.',
+    '13.1. Lookup does not use Discord OAuth login. You may enter Discord snowflake IDs or invite codes; we query the official Discord API through a dedicated Lookup application (operators may rotate multiple tokens via TokenPool).',
   'privacy.s13.p2':
     '13.2. Successful Lookup responses may be cached briefly (about 15 minutes for user/bot, about 10 minutes for invites) to reduce load on Discord. There is no public recent-searches feed.',
   'privacy.s13.p3':
@@ -400,20 +402,24 @@ const legal: TranslationDict = {
   'privacy.s13.p4':
     '13.4. After repeated requests (about 30 per minute per IP), Lookup may require CAPTCHA. Avatar/banner downloads primarily use Discord CDN; a same-origin proxy may be used as a download fallback and does not permanently host files.',
   'privacy.s13.p5':
-    '13.5. Language preference uses the shared `chetbot_ui_lang` key (see Cookies).',
+    '13.5. Language preference uses the shared `chetbot_ui_lang` key; cookie-notice consent uses `chetbot_cookie_consent` (see Cookies). DSA mode shows only public Transparency Database records when an upstream source is available.',
 
   'cookies.title': 'Cookie notice',
-  'cookies.lastUpdated': 'Last updated: September 6, 2026',
+  'cookies.lastUpdated': 'Last updated: September 29, 2026',
   'cookies.s1.title': '1. What this notice covers',
   'cookies.s1.p1':
     '1.1. This page describes cookies and similar browser storage used by the Cheterin web control panel and Cheterin Lookup on cheterin.online. It does not describe cookies set by Discord.com, Discord’s CDN, or third-party sites you open from outbound links.',
   'cookies.s2.title': '2. What we store',
   'cookies.s2.p1': '2.1. We keep storage minimal and operational:',
   'cookies.s2.li1':
-    'Session cookie for the control panel — set after Discord OAuth so you remain signed in while using guild settings. It is cleared when you sign out or when the session expires. Lookup itself does not require this cookie.',
+    'Session cookie for the control panel (`chetbot_dashboard_session`) — set after Discord OAuth so you remain signed in while using guild settings. It is cleared when you sign out or when the session expires. Lookup itself does not require this cookie.',
   'cookies.s2.li2':
-    '`chetbot_ui_lang` — stores your interface language preference (Russian or English). It is shared across About, docs, legal pages, the panel chrome, and Lookup so the RU/EN toggle stays consistent.',
+    '`chetbot_ui_lang` (localStorage) — stores your interface language preference (Russian or English). It is shared across About, docs, legal pages, the panel chrome, and Lookup so the RU/EN toggle stays consistent.',
   'cookies.s2.li3':
+    '`chetbot_cookie_consent` (localStorage) — records that you accepted the cookie notice plaque. Used only to avoid showing the plaque again after Accept. Not used for advertising.',
+  'cookies.s2.li4':
+    'Dashboard UX keys (for example What’s New dismiss, show-disabled-modules preference, muting operational alerts) — panel UX only, no cross-site tracking.',
+  'cookies.s2.li5':
     'CAPTCHA provider cookies (Turnstile or hCaptcha) — only when the operator has enabled anti-abuse CAPTCHA and Lookup asks you to complete a challenge after repeated requests. Those cookies belong to the CAPTCHA vendor’s challenge flow, not to advertising.',
   'cookies.s2.p2':
     '2.2. We do not place advertising cookies, marketing pixels, social tracking pixels, or third-party analytics trackers on the panel or Lookup. We do not sell browsing data.',
@@ -421,15 +427,20 @@ const legal: TranslationDict = {
     '2.3. Lookup queries may transit Discord’s public API and Discord CDN for avatars/banners. Those requests are subject to Discord’s own privacy practices; we do not permanently host avatar/banner files on cheterin.online beyond short-lived proxy responses when used as a download fallback.',
   'cookies.s3.title': '3. Retention and purpose',
   'cookies.s3.p1':
-    '3.1. The panel session cookie exists only to keep an authenticated dashboard session. Language preference remains until you change it or clear site data. CAPTCHA cookies last as long as the provider needs to validate the challenge (typically short-lived).',
+    '3.1. The panel session cookie exists only to keep an authenticated dashboard session. Language preference and consent remain until you change them or clear site data. CAPTCHA cookies last as long as the provider needs to validate the challenge (typically short-lived).',
   'cookies.s3.p2':
     '3.2. We do not keep a long-term “recent searches” cookie for Lookup. Rate-limit state, when used, is operational and short-lived on the Lookup API side — not a marketing profile.',
   'cookies.s4.title': '4. Your controls',
   'cookies.s4.p1':
-    '4.1. You can clear cookies and site data in your browser, or sign out of the panel. Blocking the session cookie prevents staying signed in to the dashboard. Language can be changed anytime with the RU/EN control. If CAPTCHA is required and you block its cookies, Lookup may refuse further requests until the challenge can complete.',
+    '4.1. You can clear cookies and site data in your browser, or sign out of the panel. Blocking the session cookie prevents staying signed in to the dashboard. Language can be changed anytime with the RU/EN control. Clearing `chetbot_cookie_consent` will show the plaque again. If CAPTCHA is required and you block its cookies, Lookup may refuse further requests until the challenge can complete.',
+  'cookies.s5.title': '5. Consent plaque',
+  'cookies.s5.p1':
+    '5.1. On a first visit (or after clearing site data), a bottom plaque summarizes this notice and links here. Accept stores consent in localStorage and hides the plaque; the rest of the site keeps working.',
+  'cookies.s5.p2':
+    '5.2. The plaque does not block navigation and does not require consent on every click. Material changes to this cookie notice are reflected by a new last-updated date on this page.',
 
   'disclaimer.title': 'Disclaimer',
-  'disclaimer.lastUpdated': 'Last updated: September 6, 2026',
+  'disclaimer.lastUpdated': 'Last updated: September 29, 2026',
   'disclaimer.s1.title': '1. Not affiliated with Discord',
   'disclaimer.s1.p1':
     '1.1. Cheterin (bot, control panel, and Lookup) is an independent project operated by Cheterin Group Ø / Nandak070. It is not affiliated with, endorsed by, sponsored by, or partnered with Discord Inc. “Discord” is a trademark of Discord Inc.',
@@ -445,6 +456,6 @@ const legal: TranslationDict = {
     '3.1. Do not use the Service — including Lookup — to harass, stalk, dox, or otherwise harm people. Public IDs and invite codes do not grant permission to misuse data. Server administrators remain responsible for how they configure moderation, logging, and access on their own servers.',
   'disclaimer.s4.title': '4. Responsibility',
   'disclaimer.s4.p1':
-    '4.1. Use of the Service is at your own risk and is subject to the Terms of Use and Privacy Policy. Discord API outages, token revocation, or network limits may interrupt Lookup without prior notice.',
+    '4.1. Use of the Service is at your own risk and is subject to the Terms of Use and Privacy Policy. Discord API outages, token revocation, or network limits may interrupt Lookup without prior notice. Contact: https://discord.gg/cheterin · adnan.huseynli1@gmail.com.',
 }
 export default legal

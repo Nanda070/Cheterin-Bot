@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LegalSubnav } from '../components/LegalSubnav'
 import { PublicLayout } from '../components/PublicLayout'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -37,6 +38,7 @@ export function TermsPage() {
         key={`${lang}-terms`}
         className="animate-fade-in-up mx-auto max-w-3xl rounded-card border border-border bg-surface/90 p-6 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_12%,transparent)] sm:p-8"
       >
+        <LegalSubnav />
         <h1 className="border-l-2 border-primary pl-3 text-lg font-semibold text-foreground">{t('terms.title')}</h1>
         <p className="mt-1 pl-3.5 text-xs text-muted">{t('terms.lastUpdated')}</p>
 
@@ -103,6 +105,7 @@ export function TermsPage() {
             <li>{t('terms.s3.li16b3')}</li>
             <li>{t('terms.s3.li16c')}</li>
             <li>{t('terms.s3.li17')}</li>
+            <li>{t('terms.s3.li18')}</li>
           </ul>
           <p>{t('terms.s3.p2')}</p>
           <p>{t('terms.s3.p3')}</p>
