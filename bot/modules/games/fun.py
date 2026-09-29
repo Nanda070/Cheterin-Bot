@@ -47,7 +47,11 @@ class FunCog(commands.Cog):
 
         now = time.monotonic()
         interval = settings["auto_emoji_min_interval_sec"]
-        if interval > 0 and now - self._auto_emoji_last.get(message.channel.id, 0.0) < interval:
+        # Missing key = never reacted in this channel. Do not use 0.0 as a
+        # sentinel: on fresh hosts time.monotonic() can be < interval and would
+        # wrongly suppress the first reaction (seen on CI ubuntu runners).
+        last = self._auto_emoji_last.get(message.channel.id)
+        if interval > 0 and last is not None and now - last < interval:
             return
 
         if not fun_core.auto_emoji_roll(settings["auto_emoji_chance_percent"]):

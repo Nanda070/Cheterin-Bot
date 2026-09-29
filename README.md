@@ -70,7 +70,7 @@ Support: **[Cheterin Group](https://discord.gg/cheterin)** · Contact: **turkapa
 | `bot/` | Bot package: `core/`, `modules/*`, `cards/`, `data/` |
 | `dashboard/` | Web panel (aiohttp backend + Vite/React frontend) |
 | `lookup/` + `lookup-api/` | Public Lookup SPA + API (**separate process**, not started from `main.py`) |
-| `docs/` | Engineer docs (`ARCHITECTURE`, Lookup plan) — EN + RU |
+| `docs/` | Engineer docs (`ARCHITECTURE` EN + RU) |
 | `scripts/` + `update.sh` | Full VPS update (bot + Lookup builds + systemd restart) |
 | `deploy/systemd/` | `cheterin-bot` / `cheterin-lookup` unit files |
 | `locales/` | Bot strings (RU/EN) |

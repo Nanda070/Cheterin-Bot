@@ -5,9 +5,9 @@
 > Документ только для коллабораторов репозитория (программисты с доступом к коду).  
 > Не добавлять в React-роуты, `dashboard/frontend/src/pages/docs/`, App.tsx, Landing, Docs.tsx, футер, нав, i18n публичного сайта и не раздавать как именованную статическую страницу через aiohttp.
 
-Русская карта: `docs/ARCHITECTURE.ru.md`. Английская: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md). Рядом: план Lookup, публичный `README.md` / `README.ru.md`. Источник правды по структуре монолита «бот + панель» и отдельному процессу Lookup.
+Русская карта: `docs/ARCHITECTURE.ru.md`. Английская: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md). Публичный `README.md` / `README.ru.md`. Документация только в `docs/` (корневых stub-указателей нет). Источник правды по структуре монолита «бот + панель» и отдельному процессу Lookup.
 
-**Lookup shipped** (Sep 2026, прод Oracle): SPA `lookup/` + API `lookup-api/`. Не импортируется и не стартует из `main.py`. Публично: `https://cheterin.online/lookup`. Локальный запуск и reverse-proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Locked decisions — `docs/CHETERIN_LOOKUP_PLAN.md` (шапка плана = implemented vs leftover operator).
+**Lookup shipped** (Sep 2026, прод Oracle): SPA `lookup/` + API `lookup-api/`. Не импортируется и не стартует из `main.py`. Публично: `https://cheterin.online/lookup`. Локальный запуск и reverse-proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. План Lookup закрыт и удалён; leftover оператора: ключи CAPTCHA; ротация Lookup-токенов при утечке.
 
 ---
 
@@ -141,8 +141,7 @@ Layout по образцу VALORANT (пакет `bot/`, docs/, scripts/, deploy/
 | `lookup-api/` | Lookup HTTP API + `TokenPool` — см. `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
 | `lookup-api/plugins.json` | Операторский каталог плагинов (заполнен) |
 | `lookup-api/tests/` | pytest Lookup API / TokenPool (`lookup-api/pytest.ini`) |
-| `docs/ARCHITECTURE.md` | Этот файл |
-| `docs/CHETERIN_LOOKUP_PLAN.md` | План Lookup (locked decisions; реализация **shipped**) |
+| `docs/ARCHITECTURE.md` | Этот файл (EN) / `docs/ARCHITECTURE.ru.md` (RU) |
 | `deploy/` | nginx notes + `deploy/systemd/` unit-файлы |
 | `scripts/` | `update.sh`, генераторы, selftest, `_reorg_bot.py` |
 | `tests/` | Корневые one-off тесты бота (не dashboard) |
@@ -793,7 +792,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 
 ## 18. Lookup в проде и дрейф монолита
 
-См. **`docs/CHETERIN_LOOKUP_PLAN.md`** (locked decisions не переоткрывать). Код и прод — **shipped**, не «план only».
+План Lookup **закрыт** (фазы 0–10 shipped; файлы плана удалены). Locked decisions не переоткрывать без явного product-решения. Код и прод — **shipped**.
 
 ### 18.1. Что уже в коде и на Oracle
 
@@ -875,7 +874,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Plugins catalog | `lookup-api/plugins.json` |
 | Lookup run / proxy | `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md` |
 | VPS bot+Lookup | `update.sh` → `scripts/update.sh` (systemd `cheterin-bot` + `cheterin-lookup`) |
-| Lookup план + leftover | `docs/CHETERIN_LOOKUP_PLAN.md` (шапка) |
+| Lookup leftover (CAPTCHA / токены) | §18 этой карты |
 | What’s New | `whatsNew.ts` |
 
 ---

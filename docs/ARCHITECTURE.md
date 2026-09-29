@@ -4,9 +4,9 @@
 > **Not published on cheterin.online.**  
 > For repository collaborators only. Do not add to React routes, public `pages/docs/`, footer, or aiohttp named static pages.
 
-Canonical file: `docs/ARCHITECTURE.md` (this EN doc). Russian: [`docs/ARCHITECTURE.ru.md`](ARCHITECTURE.ru.md). Related: [`docs/CHETERIN_LOOKUP_PLAN.md`](CHETERIN_LOOKUP_PLAN.md), public [`README.md`](../README.md).
+Canonical file: `docs/ARCHITECTURE.md` (this EN doc). Russian: [`docs/ARCHITECTURE.ru.md`](ARCHITECTURE.ru.md). Public [`README.md`](../README.md). Docs live only under `docs/` (no root stub pointers).
 
-**Lookup shipped** (Sep 2026): SPA `lookup/` + API `lookup-api/`. Not imported and not started from `main.py`. Public: `https://cheterin.online/lookup`. Local run / proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Product decisions: Lookup plan (status banner = implemented vs operator leftover).
+**Lookup shipped** (Sep 2026): SPA `lookup/` + API `lookup-api/`. Not imported and not started from `main.py`. Public: `https://cheterin.online/lookup`. Local run / proxy: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md`. Operator leftover: CAPTCHA keys; rotate Lookup Discord tokens if ever exposed.
 
 **Process model (current):** bot+dashboard and Lookup API run under **systemd** (`cheterin-bot.service`, `cheterin-lookup.service`). Former tmux sessions `chetmain` / `chetlookup` are legacy. See `deploy/systemd/`.
 
@@ -133,7 +133,7 @@ VALORANT-style layout (`bot/`, `docs/`, `scripts/`, `deploy/`), Lookup as a sepa
 | `dashboard/frontend/` | React 19 + Vite + Tailwind |
 | `lookup/` | Lookup SPA |
 | `lookup-api/` | Lookup HTTP API + TokenPool |
-| `docs/` | Architecture + Lookup plan (EN + RU) |
+| `docs/` | Internal architecture maps (EN + RU) |
 | `deploy/systemd/` | `cheterin-bot` / `cheterin-lookup` unit files |
 | `deploy/nginx-spa.notes.conf` | Path-split notes |
 | `scripts/update.sh` + root `update.sh` | Full VPS update (bot + Lookup) |
@@ -209,9 +209,9 @@ Ordered `load_extension` list is maintained in `main.py` (~52 extensions under `
 |:---|:---|
 | Backend tests | Root `pytest.ini` → `dashboard/backend/tests` |
 | Frontend panel | `npm run build` (`tsc -b && vite build`); `npm test` = vitest |
-| Lookup API | `lookup-api/pytest.ini` → `lookup-api/tests/` |
+| Lookup API | `lookup-api/pytest.ini` (`pythonpath = .`) → `lookup-api/tests/` |
 | Lookup SPA | `npm run build` (no vitest) |
-| CI | `.github/workflows/ci.yml` — no Discord secrets |
+| CI | `.github/workflows/ci.yml` — checkout/setup v4; no Discord secrets |
 | Docker | **Not** in repo |
 | Prod processes | **systemd** `cheterin-bot` + `cheterin-lookup` |
 | `update.sh` | git pull; pip bot + lookup-api; build both frontends; `systemctl restart` both units |
@@ -246,11 +246,11 @@ Lookup (`lookup-api/.env`): `LOOKUP_DISCORD_TOKENS` (preferred) or `LOOKUP_DISCO
 
 ## 18. Lookup in production
 
-See Lookup plan. Code is **shipped**.
+Lookup product plan is **closed** (phases 0–10 shipped); historical plan files removed. Code is **shipped**.
 
 - Paths: `/lookup`, `/lookup/about`, `/lookup/user|bot|server/...`, `/lookup/plugins/...`, `/api/lookup/...`
 - Operator leftover: CAPTCHA provider keys; rotate Lookup tokens in Discord Developer Portal if ever exposed
-- Monolith drift (VALORANT UI vs docs, etc.) is tracked in the RU plan §14 — Lookup does not close it
+- Locked product decisions (invite-only server, separate Discord app tokens, no Group DM / no recent feed, charcoal-red UI) stay as implemented behavior — do not reopen without an explicit product call
 
 ---
 

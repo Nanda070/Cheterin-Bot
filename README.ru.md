@@ -70,7 +70,7 @@
 | `bot/` | Пакет бота: `core/`, `modules/*`, `cards/`, `data/` |
 | `dashboard/` | Веб-панель (backend aiohttp + frontend Vite/React) |
 | `lookup/` + `lookup-api/` | Публичный Lookup (**отдельный процесс**, не из `main.py`) |
-| `docs/` | Инженерные docs (`ARCHITECTURE`, план Lookup) — EN + RU |
+| `docs/` | Инженерные docs (`ARCHITECTURE` EN + RU) |
 | `scripts/` + `update.sh` | Полный VPS-update (сборки bot+Lookup + restart systemd) |
 | `deploy/systemd/` | Unit-файлы `cheterin-bot` / `cheterin-lookup` |
 | `locales/` | Строки бота (RU/EN) |

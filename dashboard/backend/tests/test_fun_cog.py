@@ -226,10 +226,16 @@ async def test_auto_emoji_zero_chance_never_reacts():
 
 
 @pytest.mark.asyncio
-async def test_auto_emoji_channel_interval_limits_frequency():
+async def test_auto_emoji_channel_interval_limits_frequency(monkeypatch):
+    # Fresh hosts (CI) often have time.monotonic() << interval; fake a low clock
+    # so we never depend on wall-clock uptime for the first-reaction path.
+    clock = {"t": 42.0}
+    monkeypatch.setattr("bot.modules.games.fun.time.monotonic", lambda: clock["t"])
+
     _auto_emoji_config(auto_emoji_min_interval_sec=3600)
     player = FakeMember(20, name="player")
     guild = FakeGuild(members=[player])
+    guild.emojis = ["<:pepe:1>"]
     cog = FunCog(FakeBot(guild))
 
     first = FakeMsg(player, guild, channel_id=500)
@@ -237,6 +243,7 @@ async def test_auto_emoji_channel_interval_limits_frequency():
     other_channel = FakeMsg(player, guild, channel_id=501)
 
     await cog.on_message(first)
+    clock["t"] = 43.0  # still within 3600s of first reaction
     await cog.on_message(second)
     await cog.on_message(other_channel)
 

@@ -319,7 +319,7 @@ const BLOG_EN: BlogEntry[] = [
       },
       {
         lead: 'Docs folder.',
-        body: 'ARCHITECTURE and the Lookup plan live in docs/; deploy/ holds nginx process notes.',
+        body: 'ARCHITECTURE lives under docs/ only; deploy/ holds nginx process notes. Closed product plans are removed once shipped.',
       },
       {
         lead: 'Header legal strip.',
@@ -357,7 +357,7 @@ const BLOG_EN: BlogEntry[] = [
       },
       {
         lead: 'Docs i18n.',
-        body: 'README.md English by default with README.ru.md; architecture and Lookup plan available as EN + RU under docs/.',
+        body: 'README.md English by default with README.ru.md; architecture maps as EN + RU under docs/ only (no root stubs).',
       },
       {
         lead: 'Contact email.',
@@ -679,7 +679,7 @@ const BLOG_RU: BlogEntry[] = [
       },
       {
         lead: 'Папка docs/.',
-        body: 'ARCHITECTURE и план Lookup — в docs/; deploy/ — заметки по nginx/процессам.',
+        body: 'ARCHITECTURE только в docs/; deploy/ — заметки по nginx/процессам. Закрытые product-планы удаляются после ship.',
       },
       {
         lead: 'Шапка панели.',
@@ -717,7 +717,7 @@ const BLOG_RU: BlogEntry[] = [
       },
       {
         lead: 'Docs i18n.',
-        body: 'README.md по умолчанию на английском + README.ru.md; ARCHITECTURE и план Lookup — EN + RU в docs/.',
+        body: 'README.md по умолчанию на английском + README.ru.md; архитектурные карты EN + RU только в docs/ (без корневых stub).',
       },
       {
         lead: 'Контактный email.',
