@@ -1,6 +1,6 @@
 import pytest
 
-import voice_db
+import bot.modules.voice.voice_db as voice_db
 from dashboard.backend.routes.voice import routes as voice_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

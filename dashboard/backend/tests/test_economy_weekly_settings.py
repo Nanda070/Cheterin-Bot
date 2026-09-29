@@ -1,7 +1,7 @@
 import pytest
 
-import economy_core
-import settings_db
+import bot.modules.games.economy_core as economy_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 109
 

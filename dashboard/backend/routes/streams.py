@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import streams
+import bot.modules.community.streams as streams
 
 from ..access_middleware import require_dashboard_access
 

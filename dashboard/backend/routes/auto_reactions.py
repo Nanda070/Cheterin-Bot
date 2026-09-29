@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import auto_reactions_core
+import bot.modules.community.auto_reactions_core as auto_reactions_core
 
 from ..access_middleware import require_dashboard_access
 

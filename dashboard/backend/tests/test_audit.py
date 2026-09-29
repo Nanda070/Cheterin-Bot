@@ -4,7 +4,7 @@ import pytest
 from aiohttp import web
 from aiohttp_session import new_session
 
-import stats_db
+import bot.core.stats_db as stats_db
 from dashboard.backend.audit_middleware import audit_middleware, describe_action
 from dashboard.backend.routes.audit import routes as audit_routes
 from dashboard.backend.access_middleware import require_dashboard_access

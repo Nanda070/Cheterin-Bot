@@ -2,7 +2,7 @@ from aiohttp import web
 
 import discord
 
-import customs_core
+import bot.modules.valorant.customs_core as customs_core
 
 from ..access_middleware import require_dashboard_access
 

@@ -2,8 +2,8 @@ import uuid
 
 from aiohttp import web
 
-import economy_core
-import economy_db
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
 
 from ..access_middleware import require_dashboard_access
 

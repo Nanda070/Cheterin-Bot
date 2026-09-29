@@ -1,7 +1,7 @@
 import pytest
 
-import fun_core
-import settings_db
+import bot.modules.games.fun_core as fun_core
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

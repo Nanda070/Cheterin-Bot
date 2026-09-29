@@ -1,6 +1,6 @@
 import pytest
 
-import giveaway_core
+import bot.modules.community.giveaway_core as giveaway_core
 
 G = 404
 G2 = 777

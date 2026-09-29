@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import quote_core
+import bot.modules.utility.quote_core as quote_core
 
 from ..access_middleware import require_dashboard_access
 

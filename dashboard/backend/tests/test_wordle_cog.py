@@ -2,10 +2,10 @@
 
 import pytest
 
-import settings_db
-import wordle_core
-import wordle_db
-from wordle import WordleCog, build_board_embed
+import bot.core.settings_db as settings_db
+import bot.modules.games.wordle_core as wordle_core
+import bot.modules.games.wordle_db as wordle_db
+from bot.modules.games.wordle import WordleCog, build_board_embed
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 DAY = 10

@@ -4,13 +4,13 @@ import time
 
 import pytest
 
-import blackjack_core as bj
-import casino_core
-import casino_db
-import economy_core
-import economy_db
-import settings_db
-from blackjack import BlackjackCog, BlackjackView
+import bot.modules.games.blackjack_core as bj
+import bot.modules.games.casino_core as casino_core
+import bot.modules.games.casino_db as casino_db
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.blackjack import BlackjackCog, BlackjackView
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 GUILD_ID = 1

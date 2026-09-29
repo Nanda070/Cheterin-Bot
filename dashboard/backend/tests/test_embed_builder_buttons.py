@@ -1,6 +1,6 @@
 import discord
 
-import embed_builder
+import bot.core.embed_builder as embed_builder
 from dashboard.backend.tests.fakes import FakeComponentRow, FakeGuild, FakeMessage, FakeRole
 
 
@@ -50,7 +50,7 @@ def test_parse_role_button_ids_nested_v2_container():
 
 
 def test_parse_role_button_ids_from_layout_view():
-    import components_v2
+    import bot.core.components_v2 as components_v2
 
     view = discord.ui.View()
     view.add_item(discord.ui.Button(label="VIP", custom_id="btn_role_7"))

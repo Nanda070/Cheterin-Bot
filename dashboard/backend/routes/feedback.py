@@ -1,12 +1,12 @@
-import settings_db
+import bot.core.settings_db as settings_db
 from aiohttp import web
 
-import feedback_categories
-import feedback_core
-import feedback_menu
-import feedback_panel_core
-import embed_builder
-from message_template_core import normalize_embed_spec
+import bot.core.feedback_categories as feedback_categories
+import bot.modules.feedback.feedback_core as feedback_core
+import bot.modules.feedback.feedback_menu as feedback_menu
+import bot.modules.feedback.feedback_panel_core as feedback_panel_core
+import bot.core.embed_builder as embed_builder
+from bot.core.message_template_core import normalize_embed_spec
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()

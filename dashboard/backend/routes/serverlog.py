@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import serverlog
+import bot.modules.moderation.serverlog as serverlog
 
 from ..access_middleware import require_dashboard_access
 

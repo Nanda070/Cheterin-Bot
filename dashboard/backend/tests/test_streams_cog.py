@@ -6,9 +6,9 @@ import re
 import discord
 import pytest
 
-import components_v2
-import i18n
-from streams import Streams, card_title, default_template, render_template, resolve_template
+import bot.core.components_v2 as components_v2
+import bot.core.i18n as i18n
+from bot.modules.community.streams import Streams, card_title, default_template, render_template, resolve_template
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild
 
 

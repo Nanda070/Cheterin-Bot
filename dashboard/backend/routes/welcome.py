@@ -1,10 +1,10 @@
 from aiohttp import web
 
-import bot_config
-import embed_builder
-import i18n
-import welcome_core
-from message_template_core import normalize_embed_spec
+import bot.config as bot_config
+import bot.core.embed_builder as embed_builder
+import bot.core.i18n as i18n
+import bot.modules.community.welcome_core as welcome_core
+from bot.core.message_template_core import normalize_embed_spec
 
 from ..access_middleware import require_dashboard_access
 

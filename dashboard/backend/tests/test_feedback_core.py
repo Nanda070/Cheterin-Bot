@@ -1,9 +1,9 @@
 import discord
 import pytest
 
-import embed_style
-import feedback_core
-import settings_db
+import bot.core.embed_style as embed_style
+import bot.modules.feedback.feedback_core as feedback_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeThread
 
 # Категории и кейсы читаются по guild.id сервера события (Фаза 2.4).
@@ -13,7 +13,7 @@ GUILD_ID = 1
 
 @pytest.fixture(autouse=True)
 def isolated_feedback_categories(tmp_path, monkeypatch):
-    import feedback_categories
+    import bot.core.feedback_categories as feedback_categories
 
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.setattr(settings_db, "_cache", {})
@@ -100,7 +100,7 @@ async def test_decide_case_not_found_returns_error():
 async def test_decide_case_already_decided_returns_error():
     guild = FakeGuild()
     bot = FakeBot(guild)
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901, status="approved")
     settings_db.put(1, "feedback_cases", cases)
@@ -112,11 +112,11 @@ async def test_decide_case_already_decided_returns_error():
 
 @pytest.mark.asyncio
 async def test_decide_case_category_deleted_returns_error_without_mutating_status():
-    import feedback_categories
+    import bot.core.feedback_categories as feedback_categories
 
     guild = FakeGuild()
     bot = FakeBot(guild)
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901, status="pending")
     settings_db.put(1, "feedback_cases", cases)
@@ -141,7 +141,7 @@ async def test_decide_case_approve_updates_status_persists_and_notifies():
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[submitter], channels=[channel], threads=[thread])
     bot = FakeBot(guild)
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901)
     settings_db.put(1, "feedback_cases", cases)
@@ -171,7 +171,7 @@ async def test_decide_case_reject_sets_denied_status_and_red_color():
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[submitter], channels=[channel], threads=[thread])
     bot = FakeBot(guild)
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901)
     settings_db.put(1, "feedback_cases", cases)
@@ -192,7 +192,7 @@ async def test_decide_case_dm_falls_back_to_fetch_user_when_submitter_left_guild
     thread = FakeThread(700, messages={901: decision_message})
     guild = FakeGuild(members=[], threads=[thread])  # submitter NOT in guild.members
     bot = FakeBot(guild, fetchable_users=[gone_submitter])
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901)
     settings_db.put(1, "feedback_cases", cases)
@@ -213,7 +213,7 @@ async def test_decide_case_survives_missing_public_channel():
     # No channels configured -- public_channel_id 500 won't resolve.
     guild = FakeGuild(members=[submitter], channels=[], threads=[thread])
     bot = FakeBot(guild)
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = _build_case(900, 901)
     settings_db.put(1, "feedback_cases", cases)

@@ -6,7 +6,7 @@ import mimetypes
 
 from aiohttp import web
 
-import banner_rotation_core
+import bot.modules.community.banner_rotation_core as banner_rotation_core
 
 from ..access_middleware import require_dashboard_access
 

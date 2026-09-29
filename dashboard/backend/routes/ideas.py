@@ -2,7 +2,7 @@
 
 from aiohttp import web
 
-import ideas_core
+import bot.modules.valorant.ideas_core as ideas_core
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()

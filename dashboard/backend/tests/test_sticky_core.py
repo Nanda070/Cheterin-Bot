@@ -1,7 +1,7 @@
 import pytest
 
-import settings_db
-import sticky_core
+import bot.core.settings_db as settings_db
+import bot.modules.community.sticky_core as sticky_core
 
 GUILD_ID = 501
 

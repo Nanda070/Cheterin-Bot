@@ -1,6 +1,6 @@
 import pytest
 
-import moderation_commands_core as core
+import bot.modules.moderation.moderation_commands_core as core
 
 
 @pytest.mark.parametrize(

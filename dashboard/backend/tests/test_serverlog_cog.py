@@ -7,10 +7,10 @@ from datetime import datetime, timedelta, timezone
 import discord
 import pytest
 
-import embed_style
-import serverlog
-import settings_db
-from serverlog import ServerLog
+import bot.core.embed_style as embed_style
+import bot.modules.moderation.serverlog as serverlog
+import bot.core.settings_db as settings_db
+from bot.modules.moderation.serverlog import ServerLog
 from dashboard.backend.tests.fakes import (
     FakeAuditLogEntry,
     FakeBot,

@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import giveaway_core
+import bot.modules.community.giveaway_core as giveaway_core
 
 from ..access_middleware import require_dashboard_access
 

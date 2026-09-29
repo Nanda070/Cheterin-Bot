@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import stats_db
+import bot.core.stats_db as stats_db
 
 from ..access_middleware import require_dashboard_access
 from ..audit_middleware import normalize_stored_action

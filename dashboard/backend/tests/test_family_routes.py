@@ -1,9 +1,9 @@
 import pytest
 
-import family_core
-import family_db
-import settings_db
-from family_tickets import FamilyTicketsCog
+import bot.modules.games.family_core as family_core
+import bot.modules.games.family_db as family_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.family_tickets import FamilyTicketsCog
 from dashboard.backend.routes.family import routes as family_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

@@ -20,8 +20,8 @@ if str(ROOT) not in sys.path:
 
 from PIL import Image  # noqa: E402
 
-import dynamic_banner  # noqa: E402
-from discord_banner_bytes import (  # noqa: E402
+import bot.cards.dynamic_banner as dynamic_banner# noqa: E402
+from bot.cards.discord_banner_bytes import (  # noqa: E402
     BANNER_H,
     BANNER_W,
     describe_image_bytes,

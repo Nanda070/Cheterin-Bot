@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import warns_core
-import warns_db
+import bot.modules.moderation.warns_core as warns_core
+import bot.modules.moderation.warns_db as warns_db
 
 
 @pytest.fixture(autouse=True)

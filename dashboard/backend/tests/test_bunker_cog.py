@@ -4,9 +4,9 @@
 import discord
 import pytest
 
-import bunker_db
-import settings_db
-from bunker import BunkerCog
+import bot.modules.games.bunker_db as bunker_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.bunker import BunkerCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 
@@ -108,7 +108,7 @@ async def test_start_game_full_flow():
 
 @pytest.mark.asyncio
 async def test_start_game_with_repeats_mode(monkeypatch):
-    import bunker_data
+    import bot.data.bunker_data as bunker_data
 
     tiny_pool = [{"id": 1, "name": "Единственная профессия", "category": "Тест"}]
     monkeypatch.setattr(bunker_data, "PROFESSIONS", tiny_pool)
@@ -222,7 +222,7 @@ async def test_concurrent_phase_advance_runs_once():
     """force_advance + _finish_discussion must not double-transition discussion→vote."""
     import asyncio
 
-    import i18n
+    import bot.core.i18n as i18n
 
     player_ids = (20, 21, 22, 23)
     bot, guild, channel, cog, _ = build(player_ids)

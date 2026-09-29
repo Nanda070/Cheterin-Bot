@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import timed_roles_db
+import bot.modules.community.timed_roles_db as timed_roles_db
 
 GUILD_ID = 104
 

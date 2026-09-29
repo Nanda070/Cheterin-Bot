@@ -74,6 +74,23 @@
 
 ---
 
+## Структура репозитория
+
+| | |
+|:---|:---|
+| `main.py` | Точка входа бота + встроенная панель |
+| `bot/` | Пакет бота: `core/`, `modules/*`, `cards/`, `data/` |
+| `dashboard/` | Веб-панель (backend aiohttp + frontend Vite/React) |
+| `lookup/` + `lookup-api/` | Публичный Lookup (отдельный процесс, не из `main.py`) |
+| `docs/` | Внутренние `ARCHITECTURE.md`, план Lookup |
+| `scripts/` + `update.sh` | Деплой/утилиты |
+| `deploy/` | Заметки по nginx/процессам |
+| `locales/` | Строки бота (RU/EN) |
+
+Подробная карта: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+---
+
 <p align="center">
   <sub>© Cheterin Group Ø · часть экосистемы <a href="https://discord.gg/cheterin">Cheterin Group</a></sub>
 </p>

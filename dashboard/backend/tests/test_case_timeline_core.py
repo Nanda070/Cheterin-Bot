@@ -1,4 +1,4 @@
-import case_timeline_core
+import bot.core.case_timeline_core as case_timeline_core
 
 
 def test_build_case_timeline_filters_sorts_and_limits():

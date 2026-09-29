@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import relations_core as rc
+import bot.modules.games.relations_core as rc
 
 
 def test_pair_ids_ordered():
@@ -70,7 +70,7 @@ def test_days_together():
 
 
 def test_marriage_settings_defaults(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     db = tmp_path / "settings.db"
     monkeypatch.setenv("SETTINGS_DB_PATH", str(db))
@@ -98,7 +98,7 @@ def test_marriage_settings_defaults(tmp_path, monkeypatch):
 
 def test_level_thresholds_roundtrip(tmp_path, monkeypatch):
     """save_config persists custom level_thresholds; reload from DB returns same values."""
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     db = tmp_path / "settings.db"
     monkeypatch.setenv("SETTINGS_DB_PATH", str(db))

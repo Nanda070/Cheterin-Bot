@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import custom_commands_core
+import bot.modules.utility.custom_commands_core as custom_commands_core
 
 from ..access_middleware import require_dashboard_access
 

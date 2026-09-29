@@ -6,9 +6,9 @@ from datetime import date
 
 import pytest
 
-import settings_db
-import wordle_core
-import wordle_data
+import bot.core.settings_db as settings_db
+import bot.modules.games.wordle_core as wordle_core
+import bot.data.wordle_data as wordle_data
 
 
 @pytest.fixture(autouse=True)

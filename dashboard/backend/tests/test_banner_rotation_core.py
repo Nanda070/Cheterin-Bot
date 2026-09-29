@@ -7,9 +7,9 @@ import io
 import pytest
 from PIL import Image
 
-import banner_rotation_core
-import dynamic_banner
-import settings_db
+import bot.modules.community.banner_rotation_core as banner_rotation_core
+import bot.cards.dynamic_banner as dynamic_banner
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

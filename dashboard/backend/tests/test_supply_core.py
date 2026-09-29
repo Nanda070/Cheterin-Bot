@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime, timedelta, timezone
 
-import supply_core
-import timezone_core
+import bot.modules.games.supply_core as supply_core
+import bot.core.timezone_core as timezone_core
 
 G = 404
 G2 = 777

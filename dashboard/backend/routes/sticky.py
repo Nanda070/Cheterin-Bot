@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import sticky_core
+import bot.modules.community.sticky_core as sticky_core
 
 from ..access_middleware import require_dashboard_access
 

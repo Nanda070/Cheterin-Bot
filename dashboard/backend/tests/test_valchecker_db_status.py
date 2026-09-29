@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 
-import valchecker_db as db
+import bot.modules.valorant.valchecker_db as db
 
 
 def test_corrupt_fingerprints_return_none(tmp_path, monkeypatch):

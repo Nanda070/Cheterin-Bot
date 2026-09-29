@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import stats_db
-import timezone_core
+import bot.core.stats_db as stats_db
+import bot.core.timezone_core as timezone_core
 from dashboard.backend.routes.voice_stats import routes as voice_stats_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

@@ -1,8 +1,8 @@
 import os
 import pytest
 
-import bot_config
-import settings_db
+import bot.config as bot_config
+import bot.core.settings_db as settings_db
 
 @pytest.fixture(autouse=True)
 def isolated_settings_db(tmp_path, monkeypatch):

@@ -1,6 +1,6 @@
 import pytest
 
-import settings_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.casino import routes as casino_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

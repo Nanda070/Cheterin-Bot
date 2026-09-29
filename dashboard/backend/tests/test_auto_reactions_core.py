@@ -2,8 +2,8 @@
 
 import pytest
 
-import auto_reactions_core
-import settings_db
+import bot.modules.community.auto_reactions_core as auto_reactions_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 8801
 

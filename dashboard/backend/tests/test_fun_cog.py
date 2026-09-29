@@ -4,11 +4,11 @@ from datetime import timedelta
 
 import pytest
 
-import economy_core
-import economy_db
-import fun_core
-import settings_db
-from fun import FunCog
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
+import bot.modules.games.fun_core as fun_core
+import bot.core.settings_db as settings_db
+from bot.modules.games.fun import FunCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 GUILD_ID = 1
@@ -254,7 +254,7 @@ async def test_auto_emoji_removes_reaction_after_delay(monkeypatch):
     async def instant_sleep(delay):
         slept_for.append(delay)
 
-    import fun as fun_module
+    import bot.modules.games.fun as fun_module
     monkeypatch.setattr(fun_module.asyncio, "sleep", instant_sleep)
 
     player = FakeMember(20, name="player")

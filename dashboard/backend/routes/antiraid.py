@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import antiraid_core
+import bot.modules.moderation.antiraid_core as antiraid_core
 
 from ..access_middleware import require_dashboard_access
 

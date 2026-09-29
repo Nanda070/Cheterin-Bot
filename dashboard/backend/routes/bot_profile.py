@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import bot_profile_core
+import bot.core.bot_profile_core as bot_profile_core
 
 from ..access_middleware import require_dashboard_access
 

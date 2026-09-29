@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import timed_roles_db
+import bot.modules.community.timed_roles_db as timed_roles_db
 
 from ..access_middleware import require_dashboard_access
 

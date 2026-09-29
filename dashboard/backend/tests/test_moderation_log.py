@@ -1,6 +1,6 @@
 import pytest
 
-import moderation_log
+import bot.core.moderation_log as moderation_log
 
 
 @pytest.fixture(autouse=True)

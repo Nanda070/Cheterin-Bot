@@ -2,12 +2,12 @@
 
 import pytest
 
-import economy_db
-import settings_db
-import stats_db
-import xp_card
-import xp_core
-from xp import XPCog
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
+import bot.core.stats_db as stats_db
+import bot.cards.xp_card as xp_card
+import bot.modules.levels.xp_core as xp_core
+from bot.modules.levels.xp import XPCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 GUILD_ID = 1

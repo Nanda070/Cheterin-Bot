@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import settings_db
-import valchecker_core as core
+import bot.core.settings_db as settings_db
+import bot.modules.valorant.valchecker_core as core
 
 
 def test_validate_poll_interval_bounds():

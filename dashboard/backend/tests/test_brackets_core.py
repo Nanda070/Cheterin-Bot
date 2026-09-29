@@ -1,6 +1,6 @@
 import pytest
 
-import brackets
+import bot.modules.games.brackets as brackets
 
 
 @pytest.fixture(autouse=True)

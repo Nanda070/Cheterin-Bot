@@ -13,9 +13,9 @@ Skip this pipeline only for **this-repo meta** such as `.cursor/rules/`-only edi
 
 Keep docs accurate to the code that shipped:
 
-- Update `ARCHITECTURE.md` (internal; not a public site page).
+- Update `docs/ARCHITECTURE.md` (internal; not a public site page). Root `ARCHITECTURE.md` is a pointer stub.
 - If Lookup SPA/API/proxy/process changed: `lookup/RUN.md`, `lookup-api/RUN.md`, `lookup-api/PROXY.md` as relevant.
-- If Lookup plan phases changed: update the status banner in `CHETERIN_LOOKUP_PLAN.md`.
+- If Lookup plan phases changed: update the status banner in `docs/CHETERIN_LOOKUP_PLAN.md`.
 
 ## 2. Dev Blog
 
@@ -40,7 +40,7 @@ Keep docs accurate to the code that shipped:
 On the VPS:
 
 - Bot + dashboard: `bash ~/Cheterin_Bot_Dashboard/update.sh` (git pull, pip, dashboard frontend build, attach tmux `chetmain`).
-- Lookup UI/API is **not** in `update.sh` — rebuild `lookup/` and/or `lookup-api` as needed, then restart tmux `chetlookup`. Details: `ARCHITECTURE.md`, `lookup-api/PROXY.md`.
+- Lookup UI/API is **not** in `update.sh` — rebuild `lookup/` and/or `lookup-api` as needed, then restart tmux `chetlookup`. Details: `docs/ARCHITECTURE.md`, `lookup-api/PROXY.md`.
 
 ## 5. Zero errors and zero warnings
 

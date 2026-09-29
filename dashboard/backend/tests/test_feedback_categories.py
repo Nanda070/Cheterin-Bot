@@ -1,7 +1,7 @@
 import pytest
 
-import feedback_categories
-import settings_db
+import bot.core.feedback_categories as feedback_categories
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 404
 

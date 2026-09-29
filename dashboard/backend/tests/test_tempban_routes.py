@@ -1,8 +1,8 @@
 import pytest
 
-import bot_config
-import settings_db
-import tempban_core
+import bot.config as bot_config
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.tempban_core as tempban_core
 from dashboard.backend.routes.tempban_settings import routes as tempban_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

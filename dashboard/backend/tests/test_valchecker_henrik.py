@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-import valchecker_henrik as henrik
+import bot.modules.valorant.valchecker_henrik as henrik
 
 
 @pytest.mark.asyncio

@@ -11,8 +11,8 @@ from dashboard.backend.tests.fakes import (
     make_moderation_app,
 )
 
-import feedback_categories
-import settings_db
+import bot.core.feedback_categories as feedback_categories
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)
@@ -230,7 +230,7 @@ async def test_delete_feedback_category_removes_pending_cases(aiohttp_client):
     channel = FakeChannel(500, name="reports")
     _, app = build(roles=[role], channels=[channel])
     bot = app["bot"]
-    import settings_db
+    import bot.core.settings_db as settings_db
     cases = settings_db.get(1, "feedback_cases", {})
     cases["PR-0001"] = {"case_id": "PR-0001", "category_key": "players", "status": "pending"}
     cases["PR-0002"] = {"case_id": "PR-0002", "category_key": "players", "status": "approved"}

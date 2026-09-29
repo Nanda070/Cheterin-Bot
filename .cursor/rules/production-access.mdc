@@ -35,7 +35,7 @@ ssh -i "C:\Users\adnan\Documents\Keys\syst" ubuntu@129.213.51.233
 | Bot + dashboard | `bash ~/Cheterin_Bot_Dashboard/update.sh` — git pull, deps, dashboard frontend build, attach tmux **`chetmain`** |
 | Lookup UI/API | **Not** in `update.sh`. Rebuild `lookup/` and/or `lookup-api` as needed, then restart tmux **`chetlookup`** (API on port **8090**; nginx serves `/lookup` and `/api/lookup`) |
 
-Details: `ARCHITECTURE.md`, `lookup-api/PROXY.md`.
+Details: `docs/ARCHITECTURE.md`, `lookup-api/PROXY.md`.
 
 ## Safety
 

@@ -1,8 +1,8 @@
 import discord
 from aiohttp import web
 
-import verification
-import verification_core
+import bot.modules.moderation.verification as verification
+import bot.modules.moderation.verification_core as verification_core
 
 from ..access_middleware import require_dashboard_access
 

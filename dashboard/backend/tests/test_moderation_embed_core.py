@@ -1,6 +1,6 @@
 import discord
 
-import moderation_embed_core as core
+import bot.core.moderation_embed_core as core
 
 
 def test_build_action_log_embed_field_order_ru():

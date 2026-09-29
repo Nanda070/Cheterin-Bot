@@ -1,7 +1,7 @@
 import pytest
 
-import daily_topic_core
-import settings_db
+import bot.modules.community.daily_topic_core as daily_topic_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 404
 FIXED_TODAY = "2026-07-23"
@@ -15,7 +15,7 @@ def isolated_config(tmp_path, monkeypatch):
     # Avoid ZoneInfo/tzdata dependency on Windows CI/dev hosts.
     monkeypatch.setattr(daily_topic_core, "_today_local", lambda _gid: FIXED_TODAY)
 
-    import timezone_core
+    import bot.core.timezone_core as timezone_core
     from datetime import datetime, timezone, timedelta
 
     fixed_now = datetime(2026, 7, 23, 12, 0, tzinfo=timezone(timedelta(hours=3)))

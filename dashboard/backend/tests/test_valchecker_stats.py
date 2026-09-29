@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import valchecker_stats as stats
+import bot.modules.valorant.valchecker_stats as stats
 
 
 def test_kd():

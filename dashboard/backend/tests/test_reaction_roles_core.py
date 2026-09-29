@@ -1,7 +1,7 @@
 import pytest
 
-import reaction_roles
-import settings_db
+import bot.modules.community.reaction_roles as reaction_roles
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 404
 

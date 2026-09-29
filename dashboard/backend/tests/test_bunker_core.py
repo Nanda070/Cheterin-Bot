@@ -1,8 +1,8 @@
 import pytest
 
-import bunker_core
-import bunker_data
-import settings_db
+import bot.modules.games.bunker_core as bunker_core
+import bot.data.bunker_data as bunker_data
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

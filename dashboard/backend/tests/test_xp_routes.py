@@ -1,9 +1,9 @@
 import pytest
 
-import economy_db
-import settings_db
-import stats_db
-import xp_core
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
+import bot.core.stats_db as stats_db
+import bot.modules.levels.xp_core as xp_core
 from dashboard.backend.routes.xp import routes as xp_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

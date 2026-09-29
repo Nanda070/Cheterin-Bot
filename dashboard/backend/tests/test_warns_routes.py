@@ -1,8 +1,8 @@
 import pytest
 
-import settings_db
-import warns_core
-import warns_db
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.warns_core as warns_core
+import bot.modules.moderation.warns_db as warns_db
 from dashboard.backend.routes.warns import routes as warns_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

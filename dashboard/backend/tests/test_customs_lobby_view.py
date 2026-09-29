@@ -2,9 +2,9 @@
 
 from collections import Counter
 
-import i18n
-import customs
-import customs_core
+import bot.core.i18n as i18n
+import bot.modules.valorant.customs as customs
+import bot.modules.valorant.customs_core as customs_core
 
 
 class _DummyCog:

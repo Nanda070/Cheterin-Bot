@@ -1,8 +1,8 @@
 from aiohttp import web
 
-import bot_config
-import tempban
-import tempban_core
+import bot.config as bot_config
+import bot.modules.moderation.tempban as tempban
+import bot.modules.moderation.tempban_core as tempban_core
 
 from ..access_middleware import require_dashboard_access
 

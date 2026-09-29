@@ -1,4 +1,4 @@
-import feedback_panel_core
+import bot.modules.feedback.feedback_panel_core as feedback_panel_core
 
 
 def test_resolve_banner_url_uses_custom_setting():

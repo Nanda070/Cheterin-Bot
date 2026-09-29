@@ -1,6 +1,6 @@
 import pytest
 
-import bunker_db
+import bot.modules.games.bunker_db as bunker_db
 
 
 @pytest.fixture(autouse=True)

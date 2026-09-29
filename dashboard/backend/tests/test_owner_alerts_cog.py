@@ -5,11 +5,11 @@ from datetime import datetime, timezone
 
 import pytest
 
-import owner_alerts_core
-import settings_db
-import stats_db
-import timezone_core
-from owner_alerts import OwnerAlertsCog
+import bot.modules.utility.owner_alerts_core as owner_alerts_core
+import bot.core.settings_db as settings_db
+import bot.core.stats_db as stats_db
+import bot.core.timezone_core as timezone_core
+from bot.modules.utility.owner_alerts import OwnerAlertsCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 GUILD_ID = 1

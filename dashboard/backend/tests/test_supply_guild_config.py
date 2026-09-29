@@ -1,6 +1,6 @@
-import bot_config
-import settings_db
-from supply import _config_int, get_reminder_minutes
+import bot.config as bot_config
+import bot.core.settings_db as settings_db
+from bot.modules.games.supply import _config_int, get_reminder_minutes
 
 
 def test_supply_config_is_per_guild(tmp_path, monkeypatch):

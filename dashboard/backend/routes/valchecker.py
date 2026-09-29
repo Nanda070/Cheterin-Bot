@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import valchecker_core
+import bot.modules.valorant.valchecker_core as valchecker_core
 
 from ..access_middleware import require_dashboard_access
 

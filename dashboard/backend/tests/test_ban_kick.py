@@ -10,7 +10,7 @@ from dashboard.backend.tests.fakes import (
     make_moderation_app,
 )
 
-import moderation_log
+import bot.core.moderation_log as moderation_log
 
 
 @pytest.fixture(autouse=True)

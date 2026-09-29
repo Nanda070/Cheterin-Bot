@@ -1,6 +1,6 @@
 """Тесты SQLite-хранилища согласий верификации."""
 
-import verification_db
+import bot.modules.moderation.verification_db as verification_db
 
 
 def test_record_get_clear_and_list(tmp_path, monkeypatch):

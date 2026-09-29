@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import slash_modules as sm
+import bot.core.slash_modules as sm
 
 
 def test_disabled_roots_only_when_explicitly_off(tmp_path, monkeypatch):
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.delenv("COMMAND_SYNC_HIDE_DISABLED", raising=False)
-    import settings_db
-    import relations_core
+    import bot.core.settings_db as settings_db
+    import bot.modules.games.relations_core as relations_core
 
     settings_db._cache.clear()
     settings_db.init()
@@ -36,8 +36,8 @@ def test_hide_disabled_opt_in(monkeypatch):
 
 def test_xp_disabled_marks_levels_root(tmp_path, monkeypatch):
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
-    import settings_db
-    import xp_core
+    import bot.core.settings_db as settings_db
+    import bot.modules.levels.xp_core as xp_core
 
     settings_db._cache.clear()
     settings_db.init()

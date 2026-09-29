@@ -4,8 +4,8 @@ import base64
 
 import pytest
 
-import bot_profile_core
-import settings_db
+import bot.core.bot_profile_core as bot_profile_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 6601
 

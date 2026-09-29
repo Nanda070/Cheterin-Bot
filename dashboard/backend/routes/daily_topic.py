@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import daily_topic_core
+import bot.modules.community.daily_topic_core as daily_topic_core
 
 from ..access_middleware import require_dashboard_access
 

@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-import i18n
-import language_core
-import settings_db
+import bot.core.i18n as i18n
+import bot.core.language_core as language_core
+import bot.core.settings_db as settings_db
 from locales import en as en_locale
 from locales import ru as ru_locale
 
@@ -15,7 +15,16 @@ _LITERAL_GUILD_T_RE = re.compile(r'i18n\.guild_t\([^,]+,\s*"([a-z][a-z0-9_.]+)"'
 
 
 def _bot_py_files() -> list[Path]:
-    files = [p for p in _REPO_ROOT.glob("*.py") if not p.name.startswith("_audit")]
+    files: list[Path] = []
+    main_py = _REPO_ROOT / "main.py"
+    if main_py.exists():
+        files.append(main_py)
+    bot_pkg = _REPO_ROOT / "bot"
+    if bot_pkg.exists():
+        for path in bot_pkg.rglob("*.py"):
+            if path.name.startswith("_audit") or path.name == "__init__.py":
+                continue
+            files.append(path)
     backend = _REPO_ROOT / "dashboard" / "backend"
     if backend.exists():
         for path in backend.rglob("*.py"):

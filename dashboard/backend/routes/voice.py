@@ -1,7 +1,7 @@
 import discord
 from aiohttp import web
 
-import voice_db
+import bot.modules.voice.voice_db as voice_db
 
 from ..access_middleware import require_dashboard_access
 

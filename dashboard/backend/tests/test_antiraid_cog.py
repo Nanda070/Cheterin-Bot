@@ -4,11 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import antiraid_core
-import lockdown_core
-import moderation_log
-import settings_db
-from antiraid import AntiRaidCog
+import bot.modules.moderation.antiraid_core as antiraid_core
+import bot.modules.moderation.lockdown_core as lockdown_core
+import bot.core.moderation_log as moderation_log
+import bot.core.settings_db as settings_db
+from bot.modules.moderation.antiraid import AntiRaidCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 

@@ -1,8 +1,8 @@
 import pytest
 
-import language_core
-import settings_db
-import xp_core
+import bot.core.language_core as language_core
+import bot.core.settings_db as settings_db
+import bot.modules.levels.xp_core as xp_core
 
 
 @pytest.fixture(autouse=True)

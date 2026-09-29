@@ -1,7 +1,7 @@
 import pytest
 
-import scheduled_messages_core
-import settings_db
+import bot.modules.community.scheduled_messages_core as scheduled_messages_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.scheduled_messages import routes as scheduled_messages_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

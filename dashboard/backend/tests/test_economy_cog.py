@@ -2,10 +2,10 @@
 
 import pytest
 
-import economy_core
-import economy_db
-import settings_db
-from economy import EconomyCog
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.economy import EconomyCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole
 
 GUILD_ID = 1

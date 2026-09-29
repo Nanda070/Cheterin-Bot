@@ -4,11 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import moderation_log
-import settings_db
-import verification_core
-import verification_db
-from verification import VerificationCog, VerificationView, publish_verification_panel
+import bot.core.moderation_log as moderation_log
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.verification_core as verification_core
+import bot.modules.moderation.verification_db as verification_db
+from bot.modules.moderation.verification import VerificationCog, VerificationView, publish_verification_panel
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeRole
 
 
@@ -253,7 +253,7 @@ async def test_setup_posts_panel_when_configured():
 
 @pytest.mark.asyncio
 async def test_setup_posts_panel_with_english_button_when_guild_language_en():
-    import language_core
+    import bot.core.language_core as language_core
     from dashboard.backend.tests.fakes import FakeChannel
 
     language_core.set_language(1, "en")
@@ -284,7 +284,7 @@ async def test_publish_verification_panel_helper_sends_welcome_text():
 
 @pytest.mark.asyncio
 async def test_setup_posts_rules_button_when_rules_consent_enabled():
-    import language_core
+    import bot.core.language_core as language_core
     from dashboard.backend.tests.fakes import FakeChannel
 
     language_core.set_language(1, "en")

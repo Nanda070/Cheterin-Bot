@@ -1,7 +1,7 @@
 import discord
 import pytest
 
-import embed_builder
+import bot.core.embed_builder as embed_builder
 from dashboard.backend.routes.embed_builder import routes as embed_builder_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -167,7 +167,7 @@ async def test_get_embed_message_content_only_returns_complete_spec(aiohttp_clie
 
 @pytest.mark.asyncio
 async def test_get_embed_message_v2_maps_layout_without_error(aiohttp_client):
-    import components_v2
+    import bot.core.components_v2 as components_v2
 
     embed = embed_builder.build_embed({"title": "V2 Title", "description": "V2 body"})
     layout = components_v2.build_layout_view(embed=embed, content="hello v2")

@@ -2,9 +2,9 @@ import time
 
 from aiohttp import web
 
-import language_core
-import mafia_core
-import mafia_db
+import bot.core.language_core as language_core
+import bot.modules.games.mafia_core as mafia_core
+import bot.modules.games.mafia_db as mafia_db
 
 from ..access_middleware import require_dashboard_access
 

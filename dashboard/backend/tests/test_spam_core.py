@@ -1,11 +1,11 @@
 import pytest
 
-import spam_core
+import bot.modules.moderation.spam_core as spam_core
 
 
 @pytest.fixture(autouse=True)
 def isolated_settings_db(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "test_settings.db"))
     settings_db._cache.clear()

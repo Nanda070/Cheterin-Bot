@@ -2,7 +2,7 @@
 
 import pytest
 
-import blackjack_core as bj
+import bot.modules.games.blackjack_core as bj
 
 
 # ────────────────────────── Очки руки ──────────────────────────

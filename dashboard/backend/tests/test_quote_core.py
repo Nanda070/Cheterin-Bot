@@ -1,8 +1,8 @@
 """Quote settings and mention/reply gate."""
 
-import quote_card
-import quote_core
-import settings_db
+import bot.cards.quote_card as quote_card
+import bot.modules.utility.quote_core as quote_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 9101
 
@@ -196,7 +196,7 @@ def test_render_quote_card_with_attachment():
 
 
 def test_attachment_is_image_helpers():
-    import quote as quote_cog
+    import bot.modules.utility.quote as quote_cog
 
     class Att:
         def __init__(self, content_type="", filename="", width=None, height=None):

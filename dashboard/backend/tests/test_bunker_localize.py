@@ -1,6 +1,6 @@
-import bunker_core
-import bunker_data
-import bunker_localize
+import bot.modules.games.bunker_core as bunker_core
+import bot.data.bunker_data as bunker_data
+import bot.modules.games.bunker_localize as bunker_localize
 
 
 def test_localize_character_en_swaps_text_fields():

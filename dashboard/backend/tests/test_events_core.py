@@ -1,13 +1,13 @@
 import discord
 import pytest
 
-import events_core
+import bot.modules.community.events_core as events_core
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeRole
 
 
 @pytest.fixture(autouse=True)
 def isolated_events_file(tmp_path, monkeypatch):
-    import events
+    import bot.modules.community.events as events
 
     monkeypatch.setattr(events, "EVENTS_FILE", str(tmp_path / "events_data.json"))
 
@@ -36,7 +36,7 @@ def _tournament_event(channel_id=500, role_reward=None, participants=None):
 
 @pytest.mark.asyncio
 async def test_close_event_not_found_returns_error():
-    import events
+    import bot.modules.community.events as events
 
     bot = FakeBot(FakeGuild())
     result = await events_core.close_event(bot, 1, "MISSING")
@@ -45,7 +45,7 @@ async def test_close_event_not_found_returns_error():
 
 @pytest.mark.asyncio
 async def test_close_event_sets_status_and_persists():
-    import events
+    import bot.modules.community.events as events
 
     events.save_events(1, {"events": {"900": _tournament_event()}})
     bot = FakeBot(FakeGuild())
@@ -59,7 +59,7 @@ async def test_close_event_sets_status_and_persists():
 
 @pytest.mark.asyncio
 async def test_close_event_disables_participation_buttons_on_live_message():
-    import events
+    import bot.modules.community.events as events
 
     ev = _tournament_event()
     events.save_events(1, {"events": {"900": ev}})
@@ -79,7 +79,7 @@ async def test_close_event_disables_participation_buttons_on_live_message():
 
 @pytest.mark.asyncio
 async def test_close_event_survives_missing_channel():
-    import events
+    import bot.modules.community.events as events
 
     events.save_events(1, {"events": {"900": _tournament_event()}})
     guild = FakeGuild(channels=[])  # channel 500 won't resolve
@@ -102,7 +102,7 @@ async def test_delete_event_not_found_returns_error():
 
 @pytest.mark.asyncio
 async def test_delete_event_removes_from_storage():
-    import events
+    import bot.modules.community.events as events
 
     events.save_events(1, {"events": {"900": _tournament_event()}})
     guild = FakeGuild()
@@ -117,7 +117,7 @@ async def test_delete_event_removes_from_storage():
 
 @pytest.mark.asyncio
 async def test_delete_event_removes_role_from_all_participants():
-    import events
+    import bot.modules.community.events as events
 
     role = FakeRole(200, name="Tournament Role")
     member1 = FakeMember(10, name="p1")
@@ -135,7 +135,7 @@ async def test_delete_event_removes_role_from_all_participants():
 
 @pytest.mark.asyncio
 async def test_delete_event_deletes_live_message():
-    import events
+    import bot.modules.community.events as events
 
     ev = _tournament_event()
     events.save_events(1, {"events": {"900": ev}})
@@ -162,7 +162,7 @@ async def test_notify_participants_not_found_returns_error():
 
 @pytest.mark.asyncio
 async def test_notify_participants_empty_participants_returns_error():
-    import events
+    import bot.modules.community.events as events
 
     events.save_events(1, {"events": {"900": _tournament_event(participants=[])}})
     guild = FakeGuild()
@@ -175,7 +175,7 @@ async def test_notify_participants_empty_participants_returns_error():
 
 @pytest.mark.asyncio
 async def test_notify_participants_sends_dm_and_counts_results():
-    import events
+    import bot.modules.community.events as events
 
     reachable = FakeMember(10, name="reachable")
     unreachable = FakeMember(20, name="unreachable")

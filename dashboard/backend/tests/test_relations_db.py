@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import relations_db as rdb
+import bot.modules.games.relations_db as rdb
 
 
 def test_marriage_lifecycle(tmp_path, monkeypatch):

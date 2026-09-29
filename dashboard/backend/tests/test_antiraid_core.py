@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import antiraid_core
-import settings_db
+import bot.modules.moderation.antiraid_core as antiraid_core
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import settings_db
-import verification_core
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.verification_core as verification_core
 
 GUILD_ID = 404
 
@@ -29,7 +29,7 @@ def test_settings_disabled_by_default():
 
 
 def test_welcome_text_follows_guild_language():
-    import language_core
+    import bot.core.language_core as language_core
 
     language_core.set_language(GUILD_ID, "en")
     settings = verification_core.get_settings(GUILD_ID)
@@ -37,7 +37,7 @@ def test_welcome_text_follows_guild_language():
 
 
 def test_rules_panel_text_when_rules_consent_enabled():
-    import language_core
+    import bot.core.language_core as language_core
 
     language_core.set_language(GUILD_ID, "en")
     verification_core.save_config(GUILD_ID, {

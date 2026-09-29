@@ -2,9 +2,9 @@ from discord import Locale
 from discord import app_commands
 from discord.app_commands import TranslationContext, TranslationContextLocation
 
-import i18n
-import slash_i18n
-import slash_registry
+import bot.core.i18n as i18n
+import bot.core.slash_i18n as slash_i18n
+import bot.core.slash_registry as slash_registry
 
 
 def test_localize_command_sets_english_base_and_locale_str():

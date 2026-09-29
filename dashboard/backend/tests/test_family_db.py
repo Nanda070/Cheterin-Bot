@@ -10,7 +10,7 @@ from contextlib import closing
 
 import pytest
 
-import family_db
+import bot.modules.games.family_db as family_db
 
 G = 100
 G2 = 200

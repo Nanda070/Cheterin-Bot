@@ -1,10 +1,10 @@
 from aiohttp import web
 
-import automod_core
-import i18n
-import moderation_embed_core
-import moderation_log
-import warns_core
+import bot.modules.moderation.automod_core as automod_core
+import bot.core.i18n as i18n
+import bot.core.moderation_embed_core as moderation_embed_core
+import bot.core.moderation_log as moderation_log
+import bot.modules.moderation.warns_core as warns_core
 
 from ..access_middleware import require_dashboard_access
 

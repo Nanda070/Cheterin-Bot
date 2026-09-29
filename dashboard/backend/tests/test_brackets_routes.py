@@ -1,7 +1,7 @@
 import pytest
 
-import brackets
-import events
+import bot.modules.games.brackets as brackets
+import bot.modules.community.events as events
 from dashboard.backend.routes.brackets import routes as brackets_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

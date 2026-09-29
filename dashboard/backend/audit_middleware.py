@@ -6,7 +6,7 @@ import time
 
 from aiohttp import web
 
-import stats_db
+import bot.core.stats_db as stats_db
 
 logger = logging.getLogger("dashboard.audit")
 

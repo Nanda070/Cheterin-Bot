@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import fun_core
+import bot.modules.games.fun_core as fun_core
 
 from ..access_middleware import require_dashboard_access
 

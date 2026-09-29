@@ -1,6 +1,6 @@
 import pytest
 
-import ban_db
+import bot.modules.moderation.ban_db as ban_db
 
 
 @pytest.fixture(autouse=True)

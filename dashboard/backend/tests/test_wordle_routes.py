@@ -1,6 +1,6 @@
 import pytest
 
-import settings_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.wordle import routes as wordle_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

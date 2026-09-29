@@ -1,8 +1,8 @@
 import pytest
 
-import bunker_core
-import bunker_db
-import settings_db
+import bot.modules.games.bunker_core as bunker_core
+import bot.modules.games.bunker_db as bunker_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.bunker import routes as bunker_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 
@@ -264,7 +264,7 @@ async def test_game_detail_includes_players_and_announcements(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_game_detail_uses_stored_display_name_for_bot_players(aiohttp_client):
-    from game_test_lobby import fake_user_id
+    from bot.modules.games.game_test_lobby import fake_user_id
 
     _, guild, app = build()
     client = await aiohttp_client(app)

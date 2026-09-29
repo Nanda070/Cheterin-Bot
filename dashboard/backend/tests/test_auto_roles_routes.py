@@ -1,13 +1,13 @@
 import pytest
 
-import bot_config
+import bot.config as bot_config
 from dashboard.backend.routes.auto_roles import routes as auto_roles_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, FakeRole, force_login, make_moderation_app
 
 
 @pytest.fixture(autouse=True)
 def isolated_settings_db(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "test_settings.db"))
     settings_db._cache.clear()
     settings_db.init()

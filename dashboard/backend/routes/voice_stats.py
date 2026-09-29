@@ -4,9 +4,9 @@ from datetime import datetime
 
 from aiohttp import web
 
-import stats_db
-import timezone_core
-import xp_core
+import bot.core.stats_db as stats_db
+import bot.core.timezone_core as timezone_core
+import bot.modules.levels.xp_core as xp_core
 
 from ..access_middleware import require_dashboard_access
 

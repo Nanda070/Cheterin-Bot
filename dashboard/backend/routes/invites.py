@@ -2,8 +2,8 @@ import asyncio
 
 from aiohttp import web
 
-import invites_core
-import invites_db
+import bot.modules.community.invites_core as invites_core
+import bot.modules.community.invites_db as invites_db
 
 from ..access_middleware import require_dashboard_access
 

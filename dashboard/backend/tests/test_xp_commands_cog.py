@@ -3,10 +3,10 @@
 
 import pytest
 
-import settings_db
-import stats_db
-import xp_core
-from xp import XPCog
+import bot.core.settings_db as settings_db
+import bot.core.stats_db as stats_db
+import bot.modules.levels.xp_core as xp_core
+from bot.modules.levels.xp import XPCog
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 

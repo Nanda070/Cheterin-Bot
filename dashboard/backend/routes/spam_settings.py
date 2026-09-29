@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import spam_core
+import bot.modules.moderation.spam_core as spam_core
 
 from ..access_middleware import require_dashboard_access
 

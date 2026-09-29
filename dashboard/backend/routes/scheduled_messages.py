@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import scheduled_messages_core
+import bot.modules.community.scheduled_messages_core as scheduled_messages_core
 
 from ..access_middleware import require_dashboard_access
 

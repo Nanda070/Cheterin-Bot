@@ -2,7 +2,7 @@
 
 import pytest
 
-import settings_db
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

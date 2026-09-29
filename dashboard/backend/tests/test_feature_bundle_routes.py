@@ -1,9 +1,9 @@
 import pytest
 
-import birthdays_core
-import invites_db
-import owner_alerts_core
-import sticky_roles_core
+import bot.modules.community.birthdays_core as birthdays_core
+import bot.modules.community.invites_db as invites_db
+import bot.modules.utility.owner_alerts_core as owner_alerts_core
+import bot.modules.community.sticky_roles_core as sticky_roles_core
 from dashboard.backend.routes.birthdays import routes as birthdays_routes
 from dashboard.backend.routes.invites import routes as invites_routes
 from dashboard.backend.routes.owner_alerts import routes as owner_alerts_routes
@@ -23,7 +23,7 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_settings(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.setenv("STICKY_ROLES_DB_PATH", str(tmp_path / "sticky_roles.db"))
@@ -75,7 +75,7 @@ async def test_setup_health_reports_missing_and_ok(aiohttp_client):
 
 @pytest.mark.asyncio
 async def test_setup_health_reports_module_issues(aiohttp_client):
-    import starboard_core
+    import bot.modules.community.starboard_core as starboard_core
 
     moderator = FakeMember(10, name="mod", role_ids=[111])
     me = FakeMember(1, name="bot", bot=True)

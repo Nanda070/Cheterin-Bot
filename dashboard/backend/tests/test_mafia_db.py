@@ -1,6 +1,6 @@
 import pytest
 
-import mafia_db
+import bot.modules.games.mafia_db as mafia_db
 
 
 @pytest.fixture(autouse=True)

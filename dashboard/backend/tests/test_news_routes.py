@@ -3,8 +3,8 @@
 
 import pytest
 
-import news
-import settings_db
+import bot.modules.community.news as news
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.news import routes as news_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

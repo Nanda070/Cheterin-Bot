@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import preview_core
+import bot.core.preview_core as preview_core
 
 from ..access_middleware import require_dashboard_access
 

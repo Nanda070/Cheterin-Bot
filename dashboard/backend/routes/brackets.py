@@ -2,8 +2,8 @@ import secrets
 
 from aiohttp import web
 
-import brackets
-import events
+import bot.modules.games.brackets as brackets
+import bot.modules.community.events as events
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()

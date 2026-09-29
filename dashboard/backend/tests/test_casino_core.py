@@ -2,8 +2,8 @@
 
 import pytest
 
-import casino_core
-import settings_db
+import bot.modules.games.casino_core as casino_core
+import bot.core.settings_db as settings_db
 
 
 @pytest.fixture(autouse=True)

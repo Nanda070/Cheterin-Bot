@@ -1,6 +1,6 @@
 import pytest
 
-import giveaway_core
+import bot.modules.community.giveaway_core as giveaway_core
 from dashboard.backend.routes.giveaways import routes as giveaways_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

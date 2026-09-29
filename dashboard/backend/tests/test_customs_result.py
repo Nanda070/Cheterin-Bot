@@ -1,10 +1,10 @@
 """Customs match-result embed and winner GIF."""
 
-import customs
-import customs_core
-import customs_winner_card as winner_card
-import embed_style
-import i18n
+import bot.modules.valorant.customs as customs
+import bot.modules.valorant.customs_core as customs_core
+import bot.cards.customs_winner_card as winner_card
+import bot.core.embed_style as embed_style
+import bot.core.i18n as i18n
 
 
 def _finished_lobby(**overrides) -> dict:

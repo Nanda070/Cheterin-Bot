@@ -1,7 +1,7 @@
 import pytest
 
-import language_core
-import settings_db
+import bot.core.language_core as language_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.language import routes as language_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

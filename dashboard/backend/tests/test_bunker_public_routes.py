@@ -2,9 +2,9 @@ import time
 
 import pytest
 
-import bunker_db
-import settings_db
-from bunker import BunkerCog
+import bot.modules.games.bunker_db as bunker_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.bunker import BunkerCog
 from dashboard.backend.routes.bunker import routes as bunker_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, make_moderation_app
 
@@ -342,7 +342,7 @@ async def test_vote_self_target_allowed(aiohttp_client):
 @pytest.mark.asyncio
 async def test_vote_negative_bot_target_and_stored_display_name(aiohttp_client):
     """Fake-lobby bots use negative user ids; vote + roster must accept them."""
-    from game_test_lobby import fake_avatar_url, fake_user_id
+    from bot.modules.games.game_test_lobby import fake_avatar_url, fake_user_id
 
     host = FakeMember(20, name="host", display_name="Host")
     bot_id = fake_user_id(0)

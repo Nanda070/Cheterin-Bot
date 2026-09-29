@@ -4,9 +4,9 @@ import time
 
 import pytest
 
-import mafia_db
-import settings_db
-from mafia import MafiaCog
+import bot.modules.games.mafia_db as mafia_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.mafia import MafiaCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 

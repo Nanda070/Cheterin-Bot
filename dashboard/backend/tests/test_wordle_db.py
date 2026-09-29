@@ -6,7 +6,7 @@ from contextlib import closing
 
 import pytest
 
-import wordle_db
+import bot.modules.games.wordle_db as wordle_db
 
 GUILD = 1
 OTHER = 2

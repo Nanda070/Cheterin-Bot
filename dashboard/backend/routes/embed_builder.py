@@ -3,7 +3,7 @@ import logging
 import discord
 from aiohttp import web
 
-import embed_builder
+import bot.core.embed_builder as embed_builder
 from ..access_middleware import require_dashboard_access
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ async def create_embed_message(request: web.Request) -> web.Response:
     else:
         components_version = embed_builder.set_components_version(request["guild_id"], str(components_version))
 
-    import components_v2
+    import bot.core.components_v2 as components_v2
 
     try:
         message = await components_v2.send_message(
@@ -269,7 +269,7 @@ async def update_embed_message(request: web.Request) -> web.Response:
     else:
         components_version = embed_builder.set_components_version(request["guild_id"], str(components_version))
 
-    import components_v2
+    import bot.core.components_v2 as components_v2
 
     try:
         await components_v2.edit_message(

@@ -1,7 +1,7 @@
 from aiohttp import web
 
-import events
-import events_core
+import bot.modules.community.events as events
+import bot.modules.community.events_core as events_core
 
 from ..access_middleware import require_dashboard_access
 

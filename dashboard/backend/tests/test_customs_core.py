@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import settings_db
-import customs_core
+import bot.core.settings_db as settings_db
+import bot.modules.valorant.customs_core as customs_core
 
 
 def _isolate(tmp_path, monkeypatch):

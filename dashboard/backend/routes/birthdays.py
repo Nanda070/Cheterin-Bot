@@ -1,8 +1,8 @@
 import discord
 from aiohttp import web
 
-import birthdays_core
-import birthdays_db
+import bot.modules.community.birthdays_core as birthdays_core
+import bot.modules.community.birthdays_db as birthdays_db
 
 from ..access_middleware import require_dashboard_access
 
@@ -95,7 +95,7 @@ async def birthdays_delete(request: web.Request) -> web.Response:
 @require_dashboard_access
 async def birthdays_test(request: web.Request) -> web.Response:
     """Send a test birthday announcement to the configured channel (does not mark announced)."""
-    import i18n
+    import bot.core.i18n as i18n
 
     guild_id = request["guild_id"]
     settings = birthdays_core.get_settings(guild_id)

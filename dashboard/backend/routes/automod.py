@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import automod_core
+import bot.modules.moderation.automod_core as automod_core
 
 from ..access_middleware import require_dashboard_access
 

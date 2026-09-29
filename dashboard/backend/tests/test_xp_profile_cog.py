@@ -2,11 +2,11 @@
 
 import pytest
 
-import economy_db
-import settings_db
-import stats_db
-import xp_core
-from xp import XPCog, _PROFILE_GIF_MAX_BYTES
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
+import bot.core.stats_db as stats_db
+import bot.modules.levels.xp_core as xp_core
+from bot.modules.levels.xp import XPCog, _PROFILE_GIF_MAX_BYTES
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember
 
 GUILD_ID = 1
@@ -60,7 +60,7 @@ def build():
 
 @pytest.mark.asyncio
 async def test_profile_command_sends_gif(monkeypatch):
-    import profile_card
+    import bot.cards.profile_card as profile_card
 
     cog, guild, member = build()
     stats_db.xp_add_text(1, member.id, 100, 1000)
@@ -77,7 +77,7 @@ async def test_profile_command_sends_gif(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_profile_command_falls_back_to_png_when_gif_huge(monkeypatch):
-    import profile_card
+    import bot.cards.profile_card as profile_card
 
     cog, guild, member = build()
     stats_db.xp_add_text(1, member.id, 100, 1000)
@@ -98,8 +98,8 @@ async def test_profile_command_falls_back_to_png_when_gif_huge(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_profile_passes_economy_when_enabled(monkeypatch):
-    import profile_card
-    import economy_core
+    import bot.cards.profile_card as profile_card
+    import bot.modules.games.economy_core as economy_core
 
     cog, guild, member = build()
     stats_db.xp_add_text(1, member.id, 100, 1000)

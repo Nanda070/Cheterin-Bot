@@ -2,8 +2,8 @@
 
 import pytest
 
-import settings_db
-import starboard_core
+import bot.core.settings_db as settings_db
+import bot.modules.community.starboard_core as starboard_core
 
 GUILD_ID = 7701
 

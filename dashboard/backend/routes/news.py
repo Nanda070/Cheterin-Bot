@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import news
+import bot.modules.community.news as news
 
 from ..access_middleware import require_super_admin
 

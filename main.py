@@ -1,7 +1,9 @@
+"""Cheterin bot entrypoint — Discord bot + embedded dashboard API."""
+
 import discord
 from discord.ext import commands
-import bot_config
-import feedback_categories
+import bot.config as bot_config
+import bot.core.feedback_categories as feedback_categories
 import json
 import os
 import asyncio
@@ -9,12 +11,12 @@ import logging
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-import settings_db
-import settings_migration
-import embed_style
-import i18n
-import lockdown_core
-import slash_i18n
+import bot.core.settings_db as settings_db
+import bot.core.settings_migration as settings_migration
+import bot.core.embed_style as embed_style
+import bot.core.i18n as i18n
+import bot.modules.moderation.lockdown_core as lockdown_core
+import bot.core.slash_i18n as slash_i18n
 
 load_dotenv()
 
@@ -81,65 +83,65 @@ class ChetBot(commands.Bot):
         bot_config.migrate_from_env_if_needed(main_guild_id)
         feedback_categories.migrate_from_env_if_needed(main_guild_id)
         lockdown_core.migrate_from_env_if_needed(main_guild_id)
-        await self.load_extension("feedback_menu")
-        await self.load_extension("welcome")
-        await self.load_extension("button")
-        await self.load_extension("memobb")
-        await self.load_extension("lockdown")
-        await self.load_extension("tempban")
-        await self.load_extension("spam")
-        await self.load_extension("events")
-        await self.load_extension("reaction_roles")
-        await self.load_extension("news")
-        await self.load_extension("voice_rooms")
-        await self.load_extension("supply")
-        await self.load_extension("serverlog")
-        await self.load_extension("voice_tracker")
-        await self.load_extension("xp")
-        await self.load_extension("streams")
-        await self.load_extension("family_roster")
-        await self.load_extension("family_tickets")
-        await self.load_extension("family_birthdays")
-        await self.load_extension("mafia")
-        await self.load_extension("giveaways")
-        await self.load_extension("daily_topic")
-        await self.load_extension("automod")
-        await self.load_extension("bunker")
-        await self.load_extension("fun")
-        await self.load_extension("moderation_commands")
-        await self.load_extension("wordle")
-        await self.load_extension("economy")
-        await self.load_extension("casino")
-        await self.load_extension("blackjack")
-        await self.load_extension("antiraid")
-        await self.load_extension("verification")
-        await self.load_extension("custom_commands")
-        await self.load_extension("scheduled_messages")
-        await self.load_extension("invites")
-        await self.load_extension("timed_roles")
-        await self.load_extension("birthdays")
-        await self.load_extension("polls")
-        await self.load_extension("sticky")
-        await self.load_extension("owner_alerts")
-        await self.load_extension("starboard")
-        await self.load_extension("auto_reactions")
-        await self.load_extension("quote")
-        await self.load_extension("relations")
-        await self.load_extension("help_cog")
-        await self.load_extension("valchecker")
-        await self.load_extension("valorant_random")
-        await self.load_extension("premier")
-        await self.load_extension("valorant_panels")
-        await self.load_extension("ideas")
-        await self.load_extension("banner_rotation")
-        await self.load_extension("customs")
+        await self.load_extension("bot.modules.feedback.feedback_menu")
+        await self.load_extension("bot.modules.community.welcome")
+        await self.load_extension("bot.modules.utility.button")
+        await self.load_extension("bot.modules.utility.memobb")
+        await self.load_extension("bot.modules.moderation.lockdown")
+        await self.load_extension("bot.modules.moderation.tempban")
+        await self.load_extension("bot.modules.moderation.spam")
+        await self.load_extension("bot.modules.community.events")
+        await self.load_extension("bot.modules.community.reaction_roles")
+        await self.load_extension("bot.modules.community.news")
+        await self.load_extension("bot.modules.voice.voice_rooms")
+        await self.load_extension("bot.modules.games.supply")
+        await self.load_extension("bot.modules.moderation.serverlog")
+        await self.load_extension("bot.modules.voice.voice_tracker")
+        await self.load_extension("bot.modules.levels.xp")
+        await self.load_extension("bot.modules.community.streams")
+        await self.load_extension("bot.modules.games.family_roster")
+        await self.load_extension("bot.modules.games.family_tickets")
+        await self.load_extension("bot.modules.games.family_birthdays")
+        await self.load_extension("bot.modules.games.mafia")
+        await self.load_extension("bot.modules.community.giveaways")
+        await self.load_extension("bot.modules.community.daily_topic")
+        await self.load_extension("bot.modules.moderation.automod")
+        await self.load_extension("bot.modules.games.bunker")
+        await self.load_extension("bot.modules.games.fun")
+        await self.load_extension("bot.modules.moderation.moderation_commands")
+        await self.load_extension("bot.modules.games.wordle")
+        await self.load_extension("bot.modules.games.economy")
+        await self.load_extension("bot.modules.games.casino")
+        await self.load_extension("bot.modules.games.blackjack")
+        await self.load_extension("bot.modules.moderation.antiraid")
+        await self.load_extension("bot.modules.moderation.verification")
+        await self.load_extension("bot.modules.utility.custom_commands")
+        await self.load_extension("bot.modules.community.scheduled_messages")
+        await self.load_extension("bot.modules.community.invites")
+        await self.load_extension("bot.modules.community.timed_roles")
+        await self.load_extension("bot.modules.community.birthdays")
+        await self.load_extension("bot.modules.community.polls")
+        await self.load_extension("bot.modules.community.sticky")
+        await self.load_extension("bot.modules.utility.owner_alerts")
+        await self.load_extension("bot.modules.community.starboard")
+        await self.load_extension("bot.modules.community.auto_reactions")
+        await self.load_extension("bot.modules.utility.quote")
+        await self.load_extension("bot.modules.games.relations")
+        await self.load_extension("bot.modules.utility.help_cog")
+        await self.load_extension("bot.modules.valorant.valchecker")
+        await self.load_extension("bot.modules.valorant.valorant_random")
+        await self.load_extension("bot.modules.valorant.premier")
+        await self.load_extension("bot.modules.valorant.valorant_panels")
+        await self.load_extension("bot.modules.valorant.ideas")
+        await self.load_extension("bot.modules.community.banner_rotation")
+        await self.load_extension("bot.modules.valorant.customs")
 
         # Синхронизация команд вынесена в on_ready: для режима per_guild нужен уже
         # заполненный список self.guilds (в setup_hook он ещё пуст).
 
     async def _sync_commands(self):
         """Синхронизация слэш-команд по стратегии command_sync_mode() (A/B)."""
-        import slash_modules
+        import bot.core.slash_modules as slash_modules
 
         slash_modules.bind_bot(self)
         main_guild = discord.Object(id=get_main_guild_id())
@@ -200,7 +202,7 @@ async def on_guild_join(guild: discord.Guild):
     # Вариант A: новый сервер получает команды МГНОВЕННО (guild-sync с фильтром модулей).
     if command_sync_mode() != "global":
         try:
-            import slash_modules
+            import bot.core.slash_modules as slash_modules
 
             slash_modules.bind_bot(bot)
             await slash_modules.sync_guild_commands(bot, guild)

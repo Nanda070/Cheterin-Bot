@@ -1,10 +1,10 @@
 import discord
 from aiohttp import web
 
-import embed_style
-import i18n
-import lockdown_core
-import moderation_embed_core
+import bot.core.embed_style as embed_style
+import bot.core.i18n as i18n
+import bot.modules.moderation.lockdown_core as lockdown_core
+import bot.core.moderation_embed_core as moderation_embed_core
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()

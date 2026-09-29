@@ -2,7 +2,7 @@
 
 import pytest
 
-import game_test_lobby as gtl
+import bot.modules.games.game_test_lobby as gtl
 
 
 def test_fake_user_ids_are_negative_and_unique():

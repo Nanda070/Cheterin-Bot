@@ -2,10 +2,10 @@ import time
 
 from aiohttp import web
 
-import bunker_core
-import bunker_db
-import bunker_localize
-import language_core
+import bot.modules.games.bunker_core as bunker_core
+import bot.modules.games.bunker_db as bunker_db
+import bot.modules.games.bunker_localize as bunker_localize
+import bot.core.language_core as language_core
 
 from ..access_middleware import require_dashboard_access
 

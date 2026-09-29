@@ -1,8 +1,8 @@
 import discord
 import pytest
 
-import reaction_roles
-import settings_db
+import bot.modules.community.reaction_roles as reaction_roles
+import bot.core.settings_db as settings_db
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, FakeMessage, FakeRole
 
 

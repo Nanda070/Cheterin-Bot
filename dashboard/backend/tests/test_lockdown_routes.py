@@ -1,7 +1,7 @@
 import discord
 import pytest
 
-import lockdown_core
+import bot.modules.moderation.lockdown_core as lockdown_core
 from dashboard.backend.routes.lockdown import routes as lockdown_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,
@@ -15,7 +15,7 @@ from dashboard.backend.tests.fakes import (
 
 @pytest.fixture(autouse=True)
 def isolated_backup(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     settings_db.init()

@@ -1,6 +1,6 @@
 import pytest
 
-import invites_db
+import bot.modules.community.invites_db as invites_db
 
 GUILD_ID = 103
 

@@ -1,6 +1,6 @@
 import pytest
 
-import birthdays_db
+import bot.modules.community.birthdays_db as birthdays_db
 
 GUILD_ID = 105
 

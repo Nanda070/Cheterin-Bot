@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import timezone_core
+import bot.core.timezone_core as timezone_core
 
 from ..access_middleware import require_dashboard_access
 

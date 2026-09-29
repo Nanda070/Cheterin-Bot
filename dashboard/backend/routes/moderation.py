@@ -6,14 +6,14 @@ from aiohttp import web
 
 from datetime import timedelta
 
-import case_timeline_core
-import embed_style
-import i18n
-import moderation_commands_core
-import moderation_embed_core
-import moderation_log
-import settings_db
-import warns_core
+import bot.core.case_timeline_core as case_timeline_core
+import bot.core.embed_style as embed_style
+import bot.core.i18n as i18n
+import bot.modules.moderation.moderation_commands_core as moderation_commands_core
+import bot.core.moderation_embed_core as moderation_embed_core
+import bot.core.moderation_log as moderation_log
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.warns_core as warns_core
 from ..access_middleware import require_dashboard_access
 from .. import mass_role_jobs
 

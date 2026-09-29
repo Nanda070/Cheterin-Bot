@@ -11,7 +11,7 @@ from dashboard.backend.tests.fakes import (
     make_moderation_app,
 )
 
-import events
+import bot.modules.community.events as events
 
 
 @pytest.fixture(autouse=True)

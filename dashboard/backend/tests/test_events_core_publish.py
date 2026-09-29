@@ -1,8 +1,8 @@
 import discord
 import pytest
 
-import events
-import events_core
+import bot.modules.community.events as events
+import bot.modules.community.events_core as events_core
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild
 
 

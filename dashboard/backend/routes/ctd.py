@@ -8,7 +8,7 @@
 
 from aiohttp import web
 
-import bot_config
+import bot.config as bot_config
 
 from ..access_middleware import require_dashboard_access
 

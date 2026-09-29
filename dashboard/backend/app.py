@@ -5,21 +5,21 @@ from pathlib import Path
 import aiohttp
 from aiohttp import web
 
-import bunker_db
-import casino_db
-import family_db
-import invites_db
-import mafia_db
-import polls_db
-import settings_db
-import starboard_db
-import relations_db
-import valchecker_db
-import stats_db
-import sticky_roles_core
-import timed_roles_db
-import birthdays_db
-import warns_db
+import bot.modules.games.bunker_db as bunker_db
+import bot.modules.games.casino_db as casino_db
+import bot.modules.games.family_db as family_db
+import bot.modules.community.invites_db as invites_db
+import bot.modules.games.mafia_db as mafia_db
+import bot.modules.community.polls_db as polls_db
+import bot.core.settings_db as settings_db
+import bot.modules.community.starboard_db as starboard_db
+import bot.modules.games.relations_db as relations_db
+import bot.modules.valorant.valchecker_db as valchecker_db
+import bot.core.stats_db as stats_db
+import bot.modules.community.sticky_roles_core as sticky_roles_core
+import bot.modules.community.timed_roles_db as timed_roles_db
+import bot.modules.community.birthdays_db as birthdays_db
+import bot.modules.moderation.warns_db as warns_db
 
 from .auth import routes as auth_routes
 from .config import ConfigError, DashboardConfig, load_dashboard_config

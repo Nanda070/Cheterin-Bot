@@ -1,6 +1,6 @@
 import pytest
 
-import moderation_log
+import bot.core.moderation_log as moderation_log
 from dashboard.backend.routes.moderation import routes as moderation_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

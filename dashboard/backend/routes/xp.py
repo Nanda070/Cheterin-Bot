@@ -3,12 +3,12 @@ import os
 
 from aiohttp import web
 
-import economy_core
-import economy_db
-import i18n
-import profile_card
-import stats_db
-import xp_core
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
+import bot.core.i18n as i18n
+import bot.cards.profile_card as profile_card
+import bot.core.stats_db as stats_db
+import bot.modules.levels.xp_core as xp_core
 
 from ..access_middleware import require_dashboard_access
 

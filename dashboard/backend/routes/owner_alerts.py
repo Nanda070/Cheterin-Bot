@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import owner_alerts_core
+import bot.modules.utility.owner_alerts_core as owner_alerts_core
 
 from ..access_middleware import require_dashboard_access
 

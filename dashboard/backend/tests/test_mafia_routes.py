@@ -1,8 +1,8 @@
 import pytest
 
-import mafia_core
-import mafia_db
-import settings_db
+import bot.modules.games.mafia_core as mafia_core
+import bot.modules.games.mafia_db as mafia_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.mafia import routes as mafia_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

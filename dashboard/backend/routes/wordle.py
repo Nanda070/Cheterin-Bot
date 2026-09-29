@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import wordle_core
+import bot.modules.games.wordle_core as wordle_core
 
 from ..access_middleware import require_dashboard_access
 

@@ -10,7 +10,7 @@ from contextlib import closing
 
 import pytest
 
-import stats_db
+import bot.core.stats_db as stats_db
 
 MAIN = 1111  # произвольный guild_id для тестов изоляции (не sentinel 404)
 OTHER = 777

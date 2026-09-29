@@ -1,5 +1,5 @@
-import welcome_core
-from message_template_core import substitute
+import bot.modules.community.welcome_core as welcome_core
+from bot.core.message_template_core import substitute
 
 
 def test_substitute_placeholders():

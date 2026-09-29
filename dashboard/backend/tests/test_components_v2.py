@@ -1,7 +1,7 @@
 import discord
 import pytest
 
-import components_v2
+import bot.core.components_v2 as components_v2
 from dashboard.backend.tests.fakes import FakeChannel
 
 

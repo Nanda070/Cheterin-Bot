@@ -1,7 +1,7 @@
 import pytest
 
-import lockdown_core
-import settings_db
+import bot.modules.moderation.lockdown_core as lockdown_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.tests.fakes import FakeGuild, FakeRole
 
 

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import polls_db
+import bot.modules.community.polls_db as polls_db
 
 GUILD_ID = 106
 

@@ -1,6 +1,6 @@
 import pytest
 import os
-import settings_db
+import bot.core.settings_db as settings_db
 from contextlib import closing
 
 os.environ["SETTINGS_DB_PATH"] = "test_settings.db"

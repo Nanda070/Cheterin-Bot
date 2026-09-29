@@ -2,8 +2,8 @@
 
 import pytest
 
-import settings_db
-import voice_rooms
+import bot.core.settings_db as settings_db
+import bot.modules.voice.voice_rooms as voice_rooms
 
 
 @pytest.fixture(autouse=True)

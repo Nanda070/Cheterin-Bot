@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import starboard_core
+import bot.modules.community.starboard_core as starboard_core
 
 from ..access_middleware import require_dashboard_access
 

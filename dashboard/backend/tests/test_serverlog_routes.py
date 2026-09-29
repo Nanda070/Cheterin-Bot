@@ -1,7 +1,7 @@
 import pytest
 
-import serverlog
-import settings_db
+import bot.modules.moderation.serverlog as serverlog
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.serverlog import routes as serverlog_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

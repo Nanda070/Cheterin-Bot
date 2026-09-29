@@ -2,9 +2,9 @@
 
 import pytest
 
-import daily_topic_core
-import settings_db
-from daily_topic import DailyTopicCog
+import bot.modules.community.daily_topic_core as daily_topic_core
+import bot.core.settings_db as settings_db
+from bot.modules.community.daily_topic import DailyTopicCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild
 
 

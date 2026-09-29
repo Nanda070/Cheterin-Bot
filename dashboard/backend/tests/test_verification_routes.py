@@ -1,7 +1,7 @@
 import pytest
 
-import settings_db
-import verification_core
+import bot.core.settings_db as settings_db
+import bot.modules.moderation.verification_core as verification_core
 from dashboard.backend.routes.verification import routes as verification_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, force_login, make_moderation_app
 

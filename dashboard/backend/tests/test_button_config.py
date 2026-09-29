@@ -5,7 +5,7 @@
 через settings_db с изоляцией по гильдиям.
 """
 
-import button
+import bot.modules.utility.button as button
 
 
 def test_load_returns_defaults_when_empty():

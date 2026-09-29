@@ -2,9 +2,9 @@ import time
 
 import pytest
 
-import mafia_db
-import settings_db
-from mafia import MafiaCog
+import bot.modules.games.mafia_db as mafia_db
+import bot.core.settings_db as settings_db
+from bot.modules.games.mafia import MafiaCog
 from dashboard.backend.routes.mafia import routes as mafia_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember, make_moderation_app
 
@@ -467,7 +467,7 @@ async def test_vote_triggers_early_day_vote_resolution(aiohttp_client):
 @pytest.mark.asyncio
 async def test_vote_negative_bot_target_and_stored_display_name(aiohttp_client):
     """Fake-lobby bots use negative user ids; vote + roster must accept them."""
-    from game_test_lobby import fake_avatar_url, fake_user_id
+    from bot.modules.games.game_test_lobby import fake_avatar_url, fake_user_id
 
     host = FakeMember(20, name="host", display_name="Host")
     bot_id = fake_user_id(0)
@@ -512,7 +512,7 @@ async def test_vote_negative_bot_target_and_stored_display_name(aiohttp_client):
 @pytest.mark.asyncio
 async def test_night_action_negative_bot_target(aiohttp_client):
     """Night actions must accept synthetic negative bot seat ids."""
-    from game_test_lobby import fake_user_id
+    from bot.modules.games.game_test_lobby import fake_user_id
 
     mafia1 = FakeMember(20, name="mafia1")
     bot_id = fake_user_id(0)

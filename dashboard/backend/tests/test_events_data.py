@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-import events
+import bot.modules.community.events as events
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ async def test_save_then_load_roundtrips():
 @pytest.mark.asyncio
 async def test_load_events_reads_fresh_after_external_write():
     events.load_events(1)  # first read, populates any cache that might exist
-    import settings_db
+    import bot.core.settings_db as settings_db
     settings_db.put(1, "events", {"events": {"999": {"title": "Written externally"}}})
     data = events.load_events(1)
     assert data == {"events": {"999": {"title": "Written externally"}}}

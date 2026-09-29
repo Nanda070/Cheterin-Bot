@@ -1,7 +1,7 @@
 import pytest
 
-import settings_db
-import starboard_core
+import bot.core.settings_db as settings_db
+import bot.modules.community.starboard_core as starboard_core
 from dashboard.backend.routes.starboard import routes as starboard_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

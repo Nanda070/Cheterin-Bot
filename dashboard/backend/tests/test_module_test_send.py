@@ -1,7 +1,7 @@
 import pytest
 
-import bot_config
-import sticky_core
+import bot.config as bot_config
+import bot.modules.community.sticky_core as sticky_core
 from dashboard.backend.routes.sticky import routes as sticky_routes
 from dashboard.backend.routes.welcome import routes as welcome_routes
 from dashboard.backend.tests.fakes import (
@@ -12,12 +12,12 @@ from dashboard.backend.tests.fakes import (
     force_login,
     make_moderation_app,
 )
-from sticky import StickyCog
+from bot.modules.community.sticky import StickyCog
 
 
 @pytest.fixture(autouse=True)
 def isolated_settings(tmp_path, monkeypatch):
-    import settings_db
+    import bot.core.settings_db as settings_db
 
     monkeypatch.setenv("SETTINGS_DB_PATH", str(tmp_path / "settings.db"))
     monkeypatch.setattr(settings_db, "_cache", {})

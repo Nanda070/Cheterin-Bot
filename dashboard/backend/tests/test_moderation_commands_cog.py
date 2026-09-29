@@ -9,9 +9,9 @@ import time
 import discord
 import pytest
 
-import ban_db
-import moderation_commands_core
-from moderation_commands import ModerationCommandsCog
+import bot.modules.moderation.ban_db as ban_db
+import bot.modules.moderation.moderation_commands_core as moderation_commands_core
+from bot.modules.moderation.moderation_commands import ModerationCommandsCog
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 
@@ -19,7 +19,7 @@ from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeM
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("BAN_DB_PATH", str(tmp_path / "moderation_bans.db"))
     ban_db.init()
-    monkeypatch.setattr("moderation_log.LOG_FILE", str(tmp_path / "moderation_log.json"))
+    monkeypatch.setattr("bot.core.moderation_log.LOG_FILE", str(tmp_path / "moderation_log.json"))
 
 
 class FakeResponse:

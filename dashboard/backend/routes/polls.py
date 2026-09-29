@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import polls_db
+import bot.modules.community.polls_db as polls_db
 
 from ..access_middleware import require_dashboard_access
 

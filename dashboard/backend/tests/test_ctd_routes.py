@@ -3,8 +3,8 @@
 
 import pytest
 
-import bot_config
-import settings_db
+import bot.config as bot_config
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.ctd import routes as ctd_routes
 from dashboard.backend.tests.fakes import (
     FakeChannel,

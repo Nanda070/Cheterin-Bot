@@ -1,7 +1,7 @@
 import pytest
 
-import economy_db
-import settings_db
+import bot.modules.games.economy_db as economy_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.economy import routes as economy_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

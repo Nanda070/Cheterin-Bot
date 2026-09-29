@@ -4,9 +4,9 @@
 
 import pytest
 
-import bot_config
-import settings_db
-from welcome import Welcome
+import bot.config as bot_config
+import bot.core.settings_db as settings_db
+from bot.modules.community.welcome import Welcome
 from dashboard.backend.tests.fakes import FakeBot, FakeChannel, FakeGuild, FakeMember
 
 

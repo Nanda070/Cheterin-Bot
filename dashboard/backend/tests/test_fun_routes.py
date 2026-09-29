@@ -1,7 +1,7 @@
 import pytest
 
-import fun_core
-import settings_db
+import bot.modules.games.fun_core as fun_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.fun import routes as fun_routes
 from dashboard.backend.tests.fakes import FakeBot, FakeGuild, FakeMember, force_login, make_moderation_app
 

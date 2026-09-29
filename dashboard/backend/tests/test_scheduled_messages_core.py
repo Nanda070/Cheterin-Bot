@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-import scheduled_messages_core
-import settings_db
+import bot.modules.community.scheduled_messages_core as scheduled_messages_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 102
 

@@ -3,7 +3,7 @@ import logging
 import discord
 from aiohttp import web
 
-import reaction_roles
+import bot.modules.community.reaction_roles as reaction_roles
 from ..access_middleware import require_dashboard_access
 
 logger = logging.getLogger(__name__)

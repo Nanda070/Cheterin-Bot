@@ -1,7 +1,7 @@
 import pytest
 
-import daily_topic_core
-import settings_db
+import bot.modules.community.daily_topic_core as daily_topic_core
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.daily_topic import routes as daily_topic_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

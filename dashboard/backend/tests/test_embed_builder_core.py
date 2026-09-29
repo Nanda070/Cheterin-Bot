@@ -1,4 +1,4 @@
-import embed_builder
+import bot.core.embed_builder as embed_builder
 
 
 def test_build_embed_sets_basic_fields():
@@ -139,7 +139,7 @@ def test_message_to_editor_payload_content_only_has_complete_embed():
 
 
 def test_v2_message_to_spec_maps_layout_from_classic_embed():
-    import components_v2
+    import bot.core.components_v2 as components_v2
     from dashboard.backend.tests.fakes import FakeMessage
 
     embed = embed_builder.build_embed(

@@ -287,6 +287,24 @@ const BLOG_EN: BlogEntry[] = [
       },
     ],
   },
+  {
+    date: 'September 29, 2026',
+    title: 'Repository layout: bot package',
+    bullets: [
+      {
+        lead: 'VALORANT-style tree.',
+        body: 'Bot modules moved under bot/ (core, modules by domain, cards, data). main.py stays the entrypoint; dashboard and Lookup paths unchanged.',
+      },
+      {
+        lead: 'Docs folder.',
+        body: 'ARCHITECTURE and the Lookup plan live in docs/; deploy/ holds nginx process notes. Lookup remains isolated from main.py.',
+      },
+      {
+        lead: 'Secret hygiene.',
+        body: '.env.example cleared to empty placeholders — no real tokens in the template.',
+      },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -558,6 +576,24 @@ const BLOG_RU: BlogEntry[] = [
       {
         lead: 'Dev Blog.',
         body: 'Эта страница — полная хронологическая история Cheterin с первого коммита по сегодня.',
+      },
+    ],
+  },
+  {
+    date: '29 сентября 2026 г.',
+    title: 'Структура репозитория: пакет bot/',
+    bullets: [
+      {
+        lead: 'Дерево как у VALORANT.',
+        body: 'Модули бота перенесены в bot/ (core, modules по доменам, cards, data). Точка входа — main.py; dashboard и Lookup на прежних путях.',
+      },
+      {
+        lead: 'Папка docs/.',
+        body: 'ARCHITECTURE и план Lookup — в docs/; deploy/ — заметки по nginx/процессам. Lookup по-прежнему изолирован от main.py.',
+      },
+      {
+        lead: 'Гигиена секретов.',
+        body: '.env.example очищен до пустых placeholders — без реальных токенов в шаблоне.',
       },
     ],
   },

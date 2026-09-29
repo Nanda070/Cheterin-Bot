@@ -1,7 +1,7 @@
 from aiohttp import web
 
-import relations_core
-import relations_db
+import bot.modules.games.relations_core as relations_core
+import bot.modules.games.relations_db as relations_db
 
 from ..access_middleware import require_dashboard_access
 

@@ -2,9 +2,9 @@
 
 from aiohttp import web
 
-import valorant_features_core as core
-import valorant_panels
-import settings_db
+import bot.modules.valorant.valorant_features_core as core
+import bot.modules.valorant.valorant_panels as valorant_panels
+import bot.core.settings_db as settings_db
 from ..access_middleware import require_dashboard_access
 
 routes = web.RouteTableDef()

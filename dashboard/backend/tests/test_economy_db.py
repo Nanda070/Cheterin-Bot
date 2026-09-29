@@ -5,7 +5,7 @@ from contextlib import closing
 
 import pytest
 
-import economy_db
+import bot.modules.games.economy_db as economy_db
 
 GUILD_ID = 1
 OTHER = 777

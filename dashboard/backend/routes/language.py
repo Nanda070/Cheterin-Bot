@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import language_core
+import bot.core.language_core as language_core
 
 from ..access_middleware import require_dashboard_access
 

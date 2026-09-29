@@ -1,7 +1,7 @@
 from aiohttp import web
 
-import casino_core
-import casino_db
+import bot.modules.games.casino_core as casino_core
+import bot.modules.games.casino_db as casino_db
 
 from ..access_middleware import require_dashboard_access
 

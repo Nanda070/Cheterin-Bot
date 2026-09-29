@@ -1,7 +1,7 @@
 import pytest
 
-import family_core
-import settings_db
+import bot.modules.games.family_core as family_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 404
 

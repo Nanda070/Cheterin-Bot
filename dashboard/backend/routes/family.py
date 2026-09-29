@@ -1,7 +1,7 @@
 from aiohttp import web
 
-import family_core
-import family_db
+import bot.modules.games.family_core as family_core
+import bot.modules.games.family_db as family_db
 
 from ..access_middleware import require_dashboard_access
 

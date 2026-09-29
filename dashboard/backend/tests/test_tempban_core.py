@@ -1,7 +1,7 @@
 """Tempban / honeypot settings: action modes, counter, templates."""
 
-import tempban_core
-import settings_db
+import bot.modules.moderation.tempban_core as tempban_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 9202
 

@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-import birthdays_core
-import owner_alerts_core
-import preview_core
-import settings_db
-import starboard_core
-import verification_core
+import bot.modules.community.birthdays_core as birthdays_core
+import bot.modules.utility.owner_alerts_core as owner_alerts_core
+import bot.core.preview_core as preview_core
+import bot.core.settings_db as settings_db
+import bot.modules.community.starboard_core as starboard_core
+import bot.modules.moderation.verification_core as verification_core
 from dashboard.backend.tests.fakes import FakeChannel, FakeGuild, FakeRole
 
 GUILD_ID = 108
@@ -82,8 +82,8 @@ def test_check_module_health_ok_when_verified_role_exists():
 
 
 def test_check_module_health_flags_valchecker_missing_match_channel(tmp_path, monkeypatch):
-    import valchecker_core
-    import valchecker_db
+    import bot.modules.valorant.valchecker_core as valchecker_core
+    import bot.modules.valorant.valchecker_db as valchecker_db
 
     monkeypatch.setenv("VALCHECKER_DB_PATH", str(tmp_path / "valchecker.db"))
     valchecker_db.init()
@@ -107,8 +107,8 @@ def test_check_module_health_flags_valchecker_missing_match_channel(tmp_path, mo
 
 
 def test_check_module_health_flags_valchecker_dead_match_channel(tmp_path, monkeypatch):
-    import valchecker_core
-    import valchecker_db
+    import bot.modules.valorant.valchecker_core as valchecker_core
+    import bot.modules.valorant.valchecker_db as valchecker_db
 
     monkeypatch.setenv("VALCHECKER_DB_PATH", str(tmp_path / "valchecker.db"))
     valchecker_db.init()
@@ -148,7 +148,7 @@ def test_weekly_digest_channel_falls_back_to_alert_channel():
 
 
 def test_should_post_weekly_digest_requires_monday_and_channel(monkeypatch):
-    import timezone_core
+    import bot.core.timezone_core as timezone_core
 
     owner_alerts_core.save_settings(
         GUILD_ID, {"enabled": True, "weekly_digest_enabled": True, "channel_id": "111"}
@@ -166,7 +166,7 @@ def test_should_post_weekly_digest_requires_monday_and_channel(monkeypatch):
 
 
 def test_should_post_weekly_digest_false_when_already_posted(monkeypatch):
-    import timezone_core
+    import bot.core.timezone_core as timezone_core
 
     owner_alerts_core.save_settings(
         GUILD_ID, {"enabled": True, "weekly_digest_enabled": True, "channel_id": "111"}
@@ -179,7 +179,7 @@ def test_should_post_weekly_digest_false_when_already_posted(monkeypatch):
 
 
 def test_should_post_weekly_digest_false_when_disabled(monkeypatch):
-    import timezone_core
+    import bot.core.timezone_core as timezone_core
 
     owner_alerts_core.save_settings(
         GUILD_ID, {"enabled": True, "weekly_digest_enabled": False, "channel_id": "111"}

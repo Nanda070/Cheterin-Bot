@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import closing
 
-import casino_db
+import bot.modules.games.casino_db as casino_db
 
 
 def test_legacy_migration_assigns_env_main_guild(tmp_path, monkeypatch):

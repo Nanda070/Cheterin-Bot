@@ -5,8 +5,8 @@ import os
 
 import pytest
 
-import settings_db
-import settings_migration
+import bot.core.settings_db as settings_db
+import bot.core.settings_migration as settings_migration
 
 
 @pytest.fixture(autouse=True)

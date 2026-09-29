@@ -1,7 +1,7 @@
 """Тесты рендера карточки ранга / профиля: PNG, GIF, косметика."""
 
-import profile_card
-import xp_card
+import bot.cards.profile_card as profile_card
+import bot.cards.xp_card as xp_card
 
 
 def test_hex_to_rgb():

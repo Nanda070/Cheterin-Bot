@@ -1,6 +1,6 @@
 from aiohttp import web
 
-import supply_core
+import bot.modules.games.supply_core as supply_core
 
 from ..access_middleware import require_dashboard_access
 

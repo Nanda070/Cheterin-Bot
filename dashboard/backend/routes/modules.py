@@ -6,24 +6,24 @@ without each page having to fetch its own settings just to know that.
 
 from aiohttp import web
 
-import auto_reactions_core
-import automod_core
-import banner_rotation_core
-import customs_core
-import birthdays_core
-import bunker_core
-import casino_core
-import custom_commands_core
-import daily_topic_core
-import economy_core
-import family_core
-import fun_core
-import mafia_core
-import relations_core
-import scheduled_messages_core
-import starboard_core
-import valchecker_core
-import xp_core
+import bot.modules.community.auto_reactions_core as auto_reactions_core
+import bot.modules.moderation.automod_core as automod_core
+import bot.modules.community.banner_rotation_core as banner_rotation_core
+import bot.modules.valorant.customs_core as customs_core
+import bot.modules.community.birthdays_core as birthdays_core
+import bot.modules.games.bunker_core as bunker_core
+import bot.modules.games.casino_core as casino_core
+import bot.modules.utility.custom_commands_core as custom_commands_core
+import bot.modules.community.daily_topic_core as daily_topic_core
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.family_core as family_core
+import bot.modules.games.fun_core as fun_core
+import bot.modules.games.mafia_core as mafia_core
+import bot.modules.games.relations_core as relations_core
+import bot.modules.community.scheduled_messages_core as scheduled_messages_core
+import bot.modules.community.starboard_core as starboard_core
+import bot.modules.valorant.valchecker_core as valchecker_core
+import bot.modules.levels.xp_core as xp_core
 
 from ..access_middleware import require_dashboard_access
 

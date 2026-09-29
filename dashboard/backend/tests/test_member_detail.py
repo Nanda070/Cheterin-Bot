@@ -1,6 +1,6 @@
 import pytest
 
-import settings_db
+import bot.core.settings_db as settings_db
 from dashboard.backend.routes.moderation import routes as moderation_routes
 from dashboard.backend.tests.fakes import (
     FakeBot,

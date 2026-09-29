@@ -2,10 +2,10 @@
 
 import pytest
 
-import economy_core
-import economy_db
-import language_core
-import settings_db
+import bot.modules.games.economy_core as economy_core
+import bot.modules.games.economy_db as economy_db
+import bot.core.language_core as language_core
+import bot.core.settings_db as settings_db
 
 GUILD_ID = 404
 

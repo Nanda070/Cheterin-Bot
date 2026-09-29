@@ -2,7 +2,7 @@
 
 import discord
 
-import embed_style
+import bot.core.embed_style as embed_style
 
 
 def test_semantic_palette_matches_discord_ui_hex():
