@@ -1,51 +1,10 @@
 ---
-description: After big updates, run full verification then commit and push to GitHub
-alwaysApply: true
+description: SUPERSEDED — follow after-every-change-docs-commit-deploy.mdc (do not apply this stub)
+alwaysApply: false
 ---
 
-# After Big Update: Check, Then Commit + Push
+# Superseded
 
-After **any big update** (large feature work, multi-file drift fixes, major refactors, multi-module changes — not tiny one-liners), do not treat the work as done until both steps below are complete.
+**Do not follow this file.** The “big updates only / skip tiny one-liners” policy is revoked.
 
-## 1. Full check (required before done)
-
-Run a full verification pass covering:
-
-- App/bot/dashboard loads correctly
-- Data/settings pull correctly
-- Behavior is stable
-- Loads quickly (no obvious regressions)
-- No build errors or warnings (frontend build/tsc/lint as applicable; backend/tests as applicable)
-- Commands work correctly (slash/relevant flows)
-- Modules activate/enable correctly
-- Full regression-style verification of what was touched, plus smoke of critical paths
-
-Fix any failures from this check before proceeding.
-
-## 2. Commit + push (default end state)
-
-After the full check passes, **always commit and push** to GitHub.
-
-Follow repo git safety:
-
-- No force push
-- No git config changes
-- No secrets (`.env`, credentials, etc.)
-- Commit message via HEREDOC
-- Push to `origin` on the current branch
-
-This **overrides** any earlier “don’t commit unless asked” preference for big updates. For big updates, check → commit → push is the default end state.
-
-## Examples
-
-```text
-✅ BIG UPDATE — run full check, then commit + push
-- New dashboard module across frontend + backend + bot
-- Multi-file drift/i18n sync across locales
-- Major lockdown/antiraid refactor touching core + routes + UI
-
-❌ NOT a big update — do not auto commit/push
-- One-line typo fix
-- Single-file comment or copy tweak
-- Tiny lint-only change
-```
+Use `.cursor/rules/after-every-change-docs-commit-deploy.mdc` (`alwaysApply: true`): after every product change, update technical docs + Dev Blog, commit and push, deploy to Oracle with a zero-warning build, then verify https://cheterin.online.
