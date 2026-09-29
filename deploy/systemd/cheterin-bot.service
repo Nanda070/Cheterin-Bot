@@ -1,0 +1,29 @@
+# Cheterin bot + embedded dashboard (same OS process as `python main.py`).
+# Install (once, on the VPS — not done by CI or agents):
+#   sudo cp deploy/systemd/cheterin-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now cheterin-bot.service
+# Adjust User=, WorkingDirectory=, and ExecStart= if your home path differs.
+# Secrets: EnvironmentFile points at repo `.env` (never commit it).
+
+[Unit]
+Description=Cheterin Discord bot + web dashboard
+Documentation=https://github.com/Nanda070/Cheterin_Bot_Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Cheterin_Bot_Dashboard
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/home/ubuntu/Cheterin_Bot_Dashboard/.env
+ExecStart=/home/ubuntu/Cheterin_Bot_Dashboard/venv/bin/python main.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+# Keep CWD as repo root so SQLite / card_bgs paths resolve like the old tmux setup.
+
+[Install]
+WantedBy=multi-user.target

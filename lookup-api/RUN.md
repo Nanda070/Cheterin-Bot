@@ -50,13 +50,14 @@ pytest tests/test_token_pool.py -v   # token pool unit tests only
 
 ## Deploy notes (Oracle / Ubuntu)
 
-- Process: tmux session **`chetlookup`** (`python app.py` in `lookup-api/`). Not started from `main.py` / `chetmain`.
+- Process: systemd **`cheterin-lookup.service`** (`python app.py` in `lookup-api/`). Not started from `main.py` / `cheterin-bot`.
+- Unit file: `deploy/systemd/cheterin-lookup.service` (install once — see `deploy/systemd/README.md`).
 - Reverse-proxy `/api/lookup/*` to `127.0.0.1:8090` (see `PROXY.md`). Static SPA is nginx `/lookup` → `lookup/dist`.
-- Repo `update.sh` refreshes bot+dashboard (`chetmain`) only — restart this session after API or `plugins.json` changes.
+- Repo `update.sh` builds Lookup SPA + installs lookup-api deps and `systemctl restart`s **`cheterin-lookup`** (and the bot unit).
 - `LOOKUP_DISCORD_TOKENS` (comma-list) is the production pool; never `BOT_TOKEN`.
 - Rotate Lookup Discord tokens in the Developer Portal if they were ever exposed in chat/logs.
 - Optional CAPTCHA: set `LOOKUP_CAPTCHA_ENABLED=true` plus `LOOKUP_CAPTCHA_SITE_KEY` + `LOOKUP_CAPTCHA_SECRET` (and optional `LOOKUP_CAPTCHA_PROVIDER`). Until then the widget stays off.
-- Curated plugins: `plugins.json` is operator-filled; edit and restart the API.
+- Curated plugins: `plugins.json` is operator-filled; edit and restart the API (`systemctl restart cheterin-lookup.service`).
 
 ## DSA Lookup
 

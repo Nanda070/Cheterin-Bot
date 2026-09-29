@@ -5,7 +5,7 @@ import { useT } from '../context/LanguageContext'
 const SOCIAL = {
   github: 'https://github.com/nanda070/',
   discord: 'https://discord.gg/cheterin',
-  mail: 'mailto:adnan.huseynli1@gmail.com',
+  mail: 'mailto:turkapahf@gmail.com',
 } as const
 
 const ROOT = {

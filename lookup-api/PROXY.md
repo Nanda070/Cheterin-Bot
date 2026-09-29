@@ -2,7 +2,7 @@
 
 Lookup is a **separate** UI + API from the Cheterin bot dashboard process.
 
-Production (Ubuntu / Oracle): nginx on the same host. Bot+dashboard = tmux `chetmain` (`python main.py`). Lookup API = tmux `chetlookup` (`lookup-api`, `:8090`). Tokens: `LOOKUP_DISCORD_TOKENS` (TokenPool) in `lookup-api/.env` — never `BOT_TOKEN`.
+Production (Ubuntu / Oracle): nginx on the same host. Bot+dashboard = systemd `cheterin-bot.service` (`python main.py`). Lookup API = systemd `cheterin-lookup.service` (`lookup-api`, `:8090`). Units: `deploy/systemd/`. Tokens: `LOOKUP_DISCORD_TOKENS` (TokenPool) in `lookup-api/.env` — never `BOT_TOKEN`. Day-to-day: `bash ~/Cheterin_Bot_Dashboard/update.sh`.
 
 ## Concept
 

@@ -1,0 +1,30 @@
+# Cheterin Lookup API (isolated process — never started from main.py).
+# Static SPA is nginx → lookup/dist; this unit only runs lookup-api on :8090.
+# Install (once, on the VPS):
+#   sudo cp deploy/systemd/cheterin-lookup.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now cheterin-lookup.service
+# Prefer lookup-api/.venv; if you only have repo-root venv, change ExecStart accordingly.
+# Tokens: LOOKUP_DISCORD_TOKENS in lookup-api/.env — never BOT_TOKEN.
+
+[Unit]
+Description=Cheterin Lookup API
+Documentation=https://github.com/Nanda070/Cheterin_Bot_Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Cheterin_Bot_Dashboard/lookup-api
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/home/ubuntu/Cheterin_Bot_Dashboard/lookup-api/.env
+# Optional fallbacks from repo-root .env are also loaded by app.py via dotenv.
+ExecStart=/home/ubuntu/Cheterin_Bot_Dashboard/lookup-api/.venv/bin/python app.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

@@ -25,7 +25,7 @@ Health: `GET /api/lookup/health` (also `/health`) — includes `token_count` fro
 
 - Tokens: **`LOOKUP_DISCORD_TOKENS`** (comma-list, round-robin + 429 rotate) or fallback **`LOOKUP_DISCORD_TOKEN`**. Never `BOT_TOKEN`.
 - Does not import cogs, `dashboard.backend`, `member_lookup.py`, or ValChecker
-- Not started from `main.py` / `start_dashboard` / tmux `chetmain`
+- Not started from `main.py` / `start_dashboard` / `cheterin-bot.service`
 
 ## Reverse proxy (cheterin.online)
 

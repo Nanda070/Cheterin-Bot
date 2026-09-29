@@ -335,11 +335,41 @@ const BLOG_EN: BlogEntry[] = [
       },
       {
         lead: 'Legal copy refresh.',
-        body: 'Terms, Privacy, Cookies, and Disclaimer updated for bot + dashboard + Lookup, OAuth session, TokenPool, contacts (discord.gg/cheterin, adnan.huseynli1@gmail.com), last updated 29 September 2026.',
+        body: 'Terms, Privacy, Cookies, and Disclaimer updated for bot + dashboard + Lookup, OAuth session, TokenPool, contacts (discord.gg/cheterin, turkapahf@gmail.com), last updated 29 September 2026.',
       },
       {
         lead: 'Secret hygiene.',
         body: '.env.example cleared to empty placeholders — no real tokens in the template.',
+      },
+    ],
+  },
+  {
+    date: 'September 29, 2026',
+    title: 'Public-prep: Apache-2.0, CI, docs i18n & systemd',
+    bullets: [
+      {
+        lead: 'Apache License 2.0.',
+        body: 'Root LICENSE with Copyright 2026 Cheterin Group — repo ready for public redistribution under Apache-2.0.',
+      },
+      {
+        lead: 'GitHub Actions CI.',
+        body: 'Push/PR to main runs dashboard backend pytest, lookup-api pytest, and production builds for dashboard + Lookup SPAs — no Discord secrets in CI.',
+      },
+      {
+        lead: 'Docs i18n.',
+        body: 'README.md English by default with README.ru.md; architecture and Lookup plan available as EN + RU under docs/.',
+      },
+      {
+        lead: 'Contact email.',
+        body: 'Public contact unified to turkapahf@gmail.com (footer, credits, legal).',
+      },
+      {
+        lead: 'Full update.sh + systemd.',
+        body: 'update.sh now builds dashboard and Lookup, installs lookup-api deps, and restarts cheterin-bot + cheterin-lookup units (deploy/systemd/). Replaces legacy tmux chetmain/chetlookup in docs; operator installs units on the VPS.',
+      },
+      {
+        lead: 'Local Cursor rules.',
+        body: '.cursor/rules/ gitignored and untracked — production SSH details stay on the operator machine only.',
       },
     ],
   },
@@ -665,11 +695,41 @@ const BLOG_RU: BlogEntry[] = [
       },
       {
         lead: 'Обновление legal-текстов.',
-        body: 'Условия, Приватность, Cookies и Отказ актуализированы под бот + панель + Lookup, OAuth-сессию, TokenPool, контакты (discord.gg/cheterin, adnan.huseynli1@gmail.com); дата — 29 сентября 2026.',
+        body: 'Условия, Приватность, Cookies и Отказ актуализированы под бот + панель + Lookup, OAuth-сессию, TokenPool, контакты (discord.gg/cheterin, turkapahf@gmail.com); дата — 29 сентября 2026.',
       },
       {
         lead: 'Гигиена секретов.',
         body: '.env.example очищен до пустых placeholders — без реальных токенов в шаблоне.',
+      },
+    ],
+  },
+  {
+    date: '29 сентября 2026 г.',
+    title: 'Публичная подготовка: Apache-2.0, CI, docs i18n и systemd',
+    bullets: [
+      {
+        lead: 'Apache License 2.0.',
+        body: 'Корневой LICENSE с Copyright 2026 Cheterin Group — репозиторий готов к публичной раздаче под Apache-2.0.',
+      },
+      {
+        lead: 'GitHub Actions CI.',
+        body: 'На push/PR в main: pytest панели и lookup-api, production-сборки dashboard + Lookup SPA — без Discord-секретов в CI.',
+      },
+      {
+        lead: 'Docs i18n.',
+        body: 'README.md по умолчанию на английском + README.ru.md; ARCHITECTURE и план Lookup — EN + RU в docs/.',
+      },
+      {
+        lead: 'Контактный email.',
+        body: 'Публичный контакт сведён к turkapahf@gmail.com (футер, credits, legal).',
+      },
+      {
+        lead: 'Полный update.sh + systemd.',
+        body: 'update.sh собирает dashboard и Lookup, ставит deps lookup-api и рестартит unit cheterin-bot + cheterin-lookup (deploy/systemd/). В docs вместо tmux chetmain/chetlookup; unit на VPS ставит оператор.',
+      },
+      {
+        lead: 'Локальные Cursor rules.',
+        body: '.cursor/rules/ в gitignore и снят с трекинга — SSH/ops-детали только на машине оператора.',
       },
     ],
   },

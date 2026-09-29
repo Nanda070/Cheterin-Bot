@@ -215,7 +215,7 @@ const legal: TranslationDict = {
 
   'privacy.s12.title': '12. Контакты',
   'privacy.s12.p1':
-    'Вопросы по данным: администрация вашего сервера или тикет на сервере поддержки https://discord.gg/cheterin. Оператор Сервиса — Cheterin Group Ø. Почтовый контакт: adnan.huseynli1@gmail.com. По вопросам бота и хостинга — Nandak070.',
+    'Вопросы по данным: администрация вашего сервера или тикет на сервере поддержки https://discord.gg/cheterin. Оператор Сервиса — Cheterin Group Ø. Почтовый контакт: turkapahf@gmail.com. По вопросам бота и хостинга — Nandak070.',
 
   'terms.title': 'Условия пользования',
   'terms.lastUpdated': 'Последнее обновление: 29 сентября 2026',
@@ -381,7 +381,7 @@ const legal: TranslationDict = {
 
   'terms.s12.title': '12. Контакты',
   'terms.s12.p1':
-    'По вопросам Сервиса: сервер поддержки https://discord.gg/cheterin, почта adnan.huseynli1@gmail.com или администрация вашего сервера. Оператор Сервиса — Cheterin Group Ø. По вопросам бота — Nandak070.',
+    'По вопросам Сервиса: сервер поддержки https://discord.gg/cheterin, почта turkapahf@gmail.com или администрация вашего сервера. Оператор Сервиса — Cheterin Group Ø. По вопросам бота — Nandak070.',
 
   'terms.s13.title': '13. Cheterin Lookup',
   'terms.s13.p1':
@@ -455,7 +455,7 @@ const legal: TranslationDict = {
     '3.1. Не используйте Сервис (включая Lookup) для травли, слежки, доксинга или иного вреда людям. Публичные ID и коды приглашений не дают права злоупотреблять данными. Админы серверов отвечают за настройку модерации, логов и доступа на своих серверах.',
   'disclaimer.s4.title': '4. Ответственность',
   'disclaimer.s4.p1':
-    '4.1. Использование Сервиса — на ваш риск, с учётом Условий пользования и Политики конфиденциальности. Сбои Discord API, отзыв токена или сетевые лимиты могут прервать Lookup без предварительного уведомления. Контакт: https://discord.gg/cheterin · adnan.huseynli1@gmail.com.',
+    '4.1. Использование Сервиса — на ваш риск, с учётом Условий пользования и Политики конфиденциальности. Сбои Discord API, отзыв токена или сетевые лимиты могут прервать Lookup без предварительного уведомления. Контакт: https://discord.gg/cheterin · turkapahf@gmail.com.',
 }
 
 export default legal

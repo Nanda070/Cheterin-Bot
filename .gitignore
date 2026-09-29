@@ -2,6 +2,10 @@ __pycache__/
 *.pyc
 *.py[cod]
 *$py.class
+
+# Local Cursor agent rules (ops secrets / deploy habits) — keep on disk, not in git
+.cursor/rules/
+
 node_modules/
 dashboard/frontend/dist/
 lookup/dist/

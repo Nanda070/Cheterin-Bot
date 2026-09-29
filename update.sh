@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# VPS update: git pull, venv deps, frontend build, tmux attach.
-# Canonical (any cwd, no sudo):
+# VPS update: git pull, deps, dashboard + Lookup builds, systemctl restart.
+# Canonical (any cwd):
 #   bash ~/Cheterin_Bot_Dashboard/update.sh
-# Do not use sudo — git/pip/npm/tmux must run as the deploying user;
-# sudo would break venv activation and tmux attach (unlike Cheterin-Media's
-# sudo bash ~/Cheterin-Media/deploy/oracle/build-web.sh).
+# Do not use sudo for the whole script — git/pip/npm must run as the deploying user.
+# systemctl restart inside scripts/update.sh may use sudo for the two Cheterin units only.
 set -euo pipefail
 
 SOURCE="${BASH_SOURCE[0]}"

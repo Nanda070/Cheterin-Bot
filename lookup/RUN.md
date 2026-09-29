@@ -23,7 +23,7 @@ npm run build
 # output: lookup/dist  (nginx alias /lookup/ on Oracle; also dashboard Vite preview)
 ```
 
-Repo `update.sh` builds the **dashboard** frontend only. After Lookup UI changes, rebuild this dist and restart tmux `chetlookup` (or reload nginx static) separately.
+Repo `update.sh` builds **both** the dashboard frontend and this Lookup SPA, then restarts systemd `cheterin-bot` + `cheterin-lookup`. For a Lookup-only local rebuild: `npm run build` here (nginx serves `lookup/dist`; API restart only needed for `lookup-api` code).
 
 ## Combined preview with dashboard (port 4173)
 

@@ -215,7 +215,7 @@ const legal: TranslationDict = {
 
   'privacy.s12.title': '12. Contact',
   'privacy.s12.p1':
-    'Questions about data: contact your server\'s admins or open a ticket on the support server https://discord.gg/cheterin. The Service is operated by Cheterin Group Ø. Email: adnan.huseynli1@gmail.com. For bot and hosting questions — Nandak070.',
+    'Questions about data: contact your server\'s admins or open a ticket on the support server https://discord.gg/cheterin. The Service is operated by Cheterin Group Ø. Email: turkapahf@gmail.com. For bot and hosting questions — Nandak070.',
 
   'terms.title': 'Terms of Use',
   'terms.lastUpdated': 'Last updated: September 29, 2026',
@@ -382,7 +382,7 @@ const legal: TranslationDict = {
 
   'terms.s12.title': '12. Contact',
   'terms.s12.p1':
-    'For Service questions: support server https://discord.gg/cheterin, email adnan.huseynli1@gmail.com, or your server\'s admins. The Service is operated by Cheterin Group Ø. For bot questions — Nandak070.',
+    'For Service questions: support server https://discord.gg/cheterin, email turkapahf@gmail.com, or your server\'s admins. The Service is operated by Cheterin Group Ø. For bot questions — Nandak070.',
 
   'terms.s13.title': '13. Cheterin Lookup',
   'terms.s13.p1':
@@ -456,6 +456,6 @@ const legal: TranslationDict = {
     '3.1. Do not use the Service — including Lookup — to harass, stalk, dox, or otherwise harm people. Public IDs and invite codes do not grant permission to misuse data. Server administrators remain responsible for how they configure moderation, logging, and access on their own servers.',
   'disclaimer.s4.title': '4. Responsibility',
   'disclaimer.s4.p1':
-    '4.1. Use of the Service is at your own risk and is subject to the Terms of Use and Privacy Policy. Discord API outages, token revocation, or network limits may interrupt Lookup without prior notice. Contact: https://discord.gg/cheterin · adnan.huseynli1@gmail.com.',
+    '4.1. Use of the Service is at your own risk and is subject to the Terms of Use and Privacy Policy. Discord API outages, token revocation, or network limits may interrupt Lookup without prior notice. Contact: https://discord.gg/cheterin · turkapahf@gmail.com.',
 }
 export default legal

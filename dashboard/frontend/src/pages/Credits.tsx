@@ -19,7 +19,7 @@ const GITHUB_PROFILE = 'https://github.com/nanda070'
 const GITHUB_ORG = 'https://github.com/orgs/ChetTeam'
 const TELEGRAM_NANDA = 'https://t.me/nanda070'
 const SERVER_BANNER = '/credits/404-banner.png'
-const NANDA_EMAIL = 'adnan.huseynli1@gmail.com'
+const NANDA_EMAIL = 'turkapahf@gmail.com'
 const NANDA_PHONE = '+41-77-259-9608'
 const NANDA_DISCORD = 'nandak070'
 

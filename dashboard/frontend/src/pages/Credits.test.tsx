@@ -41,7 +41,7 @@ describe('CreditsPage', () => {
     expect(screen.getByText('Mark')).toBeInTheDocument()
     expect(screen.getByText('Идейный вдохновитель')).toBeInTheDocument()
     expect(screen.getByText('Основатель')).toBeInTheDocument()
-    expect(screen.getByText('adnan.huseynli1@gmail.com')).toBeInTheDocument()
+    expect(screen.getByText('turkapahf@gmail.com')).toBeInTheDocument()
     expect(screen.getByText('+41-77-259-9608')).toBeInTheDocument()
 
     const join = screen.getByRole('link', { name: /Зайти/i })
