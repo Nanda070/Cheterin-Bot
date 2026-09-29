@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://cheterin.online"><img src="https://img.shields.io/badge/Панель-cheterin.online-a8283c?style=for-the-badge" alt="Panel" /></a>
   <a href="https://discord.gg/cheterin"><img src="https://img.shields.io/badge/Cheterin_Group-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
-  <a href="https://github.com/Nanda070/Cheterin_Bot_Dashboard"><img src="https://img.shields.io/badge/GitHub-Cheterin-181717?style=for-the-badge&logo=github" alt="GitHub" /></a>
+  <a href="https://github.com/Nanda070/Cheterin-Bot"><img src="https://img.shields.io/badge/GitHub-Cheterin-181717?style=for-the-badge&logo=github" alt="GitHub" /></a>
 </p>
 
 <p align="center">
@@ -142,7 +142,7 @@ SSH-хост, ключи и прочие ops-секреты хранятся т�
 | **Dev Blog** | [cheterin.online/dev-blog](https://cheterin.online/dev-blog) |
 | **Lookup** | [cheterin.online/lookup](https://cheterin.online/lookup) |
 | **Авторы** | [cheterin.online/credits](https://cheterin.online/credits) |
-| **Репозиторий** | [github.com/Nanda070/Cheterin_Bot_Dashboard](https://github.com/Nanda070/Cheterin_Bot_Dashboard) |
+| **Репозиторий** | [github.com/Nanda070/Cheterin-Bot](https://github.com/Nanda070/Cheterin-Bot) |
 | **Cheterin Group** | [discord.gg/cheterin](https://discord.gg/cheterin) |
 | **Организация** | [github.com/orgs/ChetTeam](https://github.com/orgs/ChetTeam) |
 | **Privacy / Terms** | [privacy](https://cheterin.online/privacy) · [terms](https://cheterin.online/terms) |

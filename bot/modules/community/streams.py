@@ -38,7 +38,7 @@ POLL_SECONDS = 120
 VIDEO_POLL_SECONDS = 300
 
 _HTTP_HEADERS = {
-    "User-Agent": "Cheterin-Bot/1.0 (+https://github.com/Nanda070/Cheterin_Bot_Dashboard)",
+    "User-Agent": "Cheterin-Bot/1.0 (+https://github.com/Nanda070/Cheterin-Bot)",
     "Accept": "application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
 }
 _TIKTOK_CHROME_UA = (

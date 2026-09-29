@@ -373,6 +373,16 @@ const BLOG_EN: BlogEntry[] = [
       },
     ],
   },
+  {
+    date: 'September 29, 2026',
+    title: 'Public GitHub repo rename',
+    bullets: [
+      {
+        lead: 'New repository URL.',
+        body: 'Public GitHub home is now https://github.com/Nanda070/Cheterin-Bot (was Nanda070/Cheterin_Bot_Dashboard). README badges, docs, footer link, and git remote origin point at the new name; local/VPS folder paths stay Cheterin_Bot_Dashboard.',
+      },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -730,6 +740,16 @@ const BLOG_RU: BlogEntry[] = [
       {
         lead: 'Локальные Cursor rules.',
         body: '.cursor/rules/ в gitignore и снят с трекинга — SSH/ops-детали только на машине оператора.',
+      },
+    ],
+  },
+  {
+    date: '29 сентября 2026 г.',
+    title: 'Переименование публичного GitHub-репозитория',
+    bullets: [
+      {
+        lead: 'Новый URL репозитория.',
+        body: 'Публичный GitHub теперь https://github.com/Nanda070/Cheterin-Bot (раньше Nanda070/Cheterin_Bot_Dashboard). Бейджи README, docs, ссылка в футере и git remote origin указывают на новое имя; локальные и VPS-пути папки остаются Cheterin_Bot_Dashboard.',
       },
     ],
   },

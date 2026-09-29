@@ -8,7 +8,7 @@
 
 [Unit]
 Description=Cheterin Discord bot + web dashboard
-Documentation=https://github.com/Nanda070/Cheterin_Bot_Dashboard
+Documentation=https://github.com/Nanda070/Cheterin-Bot
 After=network-online.target
 Wants=network-online.target
 

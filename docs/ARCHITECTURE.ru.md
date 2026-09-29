@@ -21,7 +21,7 @@
 | **Языки** | RU по умолчанию, EN поддерживается (бот `locales/`, панель `chetbot_ui_lang`) |
 | **Presence** | `Playing /help • Cheterin` (`discord.ActivityType.playing`) |
 | **Prefix** | `command_prefix="!"` объявлен у `ChetBot`, но **продуктовых prefix-команд нет** — всё через slash / interactions / панель |
-| **Репозиторий** | `https://github.com/Nanda070/Cheterin_Bot_Dashboard` |
+| **Репозиторий** | `https://github.com/Nanda070/Cheterin-Bot` |
 
 Один бот вместо набора утилит. Настройки и данные **изолированы по `guild_id`**. Конфиг — browser-first (дашборд). Новые гильдии: модули **выключены по умолчанию** там, где в `*_core.get_settings` дефолт `enabled: False` (типичный паттерн engagement/игр).
 

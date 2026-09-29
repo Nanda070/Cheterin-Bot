@@ -4,7 +4,7 @@ import { fetchInviteUrl } from '../api/client'
 import { useT } from '../context/LanguageContext'
 
 const SOCIAL = {
-  github: 'https://github.com/nanda070/',
+  github: 'https://github.com/Nanda070/Cheterin-Bot',
   discord: 'https://discord.gg/cheterin',
   mail: 'mailto:turkapahf@gmail.com',
 } as const

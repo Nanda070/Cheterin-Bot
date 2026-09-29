@@ -9,7 +9,7 @@
 
 [Unit]
 Description=Cheterin Lookup API
-Documentation=https://github.com/Nanda070/Cheterin_Bot_Dashboard
+Documentation=https://github.com/Nanda070/Cheterin-Bot
 After=network-online.target
 Wants=network-online.target
 

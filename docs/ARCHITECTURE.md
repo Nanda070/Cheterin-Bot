@@ -22,7 +22,7 @@ Canonical file: `docs/ARCHITECTURE.md` (this EN doc). Russian: [`docs/ARCHITECTU
 | **Languages** | RU default, EN supported (bot `locales/`, panel `chetbot_ui_lang`) |
 | **Presence** | `Playing /help • Cheterin` |
 | **Prefix** | `command_prefix="!"` declared on `ChetBot`, but **no product prefix commands** — slash / interactions / panel |
-| **Repository** | `https://github.com/Nanda070/Cheterin_Bot_Dashboard` |
+| **Repository** | `https://github.com/Nanda070/Cheterin-Bot` |
 | **License** | Apache-2.0 (`LICENSE`) |
 
 One bot instead of a utility pile. Settings/data are **isolated by `guild_id`**. Config is browser-first. New guilds: modules **off by default** where `*_core.get_settings` defaults `enabled: False`.
