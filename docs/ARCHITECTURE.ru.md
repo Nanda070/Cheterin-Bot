@@ -620,7 +620,7 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 
 | Фича | Page | API | Core |
 |:---|:---|:---|:---|
-| Embed builder / templates | MessageBuilder / embed flows | `/api/embed-messages`, `/api/embed-templates` | `embed_builder.py` |
+| Embed builder / templates | MessageBuilder / embed flows | `/api/embed-messages`, `/api/embed-templates`, `/api/embed-templates/bulk` | `embed_builder.py` |
 | Brackets | `/events?tab=brackets`, `/brackets/:id`, public `/bracket/:token` | `/api/brackets`, `/api/public/brackets` | `brackets.py` / events |
 | Bot profile | `/settings?tab=botProfile` | `/api/bot-profile` | `bot_profile_core` |
 | Preview templates | redirect → settings customCommands preview | `/api/preview/template` | `preview_core` |
@@ -635,6 +635,15 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Config (каналы/роли bot_config) | lockdown/settings | `/api/config` | `bot_config` |
 
 ---
+
+
+### 12.1. Embed builder: контракт
+
+- **Сообщение = `content` + `embeds[]` (0–10).** `POST/PUT /api/embed-messages` и `POST /api/embed-templates` принимают `embeds`; старое одиночное `embed` читается как `[embed]` (`embed_builder.specs_from_body`). Ответы отдают `embeds` и `embed` (первый) для совместимости.
+- **Валидация:** `validate_embed_specs` — `too_many_embeds`, лимиты каждого эмбеда, общий лимит Discord 6000 символов на все эмбеды (`embed_too_large`). Пустые spec'и отбрасываются до отправки.
+- **Components V2:** `components_v2.build_layout_view(embeds=…)` — один `Container` на эмбед, `content` в первом, кнопки ролей в последнем. Маршруты зовут `send_message` / `edit_message` с `enforce_limits=True`: больше 40 компонентов или 4000 символов → `LayoutTooLargeError` → 400 `v2_too_large`. Остальные вызовы `send_message(embed=…)` в боте не затронуты.
+- **Шаблоны:** хранятся в `settings_db` (`embed_templates`) с ключом `embeds`; записи со старым `embed` читаются без миграции. `MAX_TEMPLATES = 200`. `POST /api/embed-templates/bulk` (`save_templates_bulk`) — до 200 штук одной записью, ответ `{created, skipped: [{name, reason}]}`.
+- **JSON и подстановки — только фронтенд:** `utils/messageJson.ts` (Discohook `{content, embeds}`, бэкап `{messages:[{data}]}`, обёртки `[{event, category, embed:{plainText,…}}]`, голые эмбеды; экспорт в формате Discohook) и `utils/placeholders.ts` (`{Name}` → значение за один проход). Бэкенд сырой JSON и плейсхолдеры не видит; шаблоны хранят текст с `{…}`.
 
 ## 13. Frontend routing
 
@@ -783,10 +792,11 @@ Legacy алиасы `MOSCOW_TZ` / `_MSK` ещё встречаются в отд
 | Multi-guild (`settings.db`, guild picker, active flag) | Done (`MULTIGUILD_PLAN.md` удалён) |
 | Language RU/EN (бот + панель + slash translator) | Done |
 | Timezone IANA вместо хардкода MSK | Done (см. workspace rule guild-timezone) |
-| What’s New панели | `2026.09.2` (plugins hub, badges, DSA, Dev Blog), `2026.09.1` (Lookup launch), `2026.08.2` … `2026.08.5` в `whatsNew.ts` |
+| What’s New панели | в `whatsNew.ts` хранится только последнее обновление: `2026.10.1` (Embed Builder: импорт JSON, до 10 эмбедов, подстановки, пакетные шаблоны) |
+| Embed builder: `embeds[]` (до 10), импорт/экспорт JSON, подстановки, bulk-шаблоны | Done (Oct 2026) |
 | Lookup launch + Oracle deploy | Done (Sep 2026): SPA+API в проде, TokenPool `33f8714`, nginx `/lookup` + `/api/lookup`, systemd `cheterin-lookup` |
 
-История фич панели = `dashboard/frontend/src/whatsNew.ts`, не корневой CHANGELOG.
+История фич панели = Dev Blog (`dashboard/frontend/src/pages/DevBlogPage.tsx`, `/dev-blog`); `whatsNew.ts` — только последнее обновление. Корневого CHANGELOG нет.
 
 ---
 

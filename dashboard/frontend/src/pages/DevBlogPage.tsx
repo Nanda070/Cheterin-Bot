@@ -397,6 +397,36 @@ const BLOG_EN: BlogEntry[] = [
       },
     ],
   },
+  {
+    date: 'October 8, 2026',
+    title: 'Embed Builder: JSON Import, Multiple Embeds & Placeholders',
+    bullets: [
+      {
+        lead: 'Paste JSON, get a message.',
+        body: 'The Embeds tab accepts Discohook-style JSON ({content, embeds}), Discohook backups, bare embeds and wrapped libraries ([{event, category, embed: {plainText, …}}]). Numeric colours, markdown code fences and a BOM are handled; webhook-only keys (username, avatar_url, components) are reported and skipped. “Copy JSON” exports the current message back in Discohook shape.',
+      },
+      {
+        lead: 'Up to 10 embeds per message.',
+        body: 'embeds[] is first-class across the page, the API, templates and bot/core/embed_builder.py; the legacy single embed is still accepted and returned. Discord\'s 6000-character budget is validated across all embeds, on both client and server.',
+      },
+      {
+        lead: 'Components V2.',
+        body: 'Each embed becomes its own Container with its accent colour; a layout over 40 components or 4000 characters returns v2_too_large instead of a generic Discord error. Reading a V2 message back yields one spec per Container.',
+      },
+      {
+        lead: 'Message libraries.',
+        body: 'JSON holding several messages turns into a searchable list; one click loads an entry, and “Save all as templates” stores the whole library through the new POST /api/embed-templates/bulk. Template limit raised from 50 to 200 per server; templates saved before this release are read without migration.',
+      },
+      {
+        lead: 'Placeholders.',
+        body: 'Every {Name} token gets an input under the form. Values are substituted in the preview and on send in a single pass, while templates and exported JSON keep the raw text.',
+      },
+      {
+        lead: 'Coverage.',
+        body: 'New pytest cases for spec parsing, list validation, V2 containers, routes and bulk templates; vitest suites for the JSON parser, placeholders and the page itself. What\'s New now keeps only the latest update — the full history stays here.',
+      },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -778,6 +808,36 @@ const BLOG_RU: BlogEntry[] = [
       {
         lead: 'Канонический редирект.',
         body: 'В PROXY.md и deploy/nginx notes зафиксировано: location = /lookup { return 301 /lookup/$is_args$args; }. Оператор вносит на VPS и делает reload nginx; код приложения не менялся (локальный Vite preview уже обслуживает оба URL).',
+      },
+    ],
+  },
+  {
+    date: '8 октября 2026 г.',
+    title: 'Embed Builder: импорт JSON, несколько эмбедов и подстановки',
+    bullets: [
+      {
+        lead: 'Вставил JSON — получил сообщение.',
+        body: 'Вкладка «Эмбеды» принимает JSON в стиле Discohook ({content, embeds}), бэкапы Discohook, одиночные эмбеды и библиотеки-обёртки ([{event, category, embed: {plainText, …}}]). Числовые цвета, markdown-ограждения ``` и BOM обрабатываются; ключи вебхука (username, avatar_url, components) пропускаются с предупреждением. «Скопировать JSON» выгружает текущее сообщение обратно в формате Discohook.',
+      },
+      {
+        lead: 'До 10 эмбедов в сообщении.',
+        body: 'embeds[] проходит через страницу, API, шаблоны и bot/core/embed_builder.py; старое одиночное embed по-прежнему принимается и возвращается. Лимит Discord в 6000 символов проверяется по всем эмбедам сразу — и на клиенте, и на сервере.',
+      },
+      {
+        lead: 'Components V2.',
+        body: 'Каждый эмбед становится отдельным Container со своим акцентным цветом; layout больше 40 компонентов или 4000 символов возвращает v2_too_large вместо безликой ошибки Discord. При чтении V2-сообщения обратно получается один spec на Container.',
+      },
+      {
+        lead: 'Библиотеки сообщений.',
+        body: 'JSON с несколькими сообщениями превращается в список с поиском; клик загружает запись в форму, а «Сохранить все как шаблоны» сохраняет всю библиотеку через новый POST /api/embed-templates/bulk. Лимит шаблонов поднят с 50 до 200 на сервер; старые шаблоны читаются без миграции.',
+      },
+      {
+        lead: 'Подстановки.',
+        body: 'Для каждого {Имя} под формой появляется поле ввода. Значения подставляются в превью и при отправке за один проход; в шаблонах и экспортированном JSON остаётся исходный текст.',
+      },
+      {
+        lead: 'Покрытие.',
+        body: 'Новые pytest-кейсы на разбор spec\'ов, валидацию списка, V2-контейнеры, маршруты и пакетные шаблоны; vitest — на парсер JSON, подстановки и саму страницу. «Что нового» теперь хранит только последнее обновление — полная история остаётся здесь.',
       },
     ],
   },

@@ -44,7 +44,7 @@ One bot instead of a pile of utilities. Cheterin runs on many Discord servers wi
 | **Economy** | Server currency, shop, daily, casino |
 | **VALORANT** | Premier applications, role panels, `/valorant`, ValChecker, Customs lobbies |
 | **Games** | Family & supply (GTA5RP), Mafia, Bunker, Wordle, roulette, Relations |
-| **Content** | Events, giveaways, polls, embeds, streams, banner/icon rotation |
+| **Content** | Events, giveaways, polls, embed builder (multi-embed, Discohook-style JSON import), streams, banner/icon rotation |
 
 In Discord: **`/help`**. Bot presence: `Playing /help • Cheterin`.  
 Public Lookup (ID / invite, no dashboard login): [cheterin.online/lookup](https://cheterin.online/lookup).

@@ -81,7 +81,7 @@ export const DOC_SECTIONS_EN: DocSection[] = [
             ['Auto-roles', 'Roles for new members on join', 'Server → Server entry → Auto-roles'],
             ['Sticky roles', 'Remember roles on leave and restore them on rejoin', 'Server → Server entry → Sticky roles'],
             ['Reaction roles', 'Self-assign roles via reactions', 'People → Roles & embeds'],
-            ['Embed Builder', 'Embed constructor, form buttons, templates', 'People → Roles & embeds'],
+            ['Embed Builder', 'Embed constructor, JSON import, form buttons, templates', 'People → Roles & embeds'],
             ['Events', 'Events and polls with join buttons', 'People → Events & polls'],
             ['Tournament brackets', 'Single/Double Elimination and Round Robin with a public link', 'People → Events → Brackets'],
             ['Mafia', 'Role-playing game: lobby in Discord; full match on a personal link', 'Play → Mafia'],
@@ -852,14 +852,54 @@ export const DOC_SECTIONS_EN: DocSection[] = [
           <li>Title, description, bar color (HEX), author with icon, footer.</li>
           <li>Thumbnail and large image.</li>
           <li>Fields with inline toggle.</li>
+          <li>
+            Up to 10 embeds in one message — switch between them with the “Embed 1…N” tabs. Blank embeds are not sent;
+            Discord&apos;s 6000-character limit is shared by all embeds of the message.
+          </li>
           <li>Link buttons and interactive buttons attached to the message.</li>
           <li>Channel picker and instant send as the bot; sent messages can be edited again.</li>
+          <li>
+            In Components V2 mode each embed becomes its own container. A V2 message holds at most 40 components and
+            4000 characters — if it does not fit, shorten the text or switch to V1.
+          </li>
         </UL>
+
+        <H>📥 JSON import and export</H>
+        <P>
+          Paste JSON into the JSON block and press “Apply JSON” — the form and the preview fill in, then send as
+          usual. Works the same way as Discohook.
+        </P>
+        <UL>
+          <li>
+            Accepted: a Discohook message (<Code>{'{content, embeds}'}</Code>), a Discohook backup, a single embed, or
+            an array of embeds (up to 10 become one message).
+          </li>
+          <li>
+            A list of messages — for example <Code>{'[{event, category, embed: {plainText, …}}]'}</Code> — turns into
+            a searchable list: click an entry to load it into the form. <Code>plainText</Code> becomes the message
+            text above the embed.
+          </li>
+          <li>“Save all as templates” stores every message of the list as a template in one go.</li>
+          <li>
+            Webhook-only keys (<Code>username</Code>, <Code>avatar_url</Code>, <Code>components</Code>,{' '}
+            <Code>attachments</Code>) are skipped with a notice — the message is sent by the bot, not a webhook.
+          </li>
+          <li>“Copy JSON” exports the current message in Discohook format.</li>
+        </UL>
+
+        <H>🧩 Placeholders</H>
+        <P>
+          Every <Code>{'{Name}'}</Code> in the text (for example <Code>{'{DateNow}'}</Code>,{' '}
+          <Code>{'{Channel}'}</Code>, <Code>{'{Eventer}'}</Code>) gets its own input under the form. Values are
+          substituted in the preview and when the message is sent; templates and exported JSON keep the original{' '}
+          <Code>{'{Name}'}</Code>. A placeholder left empty is sent as is.
+        </P>
 
         <H>📑 Embed templates</H>
         <P>
-          Any built embed can be saved as a named template and loaded later in one click — handy for recurring
-          announcements, rules, and guides. Templates are created, applied, and deleted inside Embed Builder.
+          Any built message — its text and all of its embeds — can be saved as a named template and loaded later in
+          one click — handy for recurring announcements, rules, and guides. Templates are created, applied, and
+          deleted inside Embed Builder; a server can keep up to 200 of them.
         </P>
 
         <H>🔘 Form buttons</H>

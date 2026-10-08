@@ -1,4 +1,7 @@
-/** Admin-facing dashboard changelog. Bump `version` when shipping user-visible panel updates. */
+/**
+ * Admin-facing dashboard changelog. Bump `version` when shipping user-visible panel updates.
+ * Only the latest update is kept here; the full history lives in the Dev Blog (/dev-blog).
+ */
 
 export interface WhatsNewEntry {
   /** Opaque id used for dismiss persistence (e.g. `2026.08`). */
@@ -11,34 +14,9 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: readonly WhatsNewEntry[] = [
   {
-    version: '2026.09.2',
-    date: '2026-09',
-    itemKeys: ['pluginsHub', 'badgeCatalog', 'dsaLookup', 'devBlog'],
-  },
-  {
-    version: '2026.09.1',
-    date: '2026-09',
-    itemKeys: ['lookupLaunch'],
-  },
-  {
-    version: '2026.08.5',
-    date: '2026-08',
-    itemKeys: ['dynamicBannerWindowBoth', 'customsManualTeams', 'valorantPremierIdeas'],
-  },
-  {
-    version: '2026.08.4',
-    date: '2026-08',
-    itemKeys: ['dynamicBanner', 'customs', 'levelRoleRemove'],
-  },
-  {
-    version: '2026.08.3',
-    date: '2026-08',
-    itemKeys: ['bannerRotation', 'customs', 'levelRoleRemove'],
-  },
-  {
-    version: '2026.08.2',
-    date: '2026-08',
-    itemKeys: ['quoteFix', 'relations', 'valchecker'],
+    version: '2026.10.1',
+    date: '2026-10',
+    itemKeys: ['embedJsonImport', 'embedMultiple', 'embedPlaceholders', 'embedBulkTemplates'],
   },
 ]
 

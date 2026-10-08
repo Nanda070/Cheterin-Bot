@@ -4,30 +4,14 @@ const whatsNew: TranslationDict = {
   'whatsNew.title': "What's new",
   'whatsNew.subtitle': '{date}',
   'whatsNew.gotIt': 'Got it',
-  'whatsNew.item.dynamicBanner':
-    'Dynamic server banner — top voice member, member count, and who’s in voice',
-  'whatsNew.item.bannerRotation': 'Scheduled server banner and icon rotation from the dashboard',
-  'whatsNew.item.customs': 'Customs — Valorant custom lobbies (ranks, map votes, voice, scores)',
-  'whatsNew.item.levelRoleRemove': 'Levels: optional remove previous level roles on level-up',
-  'whatsNew.item.quoteFix': 'Quotes: reply + mention only; bot replies are never quoted',
-  'whatsNew.item.relations': 'Relations — hugs, romance, levels, and /relations commands',
-  'whatsNew.item.valchecker': 'ValChecker — Valorant stats, match tracking, and /val commands',
-  'whatsNew.item.dynamicBannerWindowBoth':
-    'Dynamic banner: activity window in days, plus “both” mode with icon playlist',
-  'whatsNew.item.customsManualTeams':
-    'Customs: manual Team A / B assignment from the dashboard',
-  'whatsNew.item.valorantPremierIdeas':
-    'VALORANT tab: Premier apps and role panels (ideas stay under Feedback)',
-  'whatsNew.item.lookupLaunch':
-    'Cheterin Lookup is live — look up Discord users, bots, and servers at /lookup',
-  'whatsNew.item.pluginsHub':
-    'Lookup Plugins hub — unified catalog with built-in tools and curated Vencord UserPlugins',
-  'whatsNew.item.badgeCatalog':
-    'Badge catalog — complete mezotv Discord badge reference including Nitro, boosts, flairs, and guild tags',
-  'whatsNew.item.dsaLookup':
-    'DSA mode — look up public EU DSA Statements of Reasons by Discord ID',
-  'whatsNew.item.devBlog':
-    'Dev Blog — full development history from first commit to today at /dev-blog',
+  'whatsNew.item.embedJsonImport':
+    'Embed Builder: paste JSON from Discohook or your own message library — the form and preview fill in; the current message copies out as JSON',
+  'whatsNew.item.embedMultiple':
+    'Up to 10 embeds per message — “Embed 1…N” tabs; in Components V2 each embed is its own container',
+  'whatsNew.item.embedPlaceholders':
+    'Placeholders: {DateNow}, {Channel} and any {Name} get an input — values are filled in the preview and on send',
+  'whatsNew.item.embedBulkTemplates':
+    'Message library from JSON: searchable list and “Save all as templates”; template limit is now 200 per server',
 }
 
 export default whatsNew

@@ -4,30 +4,14 @@ const whatsNew: TranslationDict = {
   'whatsNew.title': 'Что нового',
   'whatsNew.subtitle': '{date}',
   'whatsNew.gotIt': 'Понятно',
-  'whatsNew.item.dynamicBanner':
-    'Динамический баннер сервера — самый активный по войсу, участники и кто в войсе',
-  'whatsNew.item.bannerRotation': 'Баннер и аватар сервера по расписанию — загрузка и ротация в панели',
-  'whatsNew.item.customs': 'Модуль Кастомки — лобби Valorant как в VALORANT (ранги, карты, войсы, счёт)',
-  'whatsNew.item.levelRoleRemove': 'Уровни: снятие старых ролей при повышении уровня',
-  'whatsNew.item.quoteFix': 'Цитаты: только ответ + упоминание бота; ответы бота не цитируются',
-  'whatsNew.item.relations': 'Relations — обнимашки, романтика, уровни и /отношения',
-  'whatsNew.item.valchecker': 'ValChecker — статистика Valorant, трекинг матчей и команды /val',
-  'whatsNew.item.dynamicBannerWindowBoth':
-    'Динамический баннер: окно активности в днях и режим «оба» с плейлистом иконок',
-  'whatsNew.item.customsManualTeams':
-    'Кастомки: ручное назначение команд A / B в панели',
-  'whatsNew.item.valorantPremierIdeas':
-    'Вкладка VALORANT: Premier-заявки и панели ролей (идеи — в Обратной связи)',
-  'whatsNew.item.lookupLaunch':
-    'Cheterin Lookup запущен — ищите пользователей, ботов и серверы Discord на /lookup',
-  'whatsNew.item.pluginsHub':
-    'Plugins hub в Lookup — единый каталог встроенных инструментов и Vencord UserPlugins',
-  'whatsNew.item.badgeCatalog':
-    'Каталог бейджей — полный набор mezotv: Nitro, бусты, флеры, guild tags',
-  'whatsNew.item.dsaLookup':
-    'Режим DSA — поиск публичных Statement of Reasons EU DSA по Discord ID',
-  'whatsNew.item.devBlog':
-    'Dev Blog — полная история разработки с первого коммита на /dev-blog',
+  'whatsNew.item.embedJsonImport':
+    'Embed Builder: вставьте JSON из Discohook или свою библиотеку сообщений — форма и превью заполнятся сами; текущее сообщение копируется как JSON',
+  'whatsNew.item.embedMultiple':
+    'До 10 эмбедов в одном сообщении — вкладки «Эмбед 1…N»; в Components V2 каждый эмбед идёт отдельным контейнером',
+  'whatsNew.item.embedPlaceholders':
+    'Подстановки: для {DateNow}, {Channel} и любых {Имя} появляются поля — значения подставляются в превью и при отправке',
+  'whatsNew.item.embedBulkTemplates':
+    'Библиотека сообщений из JSON: список с поиском и «Сохранить все как шаблоны»; лимит шаблонов — 200 на сервер',
 }
 
 export default whatsNew

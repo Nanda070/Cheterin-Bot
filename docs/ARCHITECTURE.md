@@ -240,6 +240,7 @@ Lookup (`lookup-api/.env`): `LOOKUP_DISCORD_TOKENS` (preferred) or `LOOKUP_DISCO
 | Timezone IANA (no MSK hardcode) | Done |
 | Lookup launch + TokenPool | Done (Sep 2026) |
 | Public-prep: Apache-2.0, CI, docs i18n | Done (Sep 2026) |
+| Embed builder: multi-embed (`embeds[]`), JSON import/export, placeholders, bulk templates | Done (Oct 2026) |
 | systemd units + full `update.sh` | Documented in repo (operator installs on VPS) |
 
 ---
@@ -277,6 +278,8 @@ Lookup product plan is **closed** (phases 0–10 shipped); historical plan files
 | ACL | `dashboard/backend/access.py` |
 | Settings | `bot/core/settings_db.py` |
 | UI routes | `dashboard/frontend/src/App.tsx` |
+| Embed builder (specs, templates, V2 read-back) | `bot/core/embed_builder.py`, `dashboard/backend/routes/embed_builder.py` |
+| Embed builder JSON import / placeholders | `dashboard/frontend/src/utils/messageJson.ts`, `placeholders.ts` |
 | Lookup SPA | `lookup/src/App.tsx` |
 | Lookup API / TokenPool | `lookup-api/app.py` |
 | systemd | `deploy/systemd/` |
