@@ -71,34 +71,64 @@ export function isEmbedSpecEmpty(spec: EmbedSpec): boolean {
   return !(spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url)
 }
 
-/** Discord embed limits: https://discord.com/developers/docs/resources/channel#embed-object-embed-limits */
-export function validateEmbedSpec(spec: EmbedSpec | null | undefined, content: string): string | null {
-  const normalized = normalizeEmbedSpec(spec)
-  const hasEmbedContent = Boolean(
-    normalized.title ||
-      normalized.description ||
-      normalized.fields.length > 0 ||
-      normalized.image.url ||
-      normalized.thumbnail.url,
-  )
-  if (!hasEmbedContent && !content.trim()) {
-    return 'embedBuilder.error.validation.empty'
-  }
-  if (normalized.title.length > 256) return 'embedBuilder.error.validation.title'
-  if (normalized.description.length > 4096) return 'embedBuilder.error.validation.description'
-  if (normalized.footer.text.length > 2048) return 'embedBuilder.error.validation.footer'
-  if (normalized.author.name.length > 256) return 'embedBuilder.error.validation.author'
-  if (normalized.fields.length > 25) return 'embedBuilder.error.validation.fieldsCount'
+/** Total characters Discord allows across every embed of one message. */
+const TOTAL_TEXT_LIMIT = 6000
+
+/** Per-embed Discord limits. Returns the i18n key of the first violation and the counted text length. */
+function specLimitError(normalized: EmbedSpec): { error: string | null; length: number } {
+  const fail = (error: string) => ({ error, length: 0 })
+  if (normalized.title.length > 256) return fail('embedBuilder.error.validation.title')
+  if (normalized.description.length > 4096) return fail('embedBuilder.error.validation.description')
+  if (normalized.footer.text.length > 2048) return fail('embedBuilder.error.validation.footer')
+  if (normalized.author.name.length > 256) return fail('embedBuilder.error.validation.author')
+  if (normalized.fields.length > 25) return fail('embedBuilder.error.validation.fieldsCount')
   for (const field of normalized.fields) {
-    if (field.name.length > 256) return 'embedBuilder.error.validation.fieldName'
-    if (field.value.length > 1024) return 'embedBuilder.error.validation.fieldValue'
+    if (field.name.length > 256) return fail('embedBuilder.error.validation.fieldName')
+    if (field.value.length > 1024) return fail('embedBuilder.error.validation.fieldValue')
   }
-  const totalLength =
+  const length =
     normalized.title.length +
     normalized.description.length +
     normalized.footer.text.length +
     normalized.author.name.length +
     normalized.fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0)
-  if (totalLength > 6000) return 'embedBuilder.error.validation.totalLength'
+  return { error: null, length }
+}
+
+/** Discord embed limits: https://discord.com/developers/docs/resources/channel#embed-object-embed-limits */
+export function validateEmbedSpec(spec: EmbedSpec | null | undefined, content: string): string | null {
+  const normalized = normalizeEmbedSpec(spec)
+  if (isEmbedSpecEmpty(normalized) && !content.trim()) {
+    return 'embedBuilder.error.validation.empty'
+  }
+  const { error, length } = specLimitError(normalized)
+  if (error) return error
+  if (length > TOTAL_TEXT_LIMIT) return 'embedBuilder.error.validation.totalLength'
   return null
+}
+
+/** Validate all embeds of one message: empty slots are ignored, the 6000-char limit is shared. */
+export function validateEmbedSpecs(specs: EmbedSpec[], content: string): string | null {
+  const filled = specs.map((spec) => normalizeEmbedSpec(spec)).filter((spec) => !isEmbedSpecEmpty(spec))
+  if (filled.length === 0 && !content.trim()) return 'embedBuilder.error.validation.empty'
+  if (filled.length > MAX_EMBEDS) return 'embedBuilder.error.validation.embedsCount'
+  let total = 0
+  for (const spec of filled) {
+    const { error, length } = specLimitError(spec)
+    if (error) return error
+    total += length
+  }
+  if (total > TOTAL_TEXT_LIMIT) return 'embedBuilder.error.validation.totalLength'
+  return null
+}
+
+/**
+ * Editor embeds from an API payload: `embeds`, or the single `embed` older records carry.
+ * Never empty — the editor always has at least one (possibly blank) embed slot.
+ */
+export function embedsFromPayload(raw: { embeds?: unknown; embed?: unknown }): EmbedSpec[] {
+  if (Array.isArray(raw.embeds) && raw.embeds.length > 0) {
+    return raw.embeds.slice(0, MAX_EMBEDS).map((embed) => normalizeEmbedSpec(embed))
+  }
+  return [normalizeEmbedSpec(raw.embed ?? {})]
 }

@@ -14,6 +14,8 @@ const API_ERROR_KEYS: Record<string, string> = {
   field_name_too_long: 'apiError.field_name_too_long',
   field_value_too_long: 'apiError.field_value_too_long',
   embed_too_large: 'apiError.embed_too_large',
+  too_many_embeds: 'apiError.too_many_embeds',
+  v2_too_large: 'apiError.v2_too_large',
   invalid_channel_mode: 'apiError.invalid_channel_mode',
   goodbye_channel_id_not_found: 'apiError.goodbye_channel_not_found',
   channel_not_found: 'apiError.channel_not_found',

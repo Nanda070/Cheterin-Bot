@@ -362,7 +362,9 @@ export interface EmbedSpec {
 
 export interface EmbedMessagePayload {
   content: string
-  embed: EmbedSpec
+  /** Up to 10 embeds. Responses also carry the legacy `embed` (the first one). */
+  embeds: EmbedSpec[]
+  embed?: EmbedSpec
   role_ids: string[]
   components_version?: 'v1' | 'v2'
 }
@@ -1259,7 +1261,8 @@ export interface EmbedTemplate {
   id: string
   name: string
   content: string
-  embed: EmbedSpec
+  embeds: EmbedSpec[]
+  embed?: EmbedSpec
   role_ids: string[]
 }
 
@@ -1283,10 +1286,22 @@ export function setEmbedComponentsVersion(version: 'v1' | 'v2'): Promise<{ compo
 export function saveEmbedTemplate(input: {
   name: string
   content: string
-  embed: EmbedSpec
+  embeds: EmbedSpec[]
   role_ids: string[]
 }): Promise<EmbedTemplate> {
   return apiFetch('/api/embed-templates', jsonInit('POST', input))
+}
+
+export interface EmbedTemplatesBulkResult {
+  created: EmbedTemplate[]
+  skipped: { name: string; reason: string }[]
+}
+
+/** Save many templates at once; duplicates and invalid entries come back in `skipped`. */
+export function saveEmbedTemplatesBulk(
+  templates: { name: string; content: string; embeds: EmbedSpec[] }[],
+): Promise<EmbedTemplatesBulkResult> {
+  return apiFetch('/api/embed-templates/bulk', jsonInit('POST', { templates }))
 }
 
 export async function deleteEmbedTemplate(id: string): Promise<void> {
