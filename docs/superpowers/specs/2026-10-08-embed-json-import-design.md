@@ -64,9 +64,10 @@
 
 ```ts
 interface ImportedMessage { name: string; group: string; content: string; embeds: EmbedSpec[] }
+interface JsonNotice { key: string; params?: Record<string, string | number> }   // key — ключ i18n
 type ParseResult =
-  | { ok: true; messages: ImportedMessage[]; warnings: string[] }   // warnings — ключи i18n + параметры
-  | { ok: false; error: string }
+  | { ok: true; messages: ImportedMessage[]; warnings: JsonNotice[] }
+  | { ok: false; error: JsonNotice }
 
 parseMessageJson(text: string): ParseResult
 exportMessageJson(content: string, embeds: EmbedSpec[]): string
