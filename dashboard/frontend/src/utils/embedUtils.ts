@@ -63,6 +63,14 @@ export function normalizeEmbedSpec(raw: unknown): EmbedSpec {
   }
 }
 
+/** Discord allows at most 10 embeds in one message. */
+export const MAX_EMBEDS = 10
+
+/** Mirrors the backend's is_embed_spec_empty: such an embed is never sent. */
+export function isEmbedSpecEmpty(spec: EmbedSpec): boolean {
+  return !(spec.title || spec.description || spec.fields.length > 0 || spec.image.url || spec.thumbnail.url)
+}
+
 /** Discord embed limits: https://discord.com/developers/docs/resources/channel#embed-object-embed-limits */
 export function validateEmbedSpec(spec: EmbedSpec | null | undefined, content: string): string | null {
   const normalized = normalizeEmbedSpec(spec)
