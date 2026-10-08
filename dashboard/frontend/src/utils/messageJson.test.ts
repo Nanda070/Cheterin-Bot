@@ -184,6 +184,19 @@ describe('parseMessageJson — tolerant input', () => {
   })
 })
 
+describe('parseMessageJson — timestamps', () => {
+  it('drops a timestamp that is not a date', () => {
+    const timestamps = parsed({
+      embeds: [
+        { title: 'a', timestamp: 'yesterday' },
+        { title: 'b', timestamp: 1700000000 },
+        { title: 'c', timestamp: '2026-01-02T03:04:05.000Z' },
+      ],
+    }).messages[0].embeds.map((embed) => embed.timestamp)
+    expect(timestamps).toEqual([null, null, '2026-01-02T03:04:05.000Z'])
+  })
+})
+
 describe('parseMessageJson — errors', () => {
   it('reports a syntax error with the parser detail', () => {
     const result = parseMessageJson('{oops')

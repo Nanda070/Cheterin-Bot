@@ -371,3 +371,18 @@ def test_save_templates_bulk_stops_at_limit(monkeypatch):
 
 def test_max_templates_fits_a_large_library():
     assert embed_builder.MAX_TEMPLATES == 200
+
+
+def test_build_embed_ignores_unparseable_timestamp_and_colour():
+    embed = embed_builder.build_embed({"title": "T", "timestamp": "not a date", "color": "red"})
+    assert embed.title == "T"
+    assert embed.timestamp is None
+    assert embed.colour is None
+
+
+def test_build_embed_keeps_valid_timestamp_and_colour_next_to_bad_input_types():
+    embed = embed_builder.build_embed({"title": "T", "timestamp": 12345, "color": 3092790})
+    assert embed.timestamp is None
+    assert embed.colour is None
+    ok = embed_builder.build_embed({"title": "T", "timestamp": "2026-01-02T03:04:05.000Z", "color": "#2f3136"})
+    assert ok.timestamp is not None and ok.colour.value == 0x2F3136

@@ -559,3 +559,18 @@ async def test_bulk_embed_templates_requires_auth(aiohttp_client):
     client = await aiohttp_client(app)
     resp = await client.post("/api/embed-templates/bulk", json={"templates": []})
     assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_survives_garbage_timestamp_and_colour(aiohttp_client):
+    channel = FakeChannel(500)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages",
+        json={"channel_id": "500", "embeds": [{"title": "T", "timestamp": "yesterday", "color": "blue"}]},
+    )
+    assert resp.status == 201
+    assert channel.send_calls[0]["embeds"][0].timestamp is None

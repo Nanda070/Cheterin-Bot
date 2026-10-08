@@ -65,7 +65,8 @@ function toEmbed(raw: Json): EmbedSpec {
     footer: { text: asText(footer.text), icon_url: asText(footer.icon_url) },
     image: { url: asText(image.url) },
     thumbnail: { url: asText(thumbnail.url) },
-    timestamp: typeof raw.timestamp === 'string' && raw.timestamp ? raw.timestamp : null,
+    // A timestamp the bot could not parse would be dropped server-side — drop it here so the preview agrees.
+    timestamp: typeof raw.timestamp === 'string' && !Number.isNaN(Date.parse(raw.timestamp)) ? raw.timestamp : null,
     fields,
   }
 }

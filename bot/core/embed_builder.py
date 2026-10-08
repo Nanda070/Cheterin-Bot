@@ -42,9 +42,28 @@ def _color_hex(value) -> str:
         return ""
 
 
+def _parse_color(value) -> int | None:
+    """`#rrggbb` → int; anything else (imported JSON may carry junk) means "no colour"."""
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = int(value.lstrip("#"), 16)
+    except ValueError:
+        return None
+    return parsed if 0 <= parsed <= 0xFFFFFF else None
+
+
+def _parse_timestamp(value) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def build_embed(spec: dict) -> discord.Embed:
-    color = spec.get("color")
-    color_value = int(color.lstrip("#"), 16) if color else None
+    color_value = _parse_color(spec.get("color"))
     embed = discord.Embed(
         title=spec.get("title") or None,
         description=spec.get("description") or None,
@@ -70,8 +89,9 @@ def build_embed(spec: dict) -> discord.Embed:
     if thumbnail.get("url"):
         embed.set_thumbnail(url=thumbnail["url"])
 
-    if spec.get("timestamp"):
-        embed.timestamp = datetime.fromisoformat(spec["timestamp"].replace("Z", "+00:00"))
+    timestamp = _parse_timestamp(spec.get("timestamp"))
+    if timestamp is not None:
+        embed.timestamp = timestamp
 
     for field in spec.get("fields") or []:
         embed.add_field(

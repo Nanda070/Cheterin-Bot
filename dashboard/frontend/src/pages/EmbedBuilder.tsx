@@ -44,8 +44,8 @@ const DEEP_LINK_HINTS: Record<string, { labelKey: string; to: string }> = {
   events: { labelKey: 'embedBuilder.deepLink.events', to: '/events' },
 }
 
-/** Backend limit of one bulk template request. */
-const BULK_TEMPLATES_CHUNK = 200
+/** Templates per bulk request: well under the backend cap (200) and the 1 MB request body limit. */
+const BULK_TEMPLATES_CHUNK = 50
 
 const blankEmbed = (): EmbedSpec => normalizeEmbedSpec({})
 
