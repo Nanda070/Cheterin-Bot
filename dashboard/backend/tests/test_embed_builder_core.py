@@ -279,3 +279,24 @@ def test_message_to_editor_payload_content_only_has_one_blank_embed_slot():
 
     payload = embed_builder.message_to_editor_payload(FakeMessage(1, embeds=[], content="just text"))
     assert payload["embeds"] == [payload["embed"]]
+
+
+def test_v2_message_to_specs_returns_one_spec_per_container():
+    import bot.core.components_v2 as components_v2
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    embeds = [
+        embed_builder.build_embed({"title": "A", "description": "first", "color": "#111111"}),
+        embed_builder.build_embed({"title": "B", "footer": {"text": "bye"}, "color": "#222222"}),
+    ]
+    layout = components_v2.build_layout_view(embeds=embeds, content="hi")
+    message = FakeMessage(1, embeds=[], components=layout, content=None, components_v2=True)
+    specs, content, saw_v2 = embed_builder.v2_message_to_specs(message)
+    assert saw_v2 is True
+    assert content == "hi"
+    assert [s["title"] for s in specs] == ["A", "B"]
+    assert [s["color"] for s in specs] == ["#111111", "#222222"]
+    assert specs[0]["footer"]["text"] == "" and specs[1]["footer"]["text"] == "bye"
+    payload = embed_builder.message_to_editor_payload(message)
+    assert [s["title"] for s in payload["embeds"]] == ["A", "B"]
+    assert payload["content"] == "hi"

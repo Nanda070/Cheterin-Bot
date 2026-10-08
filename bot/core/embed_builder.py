@@ -314,13 +314,57 @@ def v2_message_to_spec(message) -> tuple[dict, str, bool]:
 
     Returns (spec, extracted_content, saw_v2_layout).
     """
+    return _v2_nodes_to_spec(_root_components(message))
+
+
+def _top_level_nodes(message) -> list:
+    """Top-level components; unwraps a typeless wrapper (e.g. a LayoutView) one level."""
+    nodes: list = []
+    for root in _root_components(message):
+        if _component_type_value(root) is None and _node_children(root):
+            nodes.extend(_node_children(root))
+        else:
+            nodes.append(root)
+    return nodes
+
+
+def v2_message_to_specs(message) -> tuple[list[dict], str, bool]:
+    """Like v2_message_to_spec, but one spec per top-level Container.
+
+    Returns (specs, extracted_content, saw_v2_layout). Best-effort: text that leads
+    the first Container is message content, in later Containers it is description.
+    """
+    top_level = _top_level_nodes(message)
+    containers = [node for node in top_level if _component_type_value(node) == _TYPE_CONTAINER]
+    if len(containers) < 2:
+        spec, content, saw_v2 = v2_message_to_spec(message)
+        return [spec], content, saw_v2
+
+    loose = [node for node in top_level if _component_type_value(node) != _TYPE_CONTAINER]
+    _, content, _ = _v2_nodes_to_spec(loose)
+    specs: list[dict] = []
+    for index, container in enumerate(containers):
+        spec, leading_text, _ = _v2_nodes_to_spec([container])
+        if leading_text:
+            if index == 0:
+                content = f"{content}\n\n{leading_text}" if content else leading_text
+            else:
+                spec["description"] = (
+                    f"{leading_text}\n{spec['description']}" if spec["description"] else leading_text
+                )
+        if not is_embed_spec_empty(spec):
+            specs.append(spec)
+    return (specs or [empty_embed_spec()])[:MAX_EMBEDS], content, True
+
+
+def _v2_nodes_to_spec(nodes: list) -> tuple[dict, str, bool]:
     spec = empty_embed_spec()
     text_blocks: list[str] = []
     image_urls: list[str] = []
     thumbnail_url = ""
     saw_v2 = False
 
-    for node in _walk_components(_root_components(message)):
+    for node in _walk_components(nodes):
         type_value = _component_type_value(node)
         if type_value in _V2_LAYOUT_TYPES:
             saw_v2 = True
@@ -378,11 +422,10 @@ def message_to_editor_payload(message) -> dict:
         specs = [_safe_embed_to_spec(embed) for embed in embeds[:MAX_EMBEDS]]
     else:
         try:
-            mapped_spec, mapped_content, saw_v2 = v2_message_to_spec(message)
+            specs, mapped_content, saw_v2 = v2_message_to_specs(message)
         except Exception:
-            logger.exception("v2_message_to_spec failed; returning empty spec")
-            mapped_spec, mapped_content, saw_v2 = empty_embed_spec(), "", is_v2
-        specs = [mapped_spec]
+            logger.exception("v2_message_to_specs failed; returning empty spec")
+            specs, mapped_content, saw_v2 = [empty_embed_spec()], "", is_v2
         if not content:
             content = mapped_content
         is_v2 = is_v2 or saw_v2

@@ -129,3 +129,85 @@ async def test_send_message_v2_forwards_allowed_mentions():
     assert sent.get("content") is None
     assert sent["view"].has_components_v2()
     assert sent["allowed_mentions"] is allowed
+
+
+def _containers(layout):
+    return [c for c in layout.children if isinstance(c, discord.ui.Container)]
+
+
+def test_build_layout_view_makes_one_container_per_embed():
+    embeds = [discord.Embed(title="A", colour=0x111111), discord.Embed(title="B", colour=0x222222)]
+    view = discord.ui.View(timeout=None)
+    view.add_item(discord.ui.Button(label="R", custom_id="btn_role_7"))
+    layout = components_v2.build_layout_view(embeds=embeds, content="hello", source_view=view)
+    first, last = _containers(layout)
+    assert [int(getattr(c.accent_colour, "value", c.accent_colour)) for c in (first, last)] == [0x111111, 0x222222]
+    assert first.children[0].content == "hello"
+    assert not any(isinstance(i, discord.ui.ActionRow) for i in first.children)
+    assert any(isinstance(i, discord.ui.ActionRow) for i in last.children)
+
+
+def test_build_layout_view_empty_embeds_list_keeps_single_container():
+    layout = components_v2.build_layout_view(embeds=[], content="only text")
+    (container,) = _containers(layout)
+    assert container.children[0].content == "only text"
+
+
+def test_layout_limit_error_flags_text_over_4000():
+    embeds = [discord.Embed(description="x" * 2100), discord.Embed(description="y" * 2100)]
+    assert components_v2.layout_limit_error(components_v2.build_layout_view(embeds=embeds)) == "v2_too_large"
+    assert components_v2.layout_limit_error(components_v2.build_layout_view(embed=discord.Embed(title="ok"))) is None
+
+
+@pytest.mark.asyncio
+async def test_send_message_v2_enforce_limits_raises_on_more_than_40_components():
+    channel = FakeChannel(1)
+    embeds = []
+    for i in range(10):
+        embed = discord.Embed(title=f"E{i}")
+        for j in range(4):
+            embed.add_field(name=f"n{j}", value="v", inline=False)
+        embeds.append(embed)
+    # 10 containers x (header + 4 field blocks) = 60 components; discord.py refuses to build it.
+    with pytest.raises(components_v2.LayoutTooLargeError):
+        await components_v2.send_message(channel, version="v2", embeds=embeds, enforce_limits=True)
+    assert channel.send_calls == []
+
+
+@pytest.mark.asyncio
+async def test_send_message_v1_forwards_embeds_list():
+    channel = FakeChannel(1)
+    embeds = [discord.Embed(title="A"), discord.Embed(title="B")]
+    message = await components_v2.send_message(channel, version="v1", embeds=embeds)
+    assert channel.send_calls[0]["embeds"] == embeds
+    assert "embed" not in channel.send_calls[0]
+    assert message.embeds == embeds
+
+
+@pytest.mark.asyncio
+async def test_send_message_v2_enforce_limits_raises_before_send():
+    channel = FakeChannel(1)
+    embeds = [discord.Embed(description="x" * 2100), discord.Embed(description="y" * 2100)]
+    with pytest.raises(components_v2.LayoutTooLargeError):
+        await components_v2.send_message(channel, version="v2", embeds=embeds, enforce_limits=True)
+    assert channel.send_calls == []
+
+
+@pytest.mark.asyncio
+async def test_edit_message_v1_empty_embeds_list_clears_existing():
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    message = FakeMessage(5, embeds=[discord.Embed(title="old")], content="x")
+    await components_v2.edit_message(message, version="v1", content="only text", embeds=[], view=None)
+    assert message.embeds == []
+    assert "embed" not in message.edit_calls[0]
+
+
+@pytest.mark.asyncio
+async def test_edit_message_v2_uses_embeds_list():
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    message = FakeMessage(5, embeds=[discord.Embed(title="old")], content="x")
+    embeds = [discord.Embed(title="A"), discord.Embed(title="B")]
+    await components_v2.edit_message(message, version="v2", content=None, embeds=embeds, view=None)
+    assert len(_containers(message.edit_calls[0]["view"])) == 2

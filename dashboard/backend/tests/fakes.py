@@ -224,7 +224,7 @@ class FakeChannel:
         self.send_calls.append(kwargs)
         message = FakeMessage(
             self._next_message_id,
-            embeds=[kwargs["embed"]] if kwargs.get("embed") else [],
+            embeds=list(kwargs.get("embeds") or []) or ([kwargs["embed"]] if kwargs.get("embed") else []),
             components=kwargs.get("view"),
             content=kwargs.get("content"),
         )
@@ -263,7 +263,7 @@ class FakeThread:
         self.send_calls.append(kwargs)
         message = FakeMessage(
             self._next_message_id,
-            embeds=[kwargs["embed"]] if kwargs.get("embed") else [],
+            embeds=list(kwargs.get("embeds") or []) or ([kwargs["embed"]] if kwargs.get("embed") else []),
             components=kwargs.get("view"),
             content=kwargs.get("content"),
         )
