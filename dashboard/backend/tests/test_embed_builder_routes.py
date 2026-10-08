@@ -40,7 +40,7 @@ async def test_create_embed_message_success(aiohttp_client):
     body = await resp.json()
     assert body == {"message_id": "999", "channel_id": "500", "components_version": "v1"}
     assert channel.send_calls[0]["content"] == "Hello"
-    assert channel.send_calls[0]["embed"].title == "Title"
+    assert channel.send_calls[0]["embeds"][0].title == "Title"
     assert channel.send_calls[0]["view"].children[0].custom_id == "btn_role_7"
 
 
@@ -224,7 +224,7 @@ async def test_update_embed_message_success(aiohttp_client):
     )
     assert resp.status == 200
     assert message.edit_calls[0]["content"] == "updated"
-    assert message.edit_calls[0]["embed"].title == "Updated"
+    assert message.edit_calls[0]["embeds"][0].title == "Updated"
 
 
 @pytest.mark.asyncio
@@ -274,7 +274,7 @@ async def test_create_embed_message_allows_content_only(aiohttp_client):
     )
     assert resp.status == 201
     assert channel.send_calls[0]["content"] == "Just text"
-    assert channel.send_calls[0]["embed"] is None
+    assert channel.send_calls[0]["embeds"] == []
 
 
 @pytest.mark.asyncio
@@ -304,7 +304,7 @@ async def test_update_embed_message_allows_content_only(aiohttp_client):
     )
     assert resp.status == 200
     assert message.edit_calls[0]["content"] == "Just text"
-    assert message.edit_calls[0]["embed"] is None
+    assert message.edit_calls[0]["embeds"] == []
 
 
 @pytest.mark.asyncio
@@ -357,3 +357,131 @@ async def test_create_embed_message_v2_uses_layout_view(aiohttp_client):
     assert channel.send_calls[0].get("embed") is None
     assert channel.send_calls[0].get("content") is None
     assert channel.send_calls[0]["view"].has_components_v2()
+
+
+# ────────────────────── Несколько эмбедов ──────────────────────
+
+@pytest.mark.asyncio
+async def test_create_embed_message_with_two_embeds(aiohttp_client):
+    channel = FakeChannel(500, next_message_id=999)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages",
+        json={"channel_id": "500", "embeds": [{"title": "A"}, {}, {"title": "B"}], "role_ids": []},
+    )
+    assert resp.status == 201
+    assert [e.title for e in channel.send_calls[0]["embeds"]] == ["A", "B"]
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_rejects_eleven_embeds(aiohttp_client):
+    channel = FakeChannel(500)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages", json={"channel_id": "500", "embeds": [{"title": "T"}] * 11}
+    )
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "too_many_embeds"
+    assert channel.send_calls == []
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_rejects_non_object_embed(aiohttp_client):
+    channel = FakeChannel(500)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages", json={"channel_id": "500", "embeds": [{"title": "A"}, None]}
+    )
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_v2_too_large(aiohttp_client):
+    channel = FakeChannel(500)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages",
+        json={
+            "channel_id": "500",
+            "components_version": "v2",
+            "embeds": [{"description": "x" * 2100}, {"description": "y" * 2100}],
+        },
+    )
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "v2_too_large"
+    assert channel.send_calls == []
+
+
+@pytest.mark.asyncio
+async def test_create_embed_message_v2_two_embeds_makes_two_containers(aiohttp_client):
+    channel = FakeChannel(500)
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-messages",
+        json={"channel_id": "500", "components_version": "v2", "embeds": [{"title": "A"}, {"title": "B"}]},
+    )
+    assert resp.status == 201
+    layout = channel.send_calls[0]["view"]
+    assert len([c for c in layout.children if isinstance(c, discord.ui.Container)]) == 2
+
+
+@pytest.mark.asyncio
+async def test_update_embed_message_with_no_embeds_clears_existing(aiohttp_client):
+    message = FakeMessage(999, embeds=[embed_builder.build_embed({"title": "Old"})], content="x")
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put(
+        "/api/embed-messages/500/999", json={"content": "only text", "embeds": [], "role_ids": []}
+    )
+    assert resp.status == 200
+    assert message.embeds == []
+    assert message.content == "only text"
+
+
+@pytest.mark.asyncio
+async def test_update_embed_message_with_two_embeds(aiohttp_client):
+    message = FakeMessage(999, embeds=[embed_builder.build_embed({"title": "Old"})])
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.put(
+        "/api/embed-messages/500/999", json={"embeds": [{"title": "A"}, {"title": "B"}], "role_ids": []}
+    )
+    assert resp.status == 200
+    assert [e.title for e in message.embeds] == ["A", "B"]
+
+
+@pytest.mark.asyncio
+async def test_get_embed_message_returns_all_embeds(aiohttp_client):
+    embeds = [embed_builder.build_embed({"title": "One"}), embed_builder.build_embed({"title": "Two"})]
+    message = FakeMessage(999, embeds=embeds, content="hi")
+    channel = FakeChannel(500, messages={999: message})
+    _, app = build(channels=[channel])
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.get("/api/embed-messages/500/999")
+    body = await resp.json()
+    assert [e["title"] for e in body["embeds"]] == ["One", "Two"]
+    assert body["embed"]["title"] == "One"

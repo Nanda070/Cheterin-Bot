@@ -51,6 +51,19 @@ async def _parse_body(request):
     return body, None
 
 
+def _parse_embeds_and_content(body):
+    """Embed specs (`embeds`, or legacy `embed`) + content of a request body.
+    Returns (specs, content, None) on success, or ([], "", error_response)."""
+    specs = embed_builder.specs_from_body(body)
+    content = body.get("content") or ""
+    if specs is None or not isinstance(content, str):
+        return [], "", web.json_response({"error": "invalid_request"}, status=400)
+    error_code = embed_builder.validate_embed_specs(specs, content)
+    if error_code:
+        return [], "", web.json_response({"error": error_code}, status=400)
+    return specs, content, None
+
+
 @routes.post("/api/embed-messages")
 @require_dashboard_access
 async def create_embed_message(request: web.Request) -> web.Response:
@@ -67,11 +80,9 @@ async def create_embed_message(request: web.Request) -> web.Response:
     except (TypeError, ValueError):
         return web.json_response({"error": "invalid_request"}, status=400)
 
-    spec = body.get("embed") or {}
-    content = body.get("content") or ""
-    error_code = embed_builder.validate_embed_spec(spec, content)
-    if error_code:
-        return web.json_response({"error": error_code}, status=400)
+    specs, content, error = _parse_embeds_and_content(body)
+    if error:
+        return error
 
     role_ids, error = _validate_role_ids_structure(body.get("role_ids") or [])
     if error:
@@ -85,7 +96,7 @@ async def create_embed_message(request: web.Request) -> web.Response:
     if error:
         return error
 
-    embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
+    embeds = [embed_builder.build_embed(spec) for spec in specs]
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
     components_version = body.get("components_version")
     if components_version is None:
@@ -100,10 +111,13 @@ async def create_embed_message(request: web.Request) -> web.Response:
             channel,
             version=components_version,
             content=content or None,
-            embed=embed,
+            embeds=embeds,
             view=view,
             detach_layout=True,
+            enforce_limits=True,
         )
+    except components_v2.LayoutTooLargeError:
+        return web.json_response({"error": "v2_too_large"}, status=400)
     except discord.HTTPException as exc:
         logger.warning("Failed to send embed message to channel %s: %s", channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
@@ -207,6 +221,7 @@ async def get_embed_message(request: web.Request) -> web.Response:
         is_v2 = bool(getattr(getattr(message, "flags", None), "components_v2", False))
         payload = {
             "content": getattr(message, "content", None) or "",
+            "embeds": [],
             "embed": embed_builder.empty_embed_spec(),
             "role_ids": [],
             "components_version": "v2" if is_v2 else "v1",
@@ -232,11 +247,9 @@ async def update_embed_message(request: web.Request) -> web.Response:
     if error:
         return error
 
-    spec = body.get("embed") or {}
-    content = body.get("content") or ""
-    error_code = embed_builder.validate_embed_spec(spec, content)
-    if error_code:
-        return web.json_response({"error": error_code}, status=400)
+    specs, content, error = _parse_embeds_and_content(body)
+    if error:
+        return error
 
     role_ids, error = _validate_role_ids_structure(body.get("role_ids") or [])
     if error:
@@ -257,7 +270,7 @@ async def update_embed_message(request: web.Request) -> web.Response:
     if error:
         return error
 
-    embed = None if embed_builder.is_embed_spec_empty(spec) else embed_builder.build_embed(spec)
+    embeds = [embed_builder.build_embed(spec) for spec in specs]
     view = embed_builder.build_role_button_view(guild, role_ids) if role_ids else None
     components_version = body.get("components_version")
     if components_version is None:
@@ -276,10 +289,13 @@ async def update_embed_message(request: web.Request) -> web.Response:
             message,
             version=components_version,
             content=content or None,
-            embed=embed,
+            embeds=embeds,
             view=view,
             detach_layout=True,
+            enforce_limits=True,
         )
+    except components_v2.LayoutTooLargeError:
+        return web.json_response({"error": "v2_too_large"}, status=400)
     except discord.HTTPException as exc:
         logger.warning("Failed to edit embed message %s in channel %s: %s", message_id, channel_id, exc)
         return web.json_response({"error": "discord_error"}, status=502)
