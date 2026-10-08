@@ -70,8 +70,8 @@ function toEmbed(raw: Json): EmbedSpec {
   }
 }
 
-function isBareEmbed(value: unknown): value is Json {
-  return isRecord(value) && !Array.isArray(value.embeds) && !isRecord(value.embed) && EMBED_KEYS.some((key) => key in value)
+function isBareEmbed(value: Json): boolean {
+  return !Array.isArray(value.embeds) && !isRecord(value.embed) && EMBED_KEYS.some((key) => key in value)
 }
 
 function firstText(...values: unknown[]): string {
@@ -175,7 +175,7 @@ export function parseMessageJson(text: string): ParseResult {
     const oneMessage =
       root.length > 0 &&
       root.length <= MAX_EMBEDS &&
-      root.every((item) => isBareEmbed(item) && !('plainText' in item) && !('content' in item))
+      root.every((item) => isRecord(item) && isBareEmbed(item) && !('plainText' in item) && !('content' in item))
     if (oneMessage) addEach([{ embeds: root }])
     else addEach(root)
   } else if (isRecord(root) && Array.isArray(root.messages)) {

@@ -1,22 +1,30 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createEmbedMessage, fetchEmbedMessage, updateEmbedMessage, type EmbedMessagePayload } from './client'
+import {
+  createEmbedMessage,
+  fetchEmbedMessage,
+  saveEmbedTemplatesBulk,
+  updateEmbedMessage,
+  type EmbedMessagePayload,
+} from './client'
 
 const okJson = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload })
 
 const samplePayload: EmbedMessagePayload = {
   content: 'hi',
-  embed: {
-    title: 'T',
-    description: '',
-    url: '',
-    color: '',
-    author: { name: '', url: '', icon_url: '' },
-    footer: { text: '', icon_url: '' },
-    image: { url: '' },
-    thumbnail: { url: '' },
-    timestamp: null,
-    fields: [],
-  },
+  embeds: [
+    {
+      title: 'T',
+      description: '',
+      url: '',
+      color: '',
+      author: { name: '', url: '', icon_url: '' },
+      footer: { text: '', icon_url: '' },
+      image: { url: '' },
+      thumbnail: { url: '' },
+      timestamp: null,
+      fields: [],
+    },
+  ],
   role_ids: ['7'],
 }
 
@@ -57,6 +65,19 @@ describe('embed builder api client', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/embed-messages/500/999',
       expect.objectContaining({ method: 'PUT', body: JSON.stringify(samplePayload) }),
+    )
+  })
+
+  it('saveEmbedTemplatesBulk POSTs the templates list', async () => {
+    const outcome = { created: [], skipped: [{ name: 'A', reason: 'duplicate_name' }] }
+    const fetchMock = vi.fn().mockResolvedValue(okJson(outcome))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const templates = [{ name: 'A', content: 'c', embeds: samplePayload.embeds }]
+    expect(await saveEmbedTemplatesBulk(templates)).toEqual(outcome)
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/embed-templates/bulk',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ templates }) }),
     )
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useT } from '../context/LanguageContext'
 import {
@@ -9,10 +9,10 @@ import {
   fetchEmbedTemplates,
   fetchRoles,
   saveEmbedTemplate,
+  saveEmbedTemplatesBulk,
   setEmbedComponentsVersion,
   updateEmbedMessage,
   type ChannelInfo,
-  type EmbedFieldSpec,
   type EmbedSpec,
   type EmbedTemplate,
   type RoleInfo,
@@ -22,9 +22,19 @@ import { Button } from '../components/ui/Button'
 import { Checkbox } from '../components/ui/Checkbox'
 import { ComponentsVersionSelect, type ComponentsVersion } from '../components/ComponentsVersionSelect'
 import { Select } from '../components/ui/Select'
-import { Toggle } from '../components/ui/Toggle'
+import { EmbedFieldsForm } from '../components/EmbedFieldsForm'
 import { EmbedPreview } from '../components/EmbedPreview'
-import { EMPTY_EMBED_SPEC, normalizeEmbedSpec, validateEmbedSpec } from '../utils/embedUtils'
+import { JsonImportPanel } from '../components/JsonImportPanel'
+import { PlaceholderInputs } from '../components/PlaceholderInputs'
+import {
+  MAX_EMBEDS,
+  embedsFromPayload,
+  isEmbedSpecEmpty,
+  normalizeEmbedSpec,
+  validateEmbedSpecs,
+} from '../utils/embedUtils'
+import { exportMessageJson, type ImportedMessage } from '../utils/messageJson'
+import { applyPlaceholders, findPlaceholders } from '../utils/placeholders'
 
 // Deep-link hints (?target=welcome|feedback|events) — Embeds tab under Roles & embeds
 // when someone is really looking for a specific embed surface elsewhere in the dashboard.
@@ -33,6 +43,11 @@ const DEEP_LINK_HINTS: Record<string, { labelKey: string; to: string }> = {
   feedback: { labelKey: 'embedBuilder.deepLink.feedback', to: '/feedback' },
   events: { labelKey: 'embedBuilder.deepLink.events', to: '/events' },
 }
+
+/** Backend limit of one bulk template request. */
+const BULK_TEMPLATES_CHUNK = 200
+
+const blankEmbed = (): EmbedSpec => normalizeEmbedSpec({})
 
 export function EmbedBuilderPage() {
   const t = useT()
@@ -44,7 +59,10 @@ export function EmbedBuilderPage() {
   const [channelId, setChannelId] = useState('')
   const [messageId, setMessageId] = useState('')
   const [content, setContent] = useState('')
-  const [embed, setEmbed] = useState<EmbedSpec>(EMPTY_EMBED_SPEC)
+  // A message carries up to MAX_EMBEDS embeds; the form edits the active one. Never empty.
+  const [embeds, setEmbeds] = useState<EmbedSpec[]>(() => [blankEmbed()])
+  const [activeEmbed, setActiveEmbed] = useState(0)
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({})
   const [roleIds, setRoleIds] = useState<string[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -70,6 +88,22 @@ export function EmbedBuilderPage() {
       .catch(() => {})
   }, [t])
 
+  const currentIndex = Math.min(activeEmbed, embeds.length - 1)
+  const placeholderNames = useMemo(() => findPlaceholders(content, embeds), [content, embeds])
+  // What actually goes to Discord (and into the preview): placeholders filled in.
+  const filled = useMemo(
+    () => applyPlaceholders(content, embeds, placeholderValues),
+    [content, embeds, placeholderValues],
+  )
+  const unfilledPlaceholders = placeholderNames.filter((name) => !placeholderValues[name])
+
+  /** Replace the whole message in the form (template, existing message or imported JSON). */
+  const loadMessage = (nextContent: string, nextEmbeds: EmbedSpec[]) => {
+    setContent(nextContent)
+    setEmbeds(nextEmbeds.length > 0 ? nextEmbeds.slice(0, MAX_EMBEDS) : [blankEmbed()])
+    setActiveEmbed(0)
+  }
+
   const handleComponentsVersion = async (version: ComponentsVersion) => {
     setComponentsVersion(version)
     try {
@@ -83,8 +117,7 @@ export function EmbedBuilderPage() {
   const applyTemplate = (id: string) => {
     const template = templates.find((t) => t.id === id)
     if (!template) return
-    setContent(template.content)
-    setEmbed(normalizeEmbedSpec(template.embed))
+    loadMessage(template.content, embedsFromPayload(template))
     setRoleIds(template.role_ids)
     setTemplateNotice(t('embedBuilder.templateLoaded', { name: template.name }))
   }
@@ -97,14 +130,20 @@ export function EmbedBuilderPage() {
       setError(t('embedBuilder.error.templateName'))
       return
     }
-    const validationError = validateEmbedSpec(embed, content)
+    const validationError = validateEmbedSpecs(embeds, content)
     if (validationError) {
       setError(t(validationError))
       return
     }
     setBusy(true)
     try {
-      const created = await saveEmbedTemplate({ name, content, embed, role_ids: roleIds })
+      // Templates keep the raw text: {placeholders} stay unfilled for the next use.
+      const created = await saveEmbedTemplate({
+        name,
+        content,
+        embeds: embeds.filter((embed) => !isEmbedSpecEmpty(embed)),
+        role_ids: roleIds,
+      })
       setTemplates((prev) => [...prev, created])
       setTemplateName('')
       setTemplateNotice(t('embedBuilder.templateSaved', { name: created.name }))
@@ -124,23 +163,33 @@ export function EmbedBuilderPage() {
     }
   }
 
-  const updateEmbedField = <K extends keyof EmbedSpec>(key: K, value: EmbedSpec[K]) => {
-    setEmbed((prev) => ({ ...prev, [key]: value }))
+  const handleSaveAllTemplates = async (messages: ImportedMessage[]) => {
+    const items = messages.map(({ name, content, embeds }) => ({ name, content, embeds }))
+    let created = 0
+    let skipped = 0
+    for (let offset = 0; offset < items.length; offset += BULK_TEMPLATES_CHUNK) {
+      const result = await saveEmbedTemplatesBulk(items.slice(offset, offset + BULK_TEMPLATES_CHUNK))
+      setTemplates((prev) => [...prev, ...result.created])
+      created += result.created.length
+      skipped += result.skipped.length
+    }
+    return { created, skipped }
   }
 
-  const updateField = (index: number, patch: Partial<EmbedFieldSpec>) => {
-    setEmbed((prev) => ({
-      ...prev,
-      fields: (prev.fields ?? []).map((f, i) => (i === index ? { ...f, ...patch } : f)),
-    }))
+  const updateCurrentEmbed = (next: EmbedSpec) => {
+    setEmbeds((prev) => prev.map((embed, index) => (index === currentIndex ? next : embed)))
   }
 
-  const addField = () => {
-    setEmbed((prev) => ({ ...prev, fields: [...(prev.fields ?? []), { name: '', value: '', inline: false }] }))
+  const addEmbed = () => {
+    if (embeds.length >= MAX_EMBEDS) return
+    setEmbeds((prev) => [...prev, blankEmbed()])
+    setActiveEmbed(embeds.length)
   }
 
-  const removeField = (index: number) => {
-    setEmbed((prev) => ({ ...prev, fields: (prev.fields ?? []).filter((_, i) => i !== index) }))
+  const removeCurrentEmbed = () => {
+    if (embeds.length <= 1) return
+    setEmbeds((prev) => prev.filter((_, index) => index !== currentIndex))
+    setActiveEmbed(Math.max(0, Math.min(currentIndex, embeds.length - 2)))
   }
 
   const toggleRole = (roleId: string) => {
@@ -157,8 +206,7 @@ export function EmbedBuilderPage() {
     setBusy(true)
     try {
       const data = await fetchEmbedMessage(channelId, messageId)
-      setContent(typeof data.content === 'string' ? data.content : '')
-      setEmbed(normalizeEmbedSpec(data.embed))
+      loadMessage(typeof data.content === 'string' ? data.content : '', embedsFromPayload(data))
       setRoleIds(Array.isArray(data.role_ids) ? data.role_ids.map(String) : [])
       if (data.components_version === 'v2' || data.components_version === 'v1') {
         setComponentsVersion(data.components_version)
@@ -168,7 +216,7 @@ export function EmbedBuilderPage() {
       }
     } catch (err) {
       setError(formatApiError(err, t, 'embedBuilder.error.load'))
-      setEmbed(EMPTY_EMBED_SPEC)
+      loadMessage(content, [])
     } finally {
       setBusy(false)
     }
@@ -189,7 +237,7 @@ export function EmbedBuilderPage() {
       setError(t('embedBuilder.error.tooManyRoles'))
       return
     }
-    const validationError = validateEmbedSpec(embed, content)
+    const validationError = validateEmbedSpecs(filled.embeds, filled.content)
     if (validationError) {
       setError(t(validationError))
       return
@@ -197,7 +245,12 @@ export function EmbedBuilderPage() {
 
     setBusy(true)
     try {
-      const payload = { content, embed, role_ids: roleIds, components_version: componentsVersion }
+      const payload = {
+        content: filled.content,
+        embeds: filled.embeds.filter((embed) => !isEmbedSpecEmpty(embed)),
+        role_ids: roleIds,
+        components_version: componentsVersion,
+      }
       const result =
         mode === 'edit'
           ? await updateEmbedMessage(channelId, messageId, payload)
@@ -212,7 +265,7 @@ export function EmbedBuilderPage() {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="flex flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-3">
         {deepLinkHint && (
           <div className="rounded-control border border-primary/40 bg-primary/10 p-3 text-sm text-foreground">
             {t(deepLinkHint.labelKey)}{' '}
@@ -268,6 +321,13 @@ export function EmbedBuilderPage() {
           {templateNotice && <p className="text-xs text-primary">{templateNotice}</p>}
         </div>
 
+        <JsonImportPanel
+          exportJson={() => exportMessageJson(content, embeds)}
+          onLoad={(message) => loadMessage(message.content, message.embeds)}
+          onSaveAll={handleSaveAllTemplates}
+          busy={busy}
+        />
+
         <label className="text-sm text-muted" htmlFor="eb-channel">
           {t('common.channel')}
         </label>
@@ -305,123 +365,47 @@ export function EmbedBuilderPage() {
           rows={2}
         />
 
-        <label className="text-sm text-muted" htmlFor="eb-title">
-          {t('embedBuilder.field.title')}
-        </label>
-        <input
-          id="eb-title"
-          value={embed.title ?? ''}
-          onChange={(e) => updateEmbedField('title', e.target.value)}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-
-        <label className="text-sm text-muted" htmlFor="eb-description">
-          {t('embedBuilder.field.description')}
-        </label>
-        <textarea
-          id="eb-description"
-          value={embed.description ?? ''}
-          onChange={(e) => updateEmbedField('description', e.target.value)}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-          rows={3}
-        />
-
-        <label className="text-sm text-muted" htmlFor="eb-color">
-          {t('embedBuilder.field.color')}
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="eb-color"
-            type="color"
-            value={embed.color || '#D44556'}
-            onChange={(e) => updateEmbedField('color', e.target.value)}
-            className="h-9 w-12 rounded-control border border-border bg-background"
-          />
-          <input
-            value={embed.color ?? ''}
-            onChange={(e) => updateEmbedField('color', e.target.value)}
-            placeholder="#D44556"
-            className="flex-1 rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-          />
-        </div>
-
-        <label className="text-sm text-muted" htmlFor="eb-author-name">
-          {t('embedBuilder.field.author')}
-        </label>
-        <input
-          id="eb-author-name"
-          value={embed.author?.name ?? ''}
-          onChange={(e) =>
-            updateEmbedField('author', { ...(embed.author ?? EMPTY_EMBED_SPEC.author), name: e.target.value })
-          }
-          placeholder={t('embedBuilder.authorPlaceholder')}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-
-        <label className="text-sm text-muted" htmlFor="eb-footer-text">
-          {t('embedBuilder.field.footer')}
-        </label>
-        <input
-          id="eb-footer-text"
-          value={embed.footer?.text ?? ''}
-          onChange={(e) =>
-            updateEmbedField('footer', { ...(embed.footer ?? EMPTY_EMBED_SPEC.footer), text: e.target.value })
-          }
-          placeholder={t('embedBuilder.footerPlaceholder')}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-
-        <label className="text-sm text-muted" htmlFor="eb-image-url">
-          {t('embedBuilder.field.imageUrl')}
-        </label>
-        <input
-          id="eb-image-url"
-          value={embed.image?.url ?? ''}
-          onChange={(e) => updateEmbedField('image', { url: e.target.value })}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-
-        <label className="text-sm text-muted" htmlFor="eb-thumbnail-url">
-          {t('embedBuilder.field.thumbnailUrl')}
-        </label>
-        <input
-          id="eb-thumbnail-url"
-          value={embed.thumbnail?.url ?? ''}
-          onChange={(e) => updateEmbedField('thumbnail', { url: e.target.value })}
-          className="rounded-control border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-
-        <Toggle
-          checked={embed.timestamp !== null}
-          onChange={(v) => updateEmbedField('timestamp', v ? new Date().toISOString() : null)}
-          label={t('embedBuilder.timestamp')}
-        />
-
-        <div className="flex flex-col gap-2">
-          {(embed.fields ?? []).map((field, index) => (
-            <div key={index} className="flex flex-wrap items-center gap-2 rounded-control border border-border/60 p-2">
-              <input
-                value={field.name ?? ''}
-                onChange={(e) => updateField(index, { name: e.target.value })}
-                placeholder={t('embedBuilder.fieldNamePlaceholder')}
-                className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
-              />
-              <input
-                value={field.value ?? ''}
-                onChange={(e) => updateField(index, { value: e.target.value })}
-                placeholder={t('embedBuilder.fieldValuePlaceholder')}
-                className="min-w-0 flex-1 basis-full rounded-control border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
-              />
-              <Checkbox checked={Boolean(field.inline)} onChange={(v) => updateField(index, { inline: v })} label="inline" />
-              <button type="button" onClick={() => removeField(index)} className="cursor-pointer text-muted hover:text-danger">
-                ×
-              </button>
-            </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {embeds.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setActiveEmbed(index)}
+              aria-pressed={index === currentIndex}
+              className={`cursor-pointer rounded-control border px-3 py-1.5 text-sm transition-colors ${
+                index === currentIndex
+                  ? 'border-primary bg-primary-muted text-foreground'
+                  : 'border-border text-muted hover:text-foreground'
+              }`}
+            >
+              {t('embedBuilder.embedTab', { n: index + 1 })}
+            </button>
           ))}
-          <button type="button" onClick={addField} className="cursor-pointer self-start text-sm text-primary hover:text-primary-hover">
-            {t('embedBuilder.addField')}
+          <button
+            type="button"
+            onClick={addEmbed}
+            disabled={embeds.length >= MAX_EMBEDS}
+            className="cursor-pointer text-sm text-primary hover:text-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t('embedBuilder.addEmbed')}
+          </button>
+          <button
+            type="button"
+            onClick={removeCurrentEmbed}
+            disabled={embeds.length <= 1}
+            className="ml-auto cursor-pointer text-sm text-muted hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t('embedBuilder.removeEmbed')}
           </button>
         </div>
+
+        <EmbedFieldsForm embed={embeds[currentIndex]} onChange={updateCurrentEmbed} />
+
+        <PlaceholderInputs
+          names={placeholderNames}
+          values={placeholderValues}
+          onChange={(name, value) => setPlaceholderValues((prev) => ({ ...prev, [name]: value }))}
+        />
 
         <div>
           <p className="mb-1 text-sm text-muted">{t('embedBuilder.roleButtons')}</p>
@@ -443,14 +427,21 @@ export function EmbedBuilderPage() {
 {t('embedBuilder.saved', { messageId: savedResult.message_id, channelId: savedResult.channel_id })}
           </p>
         )}
+        {unfilledPlaceholders.length > 0 && (
+          <p className="text-xs text-warning">
+            {t('embedBuilder.placeholders.unfilled', {
+              names: unfilledPlaceholders.map((name) => `{${name}}`).join(', '),
+            })}
+          </p>
+        )}
 
         <Button variant="primary" onClick={handleSave} disabled={busy}>
           {busy ? t('common.saving') : mode === 'edit' ? t('common.save') : t('embedBuilder.send')}
         </Button>
       </div>
 
-      <div>
-        <EmbedPreview content={content} embed={embed} />
+      <div className="min-w-0">
+        <EmbedPreview content={filled.content} embeds={filled.embeds} />
       </div>
     </div>
   )
