@@ -183,7 +183,7 @@ def test_validate_embed_spec_rejects_empty_embed_and_blank_content():
 # ────────────────────── Шаблоны: per-guild персистентность (settings_db) ──────────────────────
 
 def test_save_and_list_template_round_trips():
-    saved = embed_builder.save_template(1, "Welcome", "hi", {"title": "T"}, ["10"])
+    saved = embed_builder.save_template(1, "Welcome", "hi", [{"title": "T"}], ["10"])
     assert saved["id"] == "1"
     templates = embed_builder.list_templates(1)
     assert len(templates) == 1
@@ -193,28 +193,28 @@ def test_save_and_list_template_round_trips():
 
 
 def test_templates_are_scoped_per_guild():
-    embed_builder.save_template(1, "A", "", {"title": "T"}, [])
-    embed_builder.save_template(2, "B", "", {"title": "T"}, [])
+    embed_builder.save_template(1, "A", "", [{"title": "T"}], [])
+    embed_builder.save_template(2, "B", "", [{"title": "T"}], [])
     assert [t["name"] for t in embed_builder.list_templates(1)] == ["A"]
     assert [t["name"] for t in embed_builder.list_templates(2)] == ["B"]
 
 
 def test_save_template_rejects_duplicate_name():
-    embed_builder.save_template(1, "Dup", "", {"title": "T"}, [])
-    assert embed_builder.save_template(1, "Dup", "", {"title": "T"}, []) == "duplicate_name"
+    embed_builder.save_template(1, "Dup", "", [{"title": "T"}], [])
+    assert embed_builder.save_template(1, "Dup", "", [{"title": "T"}], []) == "duplicate_name"
     # то же имя на другом сервере — не дубликат
-    assert isinstance(embed_builder.save_template(2, "Dup", "", {"title": "T"}, []), dict)
+    assert isinstance(embed_builder.save_template(2, "Dup", "", [{"title": "T"}], []), dict)
 
 
 def test_save_template_enforces_max_limit():
     for i in range(embed_builder.MAX_TEMPLATES):
-        embed_builder.save_template(1, f"t{i}", "", {"title": "T"}, [])
-    assert embed_builder.save_template(1, "overflow", "", {"title": "T"}, []) == "too_many_templates"
+        embed_builder.save_template(1, f"t{i}", "", [{"title": "T"}], [])
+    assert embed_builder.save_template(1, "overflow", "", [{"title": "T"}], []) == "too_many_templates"
 
 
 def test_delete_template_removes_only_target_and_guild():
-    a = embed_builder.save_template(1, "A", "", {"title": "T"}, [])
-    embed_builder.save_template(2, "A", "", {"title": "T"}, [])
+    a = embed_builder.save_template(1, "A", "", [{"title": "T"}], [])
+    embed_builder.save_template(2, "A", "", [{"title": "T"}], [])
     assert embed_builder.delete_template(1, a["id"]) is True
     assert embed_builder.list_templates(1) == []
     assert len(embed_builder.list_templates(2)) == 1
@@ -300,3 +300,74 @@ def test_v2_message_to_specs_returns_one_spec_per_container():
     payload = embed_builder.message_to_editor_payload(message)
     assert [s["title"] for s in payload["embeds"]] == ["A", "B"]
     assert payload["content"] == "hi"
+
+
+# ────────────────────── Шаблоны: несколько эмбедов и пакетное сохранение ──────────────────────
+
+def test_list_templates_reads_legacy_single_embed():
+    import bot.core.settings_db as settings_db
+
+    settings_db.put(
+        1,
+        "embed_templates",
+        {"seq": 1, "templates": [{"id": "1", "name": "Old", "content": "", "embed": {"title": "T"}, "role_ids": []}]},
+    )
+    (template,) = embed_builder.list_templates(1)
+    assert template["embeds"] == [{"title": "T"}]
+    assert template["embed"] == {"title": "T"}
+
+
+def test_save_template_stores_embed_list():
+    saved = embed_builder.save_template(1, "Multi", "", [{"title": "A"}, {"title": "B"}], [])
+    assert [e["title"] for e in saved["embeds"]] == ["A", "B"]
+    assert saved["embed"] == {"title": "A"}
+    (listed,) = embed_builder.list_templates(1)
+    assert [e["title"] for e in listed["embeds"]] == ["A", "B"]
+
+
+def test_save_template_content_only_has_no_embeds():
+    saved = embed_builder.save_template(1, "Text", "hello", [], [])
+    assert saved["embeds"] == [] and saved["embed"] == {}
+
+
+def test_save_templates_bulk_creates_and_skips():
+    embed_builder.save_template(1, "Taken", "", [{"title": "T"}], [])
+    result = embed_builder.save_templates_bulk(
+        1,
+        [
+            {"name": "One", "content": "c", "embeds": [{"title": "A"}]},
+            {"name": "Taken", "embeds": [{"title": "A"}]},
+            {"name": "One", "embeds": [{"title": "A"}]},
+            {"name": "  ", "embeds": [{"title": "A"}]},
+            {"name": "Empty", "embeds": []},
+            {"name": "x" * 80, "embeds": [{"title": "A"}]},
+            {"name": "Bad", "embeds": "nope"},
+            "not a dict",
+        ],
+    )
+    assert [t["name"] for t in result["created"]] == ["One", "x" * 60]
+    assert result["created"][0]["content"] == "c"
+    assert result["created"][0]["role_ids"] == []
+    assert [s["reason"] for s in result["skipped"]] == [
+        "duplicate_name",
+        "duplicate_name",
+        "invalid_name",
+        "empty_embed",
+        "invalid_request",
+        "invalid_request",
+    ]
+    assert [t["name"] for t in embed_builder.list_templates(1)] == ["Taken", "One", "x" * 60]
+    assert len({t["id"] for t in embed_builder.list_templates(1)}) == 3
+
+
+def test_save_templates_bulk_stops_at_limit(monkeypatch):
+    monkeypatch.setattr(embed_builder, "MAX_TEMPLATES", 2)
+    result = embed_builder.save_templates_bulk(
+        1, [{"name": f"N{i}", "embeds": [{"title": "A"}]} for i in range(3)]
+    )
+    assert len(result["created"]) == 2
+    assert result["skipped"] == [{"name": "N2", "reason": "too_many_templates"}]
+
+
+def test_max_templates_fits_a_large_library():
+    assert embed_builder.MAX_TEMPLATES == 200

@@ -485,3 +485,77 @@ async def test_get_embed_message_returns_all_embeds(aiohttp_client):
     body = await resp.json()
     assert [e["title"] for e in body["embeds"]] == ["One", "Two"]
     assert body["embed"]["title"] == "One"
+
+
+# ────────────────────── Шаблоны: несколько эмбедов и пакетное сохранение ──────────────────────
+
+@pytest.mark.asyncio
+async def test_create_embed_template_with_embeds_list(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-templates",
+        json={"name": "Multi", "content": "", "embeds": [{"title": "A"}, {"title": "B"}], "role_ids": []},
+    )
+    assert resp.status == 201
+    assert [e["title"] for e in (await resp.json())["embeds"]] == ["A", "B"]
+
+
+@pytest.mark.asyncio
+async def test_create_embed_template_legacy_single_embed(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-templates", json={"name": "Old", "content": "", "embed": {"title": "T"}, "role_ids": []}
+    )
+    assert resp.status == 201
+    body = await resp.json()
+    assert body["embeds"] == [{"title": "T"}] and body["embed"] == {"title": "T"}
+
+
+@pytest.mark.asyncio
+async def test_bulk_embed_templates_creates_and_reports_skipped(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post(
+        "/api/embed-templates/bulk",
+        json={
+            "templates": [
+                {"name": "A", "content": "<@&1>", "embeds": [{"title": "A"}]},
+                {"name": "B", "content": "", "embeds": [{"title": "B"}]},
+                {"name": "A", "content": "", "embeds": [{"title": "dup"}]},
+            ]
+        },
+    )
+    assert resp.status == 200
+    body = await resp.json()
+    assert [t["name"] for t in body["created"]] == ["A", "B"]
+    assert body["skipped"] == [{"name": "A", "reason": "duplicate_name"}]
+    listed = await (await client.get("/api/embed-templates")).json()
+    assert len(listed["templates"]) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("templates", [[], "x", None, [{"name": "n", "embeds": [{"title": "T"}]}] * 201])
+async def test_bulk_embed_templates_rejects_bad_payload(aiohttp_client, templates):
+    _, app = build()
+    client = await aiohttp_client(app)
+    await force_login(client, 10)
+
+    resp = await client.post("/api/embed-templates/bulk", json={"templates": templates})
+    assert resp.status == 400
+    assert (await resp.json())["error"] == "invalid_request"
+
+
+@pytest.mark.asyncio
+async def test_bulk_embed_templates_requires_auth(aiohttp_client):
+    _, app = build()
+    client = await aiohttp_client(app)
+    resp = await client.post("/api/embed-templates/bulk", json={"templates": []})
+    assert resp.status == 401

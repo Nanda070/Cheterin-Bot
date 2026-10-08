@@ -564,7 +564,9 @@ def parse_role_button_ids(message) -> list[int]:
 import bot.core.settings_db as settings_db
 
 MODULE_NAME = "embed_templates"  # должно совпадать с ключом в settings_migration.MODULE_FILE_MAP
-MAX_TEMPLATES = 50
+MAX_TEMPLATES = 200
+MAX_BULK_TEMPLATES = 200
+MAX_TEMPLATE_NAME = 60
 
 
 def _load_templates_data(guild_id: int) -> dict:
@@ -592,37 +594,98 @@ def set_components_version(guild_id: int, version: str) -> str:
     return data["components_version"]
 
 
+def _template_embeds(template: dict) -> list[dict]:
+    """Embed specs of a stored template; records saved before multi-embed carry one `embed`."""
+    embeds = template.get("embeds")
+    if isinstance(embeds, list):
+        return [spec for spec in embeds if isinstance(spec, dict)]
+    legacy = template.get("embed")
+    return [legacy] if isinstance(legacy, dict) and legacy else []
+
+
+def _template_payload(template: dict) -> dict:
+    embeds = _template_embeds(template)
+    return {
+        "id": str(template.get("id") or ""),
+        "name": str(template.get("name") or ""),
+        "content": str(template.get("content") or ""),
+        "embeds": embeds,
+        "embed": embeds[0] if embeds else {},
+        "role_ids": [str(r) for r in template.get("role_ids", [])],
+    }
+
+
 def list_templates(guild_id: int) -> list[dict]:
-    return [
-        {
-            "id": str(t.get("id") or ""),
-            "name": str(t.get("name") or ""),
-            "content": str(t.get("content") or ""),
-            "embed": t.get("embed") or {},
-            "role_ids": [str(r) for r in t.get("role_ids", [])],
-        }
-        for t in _load_templates_data(guild_id)["templates"]
-    ]
+    return [_template_payload(t) for t in _load_templates_data(guild_id)["templates"]]
 
 
-def save_template(guild_id: int, name: str, content: str, embed_spec: dict, role_ids: list[str]) -> dict | str:
+def _append_template(data: dict, name: str, content: str, embed_specs: list[dict], role_ids: list[str]) -> dict:
+    data["seq"] += 1
+    template = {
+        "id": str(data["seq"]),
+        "name": name,
+        "content": content,
+        "embeds": list(embed_specs),
+        "role_ids": list(role_ids),
+    }
+    data["templates"].append(template)
+    return template
+
+
+def save_template(
+    guild_id: int, name: str, content: str, embed_specs: list[dict], role_ids: list[str]
+) -> dict | str:
     """Сохраняет шаблон. Возвращает шаблон или код ошибки строкой."""
     data = _load_templates_data(guild_id)
     if len(data["templates"]) >= MAX_TEMPLATES:
         return "too_many_templates"
     if any(t.get("name") == name for t in data["templates"]):
         return "duplicate_name"
-    data["seq"] += 1
-    template = {
-        "id": str(data["seq"]),
-        "name": name,
-        "content": content,
-        "embed": embed_spec,
-        "role_ids": list(role_ids),
-    }
-    data["templates"].append(template)
+    template = _append_template(data, name, content, embed_specs, role_ids)
     _save_templates_data(guild_id, data)
-    return template
+    return _template_payload(template)
+
+
+def save_templates_bulk(guild_id: int, items: list) -> dict:
+    """Сохраняет пачку шаблонов одной записью. Возвращает {"created": [...], "skipped": [...]}.
+
+    Каждый пропуск — {"name", "reason"}: invalid_request, invalid_name, код валидации
+    эмбеда, duplicate_name или too_many_templates.
+    """
+    data = _load_templates_data(guild_id)
+    taken = {t.get("name") for t in data["templates"]}
+    created: list[dict] = []
+    skipped: list[dict] = []
+
+    for item in items:
+        if not isinstance(item, dict):
+            skipped.append({"name": "", "reason": "invalid_request"})
+            continue
+        raw_name = item.get("name")
+        name = raw_name.strip()[:MAX_TEMPLATE_NAME].strip() if isinstance(raw_name, str) else ""
+        content = item.get("content") or ""
+        specs = specs_from_body(item)
+
+        if not name:
+            reason = "invalid_name"
+        elif specs is None or not isinstance(content, str):
+            reason = "invalid_request"
+        else:
+            reason = validate_embed_specs(specs, content)
+            if reason is None and name in taken:
+                reason = "duplicate_name"
+            if reason is None and len(data["templates"]) >= MAX_TEMPLATES:
+                reason = "too_many_templates"
+        if reason:
+            skipped.append({"name": name, "reason": reason})
+            continue
+
+        created.append(_template_payload(_append_template(data, name, content, specs, [])))
+        taken.add(name)
+
+    if created:
+        _save_templates_data(guild_id, data)
+    return {"created": created, "skipped": skipped}
 
 
 def delete_template(guild_id: int, template_id: str) -> bool:

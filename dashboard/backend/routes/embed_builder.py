@@ -162,24 +162,36 @@ async def create_embed_template(request: web.Request) -> web.Response:
         return error
 
     name = body.get("name", "")
-    if not isinstance(name, str) or not name.strip() or len(name) > 60:
+    if not isinstance(name, str) or not name.strip() or len(name) > embed_builder.MAX_TEMPLATE_NAME:
         return web.json_response({"error": "invalid_name"}, status=400)
 
-    spec = body.get("embed") or {}
-    content = body.get("content") or ""
-    error_code = embed_builder.validate_embed_spec(spec, content)
-    if error_code:
-        return web.json_response({"error": error_code}, status=400)
+    specs, content, error = _parse_embeds_and_content(body)
+    if error:
+        return error
 
     role_ids_raw = body.get("role_ids") or []
     _, error = _validate_role_ids_structure(role_ids_raw)
     if error:
         return error
 
-    result = embed_builder.save_template(request["guild_id"], name.strip(), content, spec, [str(r) for r in role_ids_raw])
+    result = embed_builder.save_template(request["guild_id"], name.strip(), content, specs, [str(r) for r in role_ids_raw])
     if isinstance(result, str):
         return web.json_response({"error": result}, status=409 if result == "duplicate_name" else 400)
     return web.json_response(result, status=201)
+
+
+@routes.post("/api/embed-templates/bulk")
+@require_dashboard_access
+async def create_embed_templates_bulk(request: web.Request) -> web.Response:
+    body, error = await _parse_body(request)
+    if error:
+        return error
+
+    items = body.get("templates") if isinstance(body, dict) else None
+    if not isinstance(items, list) or not items or len(items) > embed_builder.MAX_BULK_TEMPLATES:
+        return web.json_response({"error": "invalid_request"}, status=400)
+
+    return web.json_response(embed_builder.save_templates_bulk(request["guild_id"], items))
 
 
 @routes.delete("/api/embed-templates/{template_id}")
