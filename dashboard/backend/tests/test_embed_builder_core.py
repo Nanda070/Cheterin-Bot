@@ -231,3 +231,51 @@ def test_components_version_defaults_and_persists():
     assert embed_builder.set_components_version(1, "components_v2") == "v2"
     assert embed_builder.set_components_version(1, "bogus") == "v1"
     assert embed_builder.get_components_version(2) == "v1"
+
+
+# ────────────────────── Несколько эмбедов в одном сообщении ──────────────────────
+
+def test_specs_from_body_prefers_embeds_and_drops_empty():
+    body = {"embeds": [{"title": "A"}, {}, {"description": "B"}], "embed": {"title": "legacy"}}
+    specs = embed_builder.specs_from_body(body)
+    assert [s.get("title") or s.get("description") for s in specs] == ["A", "B"]
+
+
+def test_specs_from_body_falls_back_to_legacy_embed():
+    assert embed_builder.specs_from_body({"embed": {"title": "T"}}) == [{"title": "T"}]
+    assert embed_builder.specs_from_body({}) == []
+    assert embed_builder.specs_from_body({"embeds": None, "embed": {"title": "T"}}) == [{"title": "T"}]
+
+
+def test_specs_from_body_rejects_bad_shapes():
+    assert embed_builder.specs_from_body({"embeds": "nope"}) is None
+    assert embed_builder.specs_from_body({"embeds": [{"title": "A"}, None]}) is None
+    assert embed_builder.specs_from_body({"embed": "nope"}) is None
+
+
+def test_validate_embed_specs_limits():
+    one = {"title": "T"}
+    assert embed_builder.validate_embed_specs([one] * 10) is None
+    assert embed_builder.validate_embed_specs([one] * 11) == "too_many_embeds"
+    assert embed_builder.validate_embed_specs([], "") == "empty_embed"
+    assert embed_builder.validate_embed_specs([], "text") is None
+    assert embed_builder.validate_embed_specs([one, {"title": "x" * 257}]) == "title_too_long"
+    big = {"description": "x" * 3001}
+    assert embed_builder.validate_embed_specs([big]) is None
+    assert embed_builder.validate_embed_specs([big, big]) == "embed_too_large"
+
+
+def test_message_to_editor_payload_returns_all_embeds():
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    embeds = [embed_builder.build_embed({"title": f"E{i}"}) for i in range(3)]
+    payload = embed_builder.message_to_editor_payload(FakeMessage(1, embeds=embeds, content="hi"))
+    assert [e["title"] for e in payload["embeds"]] == ["E0", "E1", "E2"]
+    assert payload["embed"]["title"] == "E0"
+
+
+def test_message_to_editor_payload_content_only_has_one_blank_embed_slot():
+    from dashboard.backend.tests.fakes import FakeMessage
+
+    payload = embed_builder.message_to_editor_payload(FakeMessage(1, embeds=[], content="just text"))
+    assert payload["embeds"] == [payload["embed"]]

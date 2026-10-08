@@ -360,33 +360,37 @@ def v2_message_to_spec(message) -> tuple[dict, str, bool]:
     return spec, extracted_content, saw_v2
 
 
+def _safe_embed_to_spec(embed) -> dict:
+    try:
+        return embed_to_spec(embed)
+    except Exception:
+        logger.exception("embed_to_spec failed; returning empty spec")
+        return empty_embed_spec()
+
+
 def message_to_editor_payload(message) -> dict:
     """Parse a Discord message into the dashboard embed-editor payload."""
     is_v2 = bool(getattr(getattr(message, "flags", None), "components_v2", False))
     content = getattr(message, "content", None) or ""
-    spec = empty_embed_spec()
     embeds = getattr(message, "embeds", None) or []
 
     if embeds:
-        try:
-            spec = embed_to_spec(embeds[0])
-        except Exception:
-            logger.exception("embed_to_spec failed; returning empty spec")
-            spec = empty_embed_spec()
+        specs = [_safe_embed_to_spec(embed) for embed in embeds[:MAX_EMBEDS]]
     else:
         try:
             mapped_spec, mapped_content, saw_v2 = v2_message_to_spec(message)
         except Exception:
             logger.exception("v2_message_to_spec failed; returning empty spec")
             mapped_spec, mapped_content, saw_v2 = empty_embed_spec(), "", is_v2
-        spec = mapped_spec
+        specs = [mapped_spec]
         if not content:
             content = mapped_content
         is_v2 = is_v2 or saw_v2
 
     return {
         "content": content,
-        "embed": spec,
+        "embeds": specs,
+        "embed": specs[0],
         "role_ids": [str(r) for r in parse_role_button_ids(message)],
         "components_version": "v2" if is_v2 else "v1",
     }
@@ -401,25 +405,28 @@ def is_embed_spec_empty(spec: dict) -> bool:
     return not (title or description or fields or image_url or thumbnail_url)
 
 
-def validate_embed_spec(spec: dict, content: str = "") -> str | None:
+MAX_EMBEDS = 10
+_TOTAL_TEXT_LIMIT = 6000
+
+
+def _spec_limit_error(spec: dict) -> tuple[str | None, int]:
+    """Per-embed Discord limits. Returns (error_code, counted_text_length)."""
     title = spec.get("title") or ""
     description = spec.get("description") or ""
     author_name = (spec.get("author") or {}).get("name") or ""
     footer_text = (spec.get("footer") or {}).get("text") or ""
     fields = spec.get("fields") or []
 
-    if is_embed_spec_empty(spec) and not content.strip():
-        return "empty_embed"
     if len(title) > 256:
-        return "title_too_long"
+        return "title_too_long", 0
     if len(description) > 4096:
-        return "description_too_long"
+        return "description_too_long", 0
     if len(footer_text) > 2048:
-        return "footer_too_long"
+        return "footer_too_long", 0
     if len(author_name) > 256:
-        return "author_name_too_long"
+        return "author_name_too_long", 0
     if len(fields) > 25:
-        return "too_many_fields"
+        return "too_many_fields", 0
 
     total_length = len(title) + len(description) + len(footer_text) + len(author_name)
     for field in fields:
@@ -428,14 +435,51 @@ def validate_embed_spec(spec: dict, content: str = "") -> str | None:
         name = field.get("name") or ""
         value = field.get("value") or ""
         if len(name) > 256:
-            return "field_name_too_long"
+            return "field_name_too_long", 0
         if len(value) > 1024:
-            return "field_value_too_long"
+            return "field_value_too_long", 0
         total_length += len(name) + len(value)
+    return None, total_length
 
-    if total_length > 6000:
+
+def validate_embed_spec(spec: dict, content: str = "") -> str | None:
+    if is_embed_spec_empty(spec) and not content.strip():
+        return "empty_embed"
+    error_code, total_length = _spec_limit_error(spec)
+    if error_code:
+        return error_code
+    if total_length > _TOTAL_TEXT_LIMIT:
         return "embed_too_large"
+    return None
 
+
+def specs_from_body(body: dict) -> list[dict] | None:
+    """Embed specs of a request body: `embeds` list, or the legacy single `embed`.
+
+    Empty specs are dropped. Returns None when the shape is not usable.
+    """
+    raw = body.get("embeds")
+    if raw is None:
+        raw = [body.get("embed") or {}]
+    if not isinstance(raw, list) or not all(isinstance(spec, dict) for spec in raw):
+        return None
+    return [spec for spec in raw if not is_embed_spec_empty(spec)]
+
+
+def validate_embed_specs(specs: list[dict], content: str = "") -> str | None:
+    """Validate all embeds of one message; Discord's 6000-char limit is shared between them."""
+    if not specs and not content.strip():
+        return "empty_embed"
+    if len(specs) > MAX_EMBEDS:
+        return "too_many_embeds"
+    total_length = 0
+    for spec in specs:
+        error_code, length = _spec_limit_error(spec)
+        if error_code:
+            return error_code
+        total_length += length
+    if total_length > _TOTAL_TEXT_LIMIT:
+        return "embed_too_large"
     return None
 
 
